@@ -4,16 +4,16 @@
 // sind nach Themen aufgeteilt; die Helfer liegen in
 // test/support/profile_edit_screen_hilfen.dart.
 
-// Widget-Tests fuer den Profil-Editor ("Profil bearbeiten").
+// Widget-Tests für den Profil-Editor ("Profil bearbeiten").
 //
-// ANLASS: Die Coverage-Messung (13.11.2026) zeigte fuer
+// ANLASS: Die Coverage-Messung (13.11.2026) zeigte für
 // lib/screens/profile/profile_edit_screen.dart 583 offene Zeilen. Der
 // Screen ist die einzige Stelle, an der der Nutzer sein Profil
-// aendert - und der Betreiber hat dort im November 2026 gemeldet:
+// ändert - und der Betreiber hat dort im November 2026 gemeldet:
 // "Wenn man Buttons auswählt, z. B. in den Profileinstellungen, sollen
 // sie sich nicht in die nächste Zeile durch auswählen verschieben."
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Screen zeigt die Werte des Profils,
 //   * der Zurück-Knopf fragt nach ungespeicherten Änderungen
 //     ("Speichern?"-Nachfrage) und bietet Speichern/Verwerfen/Abbrechen,
@@ -29,11 +29,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 // Das Plattform-Interface wird von permission_handler exportiert, aber
-// nicht weitergereicht - der Test setzt die Attrappe darueber.
+// nicht weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/profile/user_profile.dart';
@@ -143,7 +143,7 @@ void main() {
       }
 
       // Und die Entscheidung wird quittiert - sonst kommt der Dialog
-      // bei jedem Oeffnen wieder.
+      // bei jedem Öffnen wieder.
       expect(
         server.pfade.any((p) => p.contains('acknowledge_photo_appeal')),
         isTrue,
@@ -156,7 +156,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      // Minderjaehrig (16) - fuer sie ist der Suchradius auf 25 km
+      // Minderjährig (16) - für sie ist der Suchradius auf 25 km
       // begrenzt. Gespeichert war aber "ganz Deutschland" mit 200 km.
       final profil = UserProfile(
         id: 'ich',
@@ -176,7 +176,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Die gespeicherten Werte muessen auf die Regel geklemmt werden -
+      // Die gespeicherten Werte müssen auf die Regel geklemmt werden -
       // sonst zeigt die App mehr, als der Server erlaubt (der Server
       // begrenzt es serverseitig auf 25 km).
       final prefs = container.read(userPreferencesProvider);
@@ -222,7 +222,7 @@ void main() {
         profileEditScreenProfil,
       );
 
-      // Der Name aendern - das Feld ist das erste TextFormular.
+      // Der Name ändern - das Feld ist das erste TextFormular.
       await tester.enterText(find.byType(TextFormField).first, 'Lena Neu');
       await pumpFrames(tester);
       expect(container.read(profileEditDirtyProvider), isTrue);
@@ -259,9 +259,9 @@ void main() {
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Das Profil ist unveraendert ...
+      // Das Profil ist unverändert ...
       expect(container.read(profileProvider).name, 'Lena');
-      // ... der Dirty-Flag ist zurueckgesetzt ...
+      // ... der Dirty-Flag ist zurückgesetzt ...
       expect(container.read(profileEditDirtyProvider), isFalse);
       // ... und der Screen ist verlassen.
       expect(find.text('Mein Profil'), findsOneWidget);
@@ -289,9 +289,9 @@ void main() {
       expect(tester.takeException(), isNull);
       // Der neue Name steht im Profil ...
       expect(container.read(profileProvider).name, 'Lena Neu');
-      // ... der Dirty-Flag ist zurueck ...
+      // ... der Dirty-Flag ist zurück ...
       expect(container.read(profileEditDirtyProvider), isFalse);
-      // ... und der Nutzer bekommt die Bestaetigung.
+      // ... und der Nutzer bekommt die Bestätigung.
       expect(find.text('Profil gespeichert'), findsOneWidget);
 
       await aufraeumen(tester);
@@ -356,9 +356,9 @@ void main() {
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Der Nutzer erfaehrt, dass es nicht gespeichert wurde.
+      // Der Nutzer erfährt, dass es nicht gespeichert wurde.
       expect(find.textContaining('Es fehlen noch Angaben'), findsWidgets);
-      // Und das Profil ist unveraendert.
+      // Und das Profil ist unverändert.
       expect(container.read(profileProvider).name, 'Lena');
 
       await aufraeumen(tester);
@@ -470,7 +470,7 @@ void main() {
       final container = await profileEditScreenPump(tester, profilMitBildern);
 
       expect(tester.takeException(), isNull);
-      // Drei Bilder = drei Entfernen-Knoepfe (einer je Kachel).
+      // Drei Bilder = drei Entfernen-Knöpfe (einer je Kachel).
       final knoepfe = find.byIcon(Icons.close);
       expect(
         knoepfe,
@@ -485,7 +485,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Der Bildschirm weiss jetzt, dass sich etwas geaendert hat.
+      // Der Bildschirm weiß jetzt, dass sich etwas geändert hat.
       expect(
         container.read(profileEditDirtyProvider),
         isTrue,
@@ -573,7 +573,7 @@ void main() {
       await pumpFrames(tester);
 
       // Die Offenlegung kommt VOR der Berechtigung (das verlangt
-      // Google Play) - der Nutzer muss sie bestaetigen.
+      // Google Play) - der Nutzer muss sie bestätigen.
       expect(
         find.text(L10n.tWithoutContext('location.disclosureTitle')),
         findsOneWidget,
@@ -606,7 +606,7 @@ void main() {
       expect(profil.locationLng, erwartet.lng);
 
       // Und der Standort geht zum Server (in der Tabelle, die nur der
-      // Eigentuemer lesen darf - nicht in profiles).
+      // Eigentümer lesen darf - nicht in profiles).
       final orte = server.schreibvorgaenge
           .where((v) => v['tabelle'] == 'profile_locations')
           .toList();
@@ -619,13 +619,13 @@ void main() {
       );
       expect(orte.last['lat'], erwartet.lat);
 
-      // Und der Nutzer bekommt die Bestaetigung.
+      // Und der Nutzer bekommt die Bestätigung.
       expect(
         find.text(L10n.tWithoutContext('profile.edit.locationDetected')),
         findsOneWidget,
       );
 
-      // Der Standort wird auch serverseitig geprueft (Massen-Fake-
+      // Der Standort wird auch serverseitig geprüft (Massen-Fake-
       // Konten) - das muss raus.
       final pruefung =
           container.read(locationCheckServiceProvider) as FakeStandortPruefung;

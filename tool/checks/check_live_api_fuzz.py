@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Fuzzt die Datenbank-Schnittstelle gegen das Produktivsystem.
 
-WARUM (22.11.2026, Betreiber: "Mit fuzzing koenntest du in der App nach
-Sicherheitsluecken suchen. Es gibt dafuer auch oeffentliche fertige
-Fuzzer, welche dafuer geeignet sein koennten."):
+WARUM (22.11.2026, Betreiber: "Mit fuzzing könntest du in der App nach
+Sicherheitslücken suchen. Es gibt dafür auch öffentliche fertige
+Fuzzer, welche dafür geeignet sein könnten."):
 
-Die App spricht ueber PostgREST mit der Datenbank. Jede RPC bekommt
+Die App spricht über PostgREST mit der Datenbank. Jede RPC bekommt
 Werte aus der App - und diese Werte kann zum Teil die ANDERE PERSON
-steuern (zum Beispiel ueber das Relay oder den Transit). Ein Fehler
+steuern (zum Beispiel über das Relay oder den Transit). Ein Fehler
 in einer RPC ist damit ein Fehler an der Grenze der App.
 
-DAS WERKZEUG: Es liest das OEFFENTLICHE OpenAPI-Schema des Projekts
+DAS WERKZEUG: Es liest das ÖFFENTLICHE OpenAPI-Schema des Projekts
 (das PostgREST selbst erzeugt) - so wie die fertigen Fuzzer (RESTler,
 Schemanticsch) es mit ihrer Spezifikation tun. Daraus kommen die
 Aufrufe und ihre Parameter; die Werte erzeugt der Fuzzer.
@@ -18,23 +18,23 @@ Aufrufe und ihre Parameter; die Werte erzeugt der Fuzzer.
 DIE FEHLERKLASSEN, NACH DENEN GESUCHT WIRD:
 
   1) HTTP 5xx - der Server ist an der Eingabe zerbrochen. Das ist ein
-     echter Fund: ein Angreifer, der eine Funktion mit einem boesen
-     Wert aufruft, laesst den Server antworten. Bei 5xx ist die
-     Funktion fuer alle betroffen.
-  2) Ein Fehler, der NICHT zu der Fehlerklasse des Aufrufs gehoert
+     echter Fund: ein Angreifer, der eine Funktion mit einem bösen
+     Wert aufruft, lässt den Server antworten. Bei 5xx ist die
+     Funktion für alle betroffen.
+  2) Ein Fehler, der NICHT zu der Fehlerklasse des Aufrufs gehört
      (z. B. "relation does not exist" statt "unauthorized"). Das deutet
      auf eine Injection hin.
   3) Eine Antwort mit Daten, die der Aufrufer nicht sehen darf. Der
-     Aufruf laeuft mit dem TESTKONTO (es sieht nur die eigenen Daten).
+     Aufruf läuft mit dem TESTKONTO (es sieht nur die eigenen Daten).
 
 DIE SICHERHEIT:
 
   * Es werden NUR LESE-RPCs gerufen (die Liste unten). Nichts wird
-    geschrieben, nichts geloescht, nichts gesendet.
+    geschrieben, nichts gelöscht, nichts gesendet.
   * Es wird das TESTKONTO benutzt (der Betreiber). Es sieht niemals
-    fremde Daten - und das wird auch geprueft (Punkt 3).
+    fremde Daten - und das wird auch geprüft (Punkt 3).
   * Die Zahl der Aufrufe je RPC ist klein (Standard: 4). Der
-    Rate-Limit-Zaehler der Entfernung wird also nur wenig belastet.
+    Rate-Limit-Zähler der Entfernung wird also nur wenig belastet.
 
 Aufruf::
 
@@ -69,8 +69,8 @@ KONTO = "46f3f558-b134-4d25-946b-4e052a8ab3b5"
 #: Die LESE-RPCs, die gefuzzt werden.
 #:
 #: WARUM NUR LESEN: Der Fuzzer soll nichts erzeugen. Ein Aufruf wie
-#: `like_user` wuerde Likes anlegen, `send_bug_report` Meldungen
-#: schreiben - beides veraendert die Produktivdaten. Die Liste hier ist
+#: `like_user` würde Likes anlegen, `send_bug_report` Meldungen
+#: schreiben - beides verändert die Produktivdaten. Die Liste hier ist
 #: bewusst kurz und conservative - sie nennt genau die Aufrufe, die die
 #: App beim LESEN benutzt.
 LESE_RPCS = [
@@ -117,7 +117,7 @@ BOESE_WERTE = [
     "<script>alert(1)</script>",
     "{{7*7}}",
     "${jndi:ldap://x}",
-    # Zahlen als Text (der Server soll das ablehnen, nicht abstuerzen)
+    # Zahlen als Text (der Server soll das ablehnen, nicht abstürzen)
     "0",
     "-1",
     "999999999999999999999999",
@@ -142,11 +142,11 @@ def parameter_aus_schema(schema: dict, name: str) -> list[str]:
 
 
 def secret_aus_cli() -> str:
-    """Holt den geheimen Schluessel aus der angemeldeten CLI.
+    """Holt den geheimen Schlüssel aus der angemeldeten CLI.
 
-    WARUM: Der Schluessel liegt absichtlich NICHT im Repository (und
-    nicht in der .env - dort stehen nur die oeffentlichen Schluessel).
-    Wer die CLI angemeldet hat (der Betreiber), bekommt ihn so fuer
+    WARUM: Der Schlüssel liegt absichtlich NICHT im Repository (und
+    nicht in der .env - dort stehen nur die öffentlichen Schlüssel).
+    Wer die CLI angemeldet hat (der Betreiber), bekommt ihn so für
     dieses eine Werkzeug - ohne ihn irgendwo abzulegen.
     """
     try:
@@ -210,7 +210,7 @@ def http(
 
 
 def sitzung(env: dict, client) -> str | None:
-    """Eine echte Sitzung fuer das Testkonto."""
+    """Eine echte Sitzung für das Testkonto."""
     geheimnis = (
         env.get("SUPABASE_SECRET_KEY_NEW")
         or env.get("SUPABASE_SECRET_KEY")
@@ -282,13 +282,13 @@ def main() -> int:
         print("  ! Keine .env gefunden - es wurde nichts geprueft.")
         return 1
 
-    # Das OpenAPI-Schema: PostgREST erzeugt es selbst. Es enthaelt jede
-    # Funktion mit ihren Parametern - die Grundlage fuer die Aufrufe
+    # Das OpenAPI-Schema: PostgREST erzeugt es selbst. Es enthält jede
+    # Funktion mit ihren Parametern - die Grundlage für die Aufrufe
     # (wie die Spezifikation bei RESTler/Schemanticsch).
     #
-    # DER ZUGANG: Fuer diesen Endpunkt verlangt PostgREST den geheimen
-    # Schluessel ("Secret API key required") - mit einer normalen
-    # Benutzersitzung antwortet er mit 401. Der geheime Schluessel wird
+    # DER ZUGANG: Für diesen Endpunkt verlangt PostgREST den geheimen
+    # Schlüssel ("Secret API key required") - mit einer normalen
+    # Benutzersitzung antwortet er mit 401. Der geheime Schlüssel wird
     # nur zum LESEN des Schemas benutzt (er steht nirgends).
     geheimnis = (
         env.get("SUPABASE_SECRET_KEY_NEW")
@@ -341,7 +341,7 @@ def main() -> int:
             continue
         parameter = parameter_aus_schema(schema, name)
         for i in range(optionen.aufrufe):
-            # Der boese Wert wandert in einen Parameter; die anderen
+            # Der böse Wert wandert in einen Parameter; die anderen
             # bekommen plausible Werte.
             daten = {}
             for p in parameter:

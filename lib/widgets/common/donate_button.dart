@@ -9,8 +9,8 @@ import 'package:thestia/l10n/app_strings.dart';
 /// Der Button existierte bis v0.4.0 und wurde beim UI-Umbau zusammen mit
 /// den Spender-Badges entfernt - zu Recht, weil die Zahlung damals eine
 /// Attrappe war. Jetzt ist er wieder da, aber ohne Attrappe: es gibt
-/// keine erfundene Buchung, keine "Danke"-Bestaetigung ohne Zahlung und
-/// kein Spender-Badge. Der Button oeffnet genau einen Link.
+/// keine erfundene Buchung, keine "Danke"-Bestätigung ohne Zahlung und
+/// kein Spender-Badge. Der Button öffnet genau einen Link.
 ///
 /// ZIEL EINSTELLEN
 ///
@@ -19,16 +19,16 @@ import 'package:thestia/l10n/app_strings.dart';
 ///     .env:  LIBERAPAY_URL=https://liberapay.com/<dein-name>/
 ///     bauen: powershell -File tool\build_release.ps1 ...
 ///
-/// Warum als Build-Wert und nicht als Konstante hier: die Kuerzel des
-/// Zahlungsanbieters sind oeffentlich, aber sie aendern sich je Konto.
-/// Wer sie fest in den Quelltext schreibt, muss fuer jeden Wechsel eine
-/// Aenderung einchecken und danach den Build erneut verteilen - das ist
-/// genau der Fehler, den [kDonateUrl] als Leerstring ueber Jahre
+/// Warum als Build-Wert und nicht als Konstante hier: die Kürzel des
+/// Zahlungsanbieters sind öffentlich, aber sie ändern sich je Konto.
+/// Wer sie fest in den Quelltext schreibt, muss für jeden Wechsel eine
+/// Änderung einchecken und danach den Build erneut verteilen - das ist
+/// genau der Fehler, den [kDonateUrl] als Leerstring über Jahre
 /// konserviert hat: niemand wusste mehr, dass hier etwas einzutragen war.
 ///
 /// Bleibt der Wert leer, passiert beim Antippen nichts weiter als ein
 /// Hinweis. Es wird KEIN Platzhalter aufgerufen und nichts angezeigt,
-/// was so aussieht, als haette gespendet.
+/// was so aussieht, als hätte gespendet.
 const String kDonateUrl = String.fromEnvironment('LIBERAPAY_URL');
 
 /// Ist ein Zahlungsziel hinterlegt?
@@ -40,7 +40,7 @@ class DonateButton extends StatelessWidget {
   /// Optionales Icon. Ohne Icon wird eine eigene Spenden-Glyphe
   /// gezeichnet, damit die Schenkform nicht mit einem Standard-Icon
   /// (z. B. `Icons.favorite`) verwechselt wird - das steht in der App
-  /// bereits fuer "Gefällt mir".
+  /// bereits für "Gefällt mir".
   final IconData? icon;
 
   @override
@@ -72,9 +72,9 @@ class DonateButton extends StatelessWidget {
               else
                 const _GiftGlyph(),
               const SizedBox(width: 10),
-              // Flexible: der Text darf den Button nicht ueber den
-              // verfuegbaren Platz hinaus schieben (RenderFlex-Overflow
-              // bei grosser Systemschrift).
+              // Flexible: der Text darf den Button nicht über den
+              // verfügbaren Platz hinaus schieben (RenderFlex-Overflow
+              // bei großer Systemschrift).
               Flexible(
                 child: Text(
                   L10n.t(context, 'profile.donateBtn'),
@@ -95,7 +95,7 @@ class DonateButton extends StatelessWidget {
 
   Future<void> _open(BuildContext context) async {
     // Texte und Messenger VOR dem ersten await holen. Nach einem await
-    // ist der Context moeglicherweise weg (Route gepoppt) - und der
+    // ist der Context möglicherweise weg (Route gepoppt) - und der
     // Analyzer moniert zu Recht, ihn dann noch zu benutzen.
     final messenger = ScaffoldMessenger.maybeOf(context);
     final failedText = L10n.t(context, 'profile.donateOpenFailed');
@@ -111,10 +111,10 @@ class DonateButton extends StatelessWidget {
       return;
     }
     // Kein canLaunchUrl() davor. Die Abfrage gilt seit Android 11 als
-    // unzuverlaessig: ohne <queries> im Manifest liefert sie `false`,
+    // unzuverlässig: ohne <queries> im Manifest liefert sie `false`,
     // obwohl ein Browser installiert ist und der Aufruf funktionieren
-    // wuerde. Sie als Tor zu benutzen hiess hier, jede Web-Seite als
-    // "kann nicht geoeffnet werden" zu melden. Der Aufruf selbst
+    // würde. Sie als Tor zu benutzen hiess hier, jede Web-Seite als
+    // "kann nicht geöffnet werden" zu melden. Der Aufruf selbst
     // entscheidet, nicht die Vorabfrage.
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened) {
@@ -122,10 +122,10 @@ class DonateButton extends StatelessWidget {
     }
   }
 
-  /// Erklaert offen, dass keine Zieladresse hinterlegt ist.
+  /// Erklärt offen, dass keine Zieladresse hinterlegt ist.
   ///
   /// Bewusst als Dialog mit nur einem Knopf: der Nutzer soll hier keine
-  /// Moeglichkeit bekommen, etwas zu bestaetigen, das nicht passiert.
+  /// Möglichkeit bekommen, etwas zu bestätigen, das nicht passiert.
   Future<void> _explainMissingLink(BuildContext context) async {
     await showDialog<void>(
       context: context,
@@ -155,7 +155,7 @@ class DonateButton extends StatelessWidget {
 /// Bewusst gezeichnet statt `Icons.card_giftcard`: die Material-Glyphe
 /// zeigt ein Geschenk mit Schleife und wirkt in der App wie ein
 /// weiteres Standard-Icon. Hier ist es eine einfache Schenkbox mit
-/// Deckel und Band, gezeichnet in derselben Strichstaerke wie die
+/// Deckel und Band, gezeichnet in derselben Strichstärke wie die
 /// anderen eigengen Glyphen der App.
 class _GiftGlyph extends StatelessWidget {
   const _GiftGlyph();
@@ -220,7 +220,7 @@ class _GiftPainter extends CustomPainter {
   bool shouldRepaint(_GiftPainter old) => old.color != color;
 }
 
-/// Kleiner Helfer fuer Screens, die den Button nur als Textzeile
+/// Kleiner Helfer für Screens, die den Button nur als Textzeile
 /// einbauen wollen.
 Future<void> openDonateLink(BuildContext context) async {
   if (!donateConfigured) {

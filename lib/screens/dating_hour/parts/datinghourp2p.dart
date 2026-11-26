@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -42,8 +42,8 @@ extension _DatingHourP2p on _DatingHourChatScreenState {
   Future<void> _handleDecision(bool accept) async {
     final session = _session;
     // Die eigene User-ID wird nur in _initP2P() gesetzt. Bricht das ohne
-    // Supabase-Session frueh ab, ist sie null - ein Tipp auf "Treffen" wuerde
-    // dann mit einem Null-Check-Crash enden (User saehe einen roten Screen).
+    // Supabase-Session früh ab, ist sie null - ein Tipp auf "Treffen" würde
+    // dann mit einem Null-Check-Crash enden (User sähe einen roten Screen).
     final myId = _currentUserId;
     if (session == null || myId == null) {
       if (mounted) {

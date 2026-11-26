@@ -5,11 +5,11 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:thestia/utils/chat/exif_stripper.dart';
 
-/// Profilbild auswaehlen und interaktiv quadratisch zuschneiden.
+/// Profilbild auswählen und interaktiv quadratisch zuschneiden.
 ///
 /// Wird von der Einrichtung ("Dein Profil") und "Profil bearbeiten"
-/// genutzt, damit beide identisch funktionieren. Gibt null zurueck, wenn
-/// der Nutzer abgebrochen hat. [context] ist optional und faerbt den
+/// genutzt, damit beide identisch funktionieren. Gibt null zurück, wenn
+/// der Nutzer abgebrochen hat. [context] ist optional und färbt den
 /// Crop-Screen im aktiven Theme.
 Future<Uint8List?> pickAndCropAvatar([BuildContext? context]) async {
   // Farben VOR den async-Aufrufen lesen (keine Context-Nutzung nach Gaps).
@@ -24,7 +24,7 @@ Future<Uint8List?> pickAndCropAvatar([BuildContext? context]) async {
   );
   if (picked == null) return null;
 
-  // Quadratischer Zuschnitt (1:1) - Avatare werden kreisfoermig gezeigt.
+  // Quadratischer Zuschnitt (1:1) - Avatare werden kreisförmig gezeigt.
   final cropped = await ImageCropper().cropImage(
     sourcePath: picked.path,
     aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),

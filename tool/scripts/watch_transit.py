@@ -1,18 +1,18 @@
-"""Beobachtet Transit Spark live - waehrend du auf den zwei Handys testest.
+"""Beobachtet Transit Spark live - während du auf den zwei Handys testest.
 
-WARUM (08.11.2026): Der BLE-Test auf zwei echten Geraeten ist das
-einzige, was sich nicht am Schreibtisch pruefen laesst. Statt auf den
-Handys im Log zu wuehlen, zeigt dieses Werkzeug, was **serverseitig**
+WARUM (08.11.2026): Der BLE-Test auf zwei echten Geräten ist das
+einzige, was sich nicht am Schreibtisch prüfen lässt. Statt auf den
+Handys im Log zu wühlen, zeigt dieses Werkzeug, was **serverseitig**
 passiert:
 
 * `transit_signals` - wer hat gefunkt, wurde jemandem zugeordnet
-* `transit_soft_pings` - der Ping (die Gegenseite wurde begruesst)
+* `transit_soft_pings` - der Ping (die Gegenseite wurde begrüßt)
 * `matches` - der Funke daraus
 * `net.http_request_queue` - **jede Zeile ist ein Push-Aufruf**. Hier
   sieht man unmittelbar, ob ein Ereignis EINE Meldung oder drei
   erzeugt (Befund 08.11.2026: ein Transit-Funke erzeugte vier).
 
-Aufruf (in einem zweiten Fenster, waehrend du testest):
+Aufruf (in einem zweiten Fenster, während du testest):
     python tool/scripts/watch_transit.py            # beobachtet alle 5 Sekunden
     python tool/scripts/watch_transit.py --sekunden 2
     python tool/scripts/watch_transit.py --konto 46f3f558-b134-4d25-946b-4e052a8ab3b5
@@ -32,8 +32,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():

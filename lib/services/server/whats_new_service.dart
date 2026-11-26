@@ -32,25 +32,25 @@ class WhatsNewService {
   /// stehen in den Release Notes.
   ///
   /// REGEL: Ein Listeneintrag ist EIN Anzeigepunkt und damit EIN
-  /// vollstaendiger Satz. Frueher stand hier der Text als Satzbausteine
+  /// vollständiger Satz. Früher stand hier der Text als Satzbausteine
   /// ('Vorstellungen, die sich nicht wiederholen: die Ideen-Karten',
-  /// 'rotieren jetzt. Wer die App oft oeffnet, ...') - zehn Bausteine
-  /// fuer vier Aussagen. Die Abschneidegrenze in [keysFor] hat daraufhin
+  /// 'rotieren jetzt. Wer die App oft öffnet, ...') - zehn Bausteine
+  /// für vier Aussagen. Die Abschneidegrenze in [keysFor] hat daraufhin
   /// mitten im Satz abgeschnitten: die Anzeige begann mit
-  /// 'fuer Funken, Daumen und Nachrichten. ...' (Satzrumpf) und der
-  /// Punkt 'Vorstellungen rotieren' - die erste sichtbare Aenderung von
-  /// 0.9.2 - fehlte vollstaendig. Zusaetzlich war der Text nicht
-  /// uebersetzt; englische Nutzer sahen Deutsch.
+  /// 'für Funken, Daumen und Nachrichten. ...' (Satzrumpf) und der
+  /// Punkt 'Vorstellungen rotieren' - die erste sichtbare Änderung von
+  /// 0.9.2 - fehlte vollständig. Zusätzlich war der Text nicht
+  /// übersetzt; englische Nutzer sahen Deutsch.
   static const Map<int, List<String>> contentByBuild = {
     // v0.10.2 (Build 56): Sicherheits-Audit. Zwei Punkte, die der
     // Nutzer unmittelbar sieht - der Rest des Audits (Pinning,
-    // Backup-Regeln, Push-Texte) ist fuer ihn unsichtbar.
+    // Backup-Regeln, Push-Texte) ist für ihn unsichtbar.
     56: ['whatsnew.v1020.safetyOffer', 'whatsnew.v1020.birthdayPrivacy'],
 
     // v0.10.0 (Build 31): Standort-Privatisierung. Die drei Punkte sind
-    // bewusst ueber die Waechter-Begrenzung gesetzt - es sind die
-    // einzigen Aenderungen, bei denen jemand in einer alten App
-    // zurueckblinzelt ("wo ist mein Ort hin?") und deshalb NICHT auf
+    // bewusst über die Wächter-Begrenzung gesetzt - es sind die
+    // einzigen Änderungen, bei denen jemand in einer alten App
+    // zurückblinzelt ("wo ist mein Ort hin?") und deshalb NICHT auf
     // einen späteren Release vertrauen sollte.
     31: [
       'whatsnew.v1000.noCity',
@@ -73,14 +73,14 @@ class WhatsNewService {
     ],
   };
 
-  /// Hoechstzahl gleichzeitig gezeigter Punkte.
+  /// Höchstzahl gleichzeitig gezeigter Punkte.
   ///
   /// Wirkt nur noch als Schutz gegen eine Ausreiessliste. Weil ein
-  /// Eintrag jetzt ein vollstaendiger Punkt ist, kann das Abschneiden
-  /// keinen Satz mehr zerstoeren - es faellt nur eine ganze Aussage
-  /// weg. Fuer die Oberflaeche ist eine Ausreiessliste schlimmer als
+  /// Eintrag jetzt ein vollständiger Punkt ist, kann das Abschneiden
+  /// keinen Satz mehr zerstören - es fällt nur eine ganze Aussage
+  /// weg. Für die Oberfläche ist eine Ausreiessliste schlimmer als
   /// weglassen, deshalb wird abgeschnitten, aber nach der neuen Logik:
-  /// die JUENGSTE Version zuerst, aeltere nur, solange Platz ist.
+  /// die JÜNGSTE Version zuerst, ältere nur, solange Platz ist.
   static const int maxPoints = 6;
 
   /// Neue ANGABEN, die im Flow abgefragt werden (z. B. Geburtstags-Stil).
@@ -138,18 +138,18 @@ class WhatsNewService {
     }
   }
 
-  /// Anzeigepunkte fuer den aktuellen Build.
+  /// Anzeigepunkte für den aktuellen Build.
   ///
-  /// Reihenfolge: die JUENGSTE Version zuerst. Wer von einem alten Build
+  /// Reihenfolge: die JÜNGSTE Version zuerst. Wer von einem alten Build
   /// direkt auf den aktuellen springt, soll zuerst sehen, was jetzt neu
-  /// ist - nicht den Aeltesten. Die alte Logik nahm
+  /// ist - nicht den Ältesten. Die alte Logik nahm
   /// `out.sublist(out.length - 6)`, also die LETZTEN sechs einer
-  /// aufsteigend zusammengebauten Liste; bei einem Sprung ueber
-  /// mehrere Versionen verdraengte damit eine alte Version den Inhalt
+  /// aufsteigend zusammengebauten Liste; bei einem Sprung über
+  /// mehrere Versionen verdrängte damit eine alte Version den Inhalt
   /// der aktuellen.
   ///
-  /// Jeder Eintrag ist ein vollstaendiger Punkt (siehe [contentByBuild]),
-  /// das Abschneiden zerstoert deshalb keinen Satz mehr.
+  /// Jeder Eintrag ist ein vollständiger Punkt (siehe [contentByBuild]),
+  /// das Abschneiden zerstört deshalb keinen Satz mehr.
   static List<String> keysFor({
     required int currentBuild,
     required int? shownBuild,

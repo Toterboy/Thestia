@@ -27,7 +27,7 @@ void main() {
     });
 
     test('akzeptiert jede kuenftige Formatversion (ein Ziffer-Praefix)', () {
-      // Cloudflare aendert die Versionsziffer - die App darf daran
+      // Cloudflare ändert die Versionsziffer - die App darf daran
       // nicht kleben. Genau das war der Fehler.
       for (final praefix in ['0.', '1.', '2.', '9.']) {
         expect(
@@ -78,8 +78,8 @@ void main() {
     test('mit einer Fehlermeldung statt eines Tokens', () {
       // Das darf auf keinen Fall als Token durchgehen: die Seite
       // meldet Fehler mit "ERROR:..." - die App wertet das im
-      // Fehler-Zweig aus, aber die Formatpruefung muss es auch
-      // zurueckweisen.
+      // Fehler-Zweig aus, aber die Formatprüfung muss es auch
+      // zurückweisen.
       expect(isTurnstileToken('ERROR:CAPTCHA_ERROR:invalid-domain'), isFalse);
       expect(isTurnstileToken('ERROR:SCRIPT_NOT_LOADED'), isFalse);
     });

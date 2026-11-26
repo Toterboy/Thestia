@@ -35,11 +35,11 @@ class FindYourMatchService {
   /// einer der Interessen (["Musik","Gaming",...]).
   ///
   /// Die Altersgrenze wird **serverseitig** erzwungen (die RPC liest
-  /// aus `public_profiles`, und die Sicht filtert ueber
-  /// `profile_discovery_visible_full`): Minderjaehrige sehen
-  /// ausschliesslich Minderjaehrige. Die Altersspanne [ageMin]/[ageMax]
+  /// aus `public_profiles`, und die Sicht filtert über
+  /// `profile_discovery_visible_full`): Minderjährige sehen
+  /// ausschließlich Minderjährige. Die Altersspanne [ageMin]/[ageMax]
   /// ist die **Zusatz**-Spanne des Browsers - der Server begrenzt sie
-  /// zusaetzlich auf das, was der Betrachter ueberhaupt sehen darf.
+  /// zusätzlich auf das, was der Betrachter überhaupt sehen darf.
   Future<List<UserProfile>> getCandidatesByCategory(
     String category, {
     required int ageMin,
@@ -64,11 +64,11 @@ class FindYourMatchService {
         .toList();
   }
 
-  /// Die Kategorien, in denen es fuer mich gerade jemanden gibt - mit
+  /// Die Kategorien, in denen es für mich gerade jemanden gibt - mit
   /// der Zahl der Kandidaten (Migration 204).
   ///
-  /// Ohne diese Zahlen waere das Stoebern blind: man tippt auf
-  /// "Sport" und sieht niemanden und weiss nicht, ob die Funktion
+  /// Ohne diese Zahlen wäre das Stöbern blind: man tippt auf
+  /// "Sport" und sieht niemanden und weiß nicht, ob die Funktion
   /// kaputt ist oder es in dem Bereich schlicht niemanden gibt.
   ///
   /// Die Zahlen respects dieselben Altersregeln wie die Kandidaten
@@ -98,7 +98,7 @@ class FindYourMatchService {
   ///   * `already_matched` - es gab schon einen Funke. Vorher wurde
   ///     der Like in dem Fall stillschweigend geschluckt (BEFUND
   ///     07.11.2026: "Man kann nicht von einer Person einen Like
-  ///     haben, mit der man schon einen Funken hat."). Jetzt weiss die
+  ///     haben, mit der man schon einen Funken hat."). Jetzt weiß die
   ///     App es und kann es sagen.
   Future<Map<String, dynamic>?> likeUser(String targetUserId) async {
     final res = await _client.rpc(
@@ -114,11 +114,11 @@ class FindYourMatchService {
   /// benachrichtigen.
   ///
   /// BEFUND (07.11.2026, Betreiber): "Das Auge mit dem Strich ist like
-  /// abgelehnt, aber man wuerde eher sowas wie ausblenden oder ignorieren
+  /// abgelehnt, aber man würde eher sowas wie ausblenden oder ignorieren
   /// darunter verstehen." Das Auge war mit "Ignorieren" beschriftet,
   /// rief aber das ABLEHNEN auf - die andere Person sah die Ablehnung.
   ///
-  /// Jetzt gibt es dafuer einen eigenen Weg (ignore_like, Migration
+  /// Jetzt gibt es dafür einen eigenen Weg (ignore_like, Migration
   /// 198): der Like verschwindet aus der Liste, die Gegenseite
   /// bekommt nichts davon zu sehen.
   Future<void> ignoreLike(int likeId) async {
@@ -152,18 +152,18 @@ class FindYourMatchService {
   }
 
   /// Matches inklusive Quiz-Freischaltungsstand.
-  /// Zaehlt eine gesendete Nachricht je Funke - serverseitig.
+  /// Zählt eine gesendete Nachricht je Funke - serverseitig.
   ///
   /// BEFUND (11.11.2026): Die kleine Zahl in der Kachel las den LOKALEN
-  /// Verlauf. Der entsteht aber erst, wenn der Chat auf diesem Geraet
-  /// geoeffnet wurde - bei einem nie geoeffneten Funke stand ueberhaupt
-  /// keine Zahl, und auf zwei Geraeten standen verschiedene. Der Server
-  /// zaehlt deshalb jetzt mit: auf allen Geraeten dieselbe Zahl.
+  /// Verlauf. Der entsteht aber erst, wenn der Chat auf diesem Gerät
+  /// geöffnet wurde - bei einem nie geöffneten Funke stand überhaupt
+  /// keine Zahl, und auf zwei Geräten standen verschiedene. Der Server
+  /// zählt deshalb jetzt mit: auf allen Geräten dieselbe Zahl.
   ///
   /// [messageId] muss die ID der gesendeten Nachricht sein - der Server
-  /// zaehlt jede ID genau einmal (idempotent).
+  /// zählt jede ID genau einmal (idempotent).
   ///
-  /// Best-Effort: ein Fehler darf das Senden nie stoeren.
+  /// Best-Effort: ein Fehler darf das Senden nie stören.
   Future<void> bumpMessageCount({
     required int matchId,
     required String messageId,
@@ -180,15 +180,15 @@ class FindYourMatchService {
     }
   }
 
-  /// Loescht eine EIGENE Nachricht fuer alle.
+  /// Löscht eine EIGENE Nachricht für alle.
   ///
   /// BEFUND (11.11.2026): "Wie bei Whatsapp - die Nachricht kann man
-  /// irgendwie fuer alle loeschen, aber ein Hinweis steht dann da."
+  /// irgendwie für alle löschen, aber ein Hinweis steht dann da."
   ///
   /// Der Server speichert NUR die Tatsache (keinen Inhalt). Der
-  /// Empfaenger ersetzt die Nachricht durch einen Hinweis.
+  /// Empfänger ersetzt die Nachricht durch einen Hinweis.
   ///
-  /// Wirft, wenn die Nachricht nicht dem Aufrufer gehoert.
+  /// Wirft, wenn die Nachricht nicht dem Aufrufer gehört.
   Future<void> deleteMessageForAll({
     required int matchId,
     required String messageId,
@@ -199,7 +199,7 @@ class FindYourMatchService {
     );
   }
 
-  /// Die "fuer alle geloescht"-Hinweise eines Funkes.
+  /// Die "für alle gelöscht"-Hinweise eines Funkes.
   Future<List<({String messageId, DateTime? deletedAt})>> listMessageDeletions(
     int matchId,
   ) async {

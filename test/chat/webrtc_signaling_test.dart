@@ -1,14 +1,14 @@
 // Das Signaling zwischen zwei Handys (WebRTC).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/webrtc_service.dart 190 offene Zeilen - der
-// groesste Einzelposten. Das Signaling ist sicherheitsrelevant: hier
+// größte Einzelposten. Das Signaling ist sicherheitsrelevant: hier
 // entscheidet sich, OB ein fremder Client sich als Partner
-// eintauschen kann (Audit H8) und ob eine zu grosse Nachricht das
-// Geraet bremst (DoS-Schutz).
+// eintauschen kann (Audit H8) und ob eine zu große Nachricht das
+// Gerät bremst (DoS-Schutz).
 //
 // DIE NAHTEN: `WebRTCService.peerConnectionFactory` liefert die
-// Peer-Connection-Attrappe, `routeSignalingForTesting` fuehrt eine
+// Peer-Connection-Attrappe, `routeSignalingForTesting` fährt eine
 // Signaling-Nachricht ohne echten Kanal zu, und
 // `currentPeerIdForTesting` setzt den erwarteten Partner.
 import 'dart:io';
@@ -30,9 +30,9 @@ void main() {
 
   /// Wie oft wurde die PeerConnection gebaut?
   ///
-  /// DER WEG: Die Attrappe zaehlt nur createDataChannel -
-  /// beim EMPFAENGER (Antwort auf ein Offer) wird aber gar kein
-  /// Kanal geoeffnet. Der Zaehler sitzt deshalb am Aufruf der
+  /// DER WEG: Die Attrappe zählt nur createDataChannel -
+  /// beim EMPFÄNGER (Antwort auf ein Offer) wird aber gar kein
+  /// Kanal geöffnet. Der Zähler sitzt deshalb am Aufruf der
   /// Fabrik.
   int verbindungen = 0;
 
@@ -97,7 +97,7 @@ void main() {
 
     test('ein fremder Absender wird verworfen', () async {
       // DER ANGRIFF (Audit H8): Ein Angreifer schickt ein Offer mit
-      // seinem 'from' - er wuerde sonst zum Partner.
+      // seinem 'from' - er würde sonst zum Partner.
       await signal({'kind': 'offer', 'from': 'attacker', 'sdp': 'v=0'});
 
       expect(
@@ -109,7 +109,7 @@ void main() {
 
     test('ein zu grosses Angebot wird verworfen', () async {
       // DER DOS-SCHUTZ: Ein SDP-Feld von mehreren Megabytes soll
-      // das Geraet nicht bremsen.
+      // das Gerät nicht bremsen.
       await signal({
         'kind': 'offer',
         'from': 'partner-1',

@@ -1,22 +1,22 @@
-// Peer-Connection und Datenkanal fuer die WebRTC-Tests.
+// Peer-Connection und Datenkanal für die WebRTC-Tests.
 //
 // ANLASS (20.11.2026): `createPeerConnection()` aus flutter_webrtc braucht
 // die native Schicht - im Test gibt es sie nicht. Die Naht
 // `WebRTCService.peerConnectionFactory` erlaubt es, stattdessen diese
-// Attrappen einzusetzen. Der Produktionscode bleibt unveraendert.
+// Attrappen einzusetzen. Der Produktionscode bleibt unverändert.
 //
 // Nicht benutzte Methoden der Schnittstellen werden bewusst NICHT
-// nachgebaut - ein Aufruf waere im Test ein Fehler (und kein stilles
-// "geht schon"). So faellt sofort auf, wenn der Dienst etwas Neues
+// nachgebaut - ein Aufruf wäre im Test ein Fehler (und kein stilles
+// "geht schon"). So fällt sofort auf, wenn der Dienst etwas Neues
 // braucht.
 import 'package:webrtc_interface/webrtc_interface.dart';
 
-// webrtc_interface kommt als Transitivum ueber flutter_webrtc - genau wie
+// webrtc_interface kommt als Transitivum über flutter_webrtc - genau wie
 // die anderen Plattform-Interfaces im Projekt wird es nur direkt
 // importiert, damit der Test eine Attrappe bauen kann.
 // ignore_for_file: depend_on_referenced_packages
 
-/// Der Datenkanal im Test: merkt sich gesendete Nachrichten und laesst
+/// Der Datenkanal im Test: merkt sich gesendete Nachrichten und lässt
 /// den Test eingehende schieben.
 class FakeDataChannel extends RTCDataChannel {
   FakeDataChannel();
@@ -49,7 +49,7 @@ class FakeDataChannel extends RTCDataChannel {
     onMessage?.call(RTCDataChannelMessage(text));
   }
 
-  /// Der Kanal geht auf (der Dienst hoert darauf).
+  /// Der Kanal geht auf (der Dienst hört darauf).
   void oeffne() {
     onDataChannelState?.call(RTCDataChannelState.RTCDataChannelOpen);
   }
@@ -60,7 +60,7 @@ class FakeDataChannel extends RTCDataChannel {
   }
 }
 
-/// Die Peer-Connection im Test: liefert einen Datenkanal und laesst den
+/// Die Peer-Connection im Test: liefert einen Datenkanal und lässt den
 /// Test den Verbindungszustand steuern.
 class FakePeerConnection extends RTCPeerConnection {
   FakePeerConnection({RTCDataChannel? kanal})

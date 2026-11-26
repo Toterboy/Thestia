@@ -1,24 +1,24 @@
 /// Erkennt, ob in einer Aufnahme wirklich etwas gesagt wird.
 ///
-/// Anlass: eine Aufnahme konnte 10 Sekunden und mehr vollstaendig still
-/// sein und wurde danach trotzdem akzeptiert. Der Mindestlaengen-Check
-/// im Review-Sheet prueft nur die *Dauer* - 10 Sekunden Rauschen auf
+/// Anlass: eine Aufnahme konnte 10 Sekunden und mehr vollständig still
+/// sein und wurde danach trotzdem akzeptiert. Der Mindestlängen-Check
+/// im Review-Sheet prüft nur die *Dauer* - 10 Sekunden Rauschen auf
 /// Zimmerlautigkeit sind auch 10 Sekunden lang.
 ///
 /// Entscheidung bewusst simpel und ohne Frequenzanalyse: der Nutzer
 /// will "habe ich etwas gesagt", nicht "war die Aufnahme akustisch
-/// sauber". Ein Schwellwert ueber dem Ruhepegel reicht dafuer, und er
-/// ist auf jedem Geraet gleich reproduzierbar - im Gegensatz zu einem
+/// sauber". Ein Schwellwert über dem Ruhepegel reicht dafür, und er
+/// ist auf jedem Gerät gleich reproduzierbar - im Gegensatz zu einem
 /// Verdeutlichungs- oder Klangerkennungs-Modell, das auf einem
-/// testaerkenden Raum falsch entscheidet.
+/// testärkenden Raum falsch entscheidet.
 class SpeechLevelDetector {
   /// Pegel in dBFS, oberhalb dessen von gesprochenem Ton ausgegangen
   /// wird.
   ///
   /// -34 dBFS ist bewusst tief angesetzt: Stille im Handylautsprecher
   /// liegt meist bei -55 bis -65 dBFS, normales Sprechen im 10-cm-
-  /// Abstand bei -30 bis -20 dBFS. Wer sein Handy 40 cm weg haelt,
-  /// spricht leiser und wuerde mit einem zu hohen Wert (z. B. -20) als
+  /// Abstand bei -30 bis -20 dBFS. Wer sein Handy 40 cm weg hält,
+  /// spricht leiser und würde mit einem zu hohen Wert (z. B. -20) als
   /// "still" eingestuft und zur Wiederholung gezwungen.
   static const double speechThresholdDb = -34;
 
@@ -32,8 +32,8 @@ class SpeechLevelDetector {
   /// folgender stiller Messungen gilt die Sequenz noch als "wird
   /// gesprochen".
   ///
-  /// Bei 10 Hz sind das 1,5 s. Ohne Toleranz wuerde jedes laengere
-  /// Denken ("aehm... was sag ich") als Stille gewertet und die
+  /// Bei 10 Hz sind das 1,5 s. Ohne Toleranz würde jedes längere
+  /// Denken ("ähm... was sag ich") als Stille gewertet und die
   /// Aufnahme verworfen - obwohl der Nutzer sehr wohl geredet hat.
   static const int pauseTolerance = 15;
 
@@ -41,8 +41,8 @@ class SpeechLevelDetector {
   /// logik unverwirrbar macht: `null` bedeutet "unterhalb des
   /// Rauschteppichs", sonst der Pegel selbst.
   ///
-  /// Ohne diese Normalisierung kaeme NaN herein: `record` liefert bei
-  /// Stille teils `0` (was 0 dBFS waere und damit Maximum), teils
+  /// Ohne diese Normalisierung käme NaN herein: `record` liefert bei
+  /// Stille teils `0` (was 0 dBFS wäre und damit Maximum), teils
   /// einen sehr kleinen Wert. Beides darf nicht als "laut" gelten.
   static double? normalize(double? rawDb) {
     if (rawDb == null || rawDb.isNaN) return null;
@@ -94,10 +94,10 @@ class SpeechLevelDetector {
   /// gemeldet wird - 1500 ms entspricht der [pauseTolerance].
   bool get isSilentTail => trailingSilenceCount >= pauseTolerance;
 
-  /// Eine Messung aufnehmen. Gibt zurueck, ob der Zustand gekippt ist.
+  /// Eine Messung aufnehmen. Gibt zurück, ob der Zustand gekippt ist.
   ///
-  /// Der Rueckgabewert spart dem Widget einen [setState]: nur wenn sich
-  /// das Ergebnis aendert, muss neu gebaut werden.
+  /// Der Rückgabewert spart dem Widget einen [setState]: nur wenn sich
+  /// das Ergebnis ändert, muss neu gebaut werden.
   bool addSample(double? rawDb) {
     final before = hasSpeech;
     _samples.add(normalize(rawDb));
@@ -107,13 +107,13 @@ class SpeechLevelDetector {
     return before != hasSpeech;
   }
 
-  /// Zustand zuruecksetzen (neue Aufnahme).
+  /// Zustand zurücksetzen (neue Aufnahme).
   void reset() => _samples.clear();
 
-  /// Kurzes Label fuer die Anzeige: der auf 5 km gerundete Weg ist hier
-  /// nicht gemeint - der Pegel wird als "Hoehe" bzw. "Stille" gezeigt.
+  /// Kurzes Label für die Anzeige: der auf 5 km gerundete Weg ist hier
+  /// nicht gemeint - der Pegel wird als "Höhe" bzw. "Stille" gezeigt.
   ///
-  /// Gehoert hierher, weil die Entscheidung "wie viel Hoehe braucht man
+  /// Gehört hierher, weil die Entscheidung "wie viel Höhe braucht man
   /// noch" an dieselbe Zahl gebunden ist wie die Schwellen.
   static int peakToPercent(double? db) {
     final n = normalize(db);
@@ -124,20 +124,20 @@ class SpeechLevelDetector {
     return pct.clamp(0, 100).round();
   }
 
-  /// Etwas zu viel Mathematik fuer einen Widget, aber hier gehoert es
+  /// Etwas zu viel Mathematik für einen Widget, aber hier gehört es
   /// hin: die Anzeige soll die *gleiche* Zahl zeigen wie die
-  /// Entscheidung, nicht eine zusaetzlich gerundete.
+  /// Entscheidung, nicht eine zusätzlich gerundete.
   static double dbToLevel01(double? db) {
     final n = normalize(db);
     if (n == null) return 0;
     return ((n - noiseFloorDb) / (0.0 - noiseFloorDb)).clamp(0.0, 1.0);
   }
 
-  /// Mittelwert im Fenster, fuer eine ruhigere Anzeige als den Peak.
+  /// Mittelwert im Fenster, für eine ruhigere Anzeige als den Peak.
   ///
-  /// Bewusst ohne die Max-Funktion: der Peak ist fuer die Entscheidung
-  /// da, der Mittelwert nur fuer die Anzeige, und ein zweiter
-  /// Normalisierungspfad waere eine zweite Stelle, an der ein Fehler
+  /// Bewusst ohne die Max-Funktion: der Peak ist für die Entscheidung
+  /// da, der Mittelwert nur für die Anzeige, und ein zweiter
+  /// Normalisierungspfad wäre eine zweite Stelle, an der ein Fehler
   /// entstehen kann.
   double? get averageDb {
     final present = _samples.whereType<double>().toList();
@@ -146,7 +146,7 @@ class SpeechLevelDetector {
     return sum / present.length;
   }
 
-  /// Beschreibung fuer Screenreader / Semantik.
+  /// Beschreibung für Screenreader / Semantik.
   static String describe({required bool silent, required double? peakDb}) {
     if (!silent) return 'Ton erkannt';
     final p = peakToPercent(peakDb);

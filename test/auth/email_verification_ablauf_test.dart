@@ -1,7 +1,7 @@
-// Der Ablauf auf dem E-Mail-Bestaetigungs-Screen: der Cooldown nach
+// Der Ablauf auf dem E-Mail-Bestätigungs-Screen: der Cooldown nach
 // "Erneut senden", der Fehler beim Versand und das Ende des Abbruchs.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/email_verification_screen.dart 76 offene Zeilen. Der
 // Weg nach dem Abbruch der Registrierung (der Hinweis und der Sprung
 // zum Login) und der Cooldown nach dem erneuten Versand waren nicht
@@ -17,7 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 // Der PKCE-Speicher des Auth-Clients im RAM (siehe unten).
 // ignore_for_file: depend_on_referenced_packages
@@ -35,9 +35,9 @@ import '../support/plugin_mocks.dart';
 
 /// Der PKCE-Speicher des Auth-Clients im RAM.
 ///
-/// DER GRUND: Der Standard-Speicher schreibt ueber die Plattform
+/// DER GRUND: Der Standard-Speicher schreibt über die Plattform
 /// (SharedPreferences). Im Widget-Test kommt das nicht voran - der
-/// Aufruf bleibt haengen. Mit diesem Ersatz laeuft er sofort.
+/// Aufruf bleibt hängen. Mit diesem Ersatz läuft er sofort.
 class _SpeicherImRam extends GotrueAsyncStorage {
   final Map<String, String> _werte = <String, String>{};
 
@@ -79,7 +79,7 @@ class _SitzungImRam implements supabase.LocalStorage {
   }
 }
 
-/// In-Memory-Speicher fuer die lokalen Einstellungen.
+/// In-Memory-Speicher für die lokalen Einstellungen.
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _daten = <String, String>{};
 
@@ -110,7 +110,7 @@ class _FakeLocalStorage implements LocalStorage {
       _daten[key] == null ? null : int.tryParse(_daten[key]!);
 }
 
-/// Der Router fuer den Test.
+/// Der Router für den Test.
 GoRouter _router() {
   return GoRouter(
     initialLocation: AppRoutes.emailVerification,
@@ -165,10 +165,10 @@ void main() {
     server.funktionsAufrufe.clear();
     server.funktionsAntworten.clear();
     server.fehlerAntworten.clear();
-    // DER STILLE LOGIN SCHLAEGT IMMER FEHL: Sonst meldet der
-    // Fake-Server jede Anmeldung als Erfolg - der Bildschirm wuerde
-    // dann zur Startseite navigieren, waehrend der Test noch den
-    // Bestaetigungs-Screen prueft.
+    // DER STILLE LOGIN SCHLÄGT IMMER FEHL: Sonst meldet der
+    // Fake-Server jede Anmeldung als Erfolg - der Bildschirm würde
+    // dann zur Startseite navigieren, während der Test noch den
+    // Bestätigungs-Screen prüft.
     server.fehlerAntworten['/auth/v1/token'] = (
       status: 400,
       body: '{"error":"invalid_grant","msg":"Invalid login credentials"}',
@@ -222,7 +222,7 @@ void main() {
     return container;
   }
 
-  /// Raeumt den Screen ab - er hat Timer (Auto-Login, Cooldown, "gesendet").
+  /// Räumt den Screen ab - er hat Timer (Auto-Login, Cooldown, "gesendet").
   ///
   /// Ohne das bleibt ein Timer stehen und der Test scheitert an
   /// "A Timer is still pending".
@@ -235,7 +235,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
-  /// Laesst die echte Ereignisschleife laufen (im Widget-Test passiert
+  /// Lässt die echte Ereignisschleife laufen (im Widget-Test passiert
   /// das nur in runAsync).
   Future<void> lassNetzLaufen(
     WidgetTester tester, {
@@ -273,9 +273,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   }
 
-  /// Laesst die echte Ereignisschleife laufen (im Widget-Test passiert
+  /// Lässt die echte Ereignisschleife laufen (im Widget-Test passiert
   /// das nur in runAsync) - in kleinen Schritten, damit der stille
-  /// Login (nach fuenf Sekunden) nicht dazwischenfunkt.
+  /// Login (nach fünf Sekunden) nicht dazwischenfunkt.
   Future<void> netzSchritte(WidgetTester tester, {int schritte = 20}) async {
     for (var i = 0; i < schritte; i++) {
       await tester.pump(const Duration(milliseconds: 200));
@@ -292,7 +292,7 @@ void main() {
       final container = await zeigeScreen(tester);
 
       // DER TAP IM TEST-KREIS: Der PKCE-Speicher liegt im RAM (keine
-      // Plattform-Kommunikation) - damit laeuft der ganze Versand im
+      // Plattform-Kommunikation) - damit läuft der ganze Versand im
       // Test-Kreis und seine Timer (die Erfolgs-Animation, der Cooldown)
       // sind die des Test-Kreises: der Test kann sie vorspulen.
       await tester.tap(find.text(L10n.tWithoutContext('email.resend')));
@@ -306,7 +306,7 @@ void main() {
       // Die Erfolgs-Animation steht da ("E-Mail gesendet").
       expect(find.text(L10n.tWithoutContext('email.sent')), findsOneWidget);
 
-      // ZWEI SEKUNDEN SPAETER: Der Knopf zaehlt die Wartezeit herunter.
+      // ZWEI SEKUNDEN SPÄTER: Der Knopf zählt die Wartezeit herunter.
       await tester.pump(const Duration(seconds: 3));
       expect(
         find.textContaining('Erneut senden in'),
@@ -360,10 +360,10 @@ void main() {
   });
 
   group('Das Ende des Abbruchs', () {
-    // ANMERKUNG: Der ERFOLGREICHE Abbruch (Konto geloescht, Abmeldung,
-    // Sprung zum Login) laesst sich im Widget-Test nicht bis zum Ende
-    // durchspielen: die Abmeldung raeumt Hunderte Dateien und Dienste
-    // ab (Hive, Schluessel, Chatverlauf) - das dauert im Test laenger als
+    // ANMERKUNG: Der ERFOLGREICHE Abbruch (Konto gelöscht, Abmeldung,
+    // Sprung zum Login) lässt sich im Widget-Test nicht bis zum Ende
+    // durchspielen: die Abmeldung räumt Hunderte Dateien und Dienste
+    // ab (Hive, Schlüssel, Chatverlauf) - das dauert im Test länger als
     // der Test laufen darf. Der Weg bis zum Aufruf der Server-Funktion
     // ist in test/auth/email_verification_cancel_test.dart getestet, der
     // Fehlerweg hier.

@@ -1,19 +1,19 @@
-/// System-Insets fuer den Store-Screenshot-Render.
+/// System-Insets für den Store-Screenshot-Render.
 ///
 /// Warum ein eigenes Modul
 /// -------------------------
 /// Der Render-Harness (test/screenshots/store_v091_shots_test.dart) ist
 /// absichtlich gitignoriert - er ist ein Werkzeug, kein Test. Die
 /// System-Insets sind aber KEIN Werkzeug-Detail, sondern die Bedingung
-/// dafuer, dass der Screenshot ueberhaupt wie die App aussieht:
+/// dafür, dass der Screenshot überhaupt wie die App aussieht:
 ///
 /// Die App setzt SafeArea in praktisch jedem Screen. In flutter_test
 /// liefert TestFlutterView ViewPadding.zero, SafeArea setzt also NICHTS
-/// und die App beginnt direkt am oberen Bildrand. Auf einem Geraet steht
+/// und die App beginnt direkt am oberen Bildrand. Auf einem Gerät steht
 /// dort die Statusleiste - der Render wirkt dadurch flach und abgeschnitten.
 ///
-/// Weil der Harness nicht im Repository liegt, waere der Fix beim
-/// naechsten Checkout verloren gewesen und niemand haette gemerkt.
+/// Weil der Harness nicht im Repository liegt, wäre der Fix beim
+/// nächsten Checkout verloren gewesen und niemand hätte gemerkt.
 /// Deshalb steht die Logik hier, in einer committeten Datei.
 ///
 /// Aufruf im Harness:
@@ -26,10 +26,10 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Statusleisten-Hoehe in dp.
+/// Statusleisten-Höhe in dp.
 ///
 /// Android mit Uhr, Signal und Akku misst 24..32 dp; 24 ist der
-/// untere, am haeufigsten gerenderte Wert.
+/// untere, am häufigsten gerenderte Wert.
 const double storeStatusBarDp = 24;
 
 /// System-Navigation am unteren Rand in dp (Gesture-Leiste: 24).
@@ -37,10 +37,10 @@ const double storeNavBarDp = 24;
 
 /// Setzt die System-Insets auf der TestView.
 ///
-/// Nur viewPadding ZUSAETZLICH zu padding gesetzt, nicht statt: Scaffold
+/// Nur viewPadding ZUSÄTZLICH zu padding gesetzt, nicht statt: Scaffold
 /// und AppBar lesen MediaQuery.viewPadding und ziehen den oberen Rand
-/// selbst ab. Mit beiden Werten verhaelt sich SafeArea wie auf einem
-/// Geraet - SafeArea selbst aendert am AppBar nichts (das Scaffold
+/// selbst ab. Mit beiden Werten verhält sich SafeArea wie auf einem
+/// Gerät - SafeArea selbst ändert am AppBar nichts (das Scaffold
 /// erledigt das), es wirkt erst auf den Body.
 void applyStoreInsets(TestFlutterView view) {
   view.viewPadding = const FakeViewPadding(
@@ -53,7 +53,7 @@ void applyStoreInsets(TestFlutterView view) {
   );
 }
 
-/// Setzt die Insets zurueck (in addTearDown zu uebergeben).
+/// Setzt die Insets zurück (in addTearDown zu übergeben).
 void resetStoreInsets(TestFlutterView view) {
   view.resetViewPadding();
   view.resetPadding();

@@ -1,23 +1,23 @@
 // Der Relay-Hinweis und die Sicherheitsnummer im Chat.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/parts/chatdetailaufbau.dart 148 offene Zeilen - darunter
-// der Hinweis auf den Relay-Fallback (kein P2P moeglich) mit seiner
+// der Hinweis auf den Relay-Fallback (kein P2P möglich) mit seiner
 // technischen Diagnose.
 //
 // DER GRUND: Wenn keine Direktverbindung zustande kommt (Router mit
-// AP-Isolation, Mobilfunknetz), laeuft der Chat ueber den Server-
+// AP-Isolation, Mobilfunknetz), läuft der Chat über den Server-
 // Relay weiter. Der Nutzer MUSS das wissen - sonst denkt er, die
-// Nachrichten gingen direkt und waeren verschluesselt, obwohl sie
-// ueber den Server laufen. Der Hinweis nennt auch den Grund (ICE-
+// Nachrichten gingen direkt und wären verschlüsselt, obwohl sie
+// über den Server laufen. Der Hinweis nennt auch den Grund (ICE-
 // Zustand, letzter Fehler) - das ist die Diagnose, wenn der Aufbau
-// haengt.
+// hängt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Hinweis erscheint, wenn keine Direktverbindung steht,
-//   * er laesst sich aufklappen (die technische Diagnose),
-//   * er laesst sich wegklicken (der Hinweis ist nicht aufdringlich),
-//   * das Menue bietet die Sicherheitsnummer an (der Weg, den der
+//   * er lässt sich aufklappen (die technische Diagnose),
+//   * er lässt sich wegklicken (der Hinweis ist nicht aufdringlich),
+//   * das Menü bietet die Sicherheitsnummer an (der Weg, den der
 //     Nutzer bei einem Verdacht geht).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,7 +33,7 @@ import 'hilfen.dart';
 
 void main() {
   // DER STIMMUNGS-DIENST: Der Chat zeigt die Stimmungskarte - ohne den
-  // Client schlaegt der Aufbau fehl.
+  // Client schlägt der Aufbau fehl.
   moodClient = supabase.SupabaseClient(
     'https://example.supabase.co',
     'test-key',
@@ -154,7 +154,7 @@ void main() {
       await tester.pump();
 
       // DER SCHLIESS-KNOPF: Der Hinweis darf nicht aufdringlich sein -
-      // wer ihn kennt, muss ihn wegklicken koennen.
+      // wer ihn kennt, muss ihn wegklicken können.
       final knopf = find.byTooltip(L10n.tWithoutContext('common.close'));
       await tester.ensureVisible(knopf);
       await tester.pump();

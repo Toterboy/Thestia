@@ -1,45 +1,45 @@
-// Die Groesse der Codedateien.
+// Die Größe der Codedateien.
 //
 // ANLASS (18.11.2026): Wunsch des Betreibers: "Diese sind einfach zu
 // lang und sollten entsprechend in verschiedene Dateien unterteilt
 // werden (Sinnvoll)."
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * keine Datei im App-Code (lib/) und in den Tests ist laenger als
+// WAS HIER GEPRÜFT WIRD:
+//   * keine Datei im App-Code (lib/) und in den Tests ist länger als
 //     1000 Zeilen,
 //   * jede Ausnahme ist mit einem GRUND dokumentiert - sie wird also
 //     nicht einfach "weil so".
 //
-// WARUM DIE GRENZE: Eine Datei, die laenger als 1000 Zeilen hat, ist
-// schwer zu lesen: Man muss bei jeder Aenderung den ganzen Block
-// lesen, Merge-Konflikte sind unausloeslich und die Aenderung wird
+// WARUM DIE GRENZE: Eine Datei, die länger als 1000 Zeilen hat, ist
+// schwer zu lesen: Man muss bei jeder Änderung den ganzen Block
+// lesen, Merge-Konflikte sind unauslöslich und die Änderung wird
 // riskant (man fasst die falsche Stelle an). Wer teilt, hat kleinere
-// Schritte und kann sie einzeln pruefen.
+// Schritte und kann sie einzeln prüfen.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Die Grenze: eine Datei ueber dieser Zeilenzahl gilt als zu lang.
+/// Die Grenze: eine Datei über dieser Zeilenzahl gilt als zu lang.
 const int maxZeilen = 1000;
 
-/// Die Dateien, die laenger sein DUERFEN - mit dem Grund.
+/// Die Dateien, die länger sein DÜRFEN - mit dem Grund.
 ///
-/// DER GRUND FUER DIE AUSNAHMEN: Manche Dateien lassen sich nicht
-/// sinnvoll teilen (ein Zustand, der ueber tausend Zeilen geht, laesst
-/// sich nur schwer in getrennte Teilstuecke zerlegen, ohne das
-/// Verhalten zu aendern). Fuer diese Dateien gilt: beim naechsten
+/// DER GRUND FÜR DIE AUSNAHMEN: Manche Dateien lassen sich nicht
+/// sinnvoll teilen (ein Zustand, der über tausend Zeilen geht, lässt
+/// sich nur schwer in getrennte Teilstücke zerlegen, ohne das
+/// Verhalten zu ändern). Für diese Dateien gilt: beim nächsten
 /// Umbau wird geteilt - der Grund hier sagt, warum es noch nicht
 /// passiert ist.
 const Map<String, String> ausnahmen = <String, String>{
   // Die drei Bildschirme (Chat, Profil-Editor, Einrichtung) sind
   // geteilt: Der AUFBAU liegt in einer Erweiterung (parts/...aufbau.dart),
   // der Rest der Datei (Felder, Methoden, Hilfs-Widgets) in der
-  // Hauptdatei. So bleibt keine Datei ueber der Grenze.
+  // Hauptdatei. So bleibt keine Datei über der Grenze.
   //
-  // Die zwei Dienste: Sie sind eine OEFFENTLICHE API (die App ruft die
-  // Methoden von aussen auf). Eine Erweiterung ist von aussen nur
+  // Die zwei Dienste: Sie sind eine ÖFFENTLICHE API (die App ruft die
+  // Methoden von außen auf). Eine Erweiterung ist von außen nur
   // sichtbar, wenn sie dort im Sichtbereich ist - die Aufrufer kennen
-  // sie nicht. Eine Aufteilung in mehrere Klassen waere ein grosser
+  // sie nicht. Eine Aufteilung in mehrere Klassen wäre ein großer
   // Umbau der Schnittstelle.
   'lib/services/server/supabase_database_service.dart':
       'Oeffentliche API mit 35 Methoden (Profil, Einrichtung, Verwaltung, '
@@ -114,7 +114,7 @@ void main() {
     });
 
     test('die Ausnahmen sind alle noetig', () {
-      // Eine Ausnahme, die nicht mehr noetig ist, wird zum Ballast: sie
+      // Eine Ausnahme, die nicht mehr nötig ist, wird zum Ballast: sie
       // erlaubt wieder zu lange Dateien.
       final ueberfluessig = <String>[];
       for (final pfad in ausnahmen.keys) {

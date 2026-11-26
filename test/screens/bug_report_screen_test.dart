@@ -1,17 +1,17 @@
-// Der Bildschirm fuer den Bug-Report.
+// Der Bildschirm für den Bug-Report.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/bug_report/bug_report_screen.dart 80 offene Zeilen bei
 // 48 % Abdeckung. Das ist der einzige Weg, mit dem der Nutzer der App
-// einen Fehler melden kann - und er haengt dabei Bildschirmshots an
-// (mit GPS-Metadaten im Bild, die vorher entfernt werden muessen).
+// einen Fehler melden kann - und er hängt dabei Bildschirmshots an
+// (mit GPS-Metadaten im Bild, die vorher entfernt werden müssen).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Beschreibung wird geprueft (leer / zu kurz / zu lang),
+// WAS HIER GEPRÜFT WIRD:
+//   * die Beschreibung wird geprüft (leer / zu kurz / zu lang),
 //   * ein Bild, das kein Bild ist, wird abgewiesen,
 //   * ein Bild landet in der Vorschau,
 //   * der Versand geht an den Server und der Bildschirm meldet das
-//     Ergebnis (erst danach schliesst er).
+//     Ergebnis (erst danach schließt er).
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -19,7 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 // Das Plattform-Interface wird von image_picker exportiert, aber nicht
-// weitergereicht - der Test setzt die Attrappe darueber.
+// weitergereicht - der Test setzt die Attrappe darüber.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,7 +33,7 @@ import '../support/plugin_mocks.dart';
 
 /// Der Bildauswahl-Ersatz.
 ///
-/// DER GRUND: Das echte Plugin oeffnet auf dem Testrechner eine Datei-
+/// DER GRUND: Das echte Plugin öffnet auf dem Testrechner eine Datei-
 /// auswahl (oder gar nichts). Der Ersatz liefert eine feste Datei.
 class _FakeImagePicker extends ImagePickerPlatform {
   _FakeImagePicker(this.datei);
@@ -68,7 +68,7 @@ void main() {
     mockKeystore();
     mockPackageInfo();
 
-    // DIE BILDER: Echte Dateien (die Datei-Arbeit haengt im Test-Bereich).
+    // DIE BILDER: Echte Dateien (die Datei-Arbeit hängt im Test-Bereich).
     final ordner = await Directory.systemTemp.createTemp('thesia_bugreport');
     bildPfad = '${ordner.path}/bild.png';
     final bild = img.Image(width: 40, height: 40);

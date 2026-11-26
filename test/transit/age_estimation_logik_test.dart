@@ -1,16 +1,16 @@
-// Die reine Logik der lokalen Alterschaetzung (v0.9.1).
+// Die reine Logik der lokalen Alterschätzung (v0.9.1).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/services/transit/age_estimation_service.dart 193 offene Zeilen bei
 // 24 % Abdeckung. Die ONNX-Teile (die Modelle selbst) brauchen die
 // native Schicht - die werden NICHT getestet. Die ENTSCHEIDUNGEN
 // darum herum sind reine Funktionen, und die sind sicherheitsrelevant:
 //
-//   * die 2-Jahres-Regel (wer zu alt aussieht, wird manuell geprueft),
-//   * der Median ueber die Frames (ein Ausreiser darf nicht durchschlagen),
+//   * die 2-Jahres-Regel (wer zu alt aussieht, wird manuell geprüft),
+//   * der Median über die Frames (ein Ausreiser darf nicht durchschlagen),
 //   * das Auslesen der Modell-Ausgabe (Jahre direkt, FairFace-Gruppen,
 //     Verteilung),
-//   * die Gesichtserkennung (NMS - zwei ueberlappende Gesichter duerfen
+//   * die Gesichtserkennung (NMS - zwei überlappende Gesichter dürfen
 //     nicht als zwei gelten).
 import 'package:flutter_test/flutter_test.dart';
 
@@ -62,7 +62,7 @@ void main() {
         ),
         isTrue,
       );
-      // 2 Gesichter: das Alter gehoert zu NIEMANDEM.
+      // 2 Gesichter: das Alter gehört zu NIEMANDEM.
       expect(
         AgeEstimationService.needsManualReview(
           estimatedAge: 30,
@@ -71,7 +71,7 @@ void main() {
         ),
         isTrue,
       );
-      // -1 heisst "unbekannt" (kein Detektor geladen) - auch das ist
+      // -1 heißt "unbekannt" (kein Detektor geladen) - auch das ist
       // kein "genau ein Gesicht".
       expect(
         AgeEstimationService.needsManualReview(

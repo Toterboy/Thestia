@@ -1,9 +1,9 @@
 // Der Teil '_ActiveSessionButtonState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -15,7 +15,7 @@ class _ActiveSessionButtonState extends ConsumerState<_ActiveSessionButton> {
   /// Session entsteht (nicht nur, dass eine da ist).
   String? _letzteSessionId;
 
-  /// Die Rueckfrage wurde fuer diese Session schon gestellt.
+  /// Die Rückfrage wurde für diese Session schon gestellt.
   bool _gefragt = false;
 
   @override
@@ -30,7 +30,7 @@ class _ActiveSessionButtonState extends ConsumerState<_ActiveSessionButton> {
         label: L10n.t(context, 'dh.searching'),
         onPressed: null,
         // Die Theme-Farbe (siehe _PrimaryActionButton): im Wartezustand
-        // kein festes Grau, sondern die Farbe des gewaehlten Themes.
+        // kein festes Grau, sondern die Farbe des gewählten Themes.
         color: Theme.of(context).colorScheme.primary,
       ),
       error: (err, _) => _PrimaryActionButton(
@@ -42,8 +42,8 @@ class _ActiveSessionButtonState extends ConsumerState<_ActiveSessionButton> {
       data: (session) {
         // BEFUND (07.11.2026, Betreiber): "kein Chat-Erzwang (mit
         // Abfrage)". Wenn die Paarung stand, wurde der Nutzer in den
-        // Chat gedrueckt - ohne zu fragen. Jetzt kommt eine Rueckfrage:
-        // reinschauen oder spaeter?
+        // Chat gedrückt - ohne zu fragen. Jetzt kommt eine Rückfrage:
+        // reinschauen oder später?
         if (session != null) {
           final neu = session.id != _letzteSessionId;
           _letzteSessionId = session.id;
@@ -69,7 +69,7 @@ class _ActiveSessionButtonState extends ConsumerState<_ActiveSessionButton> {
               // irgendwie umsetzen, dass von beiden Geschlechtern
               // welche in dem Event sind, wenn alle Hetero."
               //
-              // Der Server paart jetzt nur noch ueber die Geschlechter
+              // Der Server paart jetzt nur noch über die Geschlechter
               // hinweg (Migration 216 + 217). Wer nicht gepaart wird,
               // wartet auf Menschen des anderen Geschlechts - das steht
               // hier, damit das Warten einen Grund hat und nicht wie
@@ -94,9 +94,9 @@ class _ActiveSessionButtonState extends ConsumerState<_ActiveSessionButton> {
     );
   }
 
-  /// Die Rueckfrage nach der Paarung.
+  /// Die Rückfrage nach der Paarung.
   ///
-  /// Sie erscheint EINMAL pro Session. Wer "Spaeter" waehlt, bleibt auf
+  /// Sie erscheint EINMAL pro Session. Wer "Später" wählt, bleibt auf
   /// dem Bildschirm - der "Zum Chat"-Button bleibt ohnehin da.
   Future<void> _fragePartner(BuildContext context, String sessionId) async {
     final jetzt = await showDialog<bool>(

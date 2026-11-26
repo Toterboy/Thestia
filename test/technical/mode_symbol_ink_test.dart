@@ -11,13 +11,13 @@ import 'package:thestia/widgets/common/mode_icons.dart';
 /// Warum es das gibt: der Transit-Spark-Icon besteht aus einer
 /// Material-Glyphe (Zug) und selbst gezeichneten Elementen (Funke). Die
 /// Glyphe hat Seitenzungen, ihre Tinte liegt NICHT mittig auf dem
-/// uebergebenen Mittelpunkt. Raten fuehrt zu Ueberlagerungen - genau
-/// daran ist der urspruengliche Entwurf gescheitert (der Funke zog
+/// übergebenen Mittelpunkt. Raten fährt zu Überlagerungen - genau
+/// daran ist der ursprüngliche Entwurf gescheitert (der Funke zog
 /// durch den Zug).
 ///
 /// Deshalb wird hier gemessen statt gerechnet: gerendert wird in
-/// bekannter Groesse, dann wird die Tinte gescannt und in
-/// Viewport-Einheiten (24 = ganze Breite) zurueckgerechnet.
+/// bekannter Größe, dann wird die Tinte gescannt und in
+/// Viewport-Einheiten (24 = ganze Breite) zurückgerechnet.
 ///
 /// Nur von Hand zu starten:
 ///   flutter test test/mode_symbol_ink_test.dart
@@ -99,9 +99,9 @@ void main() {
         // (400x400 = 24 Einheiten), also gilt px / 400 * 24.
         double u(double px) => px / k * 24.0;
 
-        // Spaltenprofil: verraet, wo ein breiter Block (der Zug) beginnt
-        // und wo ein schmaler Streifen (der Funke) laeuft. Aus dem
-        // Profil laesst sich der Abstand zwischen beiden exakt ablesen.
+        // Spaltenprofil: verrät, wo ein breiter Block (der Zug) beginnt
+        // und wo ein schmaler Streifen (der Funke) läuft. Aus dem
+        // Profil lässt sich der Abstand zwischen beiden exakt ablesen.
         final profil = <String>[];
         for (int x = 0; x < bild2.width; x += 4) {
           int treffer = 0;

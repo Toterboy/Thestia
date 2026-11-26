@@ -1,9 +1,9 @@
 // Der Posteingang im Admin-Bereich (bisher ungetestet).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/admin/admin_mail_inbox.dart 0 %.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Mails stehen da (mit Absender, Betreff und Rubrik),
 //   * die Rubrik-Kacheln filtern (das war die Anforderung: "aufgeteilt
 //     nach Adresse"),

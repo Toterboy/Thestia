@@ -6,33 +6,33 @@
 
 // Der 1:1-Chat OHNE Server (v0.10.1).
 //
-// WARUM (13.11.2026): Der Chat-Screen ist die groesste Datei der App
+// WARUM (13.11.2026): Der Chat-Screen ist die größte Datei der App
 // (rund 1.800 Zeilen) - und die Coverage-Messung zeigte: 0,1 %.
 // Genau dort sitzt auch die eigene Tastatur (Build 54). Ein Screen, den
 // niemand gerendert hat, ist geraten: der Absturz beim Wischen zwischen
-// den Reitern (31.10.2026) war nur zufaellig im Screenshot-Render
+// den Reitern (31.10.2026) war nur zufällig im Screenshot-Render
 // aufgefallen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Chat rendert mit seinen Nachrichten (kein Absturz, kein
 //     Render-Overflow),
 //   * ein Chat, den es nicht mehr gibt, zeigt den Hinweis statt eines
 //     leeren Bildschirms,
 //   * die EINGABE ist die eigene Tastatur: das Feld ist readOnly (die
-//     Systemtastatur sieht nichts) und das Tippen oeffnet die
+//     Systemtastatur sieht nichts) und das Tippen öffnet die
 //     App-Tastatur,
 //   * eine getippte Nachricht landet im Chat.
 //
 // OHNE SERVER: Die Supabase-Aufrufe des Bildschirms (P2P, Relay,
-// Loeschen, Herz-Staerken) laufen ueber bestEffort/bestEffortOr und
+// Löschen, Herz-Stärken) laufen über bestEffort/bestEffortOr und
 // brechen ohne Client still ab. Genau das ist hier der Fall - es wird
-// geprueft, was der Bildschirm ohne Server macht, nicht was er mit
+// geprüft, was der Bildschirm ohne Server macht, nicht was er mit
 // Server macht (das macht test/live_message_flow_test.dart).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/chat/message.dart';
@@ -55,7 +55,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     // Der Supabase-Client muss initialisiert sein: der Sende-Weg holt
-    // ihn ueber den Relay-Service, und `Supabase.instance` wirft ohne
+    // ihn über den Relay-Service, und `Supabase.instance` wirft ohne
     // Initialisierung eine Assertion. Der Client zeigt auf einen nicht
     // existierenden Server - im Test laufen alle HTTP-Anfragen ins Leere
     // (der Test-Binding liefert 400), und der Sende-Weg ist in
@@ -64,8 +64,8 @@ void main() {
     // das echte Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
     // DER KEYSTORE und HIVE: der Signal-Dienst (Sicherheitsnummer)
-    // liest seine verschluesselten Boxen aus dem Keystore und aus Hive.
-    // Ohne diese beiden Ersatzwaerter bleibt der Dialog leer.
+    // liest seine verschlüsselten Boxen aus dem Keystore und aus Hive.
+    // Ohne diese beiden Ersatzwärter bleibt der Dialog leer.
     mockKeystore();
     await mockHive();
     // DER ADAPTER: Der Meldungs-Store legt seine Zeilen als
@@ -76,8 +76,8 @@ void main() {
     // Recorder wird beim Aufbau erzeugt (sonst: MissingPluginException).
     mockAufnahme();
     mockZeitzone();
-    // DER SERVER: die Aktionen, die auf dem Server etwas aendern
-    // ("Nachricht fuer alle loeschen"), gehen ueber den Client - ohne
+    // DER SERVER: die Aktionen, die auf dem Server etwas ändern
+    // ("Nachricht für alle löschen"), gehen über den Client - ohne
     // den Ersatz-Server bekommen sie keine Antwort.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
@@ -92,13 +92,13 @@ void main() {
 
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',
-      // DER SERVER: die Aktionen, die auf dem Server etwas aendern
-      // ("Nachricht fuer alle loeschen"), gehen ueber den Client - ohne
+      // DER SERVER: die Aktionen, die auf dem Server etwas ändern
+      // ("Nachricht für alle löschen"), gehen über den Client - ohne
       // den Ersatz-Server bekommen sie keine Antwort.
       httpClient: server,
     );
     // ANGEMELDET: die eigene User-ID kommt aus der Sitzung - ohne sie
-    // weiss der Bildschirm nicht, welche Nachrichten die eigenen sind.
+    // weiß der Bildschirm nicht, welche Nachrichten die eigenen sind.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
   setUp(() {
@@ -107,9 +107,9 @@ void main() {
       'https://example.supabase.co',
       'test-key',
     );
-    // Die Aufnahme: zurueck auf den Standard (kein eigener Pfad).
+    // Die Aufnahme: zurück auf den Standard (kein eigener Pfad).
     mockAufnahme();
-    // Der Audio-Player (das Blatt zum Anhoeren legt einen an).
+    // Der Audio-Player (das Blatt zum Anhören legt einen an).
     mockAudioPlayer();
   });
   tearDown(() async {
@@ -136,7 +136,7 @@ void main() {
       // Und die Eingabeleiste ist die eigene Tastatur.
       expect(find.byType(SecureComposer), findsOneWidget);
 
-      // Der Screen muss wieder abgeraeumt werden - sonst bleibt der
+      // Der Screen muss wieder abgeräumt werden - sonst bleibt der
       // Relay-Timer stehen und der Test scheitert an "A Timer is still
       // pending".
       await tester.pumpWidget(const SizedBox());
@@ -217,7 +217,7 @@ void main() {
         chat.notifier,
       );
 
-      // Die App-Tastatur oeffnen und "Hi" tippen.
+      // Die App-Tastatur öffnen und "Hi" tippen.
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
       await tester.tap(find.text('h'));
@@ -226,7 +226,7 @@ void main() {
 
       // Senden.
       await tester.tap(find.byIcon(Icons.send));
-      // Der Neuaufbau passiert direkt nach dem Hinzufuegen (BEFUND
+      // Der Neuaufbau passiert direkt nach dem Hinzufügen (BEFUND
       // 13.11.2026) - die eigene Nachricht ist also sofort da.
       await tester.pump();
 
@@ -266,7 +266,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       // Das Bild wird geladen - bis es da ist, steht der Platzhalter
-      // (das Bild zaehlt, dass der Bildzweig gebaut wurde).
+      // (das Bild zählt, dass der Bildzweig gebaut wurde).
       expect(find.byIcon(Icons.image), findsWidgets);
 
       await tester.pumpWidget(const SizedBox());
@@ -343,7 +343,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       // Ein SERVER-Funke: nur bei einer Match-ID aus dem Server gibt es
-      // das "fuer alle" (ein lokaler Kontakt hat keinen Funke).
+      // das "für alle" (ein lokaler Kontakt hat keinen Funke).
       final service = ChatService();
       final match = service.restoreServerMatch(
         '7',
@@ -370,7 +370,7 @@ void main() {
       // Die eigene Nachricht steht da.
       expect(find.text('Ein Satz, der weg soll'), findsOneWidget);
 
-      // Lange druecken -> die Rueckfrage.
+      // Lange drücken -> die Rückfrage.
       await tester.longPress(find.text('Ein Satz, der weg soll'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -381,7 +381,7 @@ void main() {
         findsOneWidget,
       );
 
-      // Bestaetigen: der Server wird informiert und lokal steht der
+      // Bestätigen: der Server wird informiert und lokal steht der
       // Hinweis statt der Nachricht.
       await tester.tap(
         find.text(L10n.tWithoutContext('chat.deleteForAllAction')),
@@ -436,8 +436,8 @@ void main() {
       expect(tester.takeException(), isNull);
       // DIE SEMANTICS: Im Widget-Test sind sie aus - ohne
       // `ensureSemantics()` findet der Test kein Label. Der Handle wird
-      // am Ende des Testkoerpers freigegeben (der tearDown laeuft zu
-      // spaet - das Test-Framework prueft vorher auf offene Handles).
+      // am Ende des Testkörpers freigegeben (der tearDown läuft zu
+      // spät - das Test-Framework prüft vorher auf offene Handles).
       final semantics = tester.ensureSemantics();
 
       // Solange das Bild nicht freigegeben ist, ist es unscharf.
@@ -451,7 +451,7 @@ void main() {
             'soll es bewusst freigeben.',
       );
 
-      // Lange druecken -> das Aktionsmenue mit "Anzeigen".
+      // Lange drücken -> das Aktionsmenü mit "Anzeigen".
       await tester.longPress(find.byIcon(Icons.image).first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -462,7 +462,7 @@ void main() {
         reason: 'Ein unscharfes Bild laesst sich freigeben.',
       );
 
-      // Und die Freigabe wird noch einmal bestaetigt (der Nutzer soll
+      // Und die Freigabe wird noch einmal bestätigt (der Nutzer soll
       // nicht aus Versehen fremde Bilder sehen).
       await tester.tap(find.text(L10n.tWithoutContext('chat.revealAction')));
       await tester.pump();
@@ -551,7 +551,7 @@ void main() {
           );
         }
         // Der Meldungs-Dienst als Ersatz (der echte braucht die
-        // verschluesselten Hive-Boxen).
+        // verschlüsselten Hive-Boxen).
         final meldedienst = FakeReportService();
         await chatDetailScreenPump(
           tester,
@@ -560,7 +560,7 @@ void main() {
           overrides: [reportServiceProvider.overrideWithValue(meldedienst)],
         );
 
-        // Das Menue (die drei Punkte) oeffnen.
+        // Das Menü (die drei Punkte) öffnen.
         await tester.tap(find.byIcon(Icons.more_vert));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
@@ -575,7 +575,7 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(find.byType(AlertDialog), findsOneWidget);
 
-        // Den Grund waehlen (der erste Punkt der Liste) - ohne Grund
+        // Den Grund wählen (der erste Punkt der Liste) - ohne Grund
         // ist der Melde-Knopf gesperrt.
         final grund = find.byType(RadioListTile<ReportType>).first;
         await tester.tap(grund);
@@ -639,7 +639,7 @@ void main() {
           },
         ];
 
-        // Der Chat wird mit der Nummer geoeffnet - lokal gibt es ihn
+        // Der Chat wird mit der Nummer geöffnet - lokal gibt es ihn
         // nicht (z. B. nach einem Neustart oder aus einem gespeicherten
         // Verlauf).
         await chatDetailScreenPump(
@@ -694,7 +694,7 @@ void main() {
           ChatNotifier(service),
         );
 
-        // Das Menue (die drei Punkte) oeffnen.
+        // Das Menü (die drei Punkte) öffnen.
         await tester.tap(find.byIcon(Icons.more_vert));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
@@ -712,8 +712,8 @@ void main() {
         // DREI - nur so kann der Support den Verlauf sehen, ohne dass der
         // Nutzer den ganzen Chat verliert.
         //
-        // DER HINWEIS: Geprueft wird nur der DIALOG - im Chat selbst
-        // stehen natuerlich alle vier Nachrichten.
+        // DER HINWEIS: Geprüft wird nur der DIALOG - im Chat selbst
+        // stehen natürlich alle vier Nachrichten.
         expect(
           find.descendant(
             of: find.byType(AlertDialog),
@@ -733,7 +733,7 @@ void main() {
       /// Baut den Chat mit einer Nachricht der Gegenseite.
       ///
       /// DER HINWEIS: Die Person hat eine UUID als ID - das Sperren
-      /// pruft die ID vorher ("Ungueltiger Nutzer" sonst). Die
+      /// pruft die ID vorher ("Ungültiger Nutzer" sonst). Die
       /// Test-Personen haben ansonsten "partner-1".
       Future<ChatNotifier> chatBauen(WidgetTester tester) async {
         final service = ChatService();
@@ -764,7 +764,7 @@ void main() {
         return notifier;
       }
 
-      /// Oeffnet das Menue (die drei Punkte oben rechts).
+      /// Öffnet das Menü (die drei Punkte oben rechts).
       Future<void> menueOeffnen(WidgetTester tester) async {
         await tester.tap(find.byIcon(Icons.more_vert));
         await tester.pump();
@@ -778,7 +778,7 @@ void main() {
         await chatBauen(tester);
         await menueOeffnen(tester);
 
-        // Der Eintrag "Sperren" sitzt weiter unten im Menue.
+        // Der Eintrag "Sperren" sitzt weiter unten im Menü.
         final eintrag = find.text(L10n.tWithoutContext('chat.block'));
         await tester.ensureVisible(eintrag);
         await tester.pump();
@@ -787,8 +787,8 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(tester.takeException(), isNull);
-        // Ohne Rueckfrage waere die Person gesperrt - das ist ein Eingriff,
-        // der nicht zurueckgenommen werden kann.
+        // Ohne Rückfrage wäre die Person gesperrt - das ist ein Eingriff,
+        // der nicht zurückgenommen werden kann.
         expect(find.byType(AlertDialog), findsOneWidget);
         expect(
           find.text(L10n.tWithoutContext('chat.blockTitle')),
@@ -812,7 +812,7 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
 
-        // Bestaetigen - dann geht die Sperre an den Server.
+        // Bestätigen - dann geht die Sperre an den Server.
         await tester.tap(
           find.widgetWithText(
             FilledButton,
@@ -835,7 +835,7 @@ void main() {
               'Die Sperre muss beim Server ankommen - sonst kann die Person '
               'weiter schreiben.',
         );
-        // Und der Nutzer bekommt die Bestaetigung.
+        // Und der Nutzer bekommt die Bestätigung.
         expect(find.textContaining('Mira wurde blockiert.'), findsWidgets);
 
         await tester.pumpWidget(const SizedBox());
@@ -886,7 +886,7 @@ void main() {
         ChatNotifier(service),
       );
 
-      // Das lange Druecken auf das Bild zeigt das Aktionsmenue.
+      // Das lange Drücken auf das Bild zeigt das Aktionsmenü.
       await tester.longPress(find.byIcon(Icons.image).first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -956,7 +956,7 @@ void main() {
       // unten (die Liste ist umgekehrt gebaut).
       final notifier = ChatNotifier(service);
       expect(notifier.messagesFor(match.id).length, 30);
-      // Und die Liste laesst sich scrollen.
+      // Und die Liste lässt sich scrollen.
       expect(find.byType(Scrollable), findsWidgets);
 
       await tester.pumpWidget(const SizedBox());

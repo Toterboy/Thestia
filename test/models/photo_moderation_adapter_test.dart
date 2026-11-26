@@ -1,6 +1,6 @@
 // Die Hive-Adapter der Bild-Moderierung.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/models/verification/photo_moderation_models.g.dart 59 offene
 // Zeilen (44 %) - die erzeugten Adapter.
 //
@@ -14,10 +14,10 @@
 // Box geschrieben und wieder gelesen - das ist der Weg, den die App
 // geht.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * eine gemeldete Bild-Meldung kommt unveraendert wieder heraus,
-//   * ein Vermerk (Sperre/Warnung) kommt unveraendert wieder heraus,
-//   * die Aufzaehlungen (der Typ und der Status) kommen richtig heraus.
+// WAS HIER GEPRÜFT WIRD:
+//   * eine gemeldete Bild-Meldung kommt unverändert wieder heraus,
+//   * ein Vermerk (Sperre/Warnung) kommt unverändert wieder heraus,
+//   * die Aufzählungen (der Typ und der Status) kommen richtig heraus.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -64,8 +64,8 @@ void main() {
       );
 
       await box.put('flag-1', gemeldet);
-      // DIE BOX NEU OEFFNEN: Hive liefert den gespeicherten Wert aus dem
-      // Speicher - erst beim Wiederoeffnen wird er gelesen (und der
+      // DIE BOX NEU ÖFFNEN: Hive liefert den gespeicherten Wert aus dem
+      // Speicher - erst beim Wiederöffnen wird er gelesen (und der
       // Leseweg des Adapters benutzt).
       await box.close();
       final neu = await Hive.openBox<PhotoModerationFlag>('flags');

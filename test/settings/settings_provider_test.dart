@@ -7,7 +7,7 @@ import 'package:thestia/services/storage/local_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// In-Memory-Implementierung von [LocalStorage] fuer Tests.
+/// In-Memory-Implementierung von [LocalStorage] für Tests.
 class _FakeStorage implements LocalStorage {
   final Map<String, String> _data = {};
 

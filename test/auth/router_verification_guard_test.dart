@@ -1,17 +1,17 @@
-// Regressionstest fuer die Route-Seite der Verifikationssperre
+// Regressionstest für die Route-Seite der Verifikationssperre
 // (v0.10.0, Security-Audit 31.10.2026).
 //
-// BEFUND: Die Verifikationspflicht fuer Find your Spark, Dating Hour
-// und Transit Spark wurde nur im Modus-Auswahlbildschirm geprueft
+// BEFUND: Die Verifikationspflicht für Find your Spark, Dating Hour
+// und Transit Spark wurde nur im Modus-Auswahlbildschirm geprüft
 // (swipe_mode_selection_screen.dart). Die ROUTEN selbst waren frei
 // navigierbar: ein Deep-Link, ein gespeicherter Verlauf oder ein
 // App-Link kam direkt auf den Bildschirm.
 //
-// Der Test prueft die Route-Liste, die der Redirect auswertet.
+// Der Test prüft die Route-Liste, die der Redirect auswertet.
 //
-// WICHTIG: Der Server bleibt die maechtige Sperre (Migration 161:
+// WICHTIG: Der Server bleibt die mächtige Sperre (Migration 161:
 // join_dating_hour, match_dating_hour_round, transit_spark_adult).
-// Dieser Test sichert die ZUSAETZLICHE clientseitige Pruefung ab -
+// Dieser Test sichert die ZUSÄTZLICHE clientseitige Prüfung ab -
 // damit ein Deep-Link nicht an der UI-Sperre vorbeikommt.
 import 'package:flutter_test/flutter_test.dart';
 
@@ -45,8 +45,8 @@ void main() {
     });
 
     test('Die Erklaerungsseiten bleiben frei', () {
-      // Eine Sperre auf den Erklaerungsseiten wuerde die App
-      // unbenutzbar machen, ohne etwas zu schuetzen: sie zeigen
+      // Eine Sperre auf den Erklärungsseiten würde die App
+      // unbenutzbar machen, ohne etwas zu schützen: sie zeigen
       // Information, keine Begegnung.
       expect(routeNeedsVerification(AppRoutes.datingHourRules), isFalse);
       expect(routeNeedsVerification(AppRoutes.datingHourHowItWorks), isFalse);
@@ -55,8 +55,8 @@ void main() {
     });
 
     test('Der Chat einer laufenden Dating-Hour-Runde bleibt frei', () {
-      // Wer mitten in einer Runde rausfliegt, verliert das Gespraech.
-      // Der Zutritt wurde beim Join geprueft - die Runde existiert
+      // Wer mitten in einer Runde rausfliegt, verliert das Gespräch.
+      // Der Zutritt wurde beim Join geprüft - die Runde existiert
       // bereits.
       final chat = AppRoutes.datingHourChatPath(
         '12345678-1234-1234-1234-'

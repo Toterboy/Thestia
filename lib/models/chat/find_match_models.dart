@@ -17,7 +17,7 @@ class ReceivedLike {
     // BEFUND (22.11.2026, Fuzzing): Die Casts hier (`as int`, `as Map`,
     // `as String`) warfen, sobald der Server einen anderen Typ lieferte.
     // Die Daten kommen vom Server - ein Fehler dort darf die App nicht
-    // abstuerzen lassen.
+    // abstürzen lassen.
     final profilWert = json['profile'];
     final profile = UserProfile.fromPublicView(
       profilWert is Map
@@ -78,17 +78,17 @@ class MatchWithState {
 
   /// Automatisch entstandener Funke (Migration 177): true = der Funke
   /// kam nach 10 Minuten Dating Hour zustande und wurde NICHT von
-  /// beiden Seiten bestaetigt. Der Interessen-Screen fragt deshalb
+  /// beiden Seiten bestätigt. Der Interessen-Screen fragt deshalb
   /// einmal nach (behalten oder Person entfernen).
   ///
-  /// Die Spalte heisst in der Datenbank `matches.auto_match`.
+  /// Die Spalte heißt in der Datenbank `matches.auto_match`.
   final bool autoMatch;
 
   /// Wie viele Nachrichten die PERSON (der Partner) geschrieben hat.
   ///
   /// BEFUND (11.11.2026): Die Zahl ist serverseitig (Migration 210) -
-  /// damit stimmt sie auf allen Geraeten und sie steht auch dann da, wenn
-  /// der Chat auf diesem Geraet nie geoeffnet wurde.
+  /// damit stimmt sie auf allen Geräten und sie steht auch dann da, wenn
+  /// der Chat auf diesem Gerät nie geöffnet wurde.
   final int messageCount;
 
   /// Wie viele Nachrichten ICH in diesem Funke geschrieben habe.
@@ -115,7 +115,7 @@ class MatchWithState {
     final distanceKm = numOf(json, ['distanceKm'])?.toDouble();
     // Automatischer Funke (Migration 177). Die Listen-RPC liefert die
     // Spalte `auto_match` als 'autoMatch' (Namenskonvention der RPC);
-    // 'auto_match' wird auch gelesen, falls der Wert unveraendert aus
+    // 'auto_match' wird auch gelesen, falls der Wert unverändert aus
     // der Tabelle kommt.
     final autoFlag = json['autoMatch'] ?? json['auto_match'];
     // BEFUND (22.11.2026, Fuzzing): Die Casts hier warfen bei jedem
@@ -312,7 +312,7 @@ class QuizAnswerResult {
 ///
 /// Die Zahl ist **serverseitig** berechnet und respects dieselben
 /// Altersregeln wie die Kandidaten selbst: Wer 16 oder 17 ist, sieht
-/// auch in den Zahlen nur Minderjaehrige.
+/// auch in den Zahlen nur Minderjährige.
 class CategoryCount {
   const CategoryCount({required this.category, required this.count});
 

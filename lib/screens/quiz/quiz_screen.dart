@@ -52,13 +52,13 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 
   /// AKKU (03.11.2026): Im Hintergrund wird nicht gepollt.
   ///
-  /// Der Wartepoller fragt alle 3 Sekunden den Quiz-Zustand ab. Laeuft
+  /// Der Wartepoller fragt alle 3 Sekunden den Quiz-Zustand ab. Läuft
   /// die App im Hintergrund, ist das eine sinnlose Last - und der
   /// Screen bleibt im Backstack gemountet, der Timer lief also weiter.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Der Wartepoller laeuft nur, wenn tatsaechlich auf den Partner
+      // Der Wartepoller läuft nur, wenn tatsächlich auf den Partner
       // gewartet wird.
       if (_waitingTimer != null) _startWaitingPoll();
       return;

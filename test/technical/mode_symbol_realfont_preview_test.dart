@@ -10,7 +10,7 @@ import 'package:thestia/widgets/common/mode_icons.dart';
 /// Vorschau der Mode-Symbole MIT DER ECHTEN Material-Schrift.
 ///
 /// Warum es diese Datei gibt: `test/mode_symbol_preview_test.dart`
-/// zeichnet den Transit-Spark mit einem **Ersatzkaestchen** - in
+/// zeichnet den Transit-Spark mit einem **Ersatzkästchen** - in
 /// `flutter_test` fehlt die Material-Schrift, und der TextPainter
 /// findet die Glyphe nicht. Man sieht dann ein Kästchen statt eines
 /// Zuges und kann das Symbol nicht beurteilen.
@@ -27,12 +27,12 @@ import 'package:thestia/widgets/common/mode_icons.dart';
 ///   %TEMP%/opencode/m133/symbole/real_*.png
 ///
 /// Auf einem Rechner ohne Flutter-SDK-Dateien (oder ohne Schreibrecht
-/// im Temp-Verzeichnis) macht der Test nichts und meldet sich gruen -
+/// im Temp-Verzeichnis) macht der Test nichts und meldet sich grün -
 /// er ist ein WERKZEUG, kein Guard.
 void main() {
   testWidgets('Vorschau mit echter Material-Schrift', (tester) async {
     // SystemTemp statt eines festen Windows-Pfads: auf einer
-    // Linux-Pipeline wuerde ein fester Pfad ein Verzeichnis mit
+    // Linux-Pipeline würde ein fester Pfad ein Verzeichnis mit
     // Backslashes im Arbeitsverzeichnis anlegen.
     final out = Directory('${Directory.systemTemp.path}/opencode/m133/symbole');
     try {
@@ -49,10 +49,10 @@ void main() {
       return;
     }
 
-    // ZWEI Namen: einmal der puren Familie (fuer Text ohne package)
+    // ZWEI Namen: einmal der puren Familie (für Text ohne package)
     // und einmal der paket-qualifizierte Familie. Der Transit-Spark
     // zeichnet mit `package: 'flutter'` - ohne den zweiten Eintrag
-    // waere dort wieder das Ersatzkaestchen zu sehen.
+    // wäre dort wieder das Ersatzkästchen zu sehen.
     final bytes = Uint8List.fromList(fontdatei.readAsBytesSync());
     for (final familie in ['MaterialIcons', 'packages/flutter/MaterialIcons']) {
       final loader = FontLoader(familie)
@@ -67,8 +67,8 @@ void main() {
       'zufallschat': (c) => QuestionChatPainter(c),
     };
 
-    // Zwei Groessen: 240 px zum Beurteilen der Form und 28 px in der
-    // Groesse, in der das Symbol in der App wirklich steht (dann sieht
+    // Zwei Größen: 240 px zum Beurteilen der Form und 28 px in der
+    // Größe, in der das Symbol in der App wirklich steht (dann sieht
     // man, ob kleine Teile - Funken-Schweif, Punkte - noch lesbar
     // sind).
     for (final groesse in [k, 28.0]) {

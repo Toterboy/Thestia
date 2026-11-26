@@ -90,17 +90,17 @@ class P2PChatService {
   Stream<RTCIceConnectionState> get iceConnectionState =>
       _webrtc.iceConnectionState;
 
-  /// Die Probleme beim Verbindungsaufbau (fuer die Diagnosezeile).
+  /// Die Probleme beim Verbindungsaufbau (für die Diagnosezeile).
   ///
   /// WARUM (06.11.2026): Im Store-Build war nicht sichtbar, woran der
   /// P2P-Aufbau scheiterte - die internen Meldungen gingen nur in den
   /// Debug-Log.
   Stream<String> get problems => _webrtc.problems;
 
-  /// Der LETZTE ICE-Verbindungsstatus - auch fuer einen Aufrufer, der
+  /// Der LETZTE ICE-Verbindungsstatus - auch für einen Aufrufer, der
   /// erst nach dem Zustandswechsel zuhört.
   ///
-  /// WARUM (06.11.2026): Der Status lief ueber einen Broadcast-Stream,
+  /// WARUM (06.11.2026): Der Status lief über einen Broadcast-Stream,
   /// der nichts wiederholt. Die Diagnosezeile im Chat stand darum
   /// dauerhaft auf "-", obwohl der Zustand "checking" war - wer den
   /// Aufbau beurteilen wollte, hatte keine Anhaltspunkte.

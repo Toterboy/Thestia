@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Selbsttest fuer check_stable_functions.py.
+"""Selbsttest für check_stable_functions.py.
 
-WARUM DIESER TEST: Ein Pruefer, der nichts findet, ist nicht von einem
-Pruefer zu unterscheiden, der kaputt ist. Dieser Selbsttest legt
-absichtlich einen Fehler an und verlangt, dass der Pruefer ihn MELDET.
+WARUM DIESER TEST: Ein Prüfer, der nichts findet, ist nicht von einem
+Prüfer zu unterscheiden, der kaputt ist. Dieser Selbsttest legt
+absichtlich einen Fehler an und verlangt, dass der Prüfer ihn MELDET.
 
-Geprueft werden drei Faelle:
+Geprüft werden drei Fülle:
 
   1) Eine STABLE-Funktion, die den Rate-Limit benutzt -> muss
      gemeldet werden (das ist der Fehler aus Migration 221).
   2) Dieselbe Funktion als VOLATILE -> darf NICHT gemeldet werden.
-  3) Eine STABLE-Funktion, die spaeter per ALTER FUNCTION ... VOLATILE
+  3) Eine STABLE-Funktion, die später per ALTER FUNCTION ... VOLATILE
      repariert wurde -> darf NICHT gemeldet werden (der Endzustand
-     zaehlt).
+     zählt).
 
 Aufruf::
 

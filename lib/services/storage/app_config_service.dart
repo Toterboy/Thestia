@@ -17,13 +17,13 @@ class AppConfigService {
   static const String _minVersionKey = 'min_app_version_build';
   static const String _transitEnabledKey = 'transit_spark_enabled';
 
-  /// Schluessel des lokalen Caches fuer den Mindest-Build.
+  /// Schlüssel des lokalen Caches für den Mindest-Build.
   ///
   /// PERFORMANCE (31.10.2026): Die Abfrage lief beim Start auf dem
   /// kritischen Pfad - der erste Frame der App wartete auf einen
   /// Server-Roundtrip (bis zu 6 s Timeout). Der Wert wird deshalb
   /// lokal gecacht: der Cache wird sofort ausgewertet, der frische
-  /// Wert laeuft im Hintergrund nach.
+  /// Wert läuft im Hintergrund nach.
   static const String minVersionCacheKey = 'app_min_app_version_build';
 
   /// Der gecachte Mindest-Build, oder `null` wenn noch keiner da ist.
@@ -42,11 +42,11 @@ class AppConfigService {
   ///
   /// Der Server kann Transit Spark per `app_config`-Eintrag abschalten
   /// (Migration 159) - ohne Deploy und ohne App-Update. Das ist die
-  /// Notbremse fuer den Fall, dass der BLE-Gerätetest nicht besteht
-  /// (ROADMAP, Bedingung fuer das Release von 0.10.0).
+  /// Notbremse für den Fall, dass der BLE-Gerätetest nicht besteht
+  /// (ROADMAP, Bedingung für das Release von 0.10.0).
   ///
-  /// Fail-open: Bei Netz- oder Schema-Fehlern kommt `true` zurueck. Die
-  /// App laesst den Nutzer den Radar starten - der Server entscheidet
+  /// Fail-open: Bei Netz- oder Schema-Fehlern kommt `true` zurück. Die
+  /// App lässt den Nutzer den Radar starten - der Server entscheidet
   /// dann ohnehin. Ein Fehler beim Lesen des Schalters darf das Feature
   /// nicht ungefragt stilllegen.
   static Future<bool> fetchTransitSparkEnabled() async {
@@ -97,13 +97,13 @@ class AppConfigService {
 
   /// Die Build-Nummer der installierten App (pubspec `+N`).
   ///
-  /// Gecacht: der Wert aendert sich mit der Installation nicht, und
+  /// Gecacht: der Wert ändert sich mit der Installation nicht, und
   /// [PackageInfo.fromPlatform] ist ein Plattform-Aufruf.
   static int? _buildNumberCache;
 
   /// Der Aufschlag des Admin-Builds (siehe `build_release.ps1` und
-  /// `tool/checks/check_release_artifacts.py`): Der Admin-Build traegt die
-  /// Build-Nummer der BASIS + 9000, damit er auf dem Geraet erkennbar
+  /// `tool/checks/check_release_artifacts.py`): Der Admin-Build trägt die
+  /// Build-Nummer der BASIS + 9000, damit er auf dem Gerät erkennbar
   /// ist. Er geht nicht in den Store.
   static const int adminBuildOffset = 9000;
 
@@ -112,16 +112,16 @@ class AppConfigService {
   /// BEFUND (09.11.2026, Betreiber): "Die App Version ist wahrscheinlich
   /// veraltet. Ich habe aber keinen update erforderlich screen beim admin
   /// apk." **Der Grund:** Das Gate verglich die rohe Build-Nummer. Der
-  /// Admin-Build traegt 9048 (48 + 9000) - und 9048 ist immer groesser
+  /// Admin-Build trägt 9048 (48 + 9000) - und 9048 ist immer größer
   /// als jedes Mindest-Build. **Der Admin-Build war damit vom
   /// Versions-Gate ausgenommen** - egal, wie streng der Serverwert
   /// gesetzt wurde. Genau das darf nicht sein: der Admin-Build ist
   /// genauso alt wie die Basis und muss bei einem neuen Mindest-Build
   /// genauso gesperrt werden.
   ///
-  /// Deshalb wird hier die BASIS verglichen. Fuer normale Builds ist
-  /// [rawBuild] unveraendert; nur der Admin-Build (erkennbar an
-  /// [isAdminBuild] UND dem Aufschlag) wird zurueckgerechnet.
+  /// Deshalb wird hier die BASIS verglichen. Für normale Builds ist
+  /// [rawBuild] unverändert; nur der Admin-Build (erkennbar an
+  /// [isAdminBuild] UND dem Aufschlag) wird zurückgerechnet.
   static int baseBuildNumber(int rawBuild, {required bool isAdminBuild}) {
     if (isAdminBuild && rawBuild >= adminBuildOffset) {
       return rawBuild - adminBuildOffset;
@@ -160,7 +160,7 @@ class AppConfigService {
 /// Prüft, ob das installierte Build (pubspec `+N`) unterhalb des
 /// serverseitigen Mindest-Builds liegt. Fail-open bei allen Fehlern.
 ///
-/// Fragt den SERVER - fuer den Startpfad ist [cachedMinAppVersionBuild]
+/// Fragt den SERVER - für den Startpfad ist [cachedMinAppVersionBuild]
 /// die schnellere Variante (siehe main.dart).
 Future<bool> isAppUpdateRequired() async {
   try {

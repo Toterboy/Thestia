@@ -1,4 +1,4 @@
-"""Prueft, dass die GitHub-Workflows gültiges YAML sind.
+"""Prüft, dass die GitHub-Workflows gültiges YAML sind.
 
 Anlass: am 30.09.2026 war `ci.yml` durch einen Doppelpunkt mit
 Leerzeichen in einem unquotierten Schrittnamen ungültig. Die Folge war
@@ -7,7 +7,7 @@ zeigt **gar keine Checks** an - nicht einmal einen roten. Der Build
 wirkt erfolgreich, es läuft nur nichts.
 
 Diesen Fehler findet kein Workflow-Check, weil der Workflow, der ihn
-finden soll, selbst die kaputte Datei ist. Er muss von aussen
+finden soll, selbst die kaputte Datei ist. Er muss von außen
 kommen - lokaler Aufruf vor dem Push.
 
 Geprüft wird:
@@ -22,7 +22,7 @@ Aufruf:
 
 Exit 1 bei Befund. Fehlt PyYAML, meldet das Skript das als SKIP mit
 Exit 0 - die Fehlerklasse ist dann aber nicht mehr abgesichert, und das
-gehoert in die Meldung.
+gehört in die Meldung.
 """
 
 import pathlib
@@ -31,8 +31,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -73,7 +73,7 @@ def main():
         rel = path.relative_to(ROOT).as_posix()
         raw = path.read_text(encoding='utf-8')
 
-        # (5) Zuerst die Fehlerklasse, die zur Invaliditaet fuehrt. Die
+        # (5) Zuerst die Fehlerklasse, die zur Invalidität fährt. Die
         # Meldung ist sonst nur "ScannerError bei Zeile N".
         for i, line in enumerate(raw.splitlines(), start=1):
             stripped = line.strip()
@@ -102,9 +102,9 @@ def main():
             continue
 
         # YAML 1.1 liest das Schlüsselwort "on" als Boolean. PyYAML
-        # liefert deshalb den Schluessel True statt der Zeichenkette
+        # liefert deshalb den Schlüssel True statt der Zeichenkette
         # "on". Ohne diesen Hinweis meldet der Checker hier einen Fehler,
-        # den es nicht gibt, und man faengt an, die Workflow-Datei zu
+        # den es nicht gibt, und man fängt an, die Workflow-Datei zu
         # "reparieren".
         triggers = doc.get('on', doc.get(True))
         if triggers is None:

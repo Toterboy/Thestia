@@ -3,34 +3,34 @@
 // BEFUND (07.11.2026, Betreiber): "Nachrichten kommen noch immer nicht
 // an." - und "Wenn beide sich liken entsteht kein Funke."
 //
-// DIESER TEST macht den kompletten Weg NACH, mit allem, was dazugehoert:
+// DIESER TEST macht den kompletten Weg NACH, mit allem, was dazugehört:
 //
 //   1. Beide Konten liken sich gegenseitig -> es entsteht ein Funke
 //      (beweist Befund 15).
 //   2. A holt das PreKey-Bundle von B (so wie die App das macht) und
 //      baut die Sitzung.
-//   3. A verschluesselt eine Nachricht mit der echten Signal-Krypto.
+//   3. A verschlüsselt eine Nachricht mit der echten Signal-Krypto.
 //   4. A legt sie im Relay ab (beweist Migration 196 - vorher scheiterte
 //      jeder Aufruf mit HTTP 400).
-//   5. B holt sie ab -> sie ist da, verschluesselt und mit dem PreKey
-//      (die Form, in der nur der Empfaenger sie lesen kann).
+//   5. B holt sie ab -> sie ist da, verschlüsselt und mit dem PreKey
+//      (die Form, in der nur der Empfänger sie lesen kann).
 //
 // DAS WAR DER LETZTE OFFENER PUNKT: Mein erster Live-Test hat eine
 // FAKE Nutzlast abgelegt (base64 von "Hallo"). Damit war die Server-
-// Kette belegt, aber NICHT die Verschluesselung. Dieser Test schliesst
-// die Luecke.
+// Kette belegt, aber NICHT die Verschlüsselung. Dieser Test schließt
+// die Lücke.
 //
-// DAS ENTSCHLUESSELN passiert hier bewusst NICHT: es braucht den
-// PRIVATEN PreKey des Empfaengers - und der liegt nur auf dem Geraet,
-// das den PreKey erzeugt hat (der Server kennt nur den oeffentlichen
+// DAS ENTSCHLÜSSELN passiert hier bewusst NICHT: es braucht den
+// PRIVATEN PreKey des Empfängers - und der liegt nur auf dem Gerät,
+// das den PreKey erzeugt hat (der Server kennt nur den öffentlichen
 // Teil). Die Krypto ist stattdessen in test/signal_first_message_test.dart
-// (erste Nachricht traegt den PreKey und ist ohne Sitzung lesbar) und
+// (erste Nachricht trägt den PreKey und ist ohne Sitzung lesbar) und
 // in test/live_prekey_bundle_test.dart (das echte Bundle eines echten
 // Kontos ergibt eine Sitzung) belegt.
 //
-// ER LAEUFT NUR MIT .env (der CI hat keine Schluessel) - deshalb ist er
-// ueber skip() abgesichert. Die Testdaten (Likes und Match) werden am
-// Ende per SQL entfernt; das Skript dafuer liegt bei:
+// ER LÄUFT NUR MIT .env (der CI hat keine Schlüssel) - deshalb ist er
+// über skip() abgesichert. Die Testdaten (Likes und Match) werden am
+// Ende per SQL entfernt; das Skript dafür liegt bei:
 //   tool/db/cleanup_transit_testdata.sql
 import 'dart:convert';
 import 'dart:typed_data';
@@ -93,7 +93,7 @@ void main() {
         final builder = SessionBuilder.fromSignalStore(storeA, adresseB);
         await builder.processPreKeyBundle(bundleBauen(bundleDaten!));
 
-        // 3) A verschluesselt.
+        // 3) A verschlüsselt.
         final cipher = SessionCipher.fromStore(storeA, adresseB);
         final nachricht = await cipher.encrypt(
           Uint8List.fromList(utf8.encode('Hallo, das ist ein Live-Test!')),
@@ -150,7 +150,7 @@ void main() {
         final bytes = base64Decode(meine.first['ciphertext'] as String);
         expect(bytes, isNotEmpty);
 
-        // Und die Nutzlast ist wirklich verschluesselt: im Klartext
+        // Und die Nutzlast ist wirklich verschlüsselt: im Klartext
         // taucht der Text nirgends auf.
         expect(
           utf8.decode(bytes, allowMalformed: true),
@@ -158,7 +158,7 @@ void main() {
           reason: 'Die Nutzlast ist nicht verschluesselt.',
         );
 
-        // Aufraeumen: die Relay-Zeile bestaetigen (sie wird geloescht).
+        // Aufräumen: die Relay-Zeile bestätigen (sie wird gelöscht).
         await rpc(env, client, 'relay_ack', {
           'p_ids': [meine.first['id']],
         }, tokenB);

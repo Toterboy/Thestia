@@ -1,23 +1,23 @@
-// Der WebView als Ersatz (fuer den Sicherheitscheck der App).
+// Der WebView als Ersatz (für den Sicherheitscheck der App).
 //
-// WARUM (23.11.2026): Das CAPTCHA laeuft in einem WebView - die
+// WARUM (23.11.2026): Das CAPTCHA läuft in einem WebView - die
 // Turnstile-Seite von https://auth.thestia.de/ wird in einem Fenster
-// geladen und meldet das Token ueber einen JavaScript-Kanal. Im Test
-// gibt es keinen WebView: ohne diesen Ersatz laesst sich der
+// geladen und meldet das Token über einen JavaScript-Kanal. Im Test
+// gibt es keinen WebView: ohne diesen Ersatz lässt sich der
 // Sicherheitscheck gar nicht bauen - und damit auch kein Weg, der auf
 // ein Token wartet.
 //
-// DER ERSATZ merkt sich alles, was die App der WebView ueberlaesst:
-// die geladene Adresse, die JavaScript-Kanaele (der Test spielt so die
+// DER ERSATZ merkt sich alles, was die App der WebView überlässt:
+// die geladene Adresse, die JavaScript-Kanäle (der Test spielt so die
 // Seite, die ein Token oder einen Fehler meldet) und die
-// Navigations-Regel (der Test prueft, welche Adressen erlaubt sind).
+// Navigations-Regel (der Test prüft, welche Adressen erlaubt sind).
 import 'package:flutter/material.dart';
-// Die WebView-Schnittstelle kommt als Transitivum ueber webview_flutter -
+// Die WebView-Schnittstelle kommt als Transitivum über webview_flutter -
 // der Ersatz braucht ihre Typen.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
-/// Der Ersatz fuer die WebView-Plattform.
+/// Der Ersatz für die WebView-Plattform.
 ///
 /// DER AUFBAU: [WebViewPlatform] ist die Schnittstelle des Pakets
 /// `webview_flutter`. Die App spricht nur mit [WebViewController] (dem
@@ -31,7 +31,7 @@ class FakeWebViewPlattform extends WebViewPlatform {
   /// Die zuletzt geladene Adresse (null = noch nichts geladen).
   Uri? geladeneAdresse;
 
-  /// Die JavaScript-Kanaele: Name -> Handler.
+  /// Die JavaScript-Kanäle: Name -> Handler.
   final Map<String, void Function(JavaScriptMessage)> kanaele =
       <String, void Function(JavaScriptMessage)>{};
 
@@ -58,7 +58,7 @@ class FakeWebViewPlattform extends WebViewPlatform {
 
   /// Fragt die App, ob eine Adresse erlaubt ist.
   ///
-  /// [url] ist die Adresse, die die WebView oeffnen will.
+  /// [url] ist die Adresse, die die WebView öffnen will.
   Future<NavigationDecision> frageNavigation(String url) async {
     final regel = navigationRequest;
     if (regel == null) return NavigationDecision.navigate;
@@ -86,7 +86,7 @@ class FakeWebViewPlattform extends WebViewPlatform {
   ) => _FakeCookieManager();
 }
 
-/// Der Ersatz fuer den Controller der WebView.
+/// Der Ersatz für den Controller der WebView.
 class _FakeWebViewController extends PlatformWebViewController {
   _FakeWebViewController(this.plattform)
     : super.implementation(const PlatformWebViewControllerCreationParams());
@@ -122,7 +122,7 @@ class _FakeWebViewController extends PlatformWebViewController {
   }
 }
 
-/// Der Ersatz fuer die Navigations-Regel.
+/// Der Ersatz für die Navigations-Regel.
 class _FakeNavigationDelegate extends PlatformNavigationDelegate {
   _FakeNavigationDelegate(this.plattform)
     : super.implementation(const PlatformNavigationDelegateCreationParams());
@@ -137,7 +137,7 @@ class _FakeNavigationDelegate extends PlatformNavigationDelegate {
   }
 }
 
-/// Der Ersatz fuer die Anzeige der WebView (nur eine leere Flaeche).
+/// Der Ersatz für die Anzeige der WebView (nur eine leere Fläche).
 class _FakeWebViewWidget extends PlatformWebViewWidget {
   _FakeWebViewWidget(PlatformWebViewController controller)
     : super.implementation(
@@ -149,7 +149,7 @@ class _FakeWebViewWidget extends PlatformWebViewWidget {
       const ColoredBox(color: Color(0xFF202020));
 }
 
-/// Der Ersatz fuer die Cookies (die App benutzt sie nicht).
+/// Der Ersatz für die Cookies (die App benutzt sie nicht).
 class _FakeCookieManager extends PlatformWebViewCookieManager {
   _FakeCookieManager()
     : super.implementation(const PlatformWebViewCookieManagerCreationParams());

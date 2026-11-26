@@ -5,12 +5,12 @@
 Warum es dieses Skript gibt
 ===========================
 
-Der Mailanbieter fuer thestia.de ist ein Weiterleiter (Spaceship eFwd).
-Der eigentliche Posteingang liegt in einem Postfach, das man oeffnen
+Der Mailanbieter für thestia.de ist ein Weiterleiter (Spaceship eFwd).
+Der eigentliche Posteingang liegt in einem Postfach, das man öffnen
 muss - und in einem Kinderschutz-Fall ist "ich habe die Mail nicht
 gesehen" der schlimmste Fehler, den das System haben kann.
 
-Dieses Skript laeuft deshalb als Kleinodienst (Aufgabenplaner, Cron,
+Dieses Skript läuft deshalb als Kleinodienst (Aufgabenplaner, Cron,
 systemd-Timer) und schiebt jede neue Mail in die Datenbank. Der
 Admin-Bereich zeigt sie an - nach Adresse sortiert, nur zum Lesen.
 
@@ -25,10 +25,10 @@ Einrichtung
 Die Zugangsdaten kommen aus `tool/helpers/mail_secrets.py` - in dieser
 Reihenfolge:
 
-  1. Umgebungsvariablen (fuer CI und Task-Planer):
+  1. Umgebungsvariablen (für CI und Task-Planer):
        IMAP_HOST, IMAP_PORT, IMAP_USER, IMAP_PASSWORD, IMAP_FOLDER,
        THESTIA_FUNCTIONS_URL, THESTIA_INTERNAL_SECRET
-  2. Secret-Datei ausserhalb des Projekts (Vorgabe):
+  2. Secret-Datei außerhalb des Projekts (Vorgabe):
        %USERPROFILE%\\.secrets\\thestia-mail.properties
 
 Selbst einrichten (fragt nach den Werten ab, legt die Datei an und
@@ -54,10 +54,10 @@ Sicherheit
 ==========
 
 * Nur die Standardbibliothek (imaplib, email, ssl) - keine
-  Zusatzabhaengigkeiten.
+  Zusatzabhängigkeiten.
 * Das Passwort wird nicht gespeichert, nicht geloggt und nicht
-  uebertragen: es geht nur an den IMAP-Server.
-* Uebertragen wird nur an die eigene Supabase-Instanz, mit dem
+  übertragen: es geht nur an den IMAP-Server.
+* Übertragen wird nur an die eigene Supabase-Instanz, mit dem
   internen Secret.
 """
 import email
@@ -92,8 +92,8 @@ def log(text: str) -> None:
 def header_value(msg, name: str) -> str:
     """Liest einen Header und decoded nach UTF-8.
 
-    RFC 2047: "=?utf-8?B?...?=" - ohne das Decoding kaeme bei
-    Umlauten im Betreff Muell im Admin-Bereich.
+    RFC 2047: "=?utf-8?B?...?=" - ohne das Decoding käme bei
+    Umlauten im Betreff Müll im Admin-Bereich.
     """
     raw = msg.get(name)
     if raw is None:
@@ -114,7 +114,7 @@ def body_text(msg) -> str:
     """Der Text-Teil der Mail.
 
    Multipart-Mails werden durchlaufen; der erste text/plain-Teil
-    gewinnt. Gibt es nur HTML, wird es zu Text gemacht - fuer die
+    gewinnt. Gibt es nur HTML, wird es zu Text gemacht - für die
     Anzeige im Admin-Bereich.
     """
     plain = ""
@@ -197,7 +197,7 @@ def main() -> int:
     dry_run = "--dry-run" in sys.argv
 
     # Die Zugangsdaten kommen aus tool/helpers/mail_secrets.py: Umgebung
-    # zuerst, dann die Secret-Datei ausserhalb des Projekts. Vorher
+    # zuerst, dann die Secret-Datei außerhalb des Projekts. Vorher
     # standen hier nur Umgebungsvariablen - damit war der
     # Posteingang nur per Task-Planer einrichtbar, nicht "von Hand".
     settings = mail_secrets.read_settings()
@@ -259,7 +259,7 @@ def main() -> int:
             msg = email.message_from_bytes(roh)
 
             empfaenger = header_value(msg, "To") or user
-            # Bei "Name <adresse>" zaehlt die Adresse.
+            # Bei "Name <adresse>" zählt die Adresse.
             name, adresse = email.utils.parseaddr(empfaenger)
             empfaenger = adresse or empfaenger
 

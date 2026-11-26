@@ -1,9 +1,9 @@
-// Live-Nachweis: das PreKey-Bundle des Partners laesst sich verwenden.
+// Live-Nachweis: das PreKey-Bundle des Partners lässt sich verwenden.
 //
 // BEFUND (07.11.2026, Betreiber): "Nachrichten kommen noch immer nicht
 // an."
 //
-// WARUM DIESER TEST: Beim Verschluesseln prueft die Bibliothek die
+// WARUM DIESER TEST: Beim Verschlüsseln prüft die Bibliothek die
 // Signatur des Signed PreKeys des Partners:
 //
 //     if (!Curve.verifySignature(
@@ -14,7 +14,7 @@
 //     }
 //
 // Passen die drei Teile nicht zusammen, kann die App KEINE Sitzung
-// aufbauen - und damit KEINE Nachricht verschluesseln. Die Folge:
+// aufbauen - und damit KEINE Nachricht verschlüsseln. Die Folge:
 // Die Nachricht wird nie zugestellt, ohne dass irgendwo ein Fehler
 // sichtbar wird.
 //
@@ -22,7 +22,7 @@
 // und baut genau daraus die Sitzung - so wie die App es macht. Wenn die
 // App ihr Bundle falsch signiert, scheitert es HIER.
 //
-// Der Test laeuft nur mit .env (der CI hat keine Schluessel).
+// Der Test läuft nur mit .env (der CI hat keine Schlüssel).
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -47,8 +47,8 @@ void main() {
       expect(tokenB, isNotNull, reason: 'Keine Sitzung fuer B.');
 
       // Die Beziehung muss stehen, sonst gibt der Endpunkt das Bundle
-      // nicht heraus (404 "nicht verfuegbar"). Das ist Absicht: ohne
-      // Beziehung bekommt niemand die Schluessel eines Fremden.
+      // nicht heraus (404 "nicht verfügbar"). Das ist Absicht: ohne
+      // Beziehung bekommt niemand die Schlüssel eines Fremden.
       final match = await beziehungAufbauen(env, client, tokenA!, tokenB!);
       expect(
         match,

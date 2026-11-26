@@ -1,26 +1,26 @@
 // Die Outbox des P2P-Chats (Nachrichten vor dem offenen Kanal).
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/p2p_chat_service.dart 67 offene Zeilen. Der Dienst
 // puffert Nachrichten, die geschrieben werden, BEVOR der DataChannel
 // offen ist - das ist der Weg, den der QR-Chat und der Zufallschat
 // gehen.
 //
 // DER WEG: Die Peer-Connection-Attrappe (test/support/fake_webrtc.dart)
-// liefert den Kanal; der Dienst braucht noch den Verschluesselungs-
-// Dienst (die Nachrichten werden verschluesselt gesendet).
+// liefert den Kanal; der Dienst braucht noch den Verschlüsselungs-
+// Dienst (die Nachrichten werden verschlüsselt gesendet).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * eine Nachricht vor dem offenen Kanal geht nicht verloren (sie
 //     landet in der Outbox),
 //   * das Leeren der Outbox verwirft die Warteschlange (Logout,
-//     Kontowechsel - sonst kaeme eine Nachricht im falschen Chat an),
-//   * der Relay-Weg leert die Warteschlange ueber den Server.
+//     Kontowechsel - sonst käme eine Nachricht im falschen Chat an),
+//   * der Relay-Weg leert die Warteschlange über den Server.
 //
-// NICHT DABEI: Der Flush beim offenen Kanal - dafuer braucht es eine
-// aufgebaute Signal-Sitzung (ohne sie schlaegt die Verschluesselung
+// NICHT DABEI: Der Flush beim offenen Kanal - dafür braucht es eine
+// aufgebaute Signal-Sitzung (ohne sie schlägt die Verschlüsselung
 // fehl und die Nachricht bleibt in der Schlange). Das ist ein eigener
-// Weg und wird im Signal-Test geprueft.
+// Weg und wird im Signal-Test geprüft.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';

@@ -83,7 +83,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   /// sehen - das Gespräch soll nicht nach Zeit aussehen.
   bool _showTimer = true;
 
-  /// Die Fuenf-Minuten-Marke wurde schon im Chat gezeigt.
+  /// Die Fünf-Minuten-Marke wurde schon im Chat gezeigt.
   ///
   /// Sie ist ein HINWEIS der App, keine Nachricht einer Person. Sie
   /// steht deshalb nur einmal im Verlauf und wird nicht gesendet.
@@ -98,7 +98,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   /// (im Debug ein roter Bildschirm, im Release eine Fehlermeldung).
   ///
   /// DER WEG: Die Notifier werden schon im `initState` geholt. Der
-  /// StateNotifier lebt laenger als der Screen - so wird die
+  /// StateNotifier lebt länger als der Screen - so wird die
   /// Notification-Unterdrückung wirklich wieder aufgehoben. Sonst bliebe
   /// sie bis zum App-Ende stehen und die Meldungen des Partners kämen
   /// nicht mehr an.
@@ -121,7 +121,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Die Notifier der "aktiver Chat"-Markierungen jetzt holen: im
-    // dispose() ist `ref` nicht mehr benutzbar (siehe die Erklaerung
+    // dispose() ist `ref` nicht mehr benutzbar (siehe die Erklärung
     // beim Feld).
     _aktiveChatId = ref.read(activeChatIdProvider.notifier);
     _aktiveChatPeerId = ref.read(activeChatPeerIdProvider.notifier);
@@ -143,16 +143,16 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   void dispose() {
     // Aktiven Chat freigeben (Notification-Unterdrückung nur solange der
     // Chat sichtbar ist) - über die Notifier, weil `ref` hier nicht mehr
-    // benutzt werden darf (siehe die Erklaerung beim Feld).
+    // benutzt werden darf (siehe die Erklärung beim Feld).
     //
-    // DER WEG (BEFUND 18.11.2026, gefunden von einem Test): Das Ruecksetzen
-    // muss einen Frame warten. Wird der Bildschirm waehrend eines
-    // Routenwechsels abgeraeumt (der Bildschirm springt zu den Funken),
+    // DER WEG (BEFUND 18.11.2026, gefunden von einem Test): Das Rücksetzen
+    // muss einen Frame warten. Wird der Bildschirm während eines
+    // Routenwechsels abgeräumt (der Bildschirm springt zu den Funken),
     // passiert das dispose() MITTEN IM AUFBAU - und Riverpod verbietet
-    // das Aendern eines Providers waehrend des Aufbaus ("Tried to modify
+    // das Ändern eines Providers während des Aufbaus ("Tried to modify
     // a provider while the widget tree was building"). Die Markierung
-    // blieb dann stehen: die Benachrichtigungen des Gespraechs blieben
-    // unterdrueckt.
+    // blieb dann stehen: die Benachrichtigungen des Gesprächs blieben
+    // unterdrückt.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       bestEffortSync('aktiven Chat freigeben', () {
         if (_aktiveChatId.state == widget.sessionId) {
@@ -253,7 +253,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                       // BREITER TEXT (14.11.2026, gefunden von einem Test):
                       // "Ende zu Ende verschlüsselt" passte nicht neben
                       // der Zeit in die Kopfzeile - auf einem schmalen
-                      // Geraet (oder bei grosser Schrift) lief der Text
+                      // Gerät (oder bei großer Schrift) lief der Text
                       // rechts aus der Leiste ("RenderFlex overflowed by
                       // 140 pixels"). `Flexible` kürzt den Text
                       // statt ihn abzuschneiden.
@@ -275,7 +275,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                         ),
                         decoration: BoxDecoration(
                           // In der zweiten Phase (nach den 5 Minuten)
-                          // zaehlt der Timer bis zum automatischen
+                          // zählt der Timer bis zum automatischen
                           // Funke - und wird blau, damit man sieht,
                           // dass er eine andere Bedeutung hat.
                           color: session.isDecisionPhase
@@ -378,8 +378,8 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
               setState(() => _showTimer = !_showTimer);
             },
           ),
-          // Das Gespraech beenden - von einer Seite aus, jederzeit.
-          // Ein beendetes Gespraech erhaelt KEINEN automatischen Funke.
+          // Das Gespräch beenden - von einer Seite aus, jederzeit.
+          // Ein beendetes Gespräch erhält KEINEN automatischen Funke.
           if (session != null && !session.isCompleted)
             IconButton(
               tooltip: L10n.t(context, 'dh.chat.endConversation'),
@@ -487,12 +487,12 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                   // um sind und sich langsam entschieden werden soll."
                   //
                   // Die 5 Minuten sind deshalb eine ENTSCHEIDUNGSphase, nicht
-                  // das Ende des Gespraechs: Der Chat bleibt bedienbar, und
+                  // das Ende des Gesprächs: Der Chat bleibt bedienbar, und
                   // die Entscheidung kommt ZUSATZLICH dazu. Vorher hat der
                   // abgelaufene Timer den Eingabebereich ersetzt - es war
-                  // danach nicht mehr moeglich, weiterzuschreiben, und das
-                  // Gespraech war nach 5 Minuten beendet, bevor der
-                  // automatische Funke bei Minute 10 ueberhaupt greifen konnte.
+                  // danach nicht mehr möglich, weiterzuschreiben, und das
+                  // Gespräch war nach 5 Minuten beendet, bevor der
+                  // automatische Funke bei Minute 10 überhaupt greifen konnte.
                   if (session != null && !session.bothDecided) ...[
                     if (!_hasVoted) ...[
                       // Frage-Karten für Schüchterne (v0.8.0): ein Tap übernimmt
@@ -534,7 +534,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   ///
   /// DER GRUND: In einer Erweiterung darf `setState` nicht aufgerufen
   /// werden (der Analyser erlaubt es nur in Instanzmitgliedern einer
-  /// State-Klasse). Diese Methode gehoert zur Klasse - die Erweiterung
+  /// State-Klasse). Diese Methode gehört zur Klasse - die Erweiterung
   /// ruft sie auf.
   void _setzeState(VoidCallback fn) => setState(fn);
 }

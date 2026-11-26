@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Erzeugt die Screenshot-Kacheln fuer die Webseite (thestia.de).
+"""Erzeugt die Screenshot-Kacheln für die Webseite (thestia.de).
 
 NUTZERWUNSCH (31.10.2026): "Auf thestia.de sollen auch die Screenshots
 von /release/testapk/screenshots/marketing/9x16-kacheln angezeigt werden."
@@ -11,20 +11,20 @@ Kacheln nach passkey-assets/screenshots/ - und zwar VERKLEINERT.
 
 Warum verkleinert: tool/checks/check_web_payload.py legt eine Obergrenze von
 200 KB je Datei im Publish-Verzeichnis fest. Die Originale wiegen
-300-370 KB. Ausserdem werden sie auf der Seite in einem Raster
-angezeigt - in Originalgroesse waeren sie auf dem Handy unbrauchbar
-und auf dem Desktop unnoetig gross.
+300-370 KB. Außerdem werden sie auf der Seite in einem Raster
+angezeigt - in Originalgrösse wären sie auf dem Handy unbrauchbar
+und auf dem Desktop unnötig groß.
 
 Die Verkleinerung passiert in zwei Schritten:
-  1. Kachel auf 540 x 960 verkleinern (die Seite zeigt sie hoechstens
+  1. Kachel auf 540 x 960 verkleinern (die Seite zeigt sie höchstens
      so breit - auf einem 360-Pixel-Handy sogar noch kleiner).
-  2. Als JPEG mit Qualitaet 82 speichern. PNG verliert bei Verlaufs-
-     flaechen sehr viel (die Kacheln sind 330 KB als PNG, 60 KB als
+  2. Als JPEG mit Qualität 82 speichern. PNG verliert bei Verlaufs-
+     flächen sehr viel (die Kacheln sind 330 KB als PNG, 60 KB als
      JPEG), ohne sichtbaren Verlust.
 
-Qualitaet und Groesse werden nachgeprueft: jede Datei muss unter der
+Qualität und Größe werden nachgeprüft: jede Datei muss unter der
 Obergrenze liegen, sonst bricht das Skript ab - so kann keine zu
-grosse Datei in das Publish-Verzeichnis geraten.
+große Datei in das Publish-Verzeichnis geraten.
 
 Aufruf:  python tool/web/make_web_screenshots.py
 """
@@ -36,8 +36,8 @@ from PIL import Image
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -59,15 +59,15 @@ ROOT = _projektwurzel()
 # so haben.").
 #
 # Der Unterschied ist sichtbar: der App-Screenshot (9x16) zeigt einen
-# kompletten Geraete-Screen MIT nachgeahmter Statusleiste und
+# kompletten Geräte-Screen MIT nachgeahmter Statusleiste und
 # Navigationsleiste. Die Kacheln-Variante (9x16-kacheln) legt die
 # echten Inhalte als einzelne Kacheln auf den Markenverlauf - ohne
 # Statusleiste, ohne Navigationsleiste.
 #
 # Das ist auf der Website das richtige: es sind die Bausteine der App,
-# nicht das Bild eines Geraets. Und die Kacheln sind einzeln geladen
-# (und einzeln ueber ein Raster verteilt) - ein Geraete-Screen in
-# der Mitte des Rasters waere ein Fremdkoerper.
+# nicht das Bild eines Geräts. Und die Kacheln sind einzeln geladen
+# (und einzeln über ein Raster verteilt) - ein Geräte-Screen in
+# der Mitte des Rasters wäre ein Fremdkörper.
 QUELLE = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing' / \
     '9x16-kacheln'
 ZIEL = ROOT / 'passkey-assets' / 'screenshots'
@@ -75,24 +75,24 @@ ZIEL = ROOT / 'passkey-assets' / 'screenshots'
 # Die Startseite (index.html). Dort steht die Galerie.
 INDEX = ROOT / 'passkey-assets' / 'index.html'
 
-# Marken um den erzeugten Abschnitt. Ohne sie gaenge die Galerie
+# Marken um den erzeugten Abschnitt. Ohne sie gänge die Galerie
 # verloren, sobald die Seite von Hand angefasst wird - mit ihnen
-# weiss das Skript genau, was es ersetzen darf.
+# weiß das Skript genau, was es ersetzen darf.
 GALERIE_START = '<!-- GALERIE (tool/web/make_web_screenshots.py) -->'
 GALERIE_ENDE = '<!-- /GALERIE -->'
 
 # Obergrenze je Datei - dieselbe Zahl wie in tool/checks/check_web_payload.py.
 MAX_KB = 200
 
-# Kantenlaenge der Web-Fassung. Die Seite zeigt die Kacheln in einem
-# Raster; auf einem 360-Pixel-Handy ist das die groesste sinnvolle
-# Breite. In Originalgroesse (1080 x 1920) waere die Datei dreimal so
-# gross und auf dem Handy unscharf heruntergerechnet.
+# Kantenlänge der Web-Fassung. Die Seite zeigt die Kacheln in einem
+# Raster; auf einem 360-Pixel-Handy ist das die größte sinnvolle
+# Breite. In Originalgrösse (1080 x 1920) wäre die Datei dreimal so
+# groß und auf dem Handy unscharf heruntergerechnet.
 BREITE = 540
 
-# Qualitaet des JPEG. 82 ist der Punkt, an dem Verlaufskanten noch
-# sauber aussehen und die Datei aber unter ein Drittel der PNG-Groesse
-# faellt. Bewusst nicht hoeher: der Unterschied ist auf der Seite
+# Qualität des JPEG. 82 ist der Punkt, an dem Verlaufskanten noch
+# sauber aussehen und die Datei aber unter ein Drittel der PNG-Größe
+# fällt. Bewusst nicht höher: der Unterschied ist auf der Seite
 # (max. 540 Pixel breit) nicht zu sehen.
 QUALITAET = 82
 
@@ -127,10 +127,10 @@ def galerie_html() -> str:
     mehr Information als ein Bild ohne Text, und der Text steht da,
     wo das Bild steht (nicht in einer Liste daneben).
 
-    Der Pfad beginnt mit einem Schraegstrich: die Seite liegt auf
+    Der Pfad beginnt mit einem Schrägstrich: die Seite liegt auf
     thestia.de, die Bilder im Unterordner "screenshots/". Mit
     absolutem Pfad findet der Browser sie auch, wenn die Seite
-    ueber einen Rewrite (z. B. /impressum) ausgeliefert wird.
+    über einen Rewrite (z. B. /impressum) ausgeliefert wird.
     """
     teile = []
     for name, titel, unter in KACHELN:

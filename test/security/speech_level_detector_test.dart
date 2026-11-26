@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/services/transit/speech_level_detector.dart';
 
-/// Tests fuer die Stille-Erkennung der Audio-Vorstellung.
+/// Tests für die Stille-Erkennung der Audio-Vorstellung.
 ///
 /// Anlass: eine Aufnahme konnte 10+ Sekunden komplett still sein und
-/// wurde trotzdem akzeptiert. Der Mindestlaengen-Check im Review-Sheet
-/// prueft nur die Dauer, nicht ob darin etwas gesagt wurde.
+/// wurde trotzdem akzeptiert. Der Mindestlängen-Check im Review-Sheet
+/// prüft nur die Dauer, nicht ob darin etwas gesagt wurde.
 void main() {
   /// Kurzform: 10 Messungen mit demselben Pegel.
   SpeechLevelDetector filled(int count, double db) {
@@ -29,7 +29,7 @@ void main() {
     });
 
     test('0 dBFS bleibt 0, wird aber NICHT zu null', () {
-      // record liefert bei Stille teils 0. 0 dBFS waere rechnerisch das
+      // record liefert bei Stille teils 0. 0 dBFS wäre rechnerisch das
       // Maximum - genau deshalb wird 0 nicht stillgelegt, sondern erst
       // im Schwellwertvergleich als "laut" eingestuft.
       expect(SpeechLevelDetector.normalize(0), 0);
@@ -48,7 +48,7 @@ void main() {
     });
 
     test('genau auf der Schwelle gilt NICHT als Ton', () {
-      // > statt >=: die Schwelle ist "ab hier Ton". >= wuerde exakt auf
+      // > statt >=: die Schwelle ist "ab hier Ton". >= würde exakt auf
       // dem Grenzwert schon Signal annehmen.
       expect(
         SpeechLevelDetector.isAudible(SpeechLevelDetector.speechThresholdDb),
@@ -69,8 +69,8 @@ void main() {
     });
 
     test('leises Sprechen 40 cm entfernt gilt noch als Ton', () {
-      // Der Grund fuer den tiefen Schwellwert: wer das Handy weiter weg
-      // haelt, spricht leiser. -30 ist realistisch und muss durch.
+      // Der Grund für den tiefen Schwellwert: wer das Handy weiter weg
+      // hält, spricht leiser. -30 ist realistisch und muss durch.
       expect(SpeechLevelDetector.isAudible(-30), isTrue);
     });
   });
@@ -85,7 +85,7 @@ void main() {
     });
 
     test('10 Sekunden reine Stille ergibt hasSpeech false', () {
-      // 100 Messungen bei 10 Hz = 10 s, exakt der Mindestlaengen-Fall,
+      // 100 Messungen bei 10 Hz = 10 s, exakt der Mindestlängen-Fall,
       // der vorher durchging.
       final d = filled(100, -55);
       expect(d.hasSpeech, isFalse);
@@ -100,7 +100,7 @@ void main() {
 
     test('addSample meldet nur den Wechsel, nicht jeden Wert', () {
       // Sonst baut das Widget 10-mal pro Sekunde neu, obwohl sich die
-      // Anzeige nicht geaendert hat.
+      // Anzeige nicht geändert hat.
       final d = SpeechLevelDetector();
       expect(d.addSample(-55), false, reason: 'Stille aendert nichts');
       expect(d.addSample(-25), true, reason: 'Ton ist ein Wechsel');
@@ -117,15 +117,15 @@ void main() {
       }
       // -20 ist nach 10 weiteren Samples aus dem 10er-Fenster gewandert.
       // (-50 statt -55, weil -50 unterhalb des Rauschteppichs als null
-      // gaelte und der Test dann die Normalisierung statt des Fensters
-      // pruefen wuerde.)
+      // gälte und der Test dann die Normalisierung statt des Fensters
+      // prüfen würde.)
       expect(d.peakDb, -50);
       expect(d.hasSpeech, isFalse);
     });
 
     test('kurze Pause gilt nicht als Stille', () {
-      // 10 Messungen Pause = 1 s: "aehm, was sag ich" ist kein Grund
-      // fuer eine Wiederholung.
+      // 10 Messungen Pause = 1 s: "ähm, was sag ich" ist kein Grund
+      // für eine Wiederholung.
       final d = SpeechLevelDetector(window: 60);
       d.addSample(-25);
       for (var i = 0; i < 10; i++) {
@@ -179,7 +179,7 @@ void main() {
 
     test('Gegenprobe: Schwellwert um einen Punkt anheben dreht das '
         'Ergebnis', () {
-      // Haelt fest, DASS die Schwelle die Entscheidung traegt. Liegt
+      // Hält fest, DASS die Schwelle die Entscheidung trägt. Liegt
       // jemand bei -35 dBFS, ist die Aussage "still" - und genau das
       // ist der Fall, den die Einstellung sichtbar machen soll.
       final d = SpeechLevelDetector();

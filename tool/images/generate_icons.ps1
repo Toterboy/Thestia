@@ -1,27 +1,27 @@
 # =============================================================================
 # generate_icons.ps1
 # -----------------------------------------------------------------------------
-# Generiert die Icon-Quell-Assets fuer das Thestia-App-Icon (Android + iOS):
+# Generiert die Icon-Quell-Assets für das Thestia-App-Icon (Android + iOS):
 #
 #   1. assets/images/thestia_icon_foreground.png  (1024x1024)
-#      - Transparentes Foreground fuer das Android Adaptive Icon.
+#      - Transparentes Foreground für das Android Adaptive Icon.
 #      - Weisse Bereiche (Hintergrund des Basis-PNG) werden per
-#        Flood-Fill-Weiss-Keying (verbunden mit dem Bildrand) transparent.
+#        Flood-Fill-Weiß-Keying (verbunden mit dem Bildrand) transparent.
 #      - Das Logo-Badge wird auf 66 % des Canvas skaliert und zentriert,
 #        damit es in der Safe-Zone jeder Launcher-Maske (Kreis/Squircle)
-#        vollstaendig sichtbar ist.
+#        vollständig sichtbar ist.
 #
 #   2. assets/images/thestia_icon_ios.png          (1024x1024)
-#      - Voll opake Quadrat-Variante des Basis-PNG fuer iOS (Apple maskt
+#      - Voll opake Quadrat-Variante des Basis-PNG für iOS (Apple maskt
 #        selbst, Quadrat ohne Transparenz ist dort Pflicht).
 #
 #   3. build/icon_previews/preview_circle.png   (512x512)
 #   4. build/icon_previews/preview_squircle.png (512x512)
 #      - Simulation der finalen Adaptive-Icon-Darstellung unter einer
-#        runden bzw. eckigen (Squircle) Launcher-Maske (Hintergrund weiss,
-#        Bereiche ausserhalb der Maske grau markiert).
-#      - Zusaetzlich numerische Pruefung: KEIN Pixel des Badges darf
-#        ausserhalb der Maske liegen (Ausgabe PASS/FAIL je Maske).
+#        runden bzw. eckigen (Squircle) Launcher-Maske (Hintergrund weiß,
+#        Bereiche außerhalb der Maske grau markiert).
+#      - Zusätzlich numerische Prüfung: KEIN Pixel des Badges darf
+#        außerhalb der Maske liegen (Ausgabe PASS/FAIL je Maske).
 #
 # Verwendung:
 #   powershell -ExecutionPolicy Bypass -File tool\generate_icons.ps1
@@ -37,8 +37,8 @@ $outForeground = Join-Path $root 'assets\images\thestia_icon_foreground.png'
 $outIos = Join-Path $root 'assets\images\thestia_icon_ios.png'
 $previewDir = Join-Path $root 'build\icon_previews'
 
-# Weiss-Keying-Schwelle: Pixel mit min(R,G,B) >= $whiteThreshold gelten als
-# "weiss". 250 gewaehlt, damit die hellen Herz-Highlights (min ~237) sicher
+# Weiß-Keying-Schwelle: Pixel mit min(R,G,B) >= $whiteThreshold gelten als
+# "weiß". 250 gewählt, damit die hellen Herz-Highlights (min ~237) sicher
 # erhalten bleiben.
 $whiteThreshold = 250
 
@@ -65,7 +65,7 @@ for ($y = 0; $y -lt $h; $y++) {
     }
 }
 
-# --- 2. Flood-Fill-Weiss-Keying vom Rand (verbunden mit aussen => transparent)
+# --- 2. Flood-Fill-Weiß-Keying vom Rand (verbunden mit außen => transparent)
 $keyed = New-Object 'byte[]' ($w * $h)   # 1 = transparent
 $queue = New-Object System.Collections.Generic.Queue[int]
 
@@ -186,11 +186,11 @@ function New-MaskPreview([string]$name, [scriptblock]$InsideMask) {
             $relX = [Math]::Abs($x + 0.5 - $cx)
             $relY = [Math]::Abs($y + 0.5 - $cy)
             if (& $InsideMask $relX $relY $radius) {
-                # innerhalb der Maske: unveraendert
+                # innerhalb der Maske: unverändert
             } else {
-                # ausserhalb: grau markieren (Maskengrenze sichtbar)
+                # außerhalb: grau markieren (Maskengrenze sichtbar)
                 $canvas.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(255, 200, 200, 200))
-                # Badge-Pixel (nicht weiss) ausserhalb der Maske zaehlen
+                # Badge-Pixel (nicht weiß) außerhalb der Maske zählen
                 $m = [Math]::Min($p.R, [Math]::Min($p.G, $p.B))
                 if ($p.A -gt 0 -and $m -lt 245) { $badgeOutside++ }
             }

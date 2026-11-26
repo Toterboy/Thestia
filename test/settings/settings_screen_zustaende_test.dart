@@ -1,22 +1,22 @@
 // Die Einstellungen: die Schalter, die Dialoge und das Konto.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/settings/settings_screen.dart 64 offene Zeilen - die
 // Schalter, die Dialoge und die Versionsangabe.
 //
 // DER WEG: Der Bildschirm ist eine lange Liste - der Test benutzt einen
-// hohen Bildschirm (3000 px), damit alle Eintraege auf einmal gebaut
-// werden. Der Verschluesselungs-Dienst und die Versionsangaben bekommen
+// hohen Bildschirm (3000 px), damit alle Einträge auf einmal gebaut
+// werden. Der Verschlüsselungs-Dienst und die Versionsangaben bekommen
 // ihre Ersatzteile.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die einzelnen Schalter werden wirklich gespeichert (nicht nur
 //     angezeigt),
 //   * das Erscheinungsbild und die Farbe lassen sich umstellen,
 //   * die Versionsangabe steht da (der Support braucht sie),
 //   * die Dialoge lassen sich abbrechen - und ein Scheitern wird
 //     gemeldet, nicht verschwiegen,
-//   * das Loeschen des Kontos fragt erst nach,
+//   * das Löschen des Kontos fragt erst nach,
 //   * der Zwei-Faktor-Stand steht an der Kachel.
 import 'dart:io';
 
@@ -87,11 +87,11 @@ class _Keystore extends SecureProfileStore {
   Future<void> delete() async {}
 }
 
-/// Der Verschluesselungs-Dienst fuer den Test.
+/// Der Verschlüsselungs-Dienst für den Test.
 ///
-/// DER GRUND: Der echte Dienst braucht die verschluesselten Hive-Boxen -
-/// im Test waere das der Weg ueber die Schluesselverwaltung. Fuer die
-/// Oberflaeche reicht der Code: der Dialog muss ihn anzeigen und das
+/// DER GRUND: Der echte Dienst braucht die verschlüsselten Hive-Boxen -
+/// im Test wäre das der Weg über die Schlüsselverwaltung. Für die
+/// Oberfläche reicht der Code: der Dialog muss ihn anzeigen und das
 /// Kopieren anbieten.
 class _Verschluesselung extends EncryptionService {
   _Verschluesselung({this.scheitert = false});
@@ -119,12 +119,12 @@ void main() {
     // DIE VERSIONSANGABEN: Ohne den Ersatz wartet der Aufruf im Test
     // endlos - der Bildschirm bleibt beim Lade-Spinner.
     mockPackageInfo(version: '0.10.2', build: '58');
-    // DIE VERSIONSANGABE VORAB: Der Bildschirm fragt sie ueber den
+    // DIE VERSIONSANGABE VORAB: Der Bildschirm fragt sie über den
     // Plattform-Kanal ab. Holt man sie erst beim Aufbau, kommt die
     // Antwort im Test erst danach - und die Versionszeile fehlt.
     await PackageInfo.fromPlatform();
-    // HIVE: der Abschnitt "Ende-zu-Ende-Verschluesselung" liest die
-    // gesicherten Schluessel aus einer Hive-Box.
+    // HIVE: der Abschnitt "Ende-zu-Ende-Verschlüsselung" liest die
+    // gesicherten Schlüssel aus einer Hive-Box.
     final tempDir = await Directory.systemTemp.createTemp('thesia_settings2');
     Hive.init(tempDir.path);
 
@@ -164,17 +164,17 @@ void main() {
   /// Baut den Einstellungs-Bildschirm.
   ///
   /// [mitRouter] baut ihn in einem Router mit einer Startseite - so
-  /// laesst sich der Zurueck-Knopf pruefen.
+  /// lässt sich der Zurück-Knopf prüfen.
   Future<ProviderContainer> zeigeScreen(
     WidgetTester tester, {
     bool mitRouter = false,
     _Verschluesselung? verschluesselung,
     MfaStatus? mfa,
   }) async {
-    // GROSSER Bildschirm: der Abschnitt "Ende-zu-Ende-Verschluesselung"
+    // GROSSER Bildschirm: der Abschnitt "Ende-zu-Ende-Verschlüsselung"
     // liegt weit unten. Mit einem hohen Bildschirm baut die Liste mehr
-    // Eintraege auf einmal - das Scrollen durch die lange Liste waere
-    // im Test zaeh und fehleranfaellig.
+    // Einträge auf einmal - das Scrollen durch die lange Liste wäre
+    // im Test zäh und fehleranfällig.
     await tester.binding.setSurfaceSize(const Size(390, 3000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -253,10 +253,10 @@ void main() {
     return container;
   }
 
-  /// Scrollt zu einem Text (die Liste baut nur die sichtbaren Eintraege).
+  /// Scrollt zu einem Text (die Liste baut nur die sichtbaren Einträge).
   ///
   /// DER HINWEIS: "timedDrag" statt "drag". Ein einfacher Zug kommt
-  /// erstaunlich wenig weiter - bei ueber 7000 Pixel Liste waere der
+  /// erstaunlich wenig weiter - bei über 7000 Pixel Liste wäre der
   /// Eintrag am Ende nie erreicht worden.
   Future<void> scrolleZu(WidgetTester tester, String text) async {
     final ziel = find.text(text);
@@ -273,8 +273,8 @@ void main() {
   /// Wartet, bis der entprellte Server-Sync der UI-Einstellungen durch ist.
   ///
   /// DER HINWEIS: Das Schreiben zum Server ist entprellt (1,5 s). Ohne
-  /// diese Wartezeit bleibt am Ende des Tests ein Timer uebrig - der
-  /// Test waere dann rot, obwohl die App richtig arbeitet.
+  /// diese Wartezeit bleibt am Ende des Tests ein Timer übrig - der
+  /// Test wäre dann rot, obwohl die App richtig arbeitet.
   Future<void> warteAufSync(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 1600));
     await pumpFrames(tester);
@@ -303,7 +303,7 @@ void main() {
     await warteAufSync(tester);
   }
 
-  /// Oeffnet den Backup-Dialog (das Backup der Ende-zu-Ende-Identitaet).
+  /// Öffnet den Backup-Dialog (das Backup der Ende-zu-Ende-Identität).
   Future<void> oeffneBackupDialog(WidgetTester tester) async {
     await scrolleZu(tester, L10n.tWithoutContext('settings.keyBackup'));
     final knopf = find.byIcon(Icons.download_outlined);
@@ -314,7 +314,7 @@ void main() {
     await pumpFrames(tester);
   }
 
-  /// Fuellt das Passwort (zweimal) und bestaetigt den Dialog.
+  /// Füllt das Passwort (zweimal) und bestätigt den Dialog.
   Future<void> backupErstellen(WidgetTester tester) async {
     await tester.enterText(
       find.byType(TextFormField).first,
@@ -335,9 +335,9 @@ void main() {
   }
 
   // DIESE GRUPPE STEHT VORN (25.11.2026): Die Versionsangaben kommen
-  // ueber den Plattform-Kanal - die Antwort kommt erst nach dem
-  // Bildaufbau. Der Bildschirm fragt sie nur EINMAL (der Wert aendert
-  // sich waehrend der Sitzung nicht). Steht dieser Test nicht an
+  // über den Plattform-Kanal - die Antwort kommt erst nach dem
+  // Bildaufbau. Der Bildschirm fragt sie nur EINMAL (der Wert ändert
+  // sich während der Sitzung nicht). Steht dieser Test nicht an
   // erster Stelle, ist die Abfrage schon im ersten Test gelaufen und
   // die Antwort kommt dann nicht mehr an.
   group('Die Versionsangabe', () {
@@ -345,7 +345,7 @@ void main() {
       await zeigeScreen(tester);
 
       // DIE VERSION STEHT GANZ UNTEN: Der Bildschirm ist sehr lang,
-      // also wird Stueck fuer Stueck gescrollt.
+      // also wird Stück für Stück gescrollt.
       for (var i = 0; i < 40; i++) {
         if (find.textContaining('Version 0.10.2').evaluate().isNotEmpty) break;
         await tester.timedDrag(

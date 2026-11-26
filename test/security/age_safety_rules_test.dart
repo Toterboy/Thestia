@@ -24,7 +24,7 @@ void main() {
 
   group('AgeSafetyRules - canViewProfile', () {
     // Die Regel entspricht dem Server (Migration 154 + 155):
-    // Die Discovery filtert BEIDSEITIG ueber
+    // Die Discovery filtert BEIDSEITIG über
     // age_compatible_bidirectional, also age_compatible(a->b) UND
     // age_compatible(b->a). age_compatible (Migration 056):
     //
@@ -33,14 +33,14 @@ void main() {
     //   Viewer = 19  -> Ziel >= 17
     //   Viewer >= 20 -> Ziel >= 18
     //
-    // Beidseitig heisst das: Minderjaehrige sehen nur Minderjaehrige,
+    // Beidseitig heißt das: Minderjährige sehen nur Minderjährige,
     // Erwachsene sehen nur Erwachsene. 18<->16/17 ist gesperrt und
     // 19<->17 ebenfalls.
     //
     // BISHER stand hier die einseitige Regel ("18 sieht 16+"), und
     // die Tests haben sie festgeschrieben - obwohl der Server sie
-    // nie erteilt. Ein 18-Jaehriger sieht niemals einen
-    // Minderjaehrigen.
+    // nie erteilt. Ein 18-Jähriger sieht niemals einen
+    // Minderjährigen.
     test('Erwachsene sehen keine Minderjaehrigen', () {
       expect(
         AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 16),
@@ -158,9 +158,9 @@ void main() {
   });
 
   group('AgeSafetyRules - maxFilterAge', () {
-    // v0.10.0 (Migration 154): Die Alterspruefung ist beidseitig.
-    // Minderjaehrige sehen ausschliesslich 16 und 17 - ein Wert
-    // darueber waere ein toter Filter (der Server liefert ihn nie).
+    // v0.10.0 (Migration 154): Die Altersprüfung ist beidseitig.
+    // Minderjährige sehen ausschließlich 16 und 17 - ein Wert
+    // darüber wäre ein toter Filter (der Server liefert ihn nie).
     test('Minor (16-17) max filter = 17', () {
       expect(AgeSafetyRules.maxFilterAge(16), equals(17));
       expect(AgeSafetyRules.maxFilterAge(17), equals(17));
@@ -176,19 +176,19 @@ void main() {
   });
 
   group('AgeSafetyRules - minFilterAge', () {
-    // v0.10.0 (Migration 154): Die Untergrenze ist hoechstens 10
+    // v0.10.0 (Migration 154): Die Untergrenze ist höchstens 10
     // Jahre unter dem eigenen Alter und nie unter 18, sobald der
-    // Nutzer volljuehrig ist.
+    // Nutzer volljährig ist.
     //
     // Das ist wortgleich die Server-Funktion max_age_range_min:
     //
     //   greatest(v_viewer_age - 10,
     //            CASE WHEN v_viewer_age < 18 THEN 16 ELSE 18 END)
     //
-    // Die App hat bis 04.11.2026 fuer 18-Jaehrige 16 und fuer
-    // 19-Jaehrige 17 angeboten - der Server liefert diese Altersstufen
+    // Die App hat bis 04.11.2026 für 18-Jährige 16 und für
+    // 19-Jährige 17 angeboten - der Server liefert diese Altersstufen
     // nie. Der Filter war damit TOT: leere Liste, keine
-    // Erklaerung. Die Paritaet ist jetzt ueber [die Tabelle unten]
+    // Erklärung. Die Parität ist jetzt über [die Tabelle unten]
     // festgeschrieben.
     test('Minderjaehrige (16-17) min filter = 16', () {
       expect(AgeSafetyRules.minFilterAge(16), equals(16));
@@ -211,9 +211,9 @@ void main() {
       expect(AgeSafetyRules.minFilterAge(65), equals(55));
     });
 
-    // Die Paritaet zur Server-Funktion max_age_range_min. Jede Zeile
+    // Die Parität zur Server-Funktion max_age_range_min. Jede Zeile
     // ist 1:1 aus dem SQL abgeleitet - nicht aus der App abgeleitet.
-    // Weicht eine Zahl ab, laeuft die App auseinander.
+    // Weicht eine Zahl ab, läuft die App auseinander.
     test('Paritaet zur Server-Funktion max_age_range_min', () {
       const serverWerte = <int, int>{
         // Alter: max_age_range_min(Alter)
@@ -260,9 +260,9 @@ void main() {
 
   group('AgeSafetyRules - isRoughDistanceForced', () {
     // BETREIBER-ENTSCHEIDUNG (02.11.2026): "Die grobe Entfernung
-    // duerfen 16 und 17 jaehrige auch nicht aktivieren koennen."
+    // dürfen 16 und 17 jährige auch nicht aktivieren können."
     //
-    // Die maechtige Sperre sitzt in der Datenbank
+    // Die mächtige Sperre sitzt in der Datenbank
     // (profile_distance_km, Migration 163). Diese Regel ist die
     // freundliche Seite: der Schalter wird gar nicht erst angeboten.
     test('Minor (16-17): die grobe Entfernung ist gesperrt', () {
@@ -286,13 +286,13 @@ void main() {
   });
 
   group('AgeSafetyRules - Suchradius (v0.10.0)', () {
-    // BETREIBER-ENTSCHEIDUNG (03.11.2026): "fuer 16 und 17 jaehrige
+    // BETREIBER-ENTSCHEIDUNG (03.11.2026): "für 16 und 17 jährige
     // entweder gleiches Bundesland oder max. 25 Km. Und ab 18 alles
-    // frei auswaehlbar."
+    // frei auswählbar."
     //
-    // Die maechtige Sperre sitzt in der Datenbank
+    // Die mächtige Sperre sitzt in der Datenbank
     // (profile_discovery_visible, Migration 164). Diese Regel ist die
-    // freundliche Seite: der Radius wird gar nicht erst groesser
+    // freundliche Seite: der Radius wird gar nicht erst größer
     // angeboten.
     test('Minor (16-17): der Suchradius ist begrenzt', () {
       expect(AgeSafetyRules.isDiscoveryRadiusCapped(16), isTrue);
@@ -484,7 +484,7 @@ void main() {
   });
 
   group('AgeSafetyRules - clampFilterAge', () {
-    // v0.10.0 (Migration 154): Minderjaehrige sehen nur 16 und 17.
+    // v0.10.0 (Migration 154): Minderjährige sehen nur 16 und 17.
     test('Minor filter clamped to 16-17', () {
       expect(
         AgeSafetyRules.clampFilterAge(
@@ -502,7 +502,7 @@ void main() {
         ),
         equals((16, 17)),
       );
-      // Obergrenze fuer Minderjaehrige ist jetzt 17 - beides wird
+      // Obergrenze für Minderjährige ist jetzt 17 - beides wird
       // auf 17 geklemmt.
       expect(
         AgeSafetyRules.clampFilterAge(
@@ -517,8 +517,8 @@ void main() {
     // v0.10.0 (Migration 154): nach unten max. 10 Jahre unter dem
     // eigenen Alter, mindestens 18.
     test('Adult filter clamped to eigenes Alter minus 10', () {
-      // Ein 18-Jaehriger bekommt auf 18 geklemmt: 16 waere ein toter
-      // Filter (der Server liefert fuer ihn nur Erwachsene).
+      // Ein 18-Jähriger bekommt auf 18 geklemmt: 16 wäre ein toter
+      // Filter (der Server liefert für ihn nur Erwachsene).
       expect(
         AgeSafetyRules.clampFilterAge(
           viewerAge: 18,
@@ -559,7 +559,7 @@ void main() {
         ),
         equals((30, 99)),
       );
-      // Untergrenze fuer 25-Jaehrige ist max(18, 25-10) = 18.
+      // Untergrenze für 25-Jährige ist max(18, 25-10) = 18.
       expect(
         AgeSafetyRules.clampFilterAge(
           viewerAge: 25,
@@ -573,8 +573,8 @@ void main() {
 
   group('AgeSafetyRules - isValidFilterAge', () {
     test('Valid filter ranges', () {
-      // v0.10.0 (Migration 154): Minderjaehrige duerfen hoechstens
-      // bis 17; Volljaehrige hoechstens 10 Jahre unter ihr eigenes
+      // v0.10.0 (Migration 154): Minderjährige dürfen höchstens
+      // bis 17; Volljährige höchstens 10 Jahre unter ihr eigenes
       // Alter.
       expect(
         AgeSafetyRules.isValidFilterAge(
@@ -619,8 +619,8 @@ void main() {
     });
 
     test('Invalid filter ranges', () {
-      // Minderjaehrige ueber 17 hinaus, unter 16 hinunter, bei
-      // Volljaehrigen mehr als 10 Jahre unter das eigene Alter.
+      // Minderjährige über 17 hinaus, unter 16 hinunter, bei
+      // Volljährigen mehr als 10 Jahre unter das eigene Alter.
       expect(
         AgeSafetyRules.isValidFilterAge(
           viewerAge: 16,
@@ -669,8 +669,8 @@ void main() {
         ),
         isFalse,
       );
-      // Ein 18-Jaehriger mit Untergrenze 16: der Server liefert ihm
-      // niemals einen Minderjaehrigen - der Filter waere tot.
+      // Ein 18-Jähriger mit Untergrenze 16: der Server liefert ihm
+      // niemals einen Minderjährigen - der Filter wäre tot.
       expect(
         AgeSafetyRules.isValidFilterAge(
           viewerAge: 18,

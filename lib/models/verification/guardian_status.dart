@@ -1,7 +1,7 @@
-/// Der Stand der elterlichen Aufsicht fuer dieses Konto.
+/// Der Stand der elterlichen Aufsicht für dieses Konto.
 ///
 /// Quelle: `get_my_guardian_status()` (Migration 165). Der Server
-/// entscheidet - dieses Modell ist nur die Abbildung fuer die Anzeige.
+/// entscheidet - dieses Modell ist nur die Abbildung für die Anzeige.
 library;
 
 import 'package:thestia/utils/common/json_leser.dart';
@@ -66,7 +66,7 @@ class GuardianStatus {
   /// Ende des erlaubten Zeitfensters (Minuten seit Mitternacht).
   final int? usageEndMin;
 
-  /// Ist eine PIN gesetzt? (Die PIN selbst kennt das Geraet nicht.)
+  /// Ist eine PIN gesetzt? (Die PIN selbst kennt das Gerät nicht.)
   final bool hasPin;
 
   /// `until_18` | `grace` | `indefinite` | `ended`
@@ -78,11 +78,11 @@ class GuardianStatus {
   /// Wie viele Monate Nachfrist bei `grace`?
   final int? graceMonths;
 
-  /// Wann wurde die E-Mail-Adresse des Elternteils geloescht?
+  /// Wann wurde die E-Mail-Adresse des Elternteils gelöscht?
   ///
   /// Migration 180: Mit dem Ende der Freigabe verschwindet die Adresse
   /// des Elternteils. Die App sagt das dem Nutzer - aber nur, wenn der
-  /// Server es bestaetigt. Deshalb kommt der Zeitpunkt von dort.
+  /// Server es bestätigt. Deshalb kommt der Zeitpunkt von dort.
   final DateTime? emailDeletedAt;
 
   final DateTime? confirmedAt;
@@ -96,10 +96,10 @@ class GuardianStatus {
 
   /// Warum der Stand NICHT gelesen werden konnte (null = kein Fehler).
   ///
-  /// NUR clientseitig - der Server weiss das nicht. Das Feld unterscheidet
-  /// "laedt noch" von "der Abruf ist gescheitert": ohne diese
+  /// NUR clientseitig - der Server weiß das nicht. Das Feld unterscheidet
+  /// "lädt noch" von "der Abruf ist gescheitert": ohne diese
   /// Unterscheidung zeigte der Elternbereich bei JEDEM Fehler einen
-  /// endlosen Ladekreis (BEFUND 06.11.2026: "Der Elternbereich laedt
+  /// endlosen Ladekreis (BEFUND 06.11.2026: "Der Elternbereich lädt
   /// ewig lang"). Der Nutzer hatte damit keinen Weg aus dem Bildschirm
   /// heraus.
   final String? loadError;
@@ -111,26 +111,26 @@ class GuardianStatus {
   /// anbieten (erneut versuchen), nicht ewig drehen.
   bool get isError => loadError != null;
 
-  /// Die Freigabe wartet auf die Bestaetigung des Elternteils.
+  /// Die Freigabe wartet auf die Bestätigung des Elternteils.
   bool get isPending => status == 'pending';
 
   /// Die Freigabe ist aktiv.
   bool get isActive => status == 'active';
 
-  /// Es gibt ueberhaupt eine Freigabe (aktiv oder wartend).
+  /// Es gibt überhaupt eine Freigabe (aktiv oder wartend).
   bool get hasConsent => isActive || isPending;
 
   /// Die Freigabe ist beendet - widerrufen oder abgelaufen.
   ///
   /// Das ist ein eigener Zustand und nicht dasselbe wie "es gab nie
   /// eine Freigabe": Der Jugendliche soll sehen, dass die Freigabe
-  /// existiert hat und dass sie endgueltig vorbei ist.
+  /// existiert hat und dass sie endgültig vorbei ist.
   bool get isEnded => status == 'revoked' || status == 'expired';
 
-  /// Die E-Mail-Adresse des Elternteils wurde geloescht.
+  /// Die E-Mail-Adresse des Elternteils wurde gelöscht.
   bool get isGuardianEmailDeleted => emailDeletedAt != null;
 
-  /// Der Nutzer ist minderjaehrig (16 oder 17).
+  /// Der Nutzer ist minderjährig (16 oder 17).
   bool get isMinor => (age ?? 0) > 0 && (age ?? 0) < 18;
 
   /// Der Nutzer ist gerade volljährig geworden.
@@ -176,8 +176,8 @@ class GuardianStatus {
   /// Der Stand, solange er nicht geladen ist.
   ///
   /// WICHTIG: `loaded` ist hier FALSCH. Ein unbekannter Stand ist nicht
-  /// "keine Aufsicht" - wer daraus schliesst "ich darf", macht die
-  /// Aufsicht unsichtbar. Die Aufrufer pruefen deshalb `isUnknown`.
+  /// "keine Aufsicht" - wer daraus schließt "ich darf", macht die
+  /// Aufsicht unsichtbar. Die Aufrufer prüfen deshalb `isUnknown`.
   static const GuardianStatus unknown = GuardianStatus();
 }
 
@@ -185,7 +185,7 @@ class GuardianStatus {
 ///
 /// Die Codes kommen aus den Ausnahmemeldungen der RPCs
 /// (`not_eligible`, `same_email`, `rate_limited`, ...). Sie werden im
-/// Bildschirm uebersetzt.
+/// Bildschirm übersetzt.
 class GuardianResult {
   const GuardianResult.ok() : code = null, message = null;
   const GuardianResult.failed(this.code, [this.message]);

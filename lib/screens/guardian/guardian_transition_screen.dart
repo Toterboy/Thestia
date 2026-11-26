@@ -12,12 +12,12 @@ import 'package:thestia/widgets/common/buttons.dart';
 /// Freigabe. Mit 18 entscheidet der Jugendliche selbst:
 ///
 ///   * Zugriff beenden,
-///   * fuer 1 bis 6 Monate weiter behalten,
+///   * für 1 bis 6 Monate weiter behalten,
 ///   * erstmal weiter behalten.
 ///
 /// Der Screen erscheint einmalig. Bis zur Entscheidung bleibt der
 /// Zugriff bestehen - das ist die Entscheidung des Betreibers
-/// ("wo man den Zugriff der Eltern entfernen, fuer 1-6 Monate weiter
+/// ("wo man den Zugriff der Eltern entfernen, für 1-6 Monate weiter
 /// behalten oder erstmal weiter behalten kann").
 class GuardianTransitionScreen extends ConsumerStatefulWidget {
   const GuardianTransitionScreen({super.key});

@@ -1,14 +1,14 @@
 // Der Verlauf des Zufallschats und der Relay-Eingang.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
-// lib/screens/swipe/random_chat_screen.dart 75 offene Zeilen und fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
+// lib/screens/swipe/random_chat_screen.dart 75 offene Zeilen und für
 // lib/screens/swipe/parts/zufallchatverbindung.dart 66 offene Zeilen.
-// Der groesste Teil davon war der Verlauf (die Nachrichtenliste wurde nie
-// gebaut) und der Weg, auf dem eine Nachricht ueber den Server-Relay
+// Der größte Teil davon war der Verlauf (die Nachrichtenliste wurde nie
+// gebaut) und der Weg, auf dem eine Nachricht über den Server-Relay
 // ANKOMMT - also genau der Weg, den der Nutzer nutzt, wenn das
 // Mobilfunknetz keine direkte Verbindung hinbekommt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Verlauf des Zufallschats steht da (die Nachricht des Partners
 //     und der eigene Text),
 //   * eine Relay-Nachricht kommt an - und kommt NICHT doppelt an,
@@ -16,7 +16,7 @@
 //   * eine Nachricht aus dem direkten Kanal kommt an,
 //   * der offene Datenkanal wird als "verbunden" angezeigt.
 //
-// OHNE ECHTE GERAETE: Der Zufallschat-Dienst, der P2P-Dienst und der
+// OHNE ECHTE GERÄTE: Der Zufallschat-Dienst, der P2P-Dienst und der
 // Relay-Dienst sind Hand-Attrappen (siehe zufallchat_hilfen.dart). Es
 // geht keine Anfrage ins Netz.
 import 'package:flutter/material.dart';
@@ -37,8 +37,8 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
-    // HIVE: die verschluesselten Schluessel (Signal-Protokoll) liegen in
-    // Hive-Boxen - ohne sie bleibt der Aufbau haengen.
+    // HIVE: die verschlüsselten Schlüssel (Signal-Protokoll) liegen in
+    // Hive-Boxen - ohne sie bleibt der Aufbau hängen.
     await mockHive();
     await initZufallChatServer();
   });
@@ -53,7 +53,7 @@ void main() {
     testWidgets('die Nachricht des Partners steht da', (tester) async {
       final aufbau = await baueZufallChat(tester, sitzung: partnerSession);
 
-      // Die Nachricht kommt an (wie ueber den direkten Kanal).
+      // Die Nachricht kommt an (wie über den direkten Kanal).
       aufbau.notifier.addMessage(
         'session-1',
         Message(
@@ -75,7 +75,7 @@ void main() {
             'Die Nachricht des Partners muss im Verlauf stehen - der '
             'Zufallschat ist ein echter Chat, kein Platzhalter.',
       );
-      // Und der Name der Gegenseite steht ueber der Nachricht.
+      // Und der Name der Gegenseite steht über der Nachricht.
       expect(find.text('Mira'), findsWidgets);
 
       await tester.pumpWidget(const SizedBox.shrink());
@@ -100,8 +100,8 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Mir geht es gut!'), findsOneWidget);
-      // Die eigene Nachricht traegt das "Du" (nicht den Namen der
-      // Gegenseite) - sonst wuerde der Nutzer denken, er schreibt sich
+      // Die eigene Nachricht trägt das "Du" (nicht den Namen der
+      // Gegenseite) - sonst würde der Nutzer denken, er schreibt sich
       // selbst.
       expect(find.text(L10n.tWithoutContext('chat.you')), findsWidgets);
 
@@ -113,7 +113,7 @@ void main() {
       await baueZufallChat(tester, sitzung: partnerSession);
 
       expect(tester.takeException(), isNull);
-      // Der leere Chat begruesst den Partner (mit seinem Namen).
+      // Der leere Chat begrüßt den Partner (mit seinem Namen).
       expect(
         find.textContaining('Mira'),
         findsWidgets,
@@ -131,7 +131,7 @@ void main() {
     testWidgets('eine Relay-Nachricht landet im Verlauf', (tester) async {
       final aufbau = await baueZufallChat(tester, sitzung: partnerSession);
 
-      // Der Server hat eine Zeile fuer den Partner liegen.
+      // Der Server hat eine Zeile für den Partner liegen.
       aufbau.relay.wartend.add(
         RelayMessage(
           id: 7,
@@ -175,7 +175,7 @@ void main() {
         ),
       );
 
-      // Der Ping und der Poll-Takt koennen dieselbe Zeile bringen.
+      // Der Ping und der Poll-Takt können dieselbe Zeile bringen.
       aufbau.p2p.ping();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -201,7 +201,7 @@ void main() {
     testWidgets('eine fremde Relay-Zeile bleibt liegen', (tester) async {
       final aufbau = await baueZufallChat(tester, sitzung: partnerSession);
 
-      // Die Zeile gehoert zu einem ANDEREN Chat.
+      // Die Zeile gehört zu einem ANDEREN Chat.
       aufbau.relay.wartend.add(
         RelayMessage(
           id: 8,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prueft, ob jede Funktion ihre ON-CONFLICT-Ziele auch bedienen kann.
+"""Prüft, ob jede Funktion ihre ON-CONFLICT-Ziele auch bedienen kann.
 
 WARUM (07.11.2026, Betreiber): "Bei Dating Hour finden sich die
 Partner nicht (zwei user drin (meine geräte)) und es passiert nichts."
@@ -9,15 +9,15 @@ DIE URSACHE: Die Paarungsrunde sagt
 der Unique-Index lautet aber
     CREATE UNIQUE INDEX ... (event_id, user_a, user_b) WHERE (ended_at IS NULL)
 
-Ein PARTIELLER Index traegt ein ON-CONFLICT-Ziel nur, wenn die
+Ein PARTIELLER Index trägt ein ON-CONFLICT-Ziel nur, wenn die
 Bedingung GENAU dieselbe ist. Sonst: 42P10 - und die Funktion
-arbeitet einfach nicht. Im Cron-Log faellt so etwas nicht auf; in der
+arbeitet einfach nicht. Im Cron-Log fällt so etwas nicht auf; in der
 App sieht man nur "sie suchen sich" und wartet.
 
-Diese Pruefung laeuft gegen die PRODUKTIVDATENBANK: sie fragt die
-tatsaechlichen Funktionen und die tatsaechlichen Indizes ab. Damit
-gilt sie fuer den Stand, der laeuft - nicht fuer eine Vermutung
-ueber den Quelltext.
+Diese Prüfung läuft gegen die PRODUKTIVDATENBANK: sie fragt die
+tatsächlichen Funktionen und die tatsächlichen Indizes ab. Damit
+gilt sie für den Stand, der läuft - nicht für eine Vermutung
+über den Quelltext.
 
 Aufruf::
 
@@ -34,8 +34,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -106,10 +106,10 @@ def query(sql_text):
 
 
 def norm(text):
-    """Normalisiert eine Bedingung fuer den Vergleich.
+    """Normalisiert eine Bedingung für den Vergleich.
 
-    Leerzeichen egal, aber der Wortlaut muss uebereinstimmen - ein
-    Index mit "ended_at IS NULL" traegt ein Konflikt-Ziel nur bei
+    Leerzeichen egal, aber der Wortlaut muss übereinstimmen - ein
+    Index mit "ended_at IS NULL" trägt ein Konflikt-Ziel nur bei
     genau "ended_at IS NULL".
     """
     if not text:

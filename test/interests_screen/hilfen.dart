@@ -1,19 +1,19 @@
-// Die Helfer fuer die Tests des Bildschirms 'interessen_screen'.
+// Die Helfer für die Tests des Bildschirms 'interessen_screen'.
 //
 // DER WEG: Die Testdatei war zu lang (> 1000 Zeilen). Die Helfer
 // (Ersatz-Speicher, Aufbau, Bildschirm-Helfer) liegen hier -
 // die Tests selbst sind nach Themen auf eigene Dateien verteilt.
 
-// Widget-Tests fuer den Screen "Interessen" (Reiter der Startseite).
+// Widget-Tests für den Screen "Interessen" (Reiter der Startseite).
 //
-// ANLASS: Die Coverage-Messung (13.11.2026) zeigte fuer
+// ANLASS: Die Coverage-Messung (13.11.2026) zeigte für
 // lib/screens/interests/interessen_screen.dart 835 offene Zeilen - der
-// Screen war die groesste Luecke der App. Er ist die Antwort auf die
+// Screen war die größte Lücke der App. Er ist die Antwort auf die
 // Frage "was ist mit meinem Like passiert?" - und genau dort hat der
 // Betreiber im November 2026 mehrere Befunde gemeldet (Funke
 // verschwunden, Reiter springt, Leerzustand sah wie ein Fehler aus).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Screen baut sich (kein Absturz, kein Render-Overflow),
 //   * der Leerzustand steht da (nicht "nichts gefunden", sondern der
 //     ausgeschriebene Leerzustand),
@@ -22,17 +22,17 @@
 //   * ein fehlgeschlagener Abruf zeigt den Fehler MIT Wiederholen -
 //     nicht die leere Liste (BEFUND 13.11.2026: "Außerdem ist mein
 //     Funke verschwunden"),
-//   * der Mehrfach-Auswahl-Modus blendet die gewaehlten Funken aus.
+//   * der Mehrfach-Auswahl-Modus blendet die gewählten Funken aus.
 //
 // OHNE SERVER: Der Find-your-Match-Service wird durch einen Hand-Fake
 // ersetzt (siehe [_FakeFindYourMatchService]). Der Supabase-Client wird
-// nur initialisiert, damit der Screen seinen Serverstand ueberhaupt
+// nur initialisiert, damit der Screen seinen Serverstand überhaupt
 // abfragt - es geht KEINE Anfrage raus (alle Aufrufe landen im Fake).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:thestia/models/chat/find_match_models.dart';
 import 'package:thestia/models/profile/user_profile.dart';
 import 'package:thestia/routing/app_router.dart';
@@ -70,11 +70,11 @@ class FakeFindYourMatchService extends FindYourMatchService {
   /// Der Ersatz-Server - der Fake liest daraus, was der Server bekommen
   /// hat.
   ///
-  /// DER GRUND: Ein automatisch entstandener Funke wird ueber die RPC
-  /// "resolve_dating_hour_auto_match" geloescht. Der Server ist die
+  /// DER GRUND: Ein automatisch entstandener Funke wird über die RPC
+  /// "resolve_dating_hour_auto_match" gelöscht. Der Server ist die
   /// Wahrheit - also filtert der Fake den Funke weg, sobald die RPC mit
-  /// "Person entfernen" angekommen ist. Sonst wuerde der Funke nach dem
-  /// Neuladen wieder dastehen, obwohl er beim Server geloescht wurde.
+  /// "Person entfernen" angekommen ist. Sonst würde der Funke nach dem
+  /// Neuladen wieder dastehen, obwohl er beim Server gelöscht wurde.
   FakeSupabaseServer? server;
 
   /// Eigene (gesendete) Likes.
@@ -92,7 +92,7 @@ class FakeFindYourMatchService extends FindYourMatchService {
   /// Die IDs der ausgeblendeten Funken.
   final List<int> ausgeblendet = [];
 
-  /// Die IDs der gekuehlten Funken.
+  /// Die IDs der gekühlten Funken.
   final List<int> gekuehlt = [];
 
   /// Die beantworteten Likes (ID und ob angenommen).
@@ -101,10 +101,10 @@ class FakeFindYourMatchService extends FindYourMatchService {
   /// Die ausgeblendeten Likes (nur ausgeblendet, nicht abgelehnt).
   final List<int> ausgeblendeteLikes = [];
 
-  /// Die endgueltig beendeten Funken.
+  /// Die endgültig beendeten Funken.
   final List<int> beendet = [];
 
-  /// Die wieder entzuendeten Funken.
+  /// Die wieder entzündeten Funken.
   final List<int> wiederEntzuend = [];
 
   /// Wenn gesetzt, wirft [coolMatch] diesen Fehler.
@@ -122,7 +122,7 @@ class FakeFindYourMatchService extends FindYourMatchService {
   /// Wie oft wurden die Funken geladen?
   ///
   /// DER GRUND: Damit sieht ein Test, dass wirklich neu geladen wurde -
-  /// am Bildschirm aendert sich beim Nachladen oft nichts.
+  /// am Bildschirm ändert sich beim Nachladen oft nichts.
   int matchesAufrufe = 0;
 
   /// Wie oft wurden die eigenen (gesendeten) Likes geladen?
@@ -140,7 +140,7 @@ class FakeFindYourMatchService extends FindYourMatchService {
     matchesAufrufe++;
     final fehler = ladeFehler;
     if (fehler != null) throw fehler;
-    // Der automatische Funke, der beim Server geloescht wurde, ist auch
+    // Der automatische Funke, der beim Server gelöscht wurde, ist auch
     // hier weg (der Server ist die Wahrheit).
     final geloeschte = server?.rpcAufrufe
         .where(
@@ -213,10 +213,10 @@ MatchWithState funke({
     failedAttempts: 0,
     createdVia: 'swipe',
     status: status,
-    // FRISCH: ein alter Funke wuerde von der Auto-Kuehlung (72 h) erfasst.
+    // FRISCH: ein alter Funke würde von der Auto-Kühlung (72 h) erfasst.
     createdAt: erstellt ?? DateTime.now(),
     // AUTOMATISCH: der Funke kam nach 10 Minuten Dating Hour zustande und
-    // wurde NICHT von beiden Seiten bestaetigt (Migration 177).
+    // wurde NICHT von beiden Seiten bestätigt (Migration 177).
     autoMatch: autoMatch,
   );
 }
@@ -266,8 +266,8 @@ Future<FakeFindYourMatchService> interessenScreenPump(
       child: MaterialApp.router(
         theme: ThemeData(useMaterial3: true),
         routerConfig: router,
-        // Die MediaQuery sitzt im `builder` - eine aeussere MediaQuery
-        // wuerde vom MaterialApp ueberschrieben.
+        // Die MediaQuery sitzt im `builder` - eine äussere MediaQuery
+        // würde vom MaterialApp überschrieben.
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(
             context,

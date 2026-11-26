@@ -1,6 +1,6 @@
 // Der Audio-Player der Vorstellung.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/profile/intro_audio_player.dart 60 offene Zeilen bei 36 %
 // Abdeckung - das ganze Widget war ungetestet.
 //
@@ -8,9 +8,9 @@
 // (er kann antworten, nichts liefern oder scheitern). Der Audio-Player
 // ist der Ersatz aus test/support/plugin_mocks.dart.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * das Abspielen startet (der Knopf wird zum Stopp-Knopf),
-//   * der Balken und die Zeit stehen da, WAEHREND es laeuft (das war ein
+//   * der Balken und die Zeit stehen da, WÄHREND es läuft (das war ein
 //     Wunsch des Betreibers: "eine Zeitanzeige mit Balken"),
 //   * das Stoppen macht aus dem Stopp-Knopf wieder einen Play-Knopf,
 //   * gibt es keine Vorstellung, steht das dem Nutzer auch da (nicht ein

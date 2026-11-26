@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// Kennzahlen-Zeile fuer den Admin-Screen.
+/// Kennzahlen-Zeile für den Admin-Screen.
 ///
 /// Der Admin-Bereich hat sechs Tabs, aber nur ZWEI davon erzeugen Arbeit
 /// (Meldungen und Bugs). Vorher musste der Admin an einem Symbol mit
-/// Ziffernpunkt erkennen, dass in einem Tab etwas liegt - dafuer musste er
+/// Ziffernpunkt erkennen, dass in einem Tab etwas liegt - dafür musste er
 /// alle sechs Tabs durchklicken.
 ///
 /// Die Zeile beantwortet die Frage "wo muss ich hin" in einer Zeile, ohne
-/// selbst Navigation zu uebernehmen: jede Kachel ist als Ganzes antippbar
+/// selbst Navigation zu übernehmen: jede Kachel ist als Ganzes antippbar
 /// und meldet [onTap]. Die Farbe unterscheidet "hier ist Arbeit" (error-
-/// Container) von "nichts offen" (surface), damit die Prioritaet auch ohne
+/// Container) von "nichts offen" (surface), damit die Priorität auch ohne
 /// Zahl lesbar ist.
 ///
-/// Warum Zaehler und nicht Badges an den Tabs: die Tabs sind sechs gleich
-///rangige Kacheln, eine Kennzahl an einer davon wuerde behaupten, die
-/// anderen waeren unwichtig. Ausserdem ist die Zeile lesbar, ohne dass der
+/// Warum Zähler und nicht Badges an den Tabs: die Tabs sind sechs gleich
+///rangige Kacheln, eine Kennzahl an einer davon würde behaupten, die
+/// anderen wären unwichtig. Außerdem ist die Zeile lesbar, ohne dass der
 /// Admin scrollen muss.
 class AdminMetricRow extends StatelessWidget {
   const AdminMetricRow({super.key, required this.metrics});
@@ -57,14 +57,14 @@ class AdminMetric {
   /// Kurzbezeichnung der Kennzahl (z. B. "Offene Meldungen").
   final String label;
 
-  /// Der Zahlenwert als Text. Als String uebergeben, damit ein Wert wie
+  /// Der Zahlenwert als Text. Als String übergeben, damit ein Wert wie
   /// "> 99" darstellbar bleibt, ohne eine eigene Formatierungslogik.
   final String value;
 
   /// Optionale zweite Zeile (z. B. "letzte 24 Stunden").
   final String? subtitle;
 
-  /// `true` faerbt die Kachel als "hier liegt Arbeit". Nicht nur Deko:
+  /// `true` färbt die Kachel als "hier liegt Arbeit". Nicht nur Deko:
   /// die Kennzahlen-Zeile muss auch bei farbloser Wahrnehmung erkennbar
   /// bleiben, daher bleibt die Zahl immer sichtbar.
   final bool urgent;
@@ -110,7 +110,7 @@ class _MetricTile extends StatelessWidget {
               color: fg,
               fontWeight: FontWeight.w700,
               // Tabellarische Ziffern: die Zahl springt nicht, wenn sie
-              // sich aendert. Ohne das zappelt die Zeile bei jedem
+              // sich ändert. Ohne das zappelt die Zeile bei jedem
               // Nachladen.
               fontFeatures: const [FontFeature.tabularFigures()],
             ),

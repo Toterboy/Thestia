@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Der Aufbau
 // liegt in einer ERWEITERUNG auf dieselbe Klasse - die lokalen
 // Variablen des Aufbaus wandern mit, das Verhalten bleibt also
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -14,8 +14,8 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
   Widget _baueProfil(BuildContext context) {
     final profile = ref.watch(profileProvider);
 
-    // Suchradius fuer Minderjaehrige (BETREIBER-ENTSCHEIDUNG 03.11.2026):
-    // hoechstens 25 km ODER nur das gleiche Bundesland; "Ganz Deutschland"
+    // Suchradius für Minderjährige (BETREIBER-ENTSCHEIDUNG 03.11.2026):
+    // höchstens 25 km ODER nur das gleiche Bundesland; "Ganz Deutschland"
     // ist gesperrt. Der SERVER entscheidet (Migration 164) - hier wird
     // nur das Angebot angepasst.
     //
@@ -31,8 +31,8 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
     //
     // WICHTIG: Die Snapshot-Felder werden MITVERAENDERT. Sie sind der
     // Vergleichspunkt der Dirty-Erkennung - ohne dieses Mitschreiben
-    // waere der Screen nach der Korrektur "veraendert" und der Nutzer
-    // bekäme beim Zurueck eine "Aenderungen verwerfen?"-Nachfrage, die
+    // wäre der Screen nach der Korrektur "verändert" und der Nutzer
+    // bekäme beim Zurück eine "Änderungen verwerfen?"-Nachfrage, die
     // gar nicht von ihm stammt.
     if (radiusGesperrt) {
       final prefs = ref.read(userPreferencesProvider);
@@ -216,8 +216,8 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
                 _field(
                   child: DropdownButtonFormField<Gender>(
                     initialValue: _gender,
-                    // isExpanded: der gewaehlte Text wird sonst in seiner
-                    // vollen Breite neben dem Pfeil gesetzt und laeuft bei
+                    // isExpanded: der gewählte Text wird sonst in seiner
+                    // vollen Breite neben dem Pfeil gesetzt und läuft bei
                     // langen Labels (z. B. "Männlich (F to M)") aus dem
                     // Feld heraus.
                     isExpanded: true,
@@ -306,7 +306,7 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
-                // v0.10.0: Das Stadtfeld ist entfallen. Uebrig bleibt ein
+                // v0.10.0: Das Stadtfeld ist entfallen. Übrig bleibt ein
                 // Knopf, der das Bundesland aus dem aktuellen GPS-Standort
                 // ableitet. Er sitzt jetzt am Bundesland-Dropdown, weil ein
                 // Knopf ohne Eingabefeld keinen Platz hat.
@@ -430,7 +430,7 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
                       ),
                       DropdownMenuItem(
                         value: DistanceFilterMode.germany,
-                        // Fuer Minderjaehrige gesperrt (Migration 164) -
+                        // Für Minderjährige gesperrt (Migration 164) -
                         // ausgegraut statt versteckt, damit klar ist,
                         // dass es die Option gibt und warum sie nicht
                         // geht.
@@ -478,12 +478,12 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
                         // dem Profil - und damit genau der Wert, den der
                         // Server vergleicht (profiles.state, Migration 169).
                         //
-                        // Vorher standen hier Kuerzel ("BY"), die in der
+                        // Vorher standen hier Kürzel ("BY"), die in der
                         // Spalte preferred_state landeten. Die Spalte hat
                         // einen CHECK-Constraint, der Beziehungswerte
-                        // erlaubt und keine Bundeslaender - die Auswahl
+                        // erlaubt und keine Bundesländer - die Auswahl
                         // wurde also stillschweigend verworfen. Der Modus
-                        // "Bundesland" filterte dadurch ueberhaupt nichts.
+                        // "Bundesland" filterte dadurch überhaupt nichts.
                         items: kGermanStates
                             .map(
                               (st) => DropdownMenuItem(
@@ -496,7 +496,7 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
                           if (v != null) {
                             // Das Feld _stateCtrl ist das Bundesland des
                             // Profils - es wird mit dem Speichern-Botton
-                            // mitgeschickt. Der Filter laeuft also ueber
+                            // mitgeschickt. Der Filter läuft also über
                             // denselben Wert, den das Profil anzeigt.
                             _stateCtrl.text = v;
                             _syncDirtyFlag();
@@ -512,8 +512,8 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
                       );
                     }
                     // Der Wert wird geklemmt angezeigt: ein gespeicherter
-                    // Radius ueber der Grenze wuerde sonst die Slider-
-                    // Assertion ausloesen (value muss zwischen min und max
+                    // Radius über der Grenze würde sonst die Slider-
+                    // Assertion auslösen (value muss zwischen min und max
                     // liegen).
                     final radiusWert = prefs.maxDistanceKm.clamp(
                       1,
@@ -561,7 +561,7 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
                     final settings = ref.watch(settingsProvider);
                     final myAge = ref.watch(profileProvider).age;
                     // Fallback 18 (erwachsen), solange das Geburtsdatum noch
-                    // nicht geladen ist - 16 wuerde Minderj.-Grenzen (16-19)
+                    // nicht geladen ist - 16 würde Minderj.-Grenzen (16-19)
                     // erzwingen und die gespeicherte Spanne verhunzen.
                     final viewerAge = myAge ?? 18;
                     final boundsMin = AgeSafetyRules.minFilterAge(viewerAge);
@@ -651,7 +651,7 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
                         ),
                         const SizedBox(height: 16),
                         // Dealbreaker (v0.8.0): harter Filter - Kandidaten
-                        // mit hoeberem Konsum werden serverseitig
+                        // mit höberem Konsum werden serverseitig
                         // ausgeschlossen.
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
@@ -771,9 +771,9 @@ extension _ProfileEditScreenBuild on _ProfileEditScreenState {
                         BirthdayStylePicker(
                           selected: _birthdayStyle,
                           // GROSSE Vorschau (v0.10.0). Ohne dieses Flag
-                          // zeigt der Picker fuenf kleine Kacheln - das war
+                          // zeigt der Picker fünf kleine Kacheln - das war
                           // die Beanstandung "nur ein kleines Bild". Die
-                          // grosse Vorschau zeigt den Stil in voller
+                          // große Vorschau zeigt den Stil in voller
                           // Profilbreite, darunter die Segment-Reihe zum
                           // Wechseln.
                           large: true,

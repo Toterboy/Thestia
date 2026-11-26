@@ -1,27 +1,27 @@
 Kennenlernen nach Interessen
 
 In "Find your Spark" gibt es jetzt zwei Wege: die Zufallsvorstellung
-wie bisher - oder du stoeberst in deinen Interessen. Du siehst, wer
-zu "Musik", "Sport" oder "Gaming" gehoert, liest die textliche
+wie bisher - oder du stöberst in deinen Interessen. Du siehst, wer
+zu "Musik", "Sport" oder "Gaming" gehört, liest die textliche
 Vorstellung und kannst liken. Die Altersgrenze gilt dabei genau so
-streng wie ueberall sonst: 16- und 17-Jaehrige sehen ausschliesslich
-16- und 17-Jaehrige.
+streng wie überall sonst: 16- und 17-Jährige sehen ausschließlich
+16- und 17-Jährige.
 
 Deine Vorstellung reicht als Text
 
-Bisher war die Aufnahme Pflicht. Jetzt genuegt dein Text - die
-Aufnahme ist optional. Wenn sie da ist, wird sie weiter verschluesselt
-gespeichert und erst gehoert, wenn es einen Funke gibt.
+Bisher war die Aufnahme Pflicht. Jetzt genügt dein Text - die
+Aufnahme ist optional. Wenn sie da ist, wird sie weiter verschlüsselt
+gespeichert und erst gehört, wenn es einen Funke gibt.
 
 Bilder im Chat sind wieder sichtbar
 
 Bilder, die im Chat geschickt wurden, wurden nur noch als Platzhalter
 angezeigt. Jetzt ist das Bild zu sehen - und bleibt beim Verpixeln
-geschuetzt, bis du es selbst freigibst.
+geschützt, bis du es selbst freigibst.
 
 Deine Vorstellung hat jetzt eine Zeitanzeige
 
-Beim Anhoeren der Vorstellung siehst du jetzt, wie lang sie ist und
+Beim Anhören der Vorstellung siehst du jetzt, wie lang sie ist und
 wie weit du schon bist - mit einem Balken und der Zeit.
 
 Deine Profilbilder bleiben
@@ -29,8 +29,8 @@ Deine Profilbilder bleiben
 Nach dem Speichern waren die Bilder in den Kacheln zwei und drei
 wieder verschwunden. Das ist behoben.
 
-Kleinigkeiten im Menue
+Kleinigkeiten im Menü
 
-Das Drei-Punkte-Menue ist jetzt geordnet: jede Gruppe hat eine
-Ueberschrift, und der Bildschirm laesst sich mit einer Wischgeste
-schliessen, ohne dass im Hintergrund weitergescrollt wird.
+Das Drei-Punkte-Menü ist jetzt geordnet: jede Gruppe hat eine
+Überschrift, und der Bildschirm lässt sich mit einer Wischgeste
+schließen, ohne dass im Hintergrund weitergescrollt wird.

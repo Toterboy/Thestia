@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -47,7 +47,7 @@ extension _EinrichtungAbschluss on _SettingsPrivacyOnceScreenState {
   }
 
   Future<void> _detectLocation() async {
-    // Doppelaufruf verhindern: setState wirkt erst naechsten Frame,
+    // Doppelaufruf verhindern: setState wirkt erst nächsten Frame,
     // daher ist _isDetectingLocation hier noch false.
     if (_isDetectingLocation) return;
     _setzeState(() {
@@ -72,10 +72,10 @@ extension _EinrichtungAbschluss on _SettingsPrivacyOnceScreenState {
         return;
       }
 
-      // Plausibilitaets-Check gegen die BISHERIGEN Standorte dieses
-      // Geraets (lokal). Ein serverseitiger Abgleich mit fremden Accounts
-      // existiert bewusst nicht - der Server prueft separat eigene
-      // Positions-Spruenge (>15 km / >300 km/h) via process-location-check.
+      // Plausibilitäts-Check gegen die BISHERIGEN Standorte dieses
+      // Geräts (lokal). Ein serverseitiger Abgleich mit fremden Accounts
+      // existiert bewusst nicht - der Server prüft separat eigene
+      // Positions-Sprünge (>15 km / >300 km/h) via process-location-check.
       // isLocationSuspicious liest den Secure Storage (async) - in dieser
       // Zeit kann der Screen verlassen worden sein.
       final suspicious = await locationService.isLocationSuspicious(position);
@@ -88,10 +88,10 @@ extension _EinrichtungAbschluss on _SettingsPrivacyOnceScreenState {
         return;
       }
 
-      // v0.10.0: Nur noch das Bundesland als Anzeige. Frueher stand hier
+      // v0.10.0: Nur noch das Bundesland als Anzeige. Früher stand hier
       // der ORTSNAME (via der Geocoder-Hilfe in geo_names.dart) und wurde
       // nach profiles.city geschrieben - damit war der Aufenthaltsort
-      // bis auf ~11 km genau oeffentlich, auch direkt per PostgREST
+      // bis auf ~11 km genau öffentlich, auch direkt per PostgREST
       // (Migration 135).
       //
       // Die Koordinaten werden auf 5-km-Raster gerundet, BEVOR sie
@@ -101,12 +101,12 @@ extension _EinrichtungAbschluss on _SettingsPrivacyOnceScreenState {
         position.latitude,
         position.longitude,
       );
-      // Bundesland fuer die Anzeige. Ohne Treffer wird NICHT geraten -
-      // der Nutzer waehlt es dann von Hand aus der Liste.
+      // Bundesland für die Anzeige. Ohne Treffer wird NICHT geraten -
+      // der Nutzer wählt es dann von Hand aus der Liste.
       final detectedState = await describeStateFor(snapped.lat, snapped.lng);
       if (!mounted) return;
 
-      // Koordinaten lokal UND serverseitig persistieren - sonst koennen
+      // Koordinaten lokal UND serverseitig persistieren - sonst können
       // Entfernungen zu anderen Nutzern nicht berechnet werden.
       await ref
           .read(profileProvider.notifier)
@@ -140,12 +140,12 @@ extension _EinrichtungAbschluss on _SettingsPrivacyOnceScreenState {
                 }),
               );
 
-              // v0.10.0: Die Koordinaten gehoeren nach profile_locations -
+              // v0.10.0: Die Koordinaten gehören nach profile_locations -
               // die einzige Tabelle, in der die exakten Werte liegen und
-              // die nur der Eigentuemer lesen kann. Ohne diesen Schritt
+              // die nur der Eigentümer lesen kann. Ohne diesen Schritt
               // bleibt die Tabelle leer und die Entfernungsanzeige
-              // entfaellt (Migration 135 hatte sie nur befuellt fuer
-              // Bestandsprofile, nicht fuer neue Accounts).
+              // entfällt (Migration 135 hatte sie nur befällt für
+              // Bestandsprofile, nicht für neue Accounts).
               await ref
                   .read(supabaseDatabaseServiceProvider)
                   .saveOwnLocation(snapped.lat, snapped.lng);
@@ -155,13 +155,13 @@ extension _EinrichtungAbschluss on _SettingsPrivacyOnceScreenState {
       }
 
       // Der Nutzer kann den Schritt inzwischen verlassen haben - dann
-      // waere das setState ein Absturz.
+      // wäre das setState ein Absturz.
       if (!mounted) return;
       _setzeState(() {
         _isDetectingLocation = false;
         _locationError = null;
-        // Das erkannte Bundesland in die Auswahl uebernehmen, damit der
-        // Nutzer es bestaetigen oder korrigieren kann. Ohne Treffer
+        // Das erkannte Bundesland in die Auswahl übernehmen, damit der
+        // Nutzer es bestätigen oder korrigieren kann. Ohne Treffer
         // bleibt die bisherige Wahl stehen.
         if (detectedState != null) _selectedState = detectedState;
       });
@@ -197,9 +197,9 @@ extension _EinrichtungAbschluss on _SettingsPrivacyOnceScreenState {
     }
     final prefsNotifier = ref.read(userPreferencesProvider.notifier);
     // v0.10.0: Der Stadt-Sync ist entfallen. Der Ortsname war das
-    // eigentlich sensible Datum - oeffentlich lesbar fuer jeden
-    // angemeldeten Nutzer (Migration 135). Das Bundesland wird ueber
-    // _saveProfileExtras geschrieben, die Koordinaten ueber
+    // eigentlich sensible Datum - öffentlich lesbar für jeden
+    // angemeldeten Nutzer (Migration 135). Das Bundesland wird über
+    // _saveProfileExtras geschrieben, die Koordinaten über
     // _detectLocation.
     await _saveHabitudes();
     await _saveBirthdayStyle();

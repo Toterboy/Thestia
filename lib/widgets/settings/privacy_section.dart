@@ -11,7 +11,7 @@ import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/utils/location/age_safety_rules.dart';
 import 'package:thestia/widgets/common/selectable_tile.dart';
 
-/// Schwarzflaeche fuer den Entfernungs-Schalter.
+/// Schwarzfläche für den Entfernungs-Schalter.
 ///
 /// Fast schwarz statt #000: reines Schwarz neben dem warmen
 /// Markenlila wirkt wie ein Loch im Bild. Der Wert liegt auch im
@@ -24,17 +24,17 @@ class PrivacySectionCard extends ConsumerWidget {
 
   final bool readOnly;
 
-  /// Begrenzt die Hoehe. Im Store-Bild soll der Abschnitt als kompakte
+  /// Begrenzt die Höhe. Im Store-Bild soll der Abschnitt als kompakte
   /// Kachel erscheinen und nicht als halber Bildschirm. `null` = wie in
   /// der App (unbegrenzt).
   final double? maxHeight;
 
-  /// Wechselt die Sichtbarkeit - inklusive Rueckfrage vor dem Pausieren.
+  /// Wechselt die Sichtbarkeit - inklusive Rückfrage vor dem Pausieren.
   ///
   /// Eigene Methode statt eines async-Closures im `onChanged`: der
   /// Parameter dort ist ein `ValueChanged`, also `void Function(T?)`.
-  /// Ein `async`-Literal passt nur ueber Kontextableitung, und die geht
-  /// durch `readOnly ? null : ...` verloren. Ausserdem gehoert in einen
+  /// Ein `async`-Literal passt nur über Kontextableitung, und die geht
+  /// durch `readOnly ? null : ...` verloren. Außerdem gehört in einen
   /// Callback kein `await` - der Aufrufer kann nicht darauf warten.
   Future<void> _handleVisibility(
     BuildContext context,
@@ -75,7 +75,7 @@ class PrivacySectionCard extends ConsumerWidget {
     await ref.read(settingsProvider.notifier).setProfileVisibility(val);
 
     if (!context.mounted) return;
-    // Meldung nur bei echten Pause-UEBERGAENGEn - der Wechsel
+    // Meldung nur bei echten Pause-Übergängen - der Wechsel
     // Jeder <-> Nur Funken hat mit der Pause nichts zu tun.
     final warPause = settings.profileVisibility == ProfileVisibility.hidden;
     final istPause = val == ProfileVisibility.hidden;
@@ -99,11 +99,11 @@ class PrivacySectionCard extends ConsumerWidget {
     final notifier = ref.read(settingsProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
 
-    // MINDERJAEHRIGE (16-17): die grobe Entfernung duerfen sie nicht
+    // MINDERJÄHRIGE (16-17): die grobe Entfernung dürfen sie nicht
     // anzeigen (Betreiber-Entscheidung 02.11.2026).
     //
     // Die App kennt nur das deklarierte Alter - das verifizierte steht
-    // nicht im eigenen Profil. Fuer die Anzeige reicht das: die
+    // nicht im eigenen Profil. Für die Anzeige reicht das: die
     // Datenbank entscheidet ohnehin nach dem verifizierten Alter
     // (`profile_distance_km`, Migration 163).
     //
@@ -161,9 +161,9 @@ class PrivacySectionCard extends ConsumerWidget {
             // heraus. Jetzt wechselt er mit denselben Farben wie jeder
             // andere Schalter der App.
             //
-            // Outline statt surfaceVariant fuer den ausgeschalteten
+            // Outline statt surfaceVariant für den ausgeschalteten
             // Zustand: die Kachel ist immer dunkel, auch im hellen
-            // Erscheinungsbild. `surfaceVariant` waere dort fast
+            // Erscheinungsbild. `surfaceVariant` wäre dort fast
             // unsichtbar.
             SwitchListTile.adaptive(
               tileColor: _abgesetzterKasten,
@@ -184,7 +184,7 @@ class PrivacySectionCard extends ConsumerWidget {
                     : scheme.outlineVariant,
               ),
               // Auf schwarzem Grund muss der Text hell sein - die
-              // Theme-Farben sind fuer den hellen Modus gesetzt.
+              // Theme-Farben sind für den hellen Modus gesetzt.
               title: Text(
                 L10n.t(context, 'settings.showDistance'),
                 style: const TextStyle(
@@ -198,10 +198,10 @@ class PrivacySectionCard extends ConsumerWidget {
                     : L10n.t(context, 'settings.showDistanceSub'),
                 style: const TextStyle(color: Color(0xFFC9C4D2), height: 1.35),
               ),
-              // Bei Minderjaehrigen ist der Schalter gesperrt und der
+              // Bei Minderjährigen ist der Schalter gesperrt und der
               // Wert bleibt aus - auch wenn er im Server (etwa aus
-              // einer aelteren Version) noch auf true steht. Sonst
-              // waere die Anzeige aktiv, es kaeme aber keine
+              // einer älteren Version) noch auf true steht. Sonst
+              // wäre die Anzeige aktiv, es käme aber keine
               // Entfernung an: das sieht wie ein Fehler aus.
               value: entfernungGesperrt ? false : settings.showDistance,
               onChanged: entfernungGesperrt
@@ -287,11 +287,11 @@ class PrivacySectionCard extends ConsumerWidget {
   }
 }
 
-/// Ein Schalter fuer das oeffentliche Profil.
+/// Ein Schalter für das öffentliche Profil.
 ///
 /// NUTZERWUNSCH (22.11.2026): Die Punkte (Musik, Lieblingssong,
-/// Lieblings-Kuenstler) und die Gewohnheiten sollen je einzeln
-/// ein- und ausgeschaltet werden koennen.
+/// Lieblings-Künstler) und die Gewohnheiten sollen je einzeln
+/// ein- und ausgeschaltet werden können.
 class _OeffentlicherSchalter {
   const _OeffentlicherSchalter(this.titelKey, this.lesen, this.setzen);
 
@@ -309,8 +309,8 @@ class _OeffentlicherSchalter {
 ///
 /// Von `_SectionTitle` in `settings_screen.dart` dupliziert statt
 /// exportiert: der Screen hat rund ein Dutzend solcher Titel, und ein
-/// `part`-Verhaeltnis waere fuer ein Screenshot-Widget die schlechtere
-/// Loesung. Der Doppelpflege-Bereich ist eine Zeile Farbe.
+/// `part`-Verhältnis wäre für ein Screenshot-Widget die schlechtere
+/// Lösung. Der Doppelpflege-Bereich ist eine Zeile Farbe.
 class PrivacySectionTitle extends StatelessWidget {
   const PrivacySectionTitle(this.text, {super.key});
 

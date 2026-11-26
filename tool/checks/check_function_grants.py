@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prueft, ob jede Funktion, die die App aufruft, auch aufrufbar ist.
+"""Prüft, ob jede Funktion, die die App aufruft, auch aufrufbar ist.
 
 BEFUND (07.11.2026, Betreiber): "Blockierte-Liste mit Entblockieren" -
 die Liste war da, aber das Entblockieren hat NIE funktioniert.
@@ -7,7 +7,7 @@ die Liste war da, aber das Entblockieren hat NIE funktioniert.
 DIE URSACHE (live gemessen): Der Aufruf antwortete mit
   HTTP 403  permission denied for function unblock_user
 Die Funktion public.unblock_user ist SECURITY DEFINER und existiert -
-aber die Rolle "authenticated" hat KEIN Ausfuehrungsrecht darauf.
+aber die Rolle "authenticated" hat KEIN Ausführungsrecht darauf.
 Bei der Rechte-Revoke-Migration (123) wurde sie vergessen: Ihre
 Schwester block_user hat das Recht, unblock_user nicht.
 
@@ -16,12 +16,12 @@ still. Die App zeigt "Entblockieren fehlgeschlagen", der Nutzer glaubt,
 es liege an ihm. Und es kann an jeder der ~180 Funktionen passieren -
 ein fehlendes GRANT sieht man im Quelltext nicht.
 
-Diese Pruefung macht das sichtbar:
+Diese Prüfung macht das sichtbar:
   1. Sie sammelt ALLE RPC-Namen, die der Client (Dart) und die
      Edge Functions (TypeScript) aufrufen.
   2. Sie fragt die PRODUKTIVDATENBANK, welche Rechte die Rolle
-     "authenticated" tatsaechlich hat.
-  3. Jede aufgerufene Funktion ohne Ausfuehrungsrecht wird gemeldet.
+     "authenticated" tatsächlich hat.
+  3. Jede aufgerufene Funktion ohne Ausführungsrecht wird gemeldet.
 
 Aufruf::
 
@@ -39,8 +39,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -69,15 +69,15 @@ SELECT p.proname,
  ORDER BY p.proname, sig;
 """
 
-# Die Ausnahmen: Funktionen, die bewusst fuer "anon" offen sind.
+# Die Ausnahmen: Funktionen, die bewusst für "anon" offen sind.
 #
-# * check_email_ban_status - wird VOR der Anmeldung geprueft
+# * check_email_ban_status - wird VOR der Anmeldung geprüft
 #   (Registrierung: ist diese E-Mail gesperrt?).
 # * distance_bucket_km, snap_location_to_grid - reine Rechnungen, sie
 #   lesen und schreiben nichts.
 #
-# Alles andere, was der Client aufruft, gehoert einem angemeldeten
-# Nutzer: sonst koennte jemand ohne Konto Likes setzen, Funken
+# Alles andere, was der Client aufruft, gehört einem angemeldeten
+# Nutzer: sonst kännte jemand ohne Konto Likes setzen, Funken
 # erzeugen oder Nachrichten zustellen.
 ANON_ERLAUBT = {
     "check_email_ban_status": "wird vor der Anmeldung geprueft",
@@ -150,7 +150,7 @@ def main() -> int:
         print("  ! Die Funktionen sind nicht lesbar: %s" % (fehler or "")[:300])
         return 1
 
-    # Nach Namen gruppieren: eine Funktion kann mehrere Ueberladungen
+    # Nach Namen gruppieren: eine Funktion kann mehrere Überladungen
     # haben (z. B. match_proximity_spark mit 5 und 6 Parametern).
     nach_name = {}
     for f in funktionen:
@@ -162,14 +162,14 @@ def main() -> int:
         if not eintraege:
             fehlend.append((name, None, "Die Funktion gibt es nicht."))
             continue
-        # Der Dart-Client nutzt den oeffentlichen Schluessel. Ohne
+        # Der Dart-Client nutzt den öffentlichen Schlüssel. Ohne
         # Anmeldung ist das die Rolle "anon", mit Anmeldung
         # "authenticated". Mindestens EINE der beiden muss die Funktion
-        # ausfuehren duerfen - und mindestens EINE Ueberladung.
+        # ausführen dürfen - und mindestens EINE Überladung.
         if not any(e["darf_auth"] or e["darf_anon"] for e in eintraege):
             fehlend.append((name, eintraege, "kein Ausfuehrungsrecht"))
 
-    # Die Edge Functions laufen mit der Service-Role - fuer sie zaehlt
+    # Die Edge Functions laufen mit der Service-Role - für sie zählt
     # nur das Recht dieser Rolle.
     for name in sorted(aufgerufen["edge"] - aufgerufen["client"]):
         eintraege = nach_name.get(name)
@@ -185,9 +185,9 @@ def main() -> int:
 
     fehler = 0
     # Und die Gegenseite: eine Funktion, die der Client aufruft, darf
-    # NICHT fuer "anon" (also ohne Anmeldung) aufrufbar sein.
+    # NICHT für "anon" (also ohne Anmeldung) aufrufbar sein.
     #
-    # BEFUND (07.11.2026): Zwei Like-Funktionen waren fuer jeden
+    # BEFUND (07.11.2026): Zwei Like-Funktionen waren für jeden
     # aufrufbar - auch ohne Konto. Das fiel nur auf, weil eine
     # Migration die Funktion per DROP/CREATE ersetzt hat: beim DROP
     # gehen die Rechte verloren.

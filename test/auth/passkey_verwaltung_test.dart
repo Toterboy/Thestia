@@ -1,23 +1,23 @@
-// Die Passkey-Verwaltung: Liste, Loeschen, Umbenennen.
+// Die Passkey-Verwaltung: Liste, Löschen, Umbenennen.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/services/auth/passkey_auth.dart 85 offene Zeilen. Betroffen war
 // vor allem der Teil, der mit dem Server spricht - also genau der Weg,
-// den der Nutzer braucht, wenn er auf einem neuen Geraet Passkeys
-// wegschaufeln will ("Der Server konnte den Passkey nicht bestaetigen"
-// - die Anleitung dafuer steht im Setup-Bildschirm).
+// den der Nutzer braucht, wenn er auf einem neuen Gerät Passkeys
+// wegschaufeln will ("Der Server konnte den Passkey nicht bestätigen"
+// - die Anleitung dafür steht im Setup-Bildschirm).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Liste der registrierten Passkeys kommt vom Server,
-//   * "ist ueberhaupt ein Passkey da?" - und die Regel dahinter: ein
-//     FEHLER ist nicht "nein" (sonst wuerde die Einrichtung einen
+//   * "ist überhaupt ein Passkey da?" - und die Regel dahinter: ein
+//     FEHLER ist nicht "nein" (sonst würde die Einrichtung einen
 //     zweiten Passkey anlegen, den der Server dann ablehnt),
-//   * ein Passkey laesst sich loeschen (der Weg aus der Sackgasse),
-//   * ein Passkey laesst sich umbenennen ("Pixel 8" statt "iCloud
+//   * ein Passkey lässt sich löschen (der Weg aus der Sackgasse),
+//   * ein Passkey lässt sich umbenennen ("Pixel 8" statt "iCloud
 //     Keychain").
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/services/auth/passkey_auth.dart';
@@ -103,7 +103,7 @@ void main() {
     });
 
     test('nein, wenn der Server nicht antwortet', () async {
-      // DER FEHLER IST NICHT "NEIN": Wer hier faelschlich "nein" sagt,
+      // DER FEHLER IST NICHT "NEIN": Wer hier fälschlich "nein" sagt,
       // legt im Setup einen zweiten Passkey an - den der Server dann
       // ablehnt ("bereits ein Passkey").
       server.fehlerAntworten['/auth/v1/passkeys'] = (

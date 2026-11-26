@@ -111,7 +111,7 @@ void main() {
 
     test('leeres Fenster (von == bis) sperrt NICHT', () {
       // Eine Fehlgabe des Elternteils darf die App nicht unbenutzbar
-      // machen - und niemand wuesste, warum.
+      // machen - und niemand wüsste, warum.
       expect(
         UsageTimeGate.isWithinWindow(
           nowMinutes: 3 * 60,

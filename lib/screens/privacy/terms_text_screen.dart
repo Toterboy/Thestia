@@ -37,9 +37,9 @@ class TermsTextScreen extends ConsumerWidget {
       // (beide entstehen aus tool/web/make_terms.py).
       //
       // WARUM auth.thestia.de UND NICHT thestia.de (BEFUND 20.11.2026):
-      // thestia.de ist ein verifizierter App-Link - der Knopf wuerde die
-      // App selbst oeffnen statt der Seite. auth.thestia.de ist nicht
-      // fuer die App verifiziert, dort oeffnet sich der Browser.
+      // thestia.de ist ein verifizierter App-Link - der Knopf würde die
+      // App selbst öffnen statt der Seite. auth.thestia.de ist nicht
+      // für die App verifiziert, dort öffnet sich der Browser.
       footer: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Align(

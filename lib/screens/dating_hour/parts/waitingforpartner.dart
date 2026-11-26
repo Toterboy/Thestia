@@ -1,9 +1,9 @@
 // Der Teil '_WaitingForPartner'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.

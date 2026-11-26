@@ -1,4 +1,4 @@
-# Elternaufsicht fuer 16- und 17-Jaehrige
+# Elternaufsicht für 16- und 17-Jährige
 
 Aus der Roadmap (Stand 23.11.2026) in ein eigenes Dokument verschoben:
 die Roadmap soll eine Liste sein, kein Entwurf. Die Aufsicht ist

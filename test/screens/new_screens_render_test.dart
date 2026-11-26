@@ -1,15 +1,15 @@
-// Render-Tests fuer die neuen Bildschirme (30.10.2026).
+// Render-Tests für die neuen Bildschirme (30.10.2026).
 //
 // ANLASS: Beim Wischen zwischen den Haupt-Reitern ist die App
-// abgestuerzt - "A SingleTickerProviderStateMixin can only be used as
+// abgestürzt - "A SingleTickerProviderStateMixin can only be used as
 // a TickerProvider once". Gefunden hat das der UI-Vorschau-Test, also
-// zufaellig. Ein Bildschirm, den niemand gerendert hat, ist geraten.
+// zufällig. Ein Bildschirm, den niemand gerendert hat, ist geraten.
 //
 // Deshalb pumpen diese Tests die beiden neuen Bildschirme wirklich:
 //   * "Connect to others" (Telefon & Social Media),
-//   * die Sicherheits-Aufklaerung (alle Schritte).
+//   * die Sicherheits-Aufklärung (alle Schritte).
 //
-// Geprueft wird nicht nur "kein Absturz", sondern auch: kein
+// Geprüft wird nicht nur "kein Absturz", sondern auch: kein
 // Render-Overflow, die erwarteten Texte stehen da, und die Schritte
 // lassen sich durchklicken.
 import 'package:flutter/material.dart';
@@ -23,7 +23,7 @@ import 'package:thestia/screens/qr/contact_share_screen.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/services/storage/secure_contact_share_store.dart';
 
-/// In-Memory-Implementierung von [LocalStorage] fuer Tests.
+/// In-Memory-Implementierung von [LocalStorage] für Tests.
 class _FakeStorage implements LocalStorage {
   final Map<String, String> _data = {};
 
@@ -53,7 +53,7 @@ class _FakeStorage implements LocalStorage {
       _data[key] == null ? null : int.tryParse(_data[key]!);
 }
 
-/// Kontakt-Store ohne Keystore: haelt den Stand nur im RAM.
+/// Kontakt-Store ohne Keystore: hält den Stand nur im RAM.
 class _FakeContactStore extends SecureContactShareStore {
   _FakeContactStore(this._profil);
 
@@ -100,7 +100,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      // Der Screen erklaert, was passiert - und dass nichts zum Server geht.
+      // Der Screen erklärt, was passiert - und dass nichts zum Server geht.
       expect(find.textContaining('Speichere hier'), findsOneWidget);
       expect(find.textContaining('verschlüsselt'), findsWidgets);
       // Die Apps sind als empfohlen/nicht empfohlen gekennzeichnet.
@@ -139,7 +139,7 @@ void main() {
       expect(find.text('+49 170 1234567'), findsOneWidget);
       expect(find.text('Signal'), findsOneWidget);
       // Der empfohlene Messenger ist als solcher gekennzeichnet (zwei
-      // empfohlene Apps + die Abschnitts-Ueberschrift).
+      // empfohlene Apps + die Abschnitts-Überschrift).
       expect(find.text('empfohlen'), findsNWidgets(3));
     });
 
@@ -160,7 +160,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Weitere App hinzufügen'), findsOneWidget);
-      // Der Knopf steht unter den fuenf App-Kacheln - er ist auf einem
+      // Der Knopf steht unter den fünf App-Kacheln - er ist auf einem
       // Telefon erst nach dem Scrollen erreichbar.
       await tester.ensureVisible(find.text('Weitere App hinzufügen'));
       await tester.pumpAndSettle();
@@ -168,7 +168,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      // Die Felder fuer App-Name und Handle erscheinen.
+      // Die Felder für App-Name und Handle erscheinen.
       expect(find.text('App-Name'), findsOneWidget);
       expect(find.text('Name / Handle'), findsWidgets);
     });
@@ -190,7 +190,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Bevor du loslegst'), findsOneWidget);
       expect(find.text('Ich habe verstanden'), findsOneWidget);
-      // Der Hinweis auf die fuenf Minuten steht da - er ist eine Zusage.
+      // Der Hinweis auf die fünf Minuten steht da - er ist eine Zusage.
       expect(find.textContaining('5 Minuten'), findsOneWidget);
     });
 
@@ -208,7 +208,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Schritt 1: Bestaetigung.
+      // Schritt 1: Bestätigung.
       await tester.tap(find.text('Ich habe verstanden'));
       await tester.pumpAndSettle();
 
@@ -218,7 +218,7 @@ void main() {
         findsOneWidget,
       );
 
-      // Schritt 2: "Nein" -> die Aufklaerung startet.
+      // Schritt 2: "Nein" -> die Aufklärung startet.
       await tester.tap(find.text('Nein'));
       await tester.pumpAndSettle();
 
@@ -245,7 +245,7 @@ void main() {
       await tester.tap(find.text('Nein'));
       await tester.pumpAndSettle();
 
-      // Bis zur letzten Seite weiterblaettern.
+      // Bis zur letzten Seite weiterblättern.
       for (var i = 0; i < 4; i++) {
         await tester.tap(find.text('Weiter'));
         await tester.pumpAndSettle();

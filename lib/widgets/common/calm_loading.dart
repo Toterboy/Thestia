@@ -2,12 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Ruhiger Ladeindikator - der Ersatz fuer den kreisenden Ring.
+/// Ruhiger Ladeindikator - der Ersatz für den kreisenden Ring.
 ///
-/// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend fuer die
+/// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist störend für die
 /// Animation dort". Ein Ring, der nach 200 ms wieder verschwindet, ist
 /// ein Blitzer: er zieht den Blick auf sich, unterbricht die Bewegung,
-/// in der er gerade auftaucht, und macht aus einem weichen Ueberblenden
+/// in der er gerade auftaucht, und macht aus einem weichen Überblenden
 /// einen harten Schnitt.
 ///
 /// Dieser Platzhalter ist das Gegenteil:
@@ -17,9 +17,9 @@ import 'package:flutter/material.dart';
 ///   * versetzte Phasen - sie atmen nacheinander, nicht im Gleichtakt
 ///   * er verschwindet genauso leise, wie er kam
 ///
-/// Er ist bewusst kein Ersatz fuer eine Statusanzeige, sondern ein
+/// Er ist bewusst kein Ersatz für eine Statusanzeige, sondern ein
 /// "hier passiert gerade etwas"-Zeichen. Wie lange er steht, sagt er
-/// nicht - das weiss der, der wartet, ohne dass die Oberflaeche es
+/// nicht - das weiß der, der wartet, ohne dass die Oberfläche es
 /// aufregen muss.
 class CalmLoading extends StatefulWidget {
   const CalmLoading({
@@ -32,7 +32,7 @@ class CalmLoading extends StatefulWidget {
   /// Anzahl der Balken.
   final int lines;
 
-  /// Hoechstbreite der Balkengruppe. Ohne diese Begrenzung waeren die
+  /// Höchstbreite der Balkengruppe. Ohne diese Begrenzung wären die
   /// Balken auf einem Tablet so breit, dass sie nicht mehr wie ein
   /// Platzhalter wirken.
   final double maxWidth;

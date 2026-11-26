@@ -1,8 +1,8 @@
 // Der Teil '_FunkenAuswahlLeiste'.
 //
 // DER WEG (23.11.2026): Die Datei 'matchestabstate.dart' war durch die
-// Auswahl-Leiste ueber die 1000-Zeilen-Grenze gekommen. Die Leiste ist
-// ein eigenes Widget - sie gehoert in eine eigene Datei.
+// Auswahl-Leiste über die 1000-Zeilen-Grenze gekommen. Die Leiste ist
+// ein eigenes Widget - sie gehört in eine eigene Datei.
 
 part of '../interessen_screen.dart';
 
@@ -13,12 +13,12 @@ part of '../interessen_screen.dart';
 /// BEFUND (23.11.2026, gefunden von einem Test): Die beiden Knöpfe
 /// passten nebeneinander nicht in einen 390-px-Bildschirm - der
 /// "Ausblenden"-Knopf wurde um 118 Pixel abgeschnitten (mit gelb-schwarzen
-/// Streifen). Grund: Die Knöpfe sind breit (Schriftgroesse + Rand +
-/// Symbol), und bei grosser Systemschrift passt gar nichts mehr.
+/// Streifen). Grund: Die Knöpfe sind breit (Schriftgrösse + Rand +
+/// Symbol), und bei großer Systemschrift passt gar nichts mehr.
 ///
 /// DER WEG: Ein Wrap statt einer Zeile. Passen beide Knöpfe nebeneinander,
 /// stehen sie wie vorher (Abbrechen links, Ausblenden rechts). Passen sie
-/// nicht, rueckt der zweite Knopf eine Zeile tiefer - abgeschnitten wird
+/// nicht, rückt der zweite Knopf eine Zeile tiefer - abgeschnitten wird
 /// nichts.
 class _FunkenAuswahlLeiste extends StatelessWidget {
   const _FunkenAuswahlLeiste({
@@ -27,13 +27,13 @@ class _FunkenAuswahlLeiste extends StatelessWidget {
     required this.onAusblenden,
   });
 
-  /// Wie viele Funke sind ausgewaehlt?
+  /// Wie viele Funke sind ausgewählt?
   final int anzahl;
 
   /// Der Auswahl-Modus wird beendet (die Auswahl geht verloren).
   final VoidCallback onAbbrechen;
 
-  /// Die ausgewaehlten Funke werden ausgeblendet.
+  /// Die ausgewählten Funke werden ausgeblendet.
   final VoidCallback onAusblenden;
 
   @override

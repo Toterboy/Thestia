@@ -1,13 +1,13 @@
 // Die Einstellungen (bisher kaum getestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/settings/settings_screen.dart 449 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * die Abschnitte stehen da (Sicherheit, Benachrichtigungen,
 //     Darstellung, Datenschutz & Account),
-//   * ein Schalter laesst sich umstellen und der Stand wird gespeichert.
+//   * ein Schalter lässt sich umstellen und der Stand wird gespeichert.
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -71,11 +71,11 @@ class _FakeSecureProfileStore extends SecureProfileStore {
   Future<void> delete() async {}
 }
 
-/// Der Verschluesselungs-Dienst mit einem fertigen Backup-Code.
+/// Der Verschlüsselungs-Dienst mit einem fertigen Backup-Code.
 ///
-/// DER GRUND: Der echte Dienst braucht die verschluesselten Hive-Boxen -
-/// im Test waere das der Weg ueber die Schluesselverwaltung. Fuer die
-/// Oberflaeche reicht der Code: der Dialog muss ihn anzeigen und das
+/// DER GRUND: Der echte Dienst braucht die verschlüsselten Hive-Boxen -
+/// im Test wäre das der Weg über die Schlüsselverwaltung. Für die
+/// Oberfläche reicht der Code: der Dialog muss ihn anzeigen und das
 /// Kopieren anbieten.
 class _FakeEncryptionService extends EncryptionService {
   @override
@@ -88,8 +88,8 @@ void main() {
   late ProviderContainer container;
 
   setUpAll(() async {
-    // DER SPEICHER DES GERAETS: der Auth-Client holt sich daraus die
-    // Sitzung - ohne den Mock schlaegt der Aufbau fehl.
+    // DER SPEICHER DES GERÄTS: der Auth-Client holt sich daraus die
+    // Sitzung - ohne den Mock schlägt der Aufbau fehl.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     // Der Supabase-Client: die Eltern-Aufsicht liest ihn. Ohne die drei
@@ -105,8 +105,8 @@ void main() {
         detectSessionInUri: false,
       ),
     );
-    // HIVE: der Abschnitt "Ende-zu-Ende-Verschluesselung" liest die
-    // gesicherten Schluessel aus einer Hive-Box. Ohne einen
+    // HIVE: der Abschnitt "Ende-zu-Ende-Verschlüsselung" liest die
+    // gesicherten Schlüssel aus einer Hive-Box. Ohne einen
     // initialisierten Hive scheitert der Aufbau.
     final tempDir = await Directory.systemTemp.createTemp('thesia_settings');
     Hive.init(tempDir.path);
@@ -120,7 +120,7 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     storage = _FakeLocalStorage();
-    // DER KEYSTORE: die Einstellungen liegen im verschluesselten
+    // DER KEYSTORE: die Einstellungen liegen im verschlüsselten
     // Speicher - ohne den Mock ruft der Test auf dem CI-Runner das
     // echte Plugin (das findet dort keine libsecret-Sitzung).
     mockKeystore();
@@ -139,8 +139,8 @@ void main() {
       overrides: [
         localStorageProvider.overrideWithValue(storage),
         secureProfileStoreProvider.overrideWithValue(secure),
-        // DER VERSCHLUESSELUNGS-DIENST: Der echte braucht die
-        // verschluesselten Boxen - im Test liefert der Ersatz den
+        // DER VERSCHLÜSSELUNGS-DIENST: Der echte braucht die
+        // verschlüsselten Boxen - im Test liefert der Ersatz den
         // Backup-Code direkt.
         encryptionServiceProvider.overrideWithValue(_FakeEncryptionService()),
         profileProvider.overrideWith((ref) {
@@ -172,19 +172,19 @@ void main() {
 
   /// Scrollt zu einem Text (der Bildschirm ist eine lange Liste).
   ///
-  /// DER HINWEIS: Die Liste baut nur die sichtbaren Eintraege - der Text
+  /// DER HINWEIS: Die Liste baut nur die sichtbaren Einträge - der Text
   /// muss also erst herangescrollt werden. Es wird NICHT danach noch
-  /// "sichtbar gemacht": Das wuerde die Liste weiter verschieben und die
-  /// Tests stoeren, die mehrere Abschnitte gleichzeitig sehen wollen.
+  /// "sichtbar gemacht": Das würde die Liste weiter verschieben und die
+  /// Tests stören, die mehrere Abschnitte gleichzeitig sehen wollen.
   Future<void> scrolleZu(WidgetTester tester, String text) async {
     final ziel = find.text(text);
     // Der Bildschirm ist sehr lang (die Liste baut nur die sichtbaren
-    // Eintraege) - also wird in kleinen Schritten gescrollt, bis der
+    // Einträge) - also wird in kleinen Schritten gescrollt, bis der
     // Text da ist.
     //
     // DER WEG: "timedDrag" statt "drag". Ein einfacher Zug kommt
     // erstaunlich wenig weiter (rund ein Drittel der Strecke) - bei
-    // ueber 7000 Pixel Liste waere der Eintrag am Ende nie erreicht
+    // über 7000 Pixel Liste wäre der Eintrag am Ende nie erreicht
     // worden. Der langsame Zug folgt dem Finger genau.
     for (var i = 0; i < 60 && ziel.evaluate().isEmpty; i++) {
       await tester.timedDrag(
@@ -243,7 +243,7 @@ void main() {
 
     await scrolleZu(tester, L10n.tWithoutContext('appearance.dark'));
 
-    // "Dunkel" waehlen. ensureVisible: der Abschnitt liegt unterhalb
+    // "Dunkel" wählen. ensureVisible: der Abschnitt liegt unterhalb
     // der Falz - ohne das landet der Tipp ins Leere.
     final dunkel = find.text(L10n.tWithoutContext('appearance.dark'));
     await tester.ensureVisible(dunkel);
@@ -299,9 +299,9 @@ void main() {
     testWidgets('der Hauptschalter gibt die anderen frei', (tester) async {
       await zeigeScreen(tester);
 
-      // DER HAUPTSCHALTER: Standardmaessig sind die Benachrichtigungen
+      // DER HAUPTSCHALTER: Standardmässig sind die Benachrichtigungen
       // an. Schaltet der Nutzer sie aus, sind die einzelnen Schalter
-      // gesperrt - sonst koennte er einstellen, dass er "bei neuen
+      // gesperrt - sonst kännte er einstellen, dass er "bei neuen
       // Funken" benachrichtigt wird, obwohl alle Benachrichtigungen
       // aus sind.
       expect(container.read(settingsProvider).notificationsEnabled, isTrue);
@@ -378,7 +378,7 @@ void main() {
     await pumpFrames(tester);
 
     expect(tester.takeException(), isNull);
-    // null heisst: "es entscheidet das Geraet" - true/false waere eine
+    // null heißt: "es entscheidet das Gerät" - true/false wäre eine
     // feste Entscheidung und damit etwas anderes.
     expect(container.read(settingsProvider).useDarkMode, isNull);
   });
@@ -400,8 +400,8 @@ void main() {
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Ohne Rueckfrage wuerde die Identitaet ueberschrieben - das muss
-      // der Nutzer bestaetigen.
+      // Ohne Rückfrage würde die Identität überschrieben - das muss
+      // der Nutzer bestätigen.
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(
         find.text(L10n.tWithoutContext('settings.restoreConfirmTitle')),
@@ -420,8 +420,8 @@ void main() {
 
   group('Der lokal gespeicherte Chat-Verlauf', () {
     testWidgets('die Auswahl steht da und wird gespeichert', (tester) async {
-      // GROSSER Bildschirm: der Dialog mit den drei Auswahlmoeglichkeiten
-      // braucht Platz (sonst liegt die dritte Auswahl ausserhalb des
+      // GROSSER Bildschirm: der Dialog mit den drei Auswahlmöglichkeiten
+      // braucht Platz (sonst liegt die dritte Auswahl außerhalb des
       // Fensters - und der Tipp ginge ins Leere).
       await zeigeScreen(tester, hoehe: 3000);
 
@@ -435,7 +435,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Die drei Moeglichkeiten stehen da.
+      // Die drei Möglichkeiten stehen da.
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(
         find.text(L10n.tWithoutContext('chathist.off.title')),
@@ -450,7 +450,7 @@ void main() {
         findsOneWidget,
       );
 
-      // "Gar nichts" waehlen - der Verlauf soll nicht mehr gespeichert
+      // "Gar nichts" wählen - der Verlauf soll nicht mehr gespeichert
       // werden.
       await tester.ensureVisible(
         find.text(L10n.tWithoutContext('chathist.off.title')),
@@ -460,7 +460,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Der Entscheid ist gespeichert - sonst waere er nach dem
+      // Der Entscheid ist gespeichert - sonst wäre er nach dem
       // Neustart wieder weg.
       expect(await storage.getBool('chat_history_local'), isFalse);
       expect(await storage.getBool('chat_history_all'), isFalse);
@@ -482,8 +482,8 @@ void main() {
       // Die Auswahl kann tiefer im Dialog liegen - erst dorthin scrollen,
       // sonst trifft der Tipp ins Leere.
       //
-      // DER HINWEIS: "Kompletter Verlauf" ist die VORGABE - da waere
-      // nichts geaendert worden (und nichts gespeichert). Der Test
+      // DER HINWEIS: "Kompletter Verlauf" ist die VORGABE - da wäre
+      // nichts geändert worden (und nichts gespeichert). Der Test
       // nimmt deshalb die begrenzte Variante.
       await tester.ensureVisible(
         find.text(L10n.tWithoutContext('chathist.cap200.title')),
@@ -502,17 +502,17 @@ void main() {
   });
 
   group('Das Backup der Ende-zu-Ende-Identitaet', () {
-    /// Oeffnet den Dialog fuer das Backup-Passwort.
+    /// Öffnet den Dialog für das Backup-Passwort.
     Future<void> oeffneBackupDialog(WidgetTester tester) async {
-      // GROSSER Bildschirm: der Abschnitt "Ende-zu-Ende-Verschluesselung"
+      // GROSSER Bildschirm: der Abschnitt "Ende-zu-Ende-Verschlüsselung"
       // liegt weit unten. Mit einem hohen Bildschirm baut die Liste
-      // mehr Eintraege auf einmal - das Scrollen durch die lange Liste
-      // waere im Test zaeh und fehleranfaellig.
+      // mehr Einträge auf einmal - das Scrollen durch die lange Liste
+      // wäre im Test zäh und fehleranfällig.
       await zeigeScreen(tester, hoehe: 3000);
 
       // Der Abschnitt liegt weit unten - die Liste baut nur die
-      // sichtbaren Eintraege, also wird bis zum Knopf gescrollt.
-      // Ueber das Symbol gesucht: der Text "Backup erstellen" steht
+      // sichtbaren Einträge, also wird bis zum Knopf gescrollt.
+      // Über das Symbol gesucht: der Text "Backup erstellen" steht
       // auch als Knopf im Dialog.
       final knopf = find.byIcon(Icons.download_outlined);
       for (var i = 0; i < 60 && knopf.evaluate().isEmpty; i++) {
@@ -521,10 +521,10 @@ void main() {
       }
       expect(knopf, findsOneWidget, reason: 'Der Backup-Knopf muss da sein.');
       // DER KNOPF KANN AUSSERHALB DES BILDSCHIRMS LIEGEN: die Liste
-      // baut auch die Eintraege direkt unterhalb des Bildschirms - das
+      // baut auch die Einträge direkt unterhalb des Bildschirms - das
       // Symbol ist dann im Baum, aber nicht antippbar ("off-screen").
-      // BEFUND (22.11.2026): Die sieben neuen Schalter fuer das
-      // oeffentliche Profil haben den Abschnitt nach unten geschoben -
+      // BEFUND (22.11.2026): Die sieben neuen Schalter für das
+      // öffentliche Profil haben den Abschnitt nach unten geschoben -
       // der Test tippte ins Leere.
       await tester.ensureVisible(knopf);
       await tester.pump();

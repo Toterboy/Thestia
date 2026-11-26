@@ -13,12 +13,12 @@ import 'package:thestia/services/transit/transit_encounter_service.dart';
 import 'package:thestia/services/transit/transit_ble_privacy.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 
-/// Die Plattform-Pruefungen hinter der Berechtigungslogik des Dienstes.
+/// Die Plattform-Prüfungen hinter der Berechtigungslogik des Dienstes.
 ///
 /// DER GRUND (20.11.2026, gefunden von der Coverage-Messung): Auf dem
 /// Testrechner (Linux/Windows) sind `Platform.isAndroid` und
 /// `Platform.isIOS` immer false. Die komplette Berechtigungslogik - und
-/// damit die Fehlergruende ('location_permission', 'bluetooth_scan',
+/// damit die Fehlergründe ('location_permission', 'bluetooth_scan',
 /// 'bluetooth_connect' ...), die der Bildschirm dem Nutzer nennt - war
 /// dadurch untestbar.
 ///
@@ -38,7 +38,7 @@ class TransitPlattform {
 
   bool get istIOS => Platform.isIOS;
 
-  /// Die Android-Version (API-Level) des Geraets.
+  /// Die Android-Version (API-Level) des Geräts.
   Future<int> androidSdkInt() async =>
       (await DeviceInfoPlugin().androidInfo).version.sdkInt;
 }
@@ -77,19 +77,19 @@ class TransitBleService {
 
   /// Der eigene Token, der gerade per BLE gesendet wird.
   ///
-  /// BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine Person
+  /// BEFUND (07.11.2026, Betreiber): "Beide Geräte suchen eine Person
   /// bei Transit Spark ... aber gibt keinen Funken." Die Ursache war
   /// nicht das Senden, sondern das FEHLEN dieses Tokens beim Server:
-  /// Das Signal enthielt nur die Tokens der gesehenen Geraete, und
+  /// Das Signal enthielt nur die Tokens der gesehenen Geräte, und
   /// gesucht wurde mit genau diesen - zwei Personen, die nur einander
-  /// sehen, haben disjunkte Mengen. Mit genau zwei Geraeten war ein
-  /// Match mathematisch unmoeglich (Migration 185).
+  /// sehen, haben disjunkte Mengen. Mit genau zwei Geräten war ein
+  /// Match mathematisch unmöglich (Migration 185).
   ///
-  /// Der Server braucht den eigenen Token, um zu pruefen: "HAT DER
+  /// Der Server braucht den eigenen Token, um zu prüfen: "HAT DER
   /// ANDERE MICH GESEHEN?" - denn der eigene Token des anderen steht in
   /// dessen Sichtungsliste, wenn der andere mich gesehen hat.
   ///
-  /// `null`, solange das Radar nicht laeuft (dann gibt es auch nichts
+  /// `null`, solange das Radar nicht läuft (dann gibt es auch nichts
   /// zu vergleichen).
   String? get currentToken => _currentToken;
 
@@ -135,19 +135,19 @@ class TransitBleService {
       // Android-Version an - auch dort, wo er nicht gebraucht wird. Das
       // ist zweierlei schlecht: Der Nutzer wird um eine Berechtigung
       // gebeten, die die App gar nicht nutzt (Google Play verlangt, nur
-      // das anzufragen, was noetig ist), und der Standort-DIENST muss
-      // eingeschaltet sein, obwohl Bluetooth genuegt.
+      // das anzufragen, was nötig ist), und der Standort-DIENST muss
+      // eingeschaltet sein, obwohl Bluetooth genügt.
       //
       // Ab Android 12 reicht BLUETOOTH_SCAN mit `neverForLocation` -
       // der Scan liefert dann Ergebnisse ohne Standortbezug. Die App
       // leitet aus den Scan-Ergebnissen nichts Ortliches ab (sie
-      // nutzt nur die Tokens), das ist genau die Voraussetzung fuer
+      // nutzt nur die Tokens), das ist genau die Voraussetzung für
       // `neverForLocation`.
       //
-      // BIS ANDROID 11 (API 30) ist der genaue Standort fuer den
+      // BIS ANDROID 11 (API 30) ist der genaue Standort für den
       // BLE-Scan Pflicht (ACCESS_FINE_LOCATION). Ohne ihn blockiert
       // Android den Scan still - das war der Grund, warum dort
-      // "0 Geraete in Reichweite" gemeldet wurde.
+      // "0 Geräte in Reichweite" gemeldet wurde.
       if (api <= 30) {
         var location = await Permission.locationWhenInUse.status;
         if (!location.isGranted) {
@@ -162,8 +162,8 @@ class TransitBleService {
         // BLE-Scan (besonders Android 11) ohne klare Exception. Die App
         // kann den Dienst nicht selbst einschalten (Android verbietet
         // das), aber die UI kann per Geolocator.openLocationSettings()
-        // dorthin fuehren.
-        // Geolocator nicht verfuegbar -> nicht blockieren.
+        // dorthin führen.
+        // Geolocator nicht verfügbar -> nicht blockieren.
         final dienstOk = await bestEffortOr(
           'Geolocator.isLocationServiceEnabled',
           () async => await Geolocator.isLocationServiceEnabled(),
@@ -176,8 +176,8 @@ class TransitBleService {
       }
 
       // Bluetooth AUS? (Fix "Bluetooth-Popup kam nicht"): Permissions
-      // koennen vollstaendig erteilt sein und der Adapter trotzdem AUS
-      // sein - dann schlaegt Advertising mit 'advertise_failed' fehl und
+      // können vollständig erteilt sein und der Adapter trotzdem AUS
+      // sein - dann schlägt Advertising mit 'advertise_failed' fehl und
       // der Screen bricht ab, ohne den Aktivieren-Dialog zu zeigen.
       // Adapter-Status nicht ablesbar -> nicht blockieren.
       final adapterOk = await bestEffortOr(
@@ -224,9 +224,9 @@ class TransitBleService {
     }
   }
 
-  /// Braucht der BLE-Scan auf diesem Geraet den Standort?
+  /// Braucht der BLE-Scan auf diesem Gerät den Standort?
   ///
-  /// BIS ANDROID 11 (API 30): ja. Dort ist der genaue Standort fuer den
+  /// BIS ANDROID 11 (API 30): ja. Dort ist der genaue Standort für den
   /// BLE-Scan Pflicht - ohne ihn blockiert Android den Scan still.
   /// AB ANDROID 12: nein. Dort reicht BLUETOOTH_SCAN mit
   /// `neverForLocation`; der Scan liefert Ergebnisse ohne Standortbezug.
@@ -292,7 +292,7 @@ class TransitBleService {
           .invokeMethod<bool>('startAdvertise', {
             'token': token,
             // Jitter-Zyklus: die native Seite startet das Advertising nach
-            // dieser Zeit neu. Ohne sie laeuft LOW_LATENCY 45 min im
+            // dieser Zeit neu. Ohne sie läuft LOW_LATENCY 45 min im
             // starren ~100-ms-Takt - ein Fingerprint.
             'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
           })
@@ -308,9 +308,9 @@ class TransitBleService {
       // --- Scanning (fremde Tokens) ---
       //
       // withMsd filtert schon im Plattform-Callback auf unsere
-      // Hersteller-ID: alles andere in der Luft (Uhren, Kopfhoerer,
+      // Hersteller-ID: alles andere in der Luft (Uhren, Kopfhörer,
       // Beacons) erreicht die App gar nicht erst. Das war vorher die
-      // Hauptlast und ein passiver Fremdverkehrs-Sniffer des Geraets.
+      // Hauptlast und ein passiver Fremdverkehrs-Sniffer des Geräts.
       _startScanWindow();
       _schedulePulseNext();
       _scanning = true;
@@ -328,15 +328,15 @@ class TransitBleService {
     required void Function(String token, int rssi) onEncounter,
   }) async {
     // Der neue Token wird IMMER gemerkt - auch wenn gerade kein Funk
-    // laeuft (App im Hintergrund). Sonst waere nach dem Zurueckkommen
-    // ein aelteres Token aktiv, obwohl die Rotation eigentlich lief.
+    // läuft (App im Hintergrund). Sonst wäre nach dem Zurückkommen
+    // ein älteres Token aktiv, obwohl die Rotation eigentlich lief.
     _currentToken = newToken;
     if (!_advertising) return;
     try {
       final ok = await _channel
           .invokeMethod<bool>('startAdvertise', {
             'token': newToken,
-            // Neuer Zyklus mit neuer Jitter-Dauer: der Restart faellt dann
+            // Neuer Zyklus mit neuer Jitter-Dauer: der Restart fällt dann
             // nicht mit der Token-Rotation zusammen.
             'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
           })
@@ -349,10 +349,10 @@ class TransitBleService {
     }
   }
 
-  /// Callback fuer Begegnungen; wird von den Impulsfenstern genutzt.
+  /// Callback für Begegnungen; wird von den Impulsfenstern genutzt.
   void Function(String token, int rssi)? _onEncounter;
 
-  /// Timer fuer die Scan-Impulse (v0.9.2: gepulstes Scannen statt
+  /// Timer für die Scan-Impulse (v0.9.2: gepulstes Scannen statt
   /// Dauerscan - siehe ROADMAP 0.9.0, dort war es behauptet, nicht gebaut).
   Timer? _pulseTimer;
 
@@ -374,7 +374,7 @@ class TransitBleService {
     }
   }
 
-  /// Schliesst das aktuelle Fenster und plant das nächste nach einer
+  /// Schließt das aktuelle Fenster und plant das nächste nach einer
   /// unregelmässigen Pause (Datenschutz + Akku, siehe ROADMAP 0.9.2).
   void _schedulePulseNext() {
     _pulseTimer?.cancel();
@@ -405,9 +405,9 @@ class TransitBleService {
       // Jedes Token nur EINMAL melden.
       //
       // BEFUND (06.11.2026): Das Advertising läuft im ~100-ms-Takt. Jede
-      // Advertisement fuehrte zu einem setState im Provider und zu einem
+      // Advertisement fährte zu einem setState im Provider und zu einem
       // Schreibvorgang des Caches - bei 10 Signalen pro Sekunde ein
-      // Bildschirm-Neuaufbau pro Signal. Das Token selbst aendert sich
+      // Bildschirm-Neuaufbau pro Signal. Das Token selbst ändert sich
       // nur alle 6-14 Minuten (Rotation), also reicht die Meldung beim
       // ersten Sichtkontakt.
       if (!_gemeldeteTokens.add(token)) continue;
@@ -418,11 +418,11 @@ class TransitBleService {
   /// Die bereits gemeldeten Tokens (Sitzung).
   ///
   /// Wird beim Stop geleert - ein neuer Radarlauf darf die gleichen
-  /// Geraete wieder melden (die Zahl in der Anzeige ist dann wieder
+  /// Geräte wieder melden (die Zahl in der Anzeige ist dann wieder
   /// aktuell).
   final Set<String> _gemeldeteTokens = <String>{};
 
-  /// Haelt das Funk-Radio an, ohne die Sitzung zu beenden.
+  /// Hält das Funk-Radio an, ohne die Sitzung zu beenden.
   ///
   /// AKKU + PRIVATSPHARE (03.11.2026): Das Advertising lief im
   /// Hintergrund weiter - der native Zyklus sendet bis zu 45 Minuten im
@@ -430,7 +430,7 @@ class TransitBleService {
   /// "Vordergrund-Betrieb"; die Umsetzung war es nicht. Mit diesem
   /// Aufruf wird es wieder so.
   ///
-  /// Der Token bleibt erhalten: beim Zurueckkommen wird mit demselben
+  /// Der Token bleibt erhalten: beim Zurückkommen wird mit demselben
   /// Token weitergearbeitet (siehe [resume]).
   Future<void> suspend() async {
     if (!_advertising && !_scanning) return;
@@ -451,13 +451,13 @@ class TransitBleService {
   /// Startet das Funk-Radio nach einem [suspend] wieder.
   ///
   /// [token] setzt einen neuen Token. Das ist der Normalfall: Nach dem
-  /// Hintergrund muss ein FRISCHES Token gesendet werden. Wer das Geraet
-  /// eine Stunde lang ausgeschaltet hatte, sendet nach dem Zurueckkommen
-  /// sonst wieder denselben Pseudonym-Token - genau die Kontinuitaet, die
-  /// ein Beobachter sucht (ROADMAP, "BLE-Tracking-Haertung": "frische
+  /// Hintergrund muss ein FRISCHES Token gesendet werden. Wer das Gerät
+  /// eine Stunde lang ausgeschaltet hatte, sendet nach dem Zurückkommen
+  /// sonst wieder denselben Pseudonym-Token - genau die Kontinuität, die
+  /// ein Beobachter sucht (ROADMAP, "BLE-Tracking-Härtung": "frische
   /// Token pro Advertising-Neustart").
   ///
-  /// Gibt false zurueck, wenn nicht gestartet werden konnte (z. B. weil
+  /// Gibt false zurück, wenn nicht gestartet werden konnte (z. B. weil
   /// die Bluetooth-Berechtigung inzwischen fehlt).
   Future<bool> resume({String? token}) async {
     token = token ?? _currentToken;
@@ -478,10 +478,10 @@ class TransitBleService {
       // DER TOKEN: Das gesendete Token ist ab jetzt das aktuelle.
       //
       // BEFUND (24.11.2026): Vorher blieb `_currentToken` auf dem alten
-      // Stand stehen. Der Server bekam ueber den Heartbeat das neue
+      // Stand stehen. Der Server bekam über den Heartbeat das neue
       // Token - die App aber meldete weiter das alte. Nach dem Wechsel
       // in den Hintergrund sendete die App also ein frisches Token
-      // ueber Funk, waehrend der Weg, den der Server fuer "hat der
+      // über Funk, während der Weg, den der Server für "hat der
       // andere mich gesehen?" nutzt, noch den alten lieferte.
       _currentToken = token;
       _startScanWindow();
@@ -496,7 +496,7 @@ class TransitBleService {
 
   Future<void> stop() async {
     // _scanning VOR dem Abo-Kill setzen: sonst plant _schedulePulseNext
-    // den naechsten Zyklus, der nach dem Stop wieder aufwacht.
+    // den nächsten Zyklus, der nach dem Stop wieder aufwacht.
     _scanning = false;
     _pulseTimer?.cancel();
     _pulseTimer = null;
@@ -510,8 +510,8 @@ class TransitBleService {
       _advertising = false;
       _onEncounter = null;
       _currentToken = null;
-      // Die gemeldeten Tokens gehoeren zur Sitzung: ein neuer Radarlauf
-      // darf die gleichen Geraete wieder zaehlen.
+      // Die gemeldeten Tokens gehören zur Sitzung: ein neuer Radarlauf
+      // darf die gleichen Geräte wieder zählen.
       _gemeldeteTokens.clear();
     }
   }
@@ -524,27 +524,27 @@ class TransitBleService {
   /// immer mehr (aktuell über 100 gefunden)."
   ///
   /// Die Ursache: Die Hersteller-ID 0xFFFF ist die reservierte
-  /// SIG-Nummer - sie wird von vielen echten Geraeten benutzt. Die alte
-  /// Pruefung take nur die ersten vier Bytes ("WST1") und liest den Rest
+  /// SIG-Nummer - sie wird von vielen echten Geräten benutzt. Die alte
+  /// Prüfung take nur die ersten vier Bytes ("WST1") und liest den Rest
   /// als Token. Auf Android 16 wird der Plattformfilter nicht
-  /// zuverlaessig angewandt, es kamen also viele fremde Geraete herein -
+  /// zuverlässig angewandt, es kamen also viele fremde Geräte herein -
   /// und jedes erzeugte einen neuen "Token", der im Cache landete. Die
-  /// Zahl "Thestia-Geräte in Reichweite" war damit eine Zahl ueber
-  /// fremde Bluetooth-Geraete.
+  /// Zahl "Thestia-Geräte in Reichweite" war damit eine Zahl über
+  /// fremde Bluetooth-Geräte.
   ///
   /// DIE REGEL: Ein echtes Thestia-Token ist EXAKT 20 Hexzeichen
   /// (10 Byte, siehe [TransitEncounterService.generateToken]). Alles
   /// andere wird verworfen. Damit kann die Zahl nur noch echte
-  /// Thestia-Geraete zaehlen.
+  /// Thestia-Geräte zählen.
   ///
-  /// Der Marker wird GESUCHT und nicht nur an Position 0 geprueft:
+  /// Der Marker wird GESUCHT und nicht nur an Position 0 geprüft:
   /// manche Android-Versionen liefern die Firmen-ID mit im Payload.
   String? _extractToken(ScanResult r) {
     try {
       final md = r.advertisementData.manufacturerData;
       if (md.isEmpty) return null;
       // Nur unser Hersteller-ID-Eintrag. Die Konstante ist dieselbe, die der
-      // withMsd-Filter beim Scannen benutzt - beide muessen zusammenpassen,
+      // withMsd-Filter beim Scannen benutzt - beide müssen zusammenpassen,
       // sonst sieht der Scanner nichts (bzw. filtert zu viel weg).
       final entry = md[kThestiaManufacturerId];
       if (entry == null || entry.isEmpty) return null;

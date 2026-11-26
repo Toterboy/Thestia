@@ -25,7 +25,7 @@ const String _customFileName = 'chat_bg_custom.jpg';
 class ChatBackgroundPicker extends ConsumerWidget {
   const ChatBackgroundPicker({super.key, this.festeBreite});
 
-  /// Feste Breite in Logik-Pixeln - fuer die Verwendung in einem
+  /// Feste Breite in Logik-Pixeln - für die Verwendung in einem
   /// AlertDialog.
   ///
   /// WARUM (06.11.2026): Flutter packt den Inhalt eines AlertDialog in
@@ -50,12 +50,12 @@ class ChatBackgroundPicker extends ConsumerWidget {
   /// (auch 4K) und begrenzen den Bitmap-Speicher auf ~10 MB.
   static const int _targetPx = 1600;
 
-  /// Bild auf Zielgroesse bringen und als JPEG speichern.
+  /// Bild auf Zielgrösse bringen und als JPEG speichern.
   ///
-  /// Laeuft im Isolate (compute). Top-Level-Funktion, weil compute()
+  /// Läuft im Isolate (compute). Top-Level-Funktion, weil compute()
   /// keine Methode mit Zustand der Klasse aufrufen kann.
   ///
-  /// Gibt null zurueck, wenn das Bild nicht lesbar war.
+  /// Gibt null zurück, wenn das Bild nicht lesbar war.
   static Uint8List? _bildAufbereiten(Uint8List bytes) {
     final decoded = img.decodePng(bytes) ?? img.decodeJpg(bytes);
     if (decoded == null) return null;
@@ -88,9 +88,9 @@ class ChatBackgroundPicker extends ConsumerWidget {
         _toast(context, 'chatbg.tooLarge');
         return;
       }
-      // AKKU (03.11.2026): Die Bildverarbeitung laeuft im Hintergrund-
+      // AKKU (03.11.2026): Die Bildverarbeitung läuft im Hintergrund-
       // Isolate (compute). Ohne das blockiert das Dekodieren eines
-      // grossen Fotos den UI-Thread - der Bildschirm haengt sichtbar
+      // großen Fotos den UI-Thread - der Bildschirm hängt sichtbar
       // (und die App kann in der Zeit keine Eingaben verarbeiten).
       final jpeg = await compute(_bildAufbereiten, bytes);
       if (!context.mounted) return;
@@ -153,10 +153,10 @@ class ChatBackgroundPicker extends ConsumerWidget {
     // damit unbrauchbar (live im Emulator gesehen: der Dialog ist beim
     // ersten Chat-Besuch mit einem leeren Bildschirm gestorben).
     //
-    // Die Loesung ist die, die Flutter selbst nennt: dem Viewport
+    // Die Lösung ist die, die Flutter selbst nennt: dem Viewport
     // lockere Constraints geben statt die intrinsic dimensions zu
-    // messen. Das Grid bekommt eine feste Hoehe und scrollt intern -
-    // so sind alle Hintergruende erreichbar und der Dialog muss nicht
+    // messen. Das Grid bekommt eine feste Höhe und scrollt intern -
+    // so sind alle Hintergründe erreichbar und der Dialog muss nicht
     // selbst zu scrollen.
     final raster = GridView.builder(
       physics: const BouncingScrollPhysics(),
@@ -179,9 +179,9 @@ class ChatBackgroundPicker extends ConsumerWidget {
               await _pickCustom(context, ref);
             } else {
               // BEFUND (07.11.2026, Betreiber): "Der Hintergrund, den
-              // man auswaehlt, wird nicht gespeichert." Das Schreiben
+              // man auswählt, wird nicht gespeichert." Das Schreiben
               // in den Keystore kann scheitern - dann zeigt die App
-              // zwar sofort den neuen Hintergrund, beim naechsten Start
+              // zwar sofort den neuen Hintergrund, beim nächsten Start
               // ist er aber weg. Deshalb wird der Fehler hier
               // GEMELDET, statt ihn zu schlucken.
               final notifier = ref.read(settingsProvider.notifier);
@@ -208,19 +208,19 @@ class ChatBackgroundPicker extends ConsumerWidget {
       },
     );
 
-    // Die Hoehe richtet sich nach dem, was tatsaechlich gebraucht wird.
+    // Die Höhe richtet sich nach dem, was tatsächlich gebraucht wird.
     //
     // BEFUND (07.11.2026, Betreiber): "Das mit Chat Hintergrund, dass man
     // da scrollen muss ist nur so mittel gut bei den Einstellungen."
     //
     // Vorher stand hier ein festes SizedBox(height: 280). Bei sieben
-    // Mustern (ohne + fuenf Vorgaenge + eigenes) sind das drei Reihen -
+    // Mustern (ohne + fünf Vorgänge + eigenes) sind das drei Reihen -
     // und 280 Pixel zeigen nur zwei. Man musste also scrollen, um den
     // letzten Hintergrund zu sehen.
     //
-    // Die Hoehe wird jetzt aus der Kachelgroesse berechnet: so viele
+    // Die Höhe wird jetzt aus der Kachelgrösse berechnet: so viele
     // Reihen, wie Muster da sind, und keine mehr. Auf einem kleinen
-    // Bildschirm nimmt die Dialog hoehe den verfuegbaren Platz
+    // Bildschirm nimmt die Dialog höhe den verfügbaren Platz
     // (60 Prozent) - dort wird gescrollt, weil es nicht anders geht.
     final bildschirm = MediaQuery.sizeOf(context);
     final breite = festeBreite ?? bildschirm.width * 0.72;
@@ -343,7 +343,7 @@ class _CustomPreview extends StatelessWidget {
         child: const Center(child: Icon(Icons.add_photo_alternate_outlined)),
       );
     }
-    // Die Datei ist bis zu 1600 px breit (~10 MB Bitmap). Fuer eine ~120-px-
+    // Die Datei ist bis zu 1600 px breit (~10 MB Bitmap). Für eine ~120-px-
     // Vorschaukachel reicht ein Bruchteil - ohne cacheWidth landet das
     // Originalbild dauerhaft im globalen ImageCache.
     return Image.file(

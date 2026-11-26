@@ -1,14 +1,14 @@
 // Die Wege (Pfade) des Routers.
 //
 // ANLASS (19.11.2026): `lib/routing/app_router.dart` war nur zu 29 %
-// abgedeckt. Ein Tippfehler in einem Pfad fuehrt nicht zu einem
+// abgedeckt. Ein Tippfehler in einem Pfad fährt nicht zu einem
 // Absturz, sondern zu einer stillen Fehlernavigation - der Nutzer
 // tippt auf "Quiz" und landet auf dem Ladebildschirm.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die gebauten Wege (mit den Parametern) passen zu den Routen,
 //   * jeder Weg ist einmal da (keine zwei Routen mit demselben Pfad),
-//   * jeder Weg beginnt mit einem Schraegstrich.
+//   * jeder Weg beginnt mit einem Schrägstrich.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/routing/app_router.dart';
 

@@ -1,21 +1,21 @@
-// Die Funken-Liste: Auswaehlen, ausblenden, leerer Zustand.
+// Die Funken-Liste: Auswählen, ausblenden, leerer Zustand.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/interests/parts/matchestabstate.dart 88 offene Zeilen bei
 // 81 % Abdeckung. Gerade der Auswahl-Modus (NUTZERWUNSCH "Verwalten")
 // war ungetestet - und dort kann der Nutzer Funken ausblenden.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne Funke steht der Leerzustand da,
-//   * der Auswahl-Modus laesst sich starten und abbrechen,
-//   * ein ausgewaehlter Funke laesst sich ausblenden (der Server wird
+//   * der Auswahl-Modus lässt sich starten und abbrechen,
+//   * ein ausgewählter Funke lässt sich ausblenden (der Server wird
 //     gefragt, der Nutzer bekommt die Zahl),
 //   * ein Fehler beim Ausblenden wird gemeldet (nicht verschluckt).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
@@ -158,7 +158,7 @@ void main() {
 
       await waehleAus(tester);
 
-      // DEN FUNKEN ANWAEHLEN: Das Kästchen in der Zeile.
+      // DEN FUNKEN ANWÄHLEN: Das Kästchen in der Zeile.
       await tester.tap(find.byType(CheckboxListTile));
       await pumpFrames(tester);
 

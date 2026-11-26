@@ -1,22 +1,22 @@
 // Das Blockieren eines Nutzers im Chat.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/parts/chatdialoge.dart 88 offene Zeilen - darunter
 // der ganze Weg, einen Nutzer zu blockieren.
 //
 // DER GRUND: Das Blockieren ist der Bot-/Spam-Schutz der App.
 // Serverseitig werden die Likes in beide Richtungen und der Match
-// geloescht, und kuenftige Interaktionen werden verhindert. Das ist
-// ein Eingriff, der nicht rueckgaengig zu machen ist - der Nutzer muss
-// also BESTAETIGEN, bevor es passiert. Und er muss erfahren, wenn es
+// gelöscht, und künftige Interaktionen werden verhindert. Das ist
+// ein Eingriff, der nicht rückgängig zu machen ist - der Nutzer muss
+// also BESTÄTIGEN, bevor es passiert. Und er muss erfahren, wenn es
 // nicht geklappt hat (sonst glaubt er, der Nutzer sei blockiert, und
 // schreibt weiter - oder umgekehrt).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * das Menue bietet das Blockieren an,
+// WAS HIER GEPRÜFT WIRD:
+//   * das Menü bietet das Blockieren an,
 //   * der Dialog fragt nach (mit dem Namen des Nutzers),
 //   * "Abbrechen" blockiert niemanden,
-//   * das Bestaetigen blockiert den Nutzer (der Server wird gefragt).
+//   * das Bestätigen blockiert den Nutzer (der Server wird gefragt).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,7 +31,7 @@ import 'hilfen.dart';
 
 void main() {
   // DER STIMMUNGS-DIENST: Der Chat zeigt die Stimmungskarte - ohne den
-  // Client schlaegt der Aufbau fehl.
+  // Client schlägt der Aufbau fehl.
   moodClient = supabase.SupabaseClient(
     'https://example.supabase.co',
     'test-key',
@@ -70,14 +70,14 @@ void main() {
     server.pfade.clear();
   });
 
-  /// Oeffnet das Chat-Menue.
+  /// Öffnet das Chat-Menü.
   Future<void> oeffneMenue(WidgetTester tester) async {
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Tippt den Eintrag "Blockieren" im Menue an.
+  /// Tippt den Eintrag "Blockieren" im Menü an.
   Future<void> tippeBlockieren(WidgetTester tester) async {
     final eintrag = find.text(L10n.tWithoutContext('chat.block'));
     await tester.ensureVisible(eintrag);
@@ -168,9 +168,9 @@ void main() {
     });
 
     testWidgets('das Bestaetigen blockiert den Nutzer', (tester) async {
-      // DER PARTNER MIT UUID: Die Peer-IDs werden geprueft (Audit M1/M2).
-      // Mit "partner-1" wuerde der Server die Blockierung ablehnen - der
-      // Test wuerde dann den falschen Weg pruefen.
+      // DER PARTNER MIT UUID: Die Peer-IDs werden geprüft (Audit M1/M2).
+      // Mit "partner-1" würde der Server die Blockierung ablehnen - der
+      // Test würde dann den falschen Weg prüfen.
       final chat = chatMitNachricht(partnerMitUuid: true);
       await chatDetailScreenPump(
         tester,

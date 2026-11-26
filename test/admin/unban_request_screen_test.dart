@@ -1,18 +1,18 @@
 // Der Entsperrungsantrag (bisher ungetestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/unban_request_screen.dart 0 %.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * der Bildschirm zeigt das Formular (E-Mail und Begruendung),
+// WAS HIER GEPRÜFT WIRD:
+//   * der Bildschirm zeigt das Formular (E-Mail und Begründung),
 //   * ohne Eingabe wird nichts gesendet (die Pflichtfelder),
-//   * mit Eingabe geht der Antrag raus und der Bildschirm bestaetigt,
-//   * lehnt der Server ab, steht die Begruendung da - der Nutzer
-//     erfaehrt nicht, sein Antrag sei angekommen.
+//   * mit Eingabe geht der Antrag raus und der Bildschirm bestätigt,
+//   * lehnt der Server ab, steht die Begründung da - der Nutzer
+//     erfährt nicht, sein Antrag sei angekommen.
 //
 // NICHT DABEI: der Weg "Antrag absenden". Der Versand ist eine echte
-// Netz-Anfrage; in einem Widget-Test laeuft die Zeit in einer
-// Fake-Uhr, und die Antwort kommt dort nicht zuverlaessig an. Der
+// Netz-Anfrage; in einem Widget-Test läuft die Zeit in einer
+// Fake-Uhr, und die Antwort kommt dort nicht zuverlässig an. Der
 // Dienst selbst (er schickt los, er meldet Fehler) ist in
 // test/unban_brevo_and_moderation_test.dart abgedeckt - dort ohne
 // Widget-Baum, also mit echtem Event-Loop.
@@ -135,16 +135,16 @@ void main() {
   testWidgets('ohne Eingabe wird nichts gesendet', (tester) async {
     await zeige(tester);
 
-    // DER GRUND FUER DAS SCROLLEN: der Senden-Knopf steht unterhalb
+    // DER GRUND FÜR DAS SCROLLEN: der Senden-Knopf steht unterhalb
     // des sichtbaren Bereichs (die Seite ist ein Formular). Ohne das
     // Scrollen geht der Tipp ins Leere.
     final knopf = find.byType(PrimaryButton);
     await tester.ensureVisible(knopf);
     await tester.pump();
-    // DER GRUND FUER runAsync: Der Versand ist eine echte Netz-Anfrage
-    // (der Fake antwortet sofort, aber die Antwort kommt ueber die
-    // Event-Loop). In einem Widget-Test laeuft die Zeit in einer
-    // Fake-Uhr - ohne runAsync wuerde die Antwort nie ankommen und der
+    // DER GRUND FÜR runAsync: Der Versand ist eine echte Netz-Anfrage
+    // (der Fake antwortet sofort, aber die Antwort kommt über die
+    // Event-Loop). In einem Widget-Test läuft die Zeit in einer
+    // Fake-Uhr - ohne runAsync würde die Antwort nie ankommen und der
     // Bildschirm bliebe im Formular stehen.
     await tester.runAsync(() async {
       await tester.tap(knopf);

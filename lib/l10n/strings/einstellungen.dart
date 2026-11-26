@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsEinstellungen = {
@@ -21,9 +21,9 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
     // ===================================================================
     'location.disclosureTitle': 'Standort freigeben?',
     'settings.appearance': 'Darstellung',
-    // AppearanceSelector: Wert + Erklaerung je Modus. Die Erklaerung
+    // AppearanceSelector: Wert + Erklärung je Modus. Die Erklärung
     // sagt, was die Wahl TUT - das unterscheidet 'System' (folgt dem
-    // Geraet) von 'Hell'/'Dunkel' (erzwingen etwas). Ohne das sind drei
+    // Gerät) von 'Hell'/'Dunkel' (erzwingen etwas). Ohne das sind drei
     // gleich aussehende Zeilen, in denen die Voreinstellung nicht von
     // einer bewussten Entscheidung unterscheidbar ist.
     'appearance.light': 'Hell',
@@ -102,7 +102,7 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
         'erstellen?',
     'settings.passkeyExistsContinue': 'Weiter erstellen',
     'settings.passkeyFailed': 'Passkey-Erstellung fehlgeschlagen.',
-    // Passkey-Bestaetigungs-/Fehlertexte (Services ohne BuildContext)
+    // Passkey-Bestätigungs-/Fehlertexte (Services ohne BuildContext)
     'passkey.err.cancelledRegister': 'Passkey-Einrichtung abgebrochen.',
     'settings.passkeyLastUsed': 'Zuletzt genutzt {date}',
     'settings.passkeyRename': 'Umbenennen',
@@ -146,7 +146,7 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
         'Die Einstellung konnte nicht gespeichert werden. Bitte einmal neu versuchen.',
     'settings.showDistance': 'Entfernung anzeigen',
     // NUTZERWUNSCH (22.11.2026): Die Punkte und die Gewohnheiten
-    // einzeln fuer das oeffentliche Profil an- und auschalten.
+    // einzeln für das öffentliche Profil an- und auschalten.
     'settings.showFavoriteBand': 'Lieblings-Künstler',
     'settings.showFavoriteSong': 'Lieblingssong',
     'settings.showHabitsAlcohol': 'Alkohol',
@@ -191,7 +191,7 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
     'setup.abortContinue': 'Weiter machen',
     'setup.appbarTitle': 'Einstellungen & Privatsphäre',
     'setup.birthdaySub':
-        'Einmal im Jahr, an einem einzigen Tag. Waehle eine Richtung.',
+        'Einmal im Jahr, an einem einzigen Tag. Wähle eine Richtung.',
     'setup.filterSub': 'Wen möchtest du kennenlernen?',
     'setup.flagsWarn':
         'Hinweis: Der Einrichtungs-Stand konnte nicht auf dem Server '
@@ -218,7 +218,8 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
         'Hinweis: Dieser Standort weicht deutlich von deinen bisherigen '
         'Standorten auf diesem Gerät ab. Falls das stimmt, wähle ihn '
         'trotzdem - andernfalls gib deinen Ort bitte manuell ein.',
-    'setup.musicSub': 'Gemaeckte, die du magst und solche, die du nicht magst.',
+    'setup.musicSub':
+        'Geschmäcke, die du magst und solche, die du nicht magst.',
     'setup.nudgeBody':
         'Sichere dein Konto jetzt mit einem Passkey oder der '
         'Zwei-Faktor-Authentisierung. Ohne zweiten Faktor kann jeder '
@@ -327,7 +328,7 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
     'setupq.birthday': 'Wie soll dein Profil an deinem Geburtstag aussehen?',
     'setupq.intro': 'Wie klingst du? Erzähl von dir, als Text und gesprochen.',
     'setupq.mfa': 'Magst du zusätzlich einen zweiten Faktor einrichten?',
-    'setupq.music': 'Was hoerst du gern?',
+    'setupq.music': 'Was hörst du gern?',
     'setupq.passkey':
         'Magst du dein Konto mit einem Passkey absichern? Geht schnell.',
     'setupq.profile':
@@ -461,7 +462,7 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
     'settings.saveFailed': 'The setting could not be saved. Please try again.',
     'settings.showDistance': 'Show distance',
     // NUTZERWUNSCH (22.11.2026): Die Punkte und die Gewohnheiten
-    // einzeln fuer das oeffentliche Profil an- und auschalten.
+    // einzeln für das öffentliche Profil an- und auschalten.
     'settings.showFavoriteBand': 'Favourite artist',
     'settings.showFavoriteSong': 'Favourite song',
     'settings.showHabitsAlcohol': 'Alcohol',

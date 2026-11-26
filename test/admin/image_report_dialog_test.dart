@@ -1,14 +1,14 @@
-// Der Melde-Dialog fuer Chat-Bilder - bisher ungetestet.
+// Der Melde-Dialog für Chat-Bilder - bisher ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/services/profile/image_report_service.dart 230 offene Zeilen (9 %).
-// Der Dialog ist der einzige Weg, ueber den ein Nutzer ein Bild im Chat
+// Der Dialog ist der einzige Weg, über den ein Nutzer ein Bild im Chat
 // meldet - und dort steht die Zusage, dass NUR das gemeldete Bild und
 // NICHTS aus dem Verlauf an den Server geht.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne Bild gibt es keine Meldung (der Nutzer bekommt einen Hinweis),
-//   * der Grund muss gewaehlt werden (der Knopf ist sonst gesperrt),
+//   * der Grund muss gewählt werden (der Knopf ist sonst gesperrt),
 //   * mit Grund geht genau das gemeldete Bild an den Server,
 //   * beim Abbrechen geht NICHTS raus.
 import 'package:flutter/material.dart';
@@ -32,9 +32,9 @@ import '../support/plugin_mocks.dart';
 
 /// Der Meldungs-Dienst als Ersatz.
 ///
-/// DER GRUND: Der echte Dienst legt die Meldung in einer verschluesselten
-/// Hive-Box ab - die laesst sich im Widget-Test nicht oeffnen (das ist
-/// echte Datei-Arbeit). Fuer den Dialog reicht der Ersatz.
+/// DER GRUND: Der echte Dienst legt die Meldung in einer verschlüsselten
+/// Hive-Box ab - die lässt sich im Widget-Test nicht öffnen (das ist
+/// echte Datei-Arbeit). Für den Dialog reicht der Ersatz.
 class _FakeReportService extends ReportService {
   /// Die Meldungen, die erstellt wurden.
   final List<String> beschreibungen = [];
@@ -107,11 +107,11 @@ class _Keystore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {
-    // Der Test loescht kein Profil im Keystore.
+    // Der Test löscht kein Profil im Keystore.
   }
 }
 
-/// Der Knopf, der den Melde-Dialog oeffnet.
+/// Der Knopf, der den Melde-Dialog öffnet.
 class _Aufrufer extends ConsumerWidget {
   const _Aufrufer({required this.nachricht});
 
@@ -261,7 +261,7 @@ void main() {
     testWidgets('mit Grund geht genau das gemeldete Bild raus', (tester) async {
       await zeigeDialog(tester, nachricht: nachrichtMitBild());
 
-      // Den ersten Grund waehlen.
+      // Den ersten Grund wählen.
       final grund = find.byType(RadioListTile<ReportType>).first;
       await tester.ensureVisible(grund);
       await tester.tap(grund);

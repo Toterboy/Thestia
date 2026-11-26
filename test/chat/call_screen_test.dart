@@ -1,11 +1,11 @@
 // Der Anruf-Screen (Sprachchat).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/call_screen.dart 137 offene Zeilen bei 69 % Abdeckung.
 // Der Screen entscheidet, was der Nutzer sieht, wenn es keine Verbindung
-// gibt - und genau das ist der Fall, der im Alltag auffaellt.
+// gibt - und genau das ist der Fall, der im Alltag auffällt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne Verbindung wird der Anruf als "nicht erreichbar" gemeldet
 //     (nicht: endloses Klingeln ohne Ende),
 //   * der ausgehende Anruf klingelt beim Partner,
@@ -19,7 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-// webrtc_interface kommt als Transitivum ueber flutter_webrtc - der Test
+// webrtc_interface kommt als Transitivum über flutter_webrtc - der Test
 // braucht nur den DataChannel-Zustand.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -36,8 +36,8 @@ import '../support/plugin_mocks.dart';
 /// Der P2P-Dienst als Ersatz.
 ///
 /// DER GRUND: Die echte Direktverbindung braucht das WebRTC-Plugin - im
-/// Test gibt es kein Geraet. Der Ersatz meldet, was der Test will: die
-/// Verbindung steht oder sie faellt aus.
+/// Test gibt es kein Gerät. Der Ersatz meldet, was der Test will: die
+/// Verbindung steht oder sie fällt aus.
 class _FakeP2P extends P2PChatService {
   _FakeP2P(super.webrtc, super.prekey, {this.verbunden = true});
 
@@ -108,8 +108,8 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
-    // HIVE: der Verschluesselungs-Dienst oeffnet seine Boxen - ohne
-    // initialisiertes Hive schlaegt der Aufbau fehl.
+    // HIVE: der Verschlüsselungs-Dienst öffnet seine Boxen - ohne
+    // initialisiertes Hive schlägt der Aufbau fehl.
     await mockHive();
     // DER AUDIO-PLAYER und die AUFNAHME: Der Screen benutzt beide.
     mockAudioPlayer();
@@ -212,7 +212,7 @@ void main() {
         findsOneWidget,
         reason: 'Der eingehende Anruf muss als "klingelt" erkennbar sein.',
       );
-      // ANNEHMEN und ABLEHNEN: Beide Wege muessen da sein.
+      // ANNEHMEN und ABLEHNEN: Beide Wege müssen da sein.
       expect(find.byIcon(Icons.call), findsOneWidget);
       expect(find.byIcon(Icons.call_end), findsOneWidget);
     });

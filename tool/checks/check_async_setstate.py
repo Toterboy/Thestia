@@ -1,24 +1,24 @@
 """Findet 'setState nach dispose' - setState nach einem await ohne mounted.
 
 WARUM (06.11.2026): Bei der Bildauswahl, beim Standort-Speichern und
-in weiteren Faellen wird nach einem await (Serveraufruf, Datei lesen)
-setState gerufen, ohne den mounted zu pruefen. Navigiert der Nutzer
-in dieser Zeit weg, ruft Flutter setState auf einem abgeraeumten
+in weiteren Fällen wird nach einem await (Serveraufruf, Datei lesen)
+setState gerufen, ohne den mounted zu prüfen. Navigiert der Nutzer
+in dieser Zeit weg, ruft Flutter setState auf einem abgeräumten
 State auf - im Debug-Build ein Absturz ("setState() called after
 dispose()").
 
 DIE REGEL: Zwischen dem await und dem setState muss ein mounted-Check
-stehen (oder der Zweig kehrt zurueck).
+stehen (oder der Zweig kehrt zurück).
 
-DIE PRAEZISION (das ist der schwierige Teil - ein zu lueftiger Filter
+DIE PRÄZISION (das ist der schwierige Teil - ein zu lüftiger Filter
 meldet Fehlalarme und wird dann ignoriert):
   * Die Suche endet an der Funktionsgrenze. Ein await aus einer
-    ANDEREN Funktion zaehlt nicht.
-  * Ein mounted-Check in derselben Zeile zaehlt
+    ANDEREN Funktion zählt nicht.
+  * Ein mounted-Check in derselben Zeile zählt
     ("if (mounted) setState(...)").
-  * Ein setState in einem Callback (onPressed/onTap) zaehlt nicht -
+  * Ein setState in einem Callback (onPressed/onTap) zählt nicht -
     dort gibt es kein "nach dem await".
-  * Kommentarzeilen zaehlen nicht (dort steht "setState" nur im Text).
+  * Kommentarzeilen zählen nicht (dort steht "setState" nur im Text).
 
 Nutzung:  python tool/checks/check_async_setstate.py
 """
@@ -31,8 +31,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -80,7 +80,7 @@ def pruefe_datei(pfad: pathlib.Path) -> list:
         # Der mounted-Check darf in derselben Zeile stehen.
         if "mounted" in z:
             continue
-        # Ein setState in einem Callback zaehlt nicht.
+        # Ein setState in einem Callback zählt nicht.
         if CALLBACK.search(z) or "=>" in z[: z.index("setState(")]:
             continue
 
@@ -95,8 +95,8 @@ def pruefe_datei(pfad: pathlib.Path) -> list:
         last_await = None
         for k in range(i - 1, func_von - 1, -1):
             if re.search(r"\bawait\b", zeilen[k]):
-                # Nur ein await auf derselben Ebene zaehlt (nicht in
-                # einem tieferen Zweig, der danach zurueckkehrt).
+                # Nur ein await auf derselben Ebene zählt (nicht in
+                # einem tieferen Zweig, der danach zurückkehrt).
                 if len(zeilen[k]) - len(zeilen[k].lstrip()) >= (
                     len(z) - len(z.lstrip())
                 ):

@@ -1,22 +1,22 @@
-"""Prueft: In lib/ und test/ gibt es keine leeren catch-Bloecke mehr.
+"""Prüft: In lib/ und test/ gibt es keine leeren catch-Blöcke mehr.
 
-WARUM (05.11.2026): Die App hatte 94 leere `catch (_) {}`-Bloecke.
+WARUM (05.11.2026): Die App hatte 94 leere `catch (_) {}`-Blöcke.
 Sie waren nicht falsch - das Muster "ein fehlgeschlagener
 Einzelschritt darf den Ablauf nicht stoppen" ist richtig (beim
 Abmelden darf ein kaputter Cache-Abbau nicht die restliche
-Aufraeumung verhindern). Aber sie verschluckten jeden Fehler
-spurlos: niemand konnte sehen, dass beim Aufraeumen etwas
+Aufräumung verhindern). Aber sie verschluckten jeden Fehler
+spurlos: niemand konnte sehen, dass beim Aufräumen etwas
 schiefging.
 
-AB LOESUNG: Es gibt jetzt den zentralen Helfer
+AB LÖSUNG: Es gibt jetzt den zentralen Helfer
 lib/utils/common/best_effort.dart. Er macht genau dasselbe wie ein leeres
 catch - der Fehler stoppt den Ablauf nicht - protokolliert ihn aber.
 
-DESHALB DIESES GATE: Ein leeres catch waere wieder still. Der
-Analyzer-Lint "empty_catches" faellt hier nicht durch, weil der
-Unterstrich im catch ("catch (_)") fuer den Analyzer ein
+DESHALB DIESES GATE: Ein leeres catch wäre wieder still. Der
+Analyzer-Lint "empty_catches" fällt hier nicht durch, weil der
+Unterstrich im catch ("catch (_)") für den Analyzer ein
 "bewusst ignoriert" ist - gemessen: mit aktiviertem Lint meldet er
-keinen der 94 Bloecke, nur die ohne Unterstrich.
+keinen der 94 Blöcke, nur die ohne Unterstrich.
 
 Nutzung:  python tool/checks/check_no_empty_catches.py
 """
@@ -29,8 +29,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -53,7 +53,7 @@ CATCH = re.compile(r"catch\s*\(([^)]*)\)\s*\{")
 def leerer_catch(text: str) -> list:
     """Die Zeilen, an denen ein leerer catch steht."""
     funde = []
-    # Die Kommentarzeilen ausblenden (sonst zaehlt der Beispielcode
+    # Die Kommentarzeilen ausblenden (sonst zählt der Beispielcode
     # im Doc-Kommentar des Helfers mit).
     ohne_kommentare = []
     for zeile in text.split("\n"):

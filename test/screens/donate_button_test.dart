@@ -1,13 +1,13 @@
-// Tests fuer den Spenden-Button.
+// Tests für den Spenden-Button.
 //
 // ANLASS: Der Button existierte bis v0.4.0 nicht mehr - zu Recht, weil
 // die Zahlung damals eine Attrappe war. Jetzt ist er wieder da, aber
-// ohne Attrappe: keine erfundene Buchung, keine "Danke"-Bestaetigung
-// ohne Zahlung, kein Spender-Badge. Der Button oeffnet genau einen
-// Link - oder erklaert ehrlich, dass gar keine Adresse hinterlegt ist.
+// ohne Attrappe: keine erfundene Buchung, keine "Danke"-Bestätigung
+// ohne Zahlung, kein Spender-Badge. Der Button öffnet genau einen
+// Link - oder erklärt ehrlich, dass gar keine Adresse hinterlegt ist.
 //
-// GENAU DIESER letzte Fall wird hier geprueft: Solange keine Adresse
-// eingetragen ist, darf der Button KEINEN Zahlungsfluss vortaeuschen.
+// GENAU DIESER letzte Fall wird hier geprüft: Solange keine Adresse
+// eingetragen ist, darf der Button KEINEN Zahlungsfluss vortäuschen.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,7 +24,7 @@ Widget _huelle(Widget kind) {
 /// Die gezeichneten Vektoren im Button.
 ///
 /// ACHTUNG: Das Material des Buttons bringt selbst ein CustomPaint
-/// mit (fuer die Tinte des Tap-Feedbacks) - deshalb wird nur nach
+/// mit (für die Tinte des Tap-Feedbacks) - deshalb wird nur nach
 /// einem CustomPaint MIT Painter gesucht. Das ist die Schenk-Glyphe.
 Finder _gezeichneteVektoren() {
   return find.descendant(
@@ -38,7 +38,7 @@ Finder _gezeichneteVektoren() {
 void main() {
   setUp(() {
     // Der Plattform-Kanal wird in Widget-Tests nicht beantwortet - ein
-    // Haptik-Rückimpuls (HapticFeedback) wuerde den Test sonst ewig
+    // Haptik-Rückimpuls (HapticFeedback) würde den Test sonst ewig
     // warten lassen. Der Mock beantwortet ihn sofort.
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
@@ -57,14 +57,14 @@ void main() {
 
     testWidgets('zeichnet die eigene Schenk-Glyphe', (tester) async {
       // Bewusst KEIN Icons.card_giftcard: das steht in der App bereits
-      // fuer "Gefaellt mir". Die eigene Glyphe hebt sich davon ab.
+      // für "Gefällt mir". Die eigene Glyphe hebt sich davon ab.
       await tester.pumpWidget(_huelle(const DonateButton()));
       await tester.pumpAndSettle();
 
       expect(_gezeichneteVektoren(), findsOneWidget);
       expect(find.byIcon(Icons.card_giftcard), findsNothing);
       // Und es ist wirklich kein Standard-Icon: die App benutzt
-      // "Gefaellt mir" bereits als Herz-Icon.
+      // "Gefällt mir" bereits als Herz-Icon.
       expect(find.byType(Icon), findsNothing);
     });
 
@@ -133,8 +133,8 @@ void main() {
 
   group('openDonateLink', () {
     testWidgets('ohne Adresse passiert nichts weiter', (tester) async {
-      // Der Helfer fuer Textzeilen: ohne Adresse gibt es nichts zu
-      // oeffnen. Er darf keinen Absturz produzieren - und keinen Link.
+      // Der Helfer für Textzeilen: ohne Adresse gibt es nichts zu
+      // öffnen. Er darf keinen Absturz produzieren - und keinen Link.
       await tester.pumpWidget(_huelle(const DonateButton()));
       await tester.pumpAndSettle();
 

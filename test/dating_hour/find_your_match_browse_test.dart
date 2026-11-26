@@ -1,4 +1,4 @@
-// Regressionstest fuer den Kategorie-Browser in "Find your Spark"
+// Regressionstest für den Kategorie-Browser in "Find your Spark"
 // (09.11.2026).
 //
 // BEFUND (Betreiber): "dann entweder Zufallsvorstellung oder
@@ -6,12 +6,12 @@
 // Interessens-Kategorien. Auf diesen neuen Teil mit den Kategorien soll
 // ein Bereich mit 18+ sein, wo von 18 bis 99+ alle gesehen werden (Aber
 // man kann nach Alter filtern mit Regler) und ein 16-17 Bereich ohne
-// Vorstellung mit Alter darueber. Wichtig ist, dass diese Grenze
-// wirklich klappt, wie auch ueberall anders auch, damit die
-// Kinder/Jugend geschuetzt sind."
+// Vorstellung mit Alter darüber. Wichtig ist, dass diese Grenze
+// wirklich klappt, wie auch überall anders auch, damit die
+// Kinder/Jugend geschützt sind."
 //
-// DER TEST prueft die App-seitige Haelfte: die Altersgrenzen des
-// Browsers. Die serverseitige Haelfte (Migration 203/204) ist durch
+// DER TEST prüft die App-seitige Hälfte: die Altersgrenzen des
+// Browsers. Die serverseitige Hälfte (Migration 203/204) ist durch
 // die Sicht `public_profiles` erzwungen - dort ist die Grenze nicht
 // verhandelbar, auch nicht mit einem manipulierten Client.
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +22,7 @@ import 'package:thestia/providers/dating_hour/find_your_match_browse_provider.da
 import 'package:thestia/services/dating_hour/find_your_match_service.dart';
 
 /// Ein Client, der NICHT verbindet (die Abfragen laufen ohne Server
-/// gar nicht erst - der Provider prueft `SupabaseService.isInitialized`).
+/// gar nicht erst - der Provider prüft `SupabaseService.isInitialized`).
 FindYourMatchService _service() =>
     FindYourMatchService(SupabaseClient('https://example.invalid', 'anon'));
 
@@ -30,7 +30,7 @@ void main() {
   group('Der Kategorie-Browser', () {
     test('die Altersgrenzen folgen den Sicherheitsregeln', () {
       // 16 und 17: nur untereinander. Das Alter endet bei 17 - ein
-      // 16-Jaehriger darf keinen Erwachsenen sehen.
+      // 16-Jähriger darf keinen Erwachsenen sehen.
       final minderjaehrig = FindYourMatchBrowseNotifier(_service(), 16);
       expect(minderjaehrig.state.alterMin, 16);
       expect(minderjaehrig.state.alterMax, 17);

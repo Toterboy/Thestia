@@ -1,19 +1,19 @@
 // Der Teil '_CandidateSheet'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
 
 part of '../transit_radar_screen.dart';
 
-/// Die Kandidatenliste: wer in der Naehe ist und zur Beschreibung passt.
+/// Die Kandidatenliste: wer in der Nähe ist und zur Beschreibung passt.
 ///
 /// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
-/// der selben Beschreibung geben sollte, dass man dann alle dafuer
+/// der selben Beschreibung geben sollte, dass man dann alle dafür
 /// vorgeschlagen bekommt".
 ///
 /// Der Name erscheint nur, wenn die Person ihn freigegeben hat. Der Ort

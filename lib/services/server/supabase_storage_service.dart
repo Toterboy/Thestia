@@ -143,8 +143,8 @@ class SupabaseStorageService {
       );
     }
 
-    // upsert: Erneutes Hochladen (neues Bild) ueberschreibt das alte -
-    // ohne upsert wuerde der zweite Upload mit 409 scheitern.
+    // upsert: Erneutes Hochladen (neues Bild) überschreibt das alte -
+    // ohne upsert würde der zweite Upload mit 409 scheitern.
     await _client.storage
         .from(_bucket)
         .uploadBinary(
@@ -261,8 +261,8 @@ class SupabaseStorageService {
       if (url == null || url.isEmpty) return null;
 
       // SICHERHEIT (03.11.2026): Die URL kommt aus der Edge Function.
-      // Sie wird ungeprueft geladen - ein kompromittiertes Backend (oder
-      // ein manipulierter UnifiedPush-Endpunkt) koennte die App sonst auf
+      // Sie wird ungeprüft geladen - ein kompromittiertes Backend (oder
+      // ein manipulierter UnifiedPush-Endpunkt) kännte die App sonst auf
       // einen beliebigen Host schicken. Erlaubt sind deshalb nur
       // HTTPS und die eigenen Supabase-Hosts.
       final uri = Uri.tryParse(url);
@@ -382,7 +382,7 @@ class SupabaseStorageService {
           path,
           Uint8List.fromList(data),
           // upsert: Erneutes Hochladen (z. B. zweite Aufnahme in der
-          // Einrichtung) ueberschreibt das alte Audio - ohne upsert
+          // Einrichtung) überschreibt das alte Audio - ohne upsert
           // scheitert es mit StorageException 409 "Duplicate".
           //
           // contentType (088): WICHTIG - ohne expliziten Typ landet
@@ -433,9 +433,9 @@ class SupabaseStorageService {
       throw AppException('Das Video ist leer.');
     }
 
-    // v0.10.0: Das Video liegt VERSCHLUESSELT im Bucket. Der Pfad
-    // endet auf .enc, damit ein unverschluesselter Altbestand nicht
-    // versehentlich als vollstaendig gelesen gilt.
+    // v0.10.0: Das Video liegt VERSCHLÜSSELT im Bucket. Der Pfad
+    // endet auf .enc, damit ein unverschlüsselter Altbestand nicht
+    // versehentlich als vollständig gelesen gilt.
     final path = '$userId/video.mp4.enc';
     if (kDebugMode) {
       log(
@@ -455,7 +455,7 @@ class SupabaseStorageService {
           fileOptions: const FileOptions(
             // application/octet-stream statt video/mp4: der Inhalt ist
             // Chiffrat, kein abspielbares Video. Wer ihn als MP4
-            // ausliefert, erhaelt eine Datei, die der Browser nicht
+            // ausliefert, erhält eine Datei, die der Browser nicht
             // spielen kann - das ist beabsichtigt.
             contentType: 'application/octet-stream',
             upsert: true,
@@ -467,8 +467,8 @@ class SupabaseStorageService {
 
   /// Entfernt das eigene Verifizierungs-Video (z. B. bei Abbruch).
   ///
-  /// BUG (Security-Audit 22.10.2026): hier wurde 'video.mp4' geloescht.
-  /// Seit v0.10.0 (Migration 151) liegt das Video aber verschluesselt als
+  /// BUG (Security-Audit 22.10.2026): hier wurde 'video.mp4' gelöscht.
+  /// Seit v0.10.0 (Migration 151) liegt das Video aber verschlüsselt als
   /// 'video.mp4.enc' im Bucket - der Aufruf ins Leere tat nichts.
   Future<void> deleteVerificationVideo() async {
     final userId = _currentUser?.id;

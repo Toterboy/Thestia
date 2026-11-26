@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsAnmeldung = {
@@ -82,7 +82,7 @@ const Map<String, Map<String, String>> stringsAnmeldung = {
         'Der Sicherheitscheck hat die Anfrage als Bot-Verhalten '
         'eingestuft. Bitte versuche es gleich noch einmal.',
     'captcha.err.clock':
-        'Die Uhrzeit des Geraets stimmt nicht. Bitte stelle automatische '
+        'Die Uhrzeit des Geräts stimmt nicht. Bitte stelle automatische '
         'Zeit ein und versuche es erneut.',
     'captcha.err.timeout':
         'Der Sicherheitscheck hat zu lange gebraucht. Bitte versuche es '

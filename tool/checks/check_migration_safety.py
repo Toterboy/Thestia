@@ -1,7 +1,7 @@
 """Validiert alle Migrationen mit pglast (echter PostgreSQL-Parser).
 
-Prueft zusaetzlich die eingebauten Sicherheits-Invarianten:
-  * Paarungsfunktionen muessen blocked_users + age_compatible_bidirectional
+Prüft zusätzlich die eingebauten Sicherheits-Invarianten:
+  * Paarungsfunktionen müssen blocked_users + age_compatible_bidirectional
     enthalten UND ein Fail-Fast-DO-Block muss das auch durchsetzen.
 """
 import pathlib
@@ -26,8 +26,8 @@ for f in files:
     # beim Lesen und sah die Datei als in Ordnung - der Fehler fiel
     # deshalb erst im CI auf.
     #
-    # Deshalb wird das BOM hier ausdruecklich gemeldet (und die Datei
-    # trotzdem geparst, damit alle weiteren Pruefungen laufen).
+    # Deshalb wird das BOM hier ausdrücklich gemeldet (und die Datei
+    # trotzdem geparst, damit alle weiteren Prüfungen laufen).
     if roh.startswith(b'\xef\xbb\xbf'):
         bom_fail += 1
         print(f'BOM-FEHLER {f.name}: die Datei beginnt mit einem BOM.')
@@ -75,24 +75,24 @@ for f in files:
 
 
 def effektiver_koerper(name: str) -> str:
-    """Der Koerper, in dem die Pruefungen TATSAECHLICH stehen.
+    """Der Körper, in dem die Prüfungen TATSÄCHLICH stehen.
 
-    WARUM DAS NOETIG IST (04.11.2026):
+    WARUM DAS NÖTIG IST (04.11.2026):
 
     Migration 176 hat die Dating-Hour-Funktionen umbenannt
     (ALTER FUNCTION ... RENAME TO ..._ohne_nutzungszeit) und davor
-    eine duenne Huelle gesetzt, die die elterliche Nutzungszeit
-    erzwingt. Die Sicherheitspruefungen (Verifikation, Blockier-
-    schutz, Alterskompatibilitaet) stehen aber im umbenannten Original.
+    eine dünne Hülle gesetzt, die die elterliche Nutzungszeit
+    erzwingt. Die Sicherheitsprüfungen (Verifikation, Blockier-
+    schutz, Alterskompatibilität) stehen aber im umbenannten Original.
 
-    Ohne diese Aufloesung wuerde der Pruefer nur die Huelle sehen
-    und eine Luecke melden, die es nicht gibt. Die Huelle ist selbst
-    geprueft - in tool/checks/check_security_invariants.py steht die
-    Invariante, dass die Huelle das Gate auch wirklich aufruft.
+    Ohne diese Auflösung würde der Prüfer nur die Hülle sehen
+    und eine Lücke melden, die es nicht gibt. Die Hülle ist selbst
+    geprüft - in tool/checks/check_security_invariants.py steht die
+    Invariante, dass die Hülle das Gate auch wirklich aufruft.
     """
     body = defs.get(name.lower(), '')
 
-    # (a) PERFORM-Huelle (Migration 176): die Huelle ruft das Original
+    # (a) PERFORM-Hülle (Migration 176): die Hülle ruft das Original
     #     per PERFORM auf.
     treffer = re.search(r'PERFORM\s+public\.([a-z0-9_]+)\s*\(', body, re.I)
     if treffer:
@@ -103,14 +103,14 @@ def effektiver_koerper(name: str) -> str:
     # (b) DIREKTER Aufruf einer Hilfsfunktion (Migration 205).
     #
     #     WARUM (09.11.2026): Die Blockier- und Funke-Ausschlussregeln
-    #     fuer den Zufallschat liegen jetzt in EINER Hilfsfunktion
+    #     für den Zufallschat liegen jetzt in EINER Hilfsfunktion
     #     (random_chat_pair_allowed) - join_random_chat() ruft sie an
-    #     allen drei Wegen auf. Ohne diese Aufloesung wuerde der
-    #     Pruefer nur den Aufruf sehen und die Regel als "fehlend"
+    #     allen drei Wegen auf. Ohne diese Auflösung würde der
+    #     Prüfer nur den Aufruf sehen und die Regel als "fehlend"
     #     melden, obwohl sie durchgesetzt wird.
     #
     #     Es werden nur Hilfsfunktionen verfolgt, die in den Migrationen
-    #     selbst definiert sind - Tabellen (public.profiles o. Ae.)
+    #     selbst definiert sind - Tabellen (public.profiles o. Ä.)
     #     stehen nicht in `defs` und werden ignoriert.
     for aufruf in re.finditer(r'public\.([a-z0-9_]+)\s*\(', body, re.I):
         innen = defs.get(aufruf.group(1).lower())
@@ -133,10 +133,10 @@ for name in PAIRS:
         ok &= v
 
 # --- Transit Spark nur ab 18 (Migration 131) ----------------------------------
-# Drei Einstiegspunkte muessen das Gate transit_spark_adult() enthalten.
-# Zusaetzlich muss die Gegenseite mitgeprueft werden: nur der aufrufende
-# Nutzer zu sperren wuerde einem Erwachsenen weiterhin erlauben, eine
-# Minderjaehrige zu finden (age_compatible erlaubt ein 2-Jahres-Band).
+# Drei Einstiegspunkte müssen das Gate transit_spark_adult() enthalten.
+# Zusätzlich muss die Gegenseite mitgeprüft werden: nur der aufrufende
+# Nutzer zu sperren würde einem Erwachsenen weiterhin erlauben, eine
+# Minderjährige zu finden (age_compatible erlaubt ein 2-Jahres-Band).
 TRANSIT_GATED = ['transit_presence_heartbeat', 'match_proximity_spark',
                  'send_soft_ping']
 print('\nInvarianten Transit Spark 18+ (Migration 131):')
@@ -158,10 +158,10 @@ for name in ('match_proximity_spark', 'send_soft_ping'):
 # sie NICHT "erwachsen" liefern (public.profile_age coalesct auf 2000).
 #
 # Migration 159 hat transit_spark_adult() um die Notbremse erweitert und
-# die Alterspruefung in transit_spark_is_adult() ausgelagert. Die
+# die Altersprüfung in transit_spark_is_adult() ausgelagert. Die
 # Invariante bleibt dieselbe - nur der Ort, an dem sie steht, hat sich
-# geaendert. Geprueft wird deshalb BEIDES: die Delegation muss da sein
-# (sonst waere die Bremse umgangen) UND die Alterspruefung muss
+# geändert. Geprüft wird deshalb BEIDES: die Delegation muss da sein
+# (sonst wäre die Bremse umgangen) UND die Altersprüfung muss
 # fail-closed sein.
 helper = defs.get('transit_spark_adult', '')
 alt_helper = defs.get('transit_spark_is_adult', '')
@@ -183,7 +183,7 @@ print(f'  {"transit_spark_adult":28} {"OK" if schalter_ok else "FEHLT":6} '
       f'(Notbremse im Gate)')
 ok &= bool(schalter_ok)
 
-# Und wenn transit_spark_adult die Alterspruefung auslagert, muss der
+# Und wenn transit_spark_adult die Altersprüfung auslagert, muss der
 # Schalter trotzdem im Gate selbst stehen: die Freigabe ist
 # "Schalter UND Alter", nicht "Alter UND Schalter irgendwo".
 if 'transit_spark_is_adult(' in helper:
@@ -209,10 +209,10 @@ for k, v in guards.items():
     print(f'  {k:44} {"OK" if v else "FEHLT"}')
     ok &= v
 
-# --- Antwortschluessel-Helfer duerfen nicht mehr oeffentlich sein ---------------
-# Migration 123 loest das DYNAMISCH ueber pg_proc auf (DO-Block mit
+# --- Antwortschlüssel-Helfer dürfen nicht mehr öffentlich sein ---------------
+# Migration 123 löst das DYNAMISCH über pg_proc auf (DO-Block mit
 # p.oid::regprocedure), weil `quiz_pick_personalized` zwei Overloads hat.
-# Ein Regex ueber Signaturen kann das nicht mehr sehen - daher wird der
+# Ein Regex über Signaturen kann das nicht mehr sehen - daher wird der
 # dynamische Block als Treffer gewertet.
 dynamic_block = re.search(
     r"p\.oid::regprocedure::text[\s\S]{0,900}?REVOKE ALL ON FUNCTION %s "

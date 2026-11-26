@@ -1,22 +1,22 @@
-"""Packt den Publish-Ordner in ein Zip fuer den Upload (Drag & Drop).
+"""Packt den Publish-Ordner in ein Zip für den Upload (Drag & Drop).
 
 WARUM ES DAS GIBT (08.11.2026, Hosterwechsel-Vorbereitung): Der
-Publish-Ordner wird von Hand hochgeladen - bei Netlify ueber "Drop",
-bei Cloudflare Pages ueber "Upload assets". Beide nehmen einen Ordner
+Publish-Ordner wird von Hand hochgeladen - bei Netlify über "Drop",
+bei Cloudflare Pages über "Upload assets". Beide nehmen einen Ordner
 ODER eine Zip-Datei entgegen.
 
 Der Zip ist bequemer (eine Datei statt eines Ordners), aber er hat
 eine Falle: Liegt im Zip ein ORDNER "passkey-assets/", dann ist das
-fuer den Hoster ein Unterordner - die Startseite landet unter
+für den Hoster ein Unterordner - die Startseite landet unter
 /publish-assets/index.html statt unter "/", und die Website ist
 kaputt. Genau das ist beim ersten Hochladen schon einmal passiert
 (die .well-known-Pfade fehlten, weil Netlify Drop die Ordner mit
-fuehrendem Punkt nicht mitnahm).
+führendem Punkt nicht mitnahm).
 
 DESHALB macht dieses Skript das Zip so, wie der Hoster es braucht:
 ALLE Dateien liegen im Zip-WURZELVERZEICHNIS. Der Inhalt ist
 zeichengleich mit dem, was das Gate `check_publish_folder.py`
-geprueft hat - es wird nichts hinzugefuegt, nichts entfernt, nichts
+geprüft hat - es wird nichts hinzugefügt, nichts entfernt, nichts
 umgeschrieben.
 
 Aufruf:
@@ -36,8 +36,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -55,9 +55,9 @@ ROOT = _projektwurzel()
 PUBLISH = ROOT / "passkey-assets"
 OUT_DIR = ROOT / "releases"
 
-# Diese Dateien sind Konfiguration fuer einen bestimmten Hoster. Sie
-# werden mitgepackt (sie gehoeren zum Ordner, den das Gate prueft),
-# aber sie sind ausdruecklich KEINE Seiten.
+# Diese Dateien sind Konfiguration für einen bestimmten Hoster. Sie
+# werden mitgepackt (sie gehören zum Ordner, den das Gate prüft),
+# aber sie sind ausdrücklich KEINE Seiten.
 KONFIG = {"_headers", "_redirects", "netlify.toml"}
 
 
@@ -88,8 +88,8 @@ def main() -> int:
     ziel.parent.mkdir(parents=True, exist_ok=True)
 
     # WICHTIG: arcname ist der Pfad RELATIV zum Publish-Ordner. Ohne
-    # das enthaelt die Zip einen Ordner "passkey-assets/" - und der
-    # Hoster wuerde die Seite unterhalb davon ablegen.
+    # das enthält die Zip einen Ordner "passkey-assets/" - und der
+    # Hoster würde die Seite unterhalb davon ablegen.
     with zipfile.ZipFile(ziel, "w", zipfile.ZIP_DEFLATED) as zf:
         for p in dateien:
             rel = p.relative_to(PUBLISH).as_posix()

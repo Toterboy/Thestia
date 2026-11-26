@@ -44,20 +44,20 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   /// Wie lange ein Anmelde- oder Registrierungsversuch dauern darf.
   ///
-  /// 20 Sekunden: genug fuer eine langsame Verbindung, kurz genug, damit
-  /// der Nutzer nicht denkt, die App haengt. Ohne Limit war das Verhalten
-  /// "endlos warten" - der Aufruf kehrt nicht zurueck, es gibt weder
+  /// 20 Sekunden: genug für eine langsame Verbindung, kurz genug, damit
+  /// der Nutzer nicht denkt, die App hängt. Ohne Limit war das Verhalten
+  /// "endlos warten" - der Aufruf kehrt nicht zurück, es gibt weder
   /// Erfolg noch Fehler, und der Button dreht sich unbegrenzt. Im Log
-  /// stand danach nichts, was sich wie ein haengendes Programm anfuehlt.
+  /// stand danach nichts, was sich wie ein hängendes Programm anfühlt.
   static const Duration _authTimeout = Duration(seconds: 20);
 
-  /// Oeffentlich, damit der Test die 20 Sekunden als Zahl pruefen kann.
+  /// Öffentlich, damit der Test die 20 Sekunden als Zahl prüfen kann.
   ///
-  /// Die Konstante ist Teil der Zusage an den Nutzer ("spaetestens nach
-  /// 20 Sekunden meldet die App einen Fehler"). Ein stilles Aendern auf 8
-  /// oder 60 Sekunden waere ein Rueckschritt, den kein Test fangen wuerde,
+  /// Die Konstante ist Teil der Zusage an den Nutzer ("spätestens nach
+  /// 20 Sekunden meldet die App einen Fehler"). Ein stilles Ändern auf 8
+  /// oder 60 Sekunden wäre ein Rückschritt, den kein Test fangen würde,
   /// weil beide Werte "irgendwann" sind. Als Zeichenkette ist der Wert
-  /// zusaetzlich im L10n sichtbar, damit der gemeldete Text zur Haertung
+  /// zusätzlich im L10n sichtbar, damit der gemeldete Text zur Härtung
   /// passt.
   static const Duration authTimeout = _authTimeout;
 
@@ -218,15 +218,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               captchaToken: captchaToken,
               // v0.9.2: 20 Sekunden Limit.
               //
-              // Ohne das kehrt der Aufruf auf einem Geraet ohne erreichbaren
-              // Server nie zurueck: weder Erfolg noch Fehler, der Button
+              // Ohne das kehrt der Aufruf auf einem Gerät ohne erreichbaren
+              // Server nie zurück: weder Erfolg noch Fehler, der Button
               // dreht sich endlos. Im Log stand danach nichts - und genau so
               // sah es aus: "Registriere Nutzer..." und Stille.
               //
               // Die Meldung sagt dem Nutzer, was wirklich passiert ist, statt
               // "Server fehlgeschlagen": wenn 20 Sekunden nichts kommen, ist
               // es der Server, den es nicht erreicht - nicht der Nutzer,
-              // der sich geirrt haette.
+              // der sich geirrt hätte.
             )
             .timeout(_authTimeout);
         // Profil wurde bereits in AuthNotifier.register() via setProfile()
@@ -267,12 +267,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // verworfen: der Nutzer sah eine Snackbar mit "Server
         // fehlgeschlagen", und im Logcat stand nach
         // "_submit aufgerufen" nichts mehr. Genau daran ist eine
-        // Einrueckungs-Diagnose gescheitert - der Fehler war da, er
+        // Einrückungs-Diagnose gescheitert - der Fehler war da, er
         // wurde nur nirgends festgehalten.
         //
         // Geloggt wird der Fehlertext, kein Passwort und kein Token:
         // AppException.message bzw. der Servertext (z. B. "User already
-        // registered", Captcha-Fehler). Das sind Meldungen, die fuer
+        // registered", Captcha-Fehler). Das sind Meldungen, die für
         // die Fehlersuche gebraucht werden und keine Geheimnisse.
         debugPrint(
           '[LoginScreen] Auth-Provider hat Fehler '
@@ -318,16 +318,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context.go(AppRoutes.unbanRequest, extra: e.email);
           return;
         } else if (e is TimeoutException) {
-          // Eigener Zweig fuer [_authTimeout]. Vorher landete der Timeout
+          // Eigener Zweig für [_authTimeout]. Vorher landete der Timeout
           // im generischen else und meldete "Etwas ist schiefgelaufen" -
           // nicht unterscheidbar von einem CAPTCHA-Fehler oder einem
-          // echten Serverfehler. Fuer die offene Registrierungsfrage ist
+          // echten Serverfehler. Für die offene Registrierungsfrage ist
           // genau das der Unterschied: dieser Text sagt, dass der Server
-          // nicht erreichbar war, und schliesst CAPTCHA und Passwort aus.
+          // nicht erreichbar war, und schließt CAPTCHA und Passwort aus.
           //
           // `duration` ist bewusst nicht im Text: die Snackbar steht nach
           // 20 Sekunden, nicht "irgendwann". Eine Sekundenzahl im Text
-          // waere eine Zusage, die der Nutzer nicht nachzaehlen kann.
+          // wäre eine Zusage, die der Nutzer nicht nachzählen kann.
           debugPrint(
             '[LoginScreen] Timeout nach ${authTimeout.inSeconds} s '
             '(${_isRegister ? "Registrierung" : "Login"}) - Server nicht '
@@ -755,19 +755,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 10),
                           // EINWILLIGUNG (03.11.2026): "In der
-                          // Datenschutzerklaerung muss ausdruecklich
-                          // ueber die Erhebung von Daten wie der
-                          // sexuellen Orientierung aufgeklaert werden
+                          // Datenschutzerklärung muss ausdrücklich
+                          // über die Erhebung von Daten wie der
+                          // sexuellen Orientierung aufgeklärt werden
                           // und das der User auch zustimmt."
                           //
                           // Die Angaben, aus denen sich die
                           // Orientierung ergibt, sind Daten der
                           // besonderen Kategorie (Art. 9 DSGVO). Die
-                          // Verarbeitung ist nur mit ausdruecklicher
-                          // Einwilligung zulaessig - die Registrierung
+                          // Verarbeitung ist nur mit ausdrücklicher
+                          // Einwilligung zulässig - die Registrierung
                           // ist sie. Der Hinweis steht hier, im
                           // Registrierungsformular, und verweist auf
-                          // die Erklaerung, in der es ausfuehrlich
+                          // die Erklärung, in der es ausführlich
                           // steht (Abschnitt 2b).
                           Container(
                             padding: const EdgeInsets.only(top: 2),

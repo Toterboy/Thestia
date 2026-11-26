@@ -33,21 +33,21 @@ class TransitState {
     this.featureDisabled = false,
   });
 
-  /// Taegliche Selbst-Angaben (v0.9.0): 1-3 Merkmale zu sich selbst,
-  /// werden mit jedem Signal mitgeschickt - andere finden dich darueber.
+  /// Tägliche Selbst-Angaben (v0.9.0): 1-3 Merkmale zu sich selbst,
+  /// werden mit jedem Signal mitgeschickt - andere finden dich darüber.
   final List<String> selfTags;
 
   /// Freie Ergänzung zur Selbstbeschreibung (v0.9.1, max. 140 Zeichen).
   final String selfNote;
 
-  /// Die Art des ungefaehren Ortes (v0.10.1, Betreiber: "wenn man im Zug
+  /// Die Art des ungefähren Ortes (v0.10.1, Betreiber: "wenn man im Zug
   /// ist z.B. Wagen 3").
   ///
-  /// FREI GEWAEHLT und KEIN Standort: der Nutzer nennt selbst, was er
+  /// FREI GEWÄHLT und KEIN Standort: der Nutzer nennt selbst, was er
   /// nennen will. Leer = kein Ort.
   final String placeKind;
 
-  /// Der ungefaehre Ort in den eigenen Worten (z. B. "Wagen 3",
+  /// Der ungefähre Ort in den eigenen Worten (z. B. "Wagen 3",
   /// "Halle 2 bei den Toiletten"). Max. 60 Zeichen.
   final String placeText;
 
@@ -70,9 +70,9 @@ class TransitState {
 
   /// Der Server hat Transit Spark abgeschaltet (Migration 159).
   ///
-  /// Der Schalter in `app_config` ist die Notbremse fuer den Fall, dass
+  /// Der Schalter in `app_config` ist die Notbremse für den Fall, dass
   /// der BLE-Gerätetest nicht besteht. Der Client fragt den Stand ab,
-  /// damit der Nutzer eine klare Begruendung sieht und nicht nur eine
+  /// damit der Nutzer eine klare Begründung sieht und nicht nur eine
   /// Alters-Meldung, obwohl es um etwas anderes geht.
   final bool featureDisabled;
 
@@ -127,16 +127,16 @@ class TransitNotifier extends StateNotifier<TransitState>
   /// am Dateianfang von transit_ble_service.dart sagt "Vordergrund-
   /// Betrieb" - das war die Absicht, die Umsetzung folgte ihr nicht.
   ///
-  /// Der Radar bleibt dabei AKTIV (die Sitzung laeuft weiter, der
+  /// Der Radar bleibt dabei AKTIV (die Sitzung läuft weiter, der
   /// Nutzer sieht sie im Interface als "aktiv"); nur das Funk-Radio
-  /// schweigt. Beim Zurueckkommen startet es wieder.
+  /// schweigt. Beim Zurückkommen startet es wieder.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       if (this.state.active) {
-        // FRISCHES Token beim Neustart (ROADMAP, "BLE-Tracking-Haertung":
+        // FRISCHES Token beim Neustart (ROADMAP, "BLE-Tracking-Härtung":
         // "frische Token pro Advertising-Neustart"). Mit demselben Token
-        // weiterzumachen wuerde verraten, dass das Geraet zwischendurch
+        // weiterzumachen würde verraten, dass das Gerät zwischendurch
         // nur still war.
         final neuerToken = TransitEncounterService.generateToken();
         unawaited(_resumeMitNeuemToken(neuerToken));
@@ -182,9 +182,9 @@ class TransitNotifier extends StateNotifier<TransitState>
   TransitEncounterService? _encountersField;
 
   /// SECURITY (Audit 2026-09-26): Der Encounter-Cache wird BEWUSST nicht
-  /// ueber `_storage` (localStorageProvider = SharedPreferences =
-  /// Klartext) geschrieben, sondern in den Keystore. Der Cache enthaelt
-  /// BEGEHNACHWEISE - welche fremden Geraete waren per BLE in Funkreichweite
+  /// über `_storage` (localStorageProvider = SharedPreferences =
+  /// Klartext) geschrieben, sondern in den Keystore. Der Cache enthält
+  /// BEGEHNACHWEISE - welche fremden Geräte waren per BLE in Funkreichweite
   /// und wann. Das ist ein Ortungsdatum (DSGVO Art. 9); die restlichen
   /// Art.-9-Preferenzen liegen bereits im Keystore
   /// (user_preferences_provider.dart), dieser Store war die Ausnahme.
@@ -213,7 +213,7 @@ class TransitNotifier extends StateNotifier<TransitState>
     if (!state.active) state = state.copyWith(mode: mode);
   }
 
-  /// Taegliche Selbst-Angaben setzen (v0.9.0, beim Radar-Start).
+  /// Tägliche Selbst-Angaben setzen (v0.9.0, beim Radar-Start).
   void setSelfTags(List<String> tags) {
     state = state.copyWith(selfTags: tags);
   }
@@ -223,7 +223,7 @@ class TransitNotifier extends StateNotifier<TransitState>
     state = state.copyWith(selfNote: note.trim());
   }
 
-  /// Setzt den ungefaehren Ort (v0.10.1, Betreiber: "wenn man im Zug ist
+  /// Setzt den ungefähren Ort (v0.10.1, Betreiber: "wenn man im Zug ist
   /// z.B. Wagen 3 oder so oder wenn man auf ner Messe ist z.B. Halle 2").
   ///
   /// Der Ort ist eine SELBSTAUSKUNFT - kein Standort, keine Koordinaten.
@@ -256,7 +256,7 @@ class TransitNotifier extends StateNotifier<TransitState>
 
     // Presence-Heartbeat (v0.9.1 Soft-Ping): Das aktuelle Token wird
     // serverseitig hinterlegt (TTL 45 min, Auto-Purge) - NUR so kann
-    // ein nachtraeglicher Gruß die Person ueberhaupt erreichen. Im
+    // ein nachträglicher Gruß die Person überhaupt erreichen. Im
     // Privacy-Hinweis des Radars transparent genannt.
     if (SupabaseService.isInitialized) {
       unawaited(() async {
@@ -272,10 +272,10 @@ class TransitNotifier extends StateNotifier<TransitState>
 
     // Token-Rotation mit JITTER (v0.9.2): vorher exakt alle 10 Minuten.
     // Ein fester Rotations-Raster ist selbst ein Fingerprint - wer den
-    // Wechsel mitzaehlt, kennt die Periode und bildet daraus eine
-    // Geraeteklasse ueber Sitzungen hinweg. Jetzt 6-14 min, neu gewuerfelt
-    // nach jeder Rotation. Der Server prueft Begegnungen ueber ein
-    // 30-Minuten-Fenster, der grosszuehige Spielraum passt weiter.
+    // Wechsel mitzählt, kennt die Periode und bildet daraus eine
+    // Geräteklasse über Sitzungen hinweg. Jetzt 6-14 min, neu gewürfelt
+    // nach jeder Rotation. Der Server prüft Begegnungen über ein
+    // 30-Minuten-Fenster, der großzühige Spielraum passt weiter.
     _scheduleRotation();
 
     // Countdown/Ende-Überwachung: EINMAL-Timer auf die Restlaufzeit.
@@ -306,11 +306,11 @@ class TransitNotifier extends StateNotifier<TransitState>
   /// die Tokens sind ephemere Zufallswerte ohne Positionsdaten und
   /// verfallen lokael; die eigenen PRESENCE-Tokens werden weiterhin
   /// sofort entfernt (Radar aus = nicht mehr adressierbar).
-  /// Plant die naechste Token-Rotation mit jitteriger Verzoegerung.
+  /// Plant die nächste Token-Rotation mit jitteriger Verzögerung.
   ///
-  /// Einmal-Timer statt `Timer.periodic`, weil sich die Verzoegerung nach
+  /// Einmal-Timer statt `Timer.periodic`, weil sich die Verzögerung nach
   /// jeder Rotation neu auswerfen soll - ein periodischer Timer hat
-  /// zwangslaeufig eine feste Periode.
+  /// zwangsläufig eine feste Periode.
   void _scheduleRotation() {
     _rotateTimer?.cancel();
     _rotateTimer = Timer(TransitBlePrivacy.tokenRotationDelay(), () async {
@@ -366,7 +366,7 @@ class TransitNotifier extends StateNotifier<TransitState>
   }
 
   /// Liste der NOCH SICHTBAREN Encounters (2-Stunden-Fenster, v0.9.0)
-  /// fuer die Gruessen-Sektion im Radar.
+  /// für die Grüßen-Sektion im Radar.
   List<TransitEncounter> softEncounters() => _encounters.softList();
 
   /// True, wenn gesehene Personen noch in der 2-Stunden-Ruhezeit sind.
@@ -386,11 +386,11 @@ class TransitNotifier extends StateNotifier<TransitState>
 
   /// Soft-Ping senden (1x pro Token, 48 h).
   ///
-  /// BEFUND (11.11.2026, Betreiber): "die Moeglichkeit hat auch mehrere
-  /// anzuschreiben". Darum kann der Empfaenger auch direkt benannt werden
-  /// (die Kandidatenliste liefert die Person). Der Server prueft die
-  /// Naehe in BEIDEN Faellen selbst - ein Ping an eine beliebige Person
-  /// ist damit nicht moeglich.
+  /// BEFUND (11.11.2026, Betreiber): "die Möglichkeit hat auch mehrere
+  /// anzuschreiben". Darum kann der Empfänger auch direkt benannt werden
+  /// (die Kandidatenliste liefert die Person). Der Server prüft die
+  /// Nähe in BEIDEN Fällen selbst - ein Ping an eine beliebige Person
+  /// ist damit nicht möglich.
   Future<bool> sendSoftPing({
     required String token,
     required String messageKey,
@@ -420,10 +420,10 @@ class TransitNotifier extends StateNotifier<TransitState>
     }
   }
 
-  /// Die Personen in der Naehe, deren Beschreibung passt.
+  /// Die Personen in der Nähe, deren Beschreibung passt.
   ///
   /// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
-  /// der selben Beschreibung geben sollte, dass man dann alle dafuer
+  /// der selben Beschreibung geben sollte, dass man dann alle dafür
   /// vorgeschlagen bekommt".
   Future<List<TransitCandidate>> listCandidates({
     required List<String> tags,
@@ -457,7 +457,7 @@ class TransitNotifier extends StateNotifier<TransitState>
       // den Server, der antwortete mit einem 400 und dem Rohfehler im
       // Text ("Bad request"). Der Nutzer wusste damit nichts.
       //
-      // Ohne Geraet in Reichweite gibt es nichts zu vergleichen - das
+      // Ohne Gerät in Reichweite gibt es nichts zu vergleichen - das
       // ist kein Fehler, sondern eine Lage. Die App sagt es jetzt
       // selbst.
       if (tokens.isEmpty) {
@@ -466,11 +466,11 @@ class TransitNotifier extends StateNotifier<TransitState>
       }
       // Der eigene Token (v0.10.0, Migration 185).
       //
-      // BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine
+      // BEFUND (07.11.2026, Betreiber): "Beide Geräte suchen eine
       // Person bei Transit Spark ... aber gibt keinen Funken." Der
       // Server verglich zwei Sichtungslisten - die sind bei zwei
       // Personen, die nur einander sehen, disjunkt. Mit genau zwei
-      // Geraeten war ein Match mathematisch unmoeglich.
+      // Geräten war ein Match mathematisch unmöglich.
       //
       // Der eigene Token macht die Frage beantwortbar: "hat der
       // andere mich gesehen?" - denn der eigene Token des anderen
@@ -478,7 +478,7 @@ class TransitNotifier extends StateNotifier<TransitState>
       // hat.
       final eigenerToken = TransitBleService.instance.currentToken;
       if (eigenerToken == null || eigenerToken.isEmpty) {
-        // Das Radar laeuft, sendet aber noch kein Signal (oder der
+        // Das Radar läuft, sendet aber noch kein Signal (oder der
         // Token wurde gerade gewechselt). Ein Versuch ohne ihn kann
         // keinen Match finden - das wird gesagt, statt still nichts
         // zu tun.
@@ -493,7 +493,7 @@ class TransitNotifier extends StateNotifier<TransitState>
             selfTags: state.selfTags,
             selfNote: state.selfNote.isEmpty ? null : state.selfNote,
             selfToken: eigenerToken,
-            // BEFUND (11.11.2026): Der ungefaehre Ort geht mit dem Signal
+            // BEFUND (11.11.2026): Der ungefähre Ort geht mit dem Signal
             // zum Server - damit steht er bei den Kandidaten dabei.
             placeKind: state.placeKind.isEmpty ? null : state.placeKind,
             placeText: state.placeText.isEmpty ? null : state.placeText,

@@ -4,16 +4,16 @@
 // sind nach Themen aufgeteilt; die Helfer liegen in
 // test/support/interessen_screen_hilfen.dart.
 
-// Widget-Tests fuer den Screen "Interessen" (Reiter der Startseite).
+// Widget-Tests für den Screen "Interessen" (Reiter der Startseite).
 //
-// ANLASS: Die Coverage-Messung (13.11.2026) zeigte fuer
+// ANLASS: Die Coverage-Messung (13.11.2026) zeigte für
 // lib/screens/interests/interessen_screen.dart 835 offene Zeilen - der
-// Screen war die groesste Luecke der App. Er ist die Antwort auf die
+// Screen war die größte Lücke der App. Er ist die Antwort auf die
 // Frage "was ist mit meinem Like passiert?" - und genau dort hat der
 // Betreiber im November 2026 mehrere Befunde gemeldet (Funke
 // verschwunden, Reiter springt, Leerzustand sah wie ein Fehler aus).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Screen baut sich (kein Absturz, kein Render-Overflow),
 //   * der Leerzustand steht da (nicht "nichts gefunden", sondern der
 //     ausgeschriebene Leerzustand),
@@ -22,16 +22,16 @@
 //   * ein fehlgeschlagener Abruf zeigt den Fehler MIT Wiederholen -
 //     nicht die leere Liste (BEFUND 13.11.2026: "Außerdem ist mein
 //     Funke verschwunden"),
-//   * der Mehrfach-Auswahl-Modus blendet die gewaehlten Funken aus.
+//   * der Mehrfach-Auswahl-Modus blendet die gewählten Funken aus.
 //
 // OHNE SERVER: Der Find-your-Match-Service wird durch einen Hand-Fake
 // ersetzt (siehe [_FakeFindYourMatchService]). Der Supabase-Client wird
-// nur initialisiert, damit der Screen seinen Serverstand ueberhaupt
+// nur initialisiert, damit der Screen seinen Serverstand überhaupt
 // abfragt - es geht KEINE Anfrage raus (alle Aufrufe landen im Fake).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/chat/find_match_models.dart';
@@ -48,11 +48,11 @@ void main() {
     await SharedPreferences.getInstance();
     // Der Client wird nur initialisiert, damit
     // [SupabaseService.isInitialized] true ist und der Screen den
-    // Serverstand ueberhaupt abfragt. Es geht keine Anfrage raus - der
+    // Serverstand überhaupt abfragt. Es geht keine Anfrage raus - der
     // Service ist ein Fake.
     //
-    // autoRefreshToken: false - sonst laeuft ein periodischer Timer,
-    // an dem der Test am Ende scheitern wuerde.
+    // autoRefreshToken: false - sonst läuft ein periodischer Timer,
+    // an dem der Test am Ende scheitern würde.
     // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
     // das echte Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
@@ -63,9 +63,9 @@ void main() {
     // Hive-Box - ohne initialisiertes Hive wirft der Chat-Dienst
     // ("You need to initialize Hive").
     await mockHive();
-    // DER SERVER: das Zuruecknehmen eines Likes geht ueber die
+    // DER SERVER: das Zurücknehmen eines Likes geht über die
     // REST-Schnittstelle (DELETE auf 'likes') - ohne den Ersatz-Server
-    // gaengt der Aufruf ins Leere.
+    // gängt der Aufruf ins Leere.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -75,15 +75,15 @@ void main() {
         detectSessionInUri: false,
       ),
     );
-    // ANGEMELDET: ohne Sitzung weiss der Bildschirm nicht, wessen Like
-    // das ist - das Zuruecknehmen ginge dann gar nicht.
+    // ANGEMELDET: ohne Sitzung weiß der Bildschirm nicht, wessen Like
+    // das ist - das Zurücknehmen ginge dann gar nicht.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // Der Server merkt sich die Anfragen - fuer jeden Test beginnt er
-    // neu. Sonst wuerde ein Test den Aufruf eines anderen sehen (und
-    // der "schweigt"-Test wuerde alle folgenden stoeren).
+    // Der Server merkt sich die Anfragen - für jeden Test beginnt er
+    // neu. Sonst würde ein Test den Aufruf eines anderen sehen (und
+    // der "schweigt"-Test würde alle folgenden stören).
     server.pfade.clear();
     server.rpcAufrufe.clear();
     server.rpcFehler.clear();
@@ -121,7 +121,7 @@ void main() {
       expect(find.text('Noch keine Funken'), findsOneWidget);
       expect(find.textContaining('Bestätige erhaltene Likes'), findsOneWidget);
       // Ohne Funken gibt es auch nichts zu verwalten - der Stift im
-      // App-Bereich waere ein Knopf ohne Wirkung.
+      // App-Bereich wäre ein Knopf ohne Wirkung.
       expect(find.byTooltip('Verwalten'), findsNothing);
     });
 
@@ -204,7 +204,7 @@ void main() {
       service.funken = [funke()];
       await interessenScreenPump(tester, service: service);
 
-      // Das Drei-Punkte-Menue der Kachel oeffnen.
+      // Das Drei-Punkte-Menü der Kachel öffnen.
       await tester.tap(find.byIcon(Icons.more_vert).first);
       await pumpFrames(tester);
       expect(find.text('Aus Liste entfernen'), findsOneWidget);
@@ -215,7 +215,7 @@ void main() {
       expect(tester.takeException(), isNull);
       // Der Server wurde wirklich informiert ...
       expect(service.ausgeblendet, contains(7));
-      // ... und der Nutzer bekommt die Bestaetigung.
+      // ... und der Nutzer bekommt die Bestätigung.
       expect(find.text('Mira aus der Liste entfernt.'), findsOneWidget);
     });
 
@@ -223,8 +223,8 @@ void main() {
       tester,
     ) async {
       // BREITES Fenster: im Flutter-Test ist jeder Buchstabe ein Quadrat
-      // und damit rund doppelt so breit wie auf dem Geraet. Die Knopfzeile
-      // des Auswahl-Modus passt bei dieser Breite sonst ueber - das ist
+      // und damit rund doppelt so breit wie auf dem Gerät. Die Knopfzeile
+      // des Auswahl-Modus passt bei dieser Breite sonst über - das ist
       // ein Artefakt des Test-Fonts, nicht des Screens (siehe Bericht).
       await tester.binding.setSurfaceSize(const Size(800, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -273,7 +273,7 @@ void main() {
         find.textContaining('Die Funken konnten nicht geladen werden'),
         findsOneWidget,
       );
-      // Und es gibt einen Weg zurueck.
+      // Und es gibt einen Weg zurück.
       expect(find.text('Erneut versuchen'), findsOneWidget);
     });
 
@@ -347,13 +347,13 @@ void main() {
       // ... und die Gegenseite sieht die Funke-Animation.
       expect(find.byType(FunkeOverlay), findsOneWidget);
 
-      // Die Animation laeuft von selbst ab (1,1 s) - danach kommt die
-      // Bestaetigung.
+      // Die Animation läuft von selbst ab (1,1 s) - danach kommt die
+      // Bestätigung.
       await tester.pump(const Duration(milliseconds: 1500));
       await pumpFrames(tester);
       expect(find.byType(FunkeOverlay), findsNothing);
 
-      // Und der Nutzer bekommt die Bestaetigung.
+      // Und der Nutzer bekommt die Bestätigung.
       expect(find.textContaining('Jonas'), findsWidgets);
     });
 
@@ -376,7 +376,7 @@ void main() {
       await tester.tap(find.text('Erhalten'));
       await pumpFrames(tester);
 
-      // Das Auge mit dem Strich heisst "ausblenden" - die Gegenseite
+      // Das Auge mit dem Strich heißt "ausblenden" - die Gegenseite
       // darf davon NICHTS sehen (BEFUND 07.11.2026).
       await tester.tap(find.byTooltip('Ignorieren'));
       await pumpFrames(tester);
@@ -417,14 +417,14 @@ void main() {
 
       expect(find.text('Jonas'), findsWidgets);
 
-      // Das Menue der Person -> "Like zurueckziehen".
+      // Das Menü der Person -> "Like zurückziehen".
       await tester.tap(find.byIcon(Icons.more_vert).last);
       await pumpFrames(tester);
       await tester.tap(find.text('Like zurückziehen'));
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Der Server hat die Loeschung bekommen ...
+      // Der Server hat die Löschung bekommen ...
       expect(
         server.schreibvorgaenge.any((v) => v['tabelle'] == 'likes'),
         isTrue,
@@ -438,7 +438,7 @@ void main() {
     // Das Datum des gesendeten Likes (NUTZERWUNSCH 28.10.2026: "kann
     // auch sehen, an welchem Tag man den Like gesendet hat").
     group('Das Datum des gesendeten Likes', () {
-      /// Der Anker fuer die Datums-Tests: MITTAGS Heute.
+      /// Der Anker für die Datums-Tests: MITTAGS Heute.
       ///
       /// DER GRUND: `DateTime.now().subtract(2 h)` ist kurz nach
       /// Mitternacht schon GESTERN - dann sagt der Test "Heute" und
@@ -466,7 +466,7 @@ void main() {
         ];
         await interessenScreenPump(tester, service: service);
 
-        // "Gesendet" aufklappen (wie der Test, der schon gruen ist).
+        // "Gesendet" aufklappen (wie der Test, der schon grün ist).
         await tester.tap(find.text('Gesendet'));
         await pumpFrames(tester);
       }
@@ -514,8 +514,8 @@ void main() {
 
         expect(tester.takeException(), isNull);
         // Nach einer Woche steht das konkrete Datum da (kein "vor X
-        // Tagen" mehr - das waere beim Scrollen unlesbar).
-        // Das Kalenderdatum des Likes (20 Tage zurueck).
+        // Tagen" mehr - das wäre beim Scrollen unlesbar).
+        // Das Kalenderdatum des Likes (20 Tage zurück).
         final damals = anker().subtract(const Duration(days: 20));
         expect(
           find.textContaining('${damals.day}.${damals.month}.${damals.year}'),
@@ -544,7 +544,7 @@ void main() {
       await tester.tap(find.text('Erhalten'));
       await pumpFrames(tester);
 
-      // Das Menue der Like-Kachel.
+      // Das Menü der Like-Kachel.
       await tester.tap(find.byIcon(Icons.more_vert).last);
       await pumpFrames(tester);
 
@@ -552,7 +552,7 @@ void main() {
       await tester.tap(find.text('Blockieren'));
       await pumpFrames(tester);
 
-      // Es fragt nach - blockiert wird nicht ohne Rueckfrage.
+      // Es fragt nach - blockiert wird nicht ohne Rückfrage.
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(
         find.textContaining('Jonas'),
@@ -571,12 +571,12 @@ void main() {
       service.funken = [funke()];
       await interessenScreenPump(tester, service: service);
 
-      // Das Drei-Punkte-Menue der Funke-Kachel oeffnen.
+      // Das Drei-Punkte-Menü der Funke-Kachel öffnen.
       await tester.tap(find.byIcon(Icons.more_vert).first);
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Archivieren, Loeschen, Ausblenden ...
+      // Archivieren, Löschen, Ausblenden ...
       expect(find.text('Archivieren'), findsOneWidget);
       expect(find.text('Funke löschen'), findsOneWidget);
       expect(find.text('Aus Liste entfernen'), findsOneWidget);
@@ -614,7 +614,7 @@ void main() {
       expect(tester.takeException(), isNull);
       // Der Server wurde wirklich informiert ...
       expect(service.gekuehlt, contains(7));
-      // ... und der Nutzer bekommt die Bestaetigung.
+      // ... und der Nutzer bekommt die Bestätigung.
       expect(find.textContaining('Mira'), findsWidgets);
     });
 
@@ -633,7 +633,7 @@ void main() {
       await tester.tap(find.text('Funke löschen'));
       await pumpFrames(tester);
 
-      // Die Rueckfrage kommt (zwei Knöpfe: abbrechen und loeschen).
+      // Die Rückfrage kommt (zwei Knöpfe: abbrechen und löschen).
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Funke löschen?'), findsOneWidget);
 
@@ -643,7 +643,7 @@ void main() {
       expect(tester.takeException(), isNull);
       // Der Server wurde wirklich informiert ...
       expect(service.beendet, contains(7));
-      // ... und der Nutzer bekommt die Bestaetigung.
+      // ... und der Nutzer bekommt die Bestätigung.
       expect(find.text('Funke gelöscht.'), findsOneWidget);
     });
 
@@ -676,7 +676,7 @@ void main() {
       final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      // Ein gekuehlter (archivierter) Funke.
+      // Ein gekühlter (archivierter) Funke.
       service.funken = [funke(status: 'cooled')];
       await interessenScreenPump(tester, service: service);
 
@@ -707,7 +707,7 @@ void main() {
         supabase.Supabase.instance.client,
       );
       // Acht Tage alt und ohne Nachricht: nach 72 Stunden ohne
-      // Aktivitaet wird er gekuehlt (der Nutzer soll nicht wochenlang
+      // Aktivität wird er gekühlt (der Nutzer soll nicht wochenlang
       // einen Funken sehen, der niemanden bewegt).
       service.funken = [
         funke(erstellt: DateTime.now().subtract(const Duration(days: 8))),
@@ -745,7 +745,7 @@ void main() {
     });
   });
   group('Der automatische Funke (Migration 177)', () {
-    /// Die RPC, die den automatischen Funke aufloest.
+    /// Die RPC, die den automatischen Funke auflöst.
     const String rpc = 'resolve_dating_hour_auto_match';
 
     /// Baut den Screen mit einem automatischen Funken.
@@ -860,7 +860,7 @@ void main() {
         isFalse,
         reason: '"Person entfernen" heisst p_keep = false.',
       );
-      // Der Funke ist weg - und kommt beim naechsten Laden nicht wieder.
+      // Der Funke ist weg - und kommt beim nächsten Laden nicht wieder.
       expect(
         find.text('Mira, 30'),
         findsNothing,
@@ -921,7 +921,7 @@ void main() {
       // Der Sternchen-Hinweis steht noch da (die Datenbank hat ihn nicht
       // angenommen).
       //
-      // DER HINWEIS: skipOffstage - der Chat liegt jetzt ueber dem
+      // DER HINWEIS: skipOffstage - der Chat liegt jetzt über dem
       // Bildschirm, der Bildschirm selbst ist also "offstage". Der
       // Hinweis muss aber trotzdem noch dastehen.
       expect(

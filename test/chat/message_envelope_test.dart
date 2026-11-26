@@ -1,8 +1,8 @@
-// Tests fuer die neue Nachrichten-Huelle (v0.10.1).
+// Tests für die neue Nachrichten-Hülle (v0.10.1).
 //
 // BEFUND (11.11.2026): Ohne eine stabile Nachrichten-ID konnte die
-// Nachricht nicht "fuer alle geloescht" werden (die beiden Seiten
-// hatten verschiedene IDs). Die Huelle traegt die ID des Senders.
+// Nachricht nicht "für alle gelöscht" werden (die beiden Seiten
+// hatten verschiedene IDs). Die Hülle trägt die ID des Senders.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/services/chat/message_envelope.dart';
 
@@ -63,9 +63,9 @@ void main() {
     });
 
     test('zwei Wege mit derselben ID ergeben dieselbe Nachricht', () {
-      // Das ist der Punkt: derselbe Text ueber P2P und ueber das Relay
-      // muss auf beiden Geraeten dieselbe ID haben - sonst erscheint die
-      // Nachricht doppelt und ein Loeschen erreicht die Gegenseite nicht.
+      // Das ist der Punkt: derselbe Text über P2P und über das Relay
+      // muss auf beiden Geräten dieselbe ID haben - sonst erscheint die
+      // Nachricht doppelt und ein Löschen erreicht die Gegenseite nicht.
       final ueberP2p = parseEnvelope(
         buildEnvelope(id: 'm_42', kind: WireKind.text, text: 'Hallo'),
       );

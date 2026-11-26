@@ -24,19 +24,19 @@ class DatingHourSession {
   /// Wann der automatische Funke entsteht (Start + 10 Minuten).
   ///
   /// NUTZERWUNSCH 04.11.2026: Die 5 Minuten sind eine
-  /// ENTSCHEIDUNGSphase, nicht das Ende des Gespraechs. Danach
-  /// laeuft der Chat weiter, und nach 10 Minuten entsteht automatisch
+  /// ENTSCHEIDUNGSphase, nicht das Ende des Gesprächs. Danach
+  /// läuft der Chat weiter, und nach 10 Minuten entsteht automatisch
   /// ein Funke - damit eine unterbrochene Verbindung nicht dazu
-  /// fuehrt, dass zwei sich gut verstandene Menschen kein Match
+  /// fährt, dass zwei sich gut verstandene Menschen kein Match
   /// bekommen.
   final DateTime? autoMatchAt;
 
-  /// Der Funke wurde automatisch erzeugt (nicht von beiden bestaetigt).
+  /// Der Funke wurde automatisch erzeugt (nicht von beiden bestätigt).
   final bool autoMatched;
 
-  /// Wer das Gespraech vorzeitig beendet hat.
+  /// Wer das Gespräch vorzeitig beendet hat.
   ///
-  /// Wer beendet, meint es: Ein beendetes Gespraech erhaelt KEINEN
+  /// Wer beendet, meint es: Ein beendetes Gespräch erhält KEINEN
   /// automatischen Funke.
   final String? endedBy;
 
@@ -61,13 +61,13 @@ class DatingHourSession {
   ///
   /// WARUM NULL (BEFUND 22.11.2026, Fuzzing): Eine Session ohne
   /// brauchbare Zeiten hat einen **unbekannten** Zustand: Ohne
-  /// `expires_at` weiss die App nicht, ob die fuenf Minuten laufen oder
-  /// ob die Entscheidungsphase ist. Frueher standen hier Casts - ein
-  /// fehlendes Feld liess die App abstuerzen. Mit einem
-  /// "Ersatzdatum" (dem Jahr 1970) waere die Anzeige zwar nicht mehr
-  /// kaputt, aber **falsch** (die Zeit stuende sofort auf 0, und die
-  /// Entscheidungsphase stuende an - der Bildschirm zeigte dann
-  /// Entscheidungs-Knoepfe statt des Eingabefelds).
+  /// `expires_at` weiß die App nicht, ob die fünf Minuten laufen oder
+  /// ob die Entscheidungsphase ist. Früher standen hier Casts - ein
+  /// fehlendes Feld ließ die App abstürzen. Mit einem
+  /// "Ersatzdatum" (dem Jahr 1970) wäre die Anzeige zwar nicht mehr
+  /// kaputt, aber **falsch** (die Zeit stünde sofort auf 0, und die
+  /// Entscheidungsphase stünde an - der Bildschirm zeigte dann
+  /// Entscheidungs-Knöpfe statt des Eingabefelds).
   ///
   /// DER WEG: Lieber keine Session als eine erfundene. Der Bildschirm
   /// zeigt dann den Zustand "Verbinde..." - das ist ehrlich.
@@ -96,9 +96,9 @@ class DatingHourSession {
 
   /// Baut eine Session aus einer Supabase-Row.
   ///
-  /// BEFUND (22.11.2026, Fuzzing): Die Casts hier waren ungeschuetzt.
-  /// Fuer das Lesen aus fremden Daten ist [parse] der richtige Weg -
-  /// es gibt null zurueck, wenn die Zeile unbrauchbar ist.
+  /// BEFUND (22.11.2026, Fuzzing): Die Casts hier waren ungeschützt.
+  /// Für das Lesen aus fremden Daten ist [parse] der richtige Weg -
+  /// es gibt null zurück, wenn die Zeile unbrauchbar ist.
   factory DatingHourSession.fromJson(Map<String, dynamic> json) {
     return DatingHourSession(
       id: textOf(json, ['id']) ?? '',
@@ -182,10 +182,10 @@ class DatingHourSession {
   /// Der Funke wurde automatisch erzeugt.
   bool get isAutoMatched => autoMatched;
 
-  /// Hat eine der beiden Seiten das Gespraech vorzeitig beendet?
+  /// Hat eine der beiden Seiten das Gespräch vorzeitig beendet?
   bool get wasEndedEarly => endedBy != null;
 
-  /// Hat der aufrufende Nutzer das Gespraech beendet?
+  /// Hat der aufrufende Nutzer das Gespräch beendet?
   bool wasEndedBy(String userId) => endedBy != null && endedBy == userId;
 
   DatingHourSession copyWith({

@@ -1,15 +1,15 @@
 // Der Teil '_PasskeyManagerCardState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
 
 // Passkeys sind ein Supabase-Beta-Feature (@experimental). DER GRUND:
-// Die Anweisung stand frueher in der Hauptdatei - beim Teilen muss sie
+// Die Anweisung stand früher in der Hauptdatei - beim Teilen muss sie
 // auch in diesem Teil stehen, sonst meldet der Analyser 4 Warnungen.
 // ignore_for_file: experimental_member_use
 

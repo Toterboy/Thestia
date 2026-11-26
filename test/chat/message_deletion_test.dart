@@ -1,14 +1,14 @@
-// Test fuer die Nachrichten-Loeschung "fuer alle" (v0.10.1).
+// Test für die Nachrichten-Löschung "für alle" (v0.10.1).
 //
-// BEFUND (11.11.2026, Betreiber): "3. Ist kein Nachrichtenloeschen wie bei
-// z. B. Whatsapp moeglich? Also da kann man die Nachricht ja irgendwie fuer
-// beide loeschen, aber ein Hinweis steht dann da, dass es fuer alle
-// geloescht wurde. Ist das gegen den Datenschutz? Wenn ja nicht machen."
+// BEFUND (11.11.2026, Betreiber): "3. Ist kein Nachrichtenlöschen wie bei
+// z. B. Whatsapp möglich? Also da kann man die Nachricht ja irgendwie für
+// beide löschen, aber ein Hinweis steht dann da, dass es für alle
+// gelöscht wurde. Ist das gegen den Datenschutz? Wenn ja nicht machen."
 //
 // DIE ANTWORT: Nein - solange der Server NUR die Tatsache speichert
-// (kein Inhalt). Dieser Test haelt fest, dass die lokale Seite die
+// (kein Inhalt). Dieser Test hält fest, dass die lokale Seite die
 // Nachricht durch einen HINWEIS ersetzt (nicht durch einen Text, der
-// verraten wuerde, was drin stand).
+// verraten würde, was drin stand).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/chat/message.dart';
 import 'package:thestia/models/profile/user_profile.dart';

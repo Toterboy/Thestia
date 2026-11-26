@@ -1,18 +1,18 @@
 // Der Scan-Weg des QR-Scanners (Kamera statt Code eingeben).
 //
-// ANLASS (20.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (20.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/qr/qr_scan_screen.dart 106 offene Zeilen. Der manuelle Weg
-// (Code eingeben) war getestet - der Weg ueber die Kamera nicht.
+// (Code eingeben) war getestet - der Weg über die Kamera nicht.
 //
 // DER WEG: `mobile_scanner` hat eine austauschbare Plattform-Schnittstelle.
 // Der Test schiebt selbst einen erkannten Barcode hinein, so wie es die
-// Kamera tun wuerde - ohne echte Kamera und ohne Aenderung am Produkt.
+// Kamera tun würde - ohne echte Kamera und ohne Änderung am Produkt.
 //
-// DER GRUND: Ein QR-Code kommt von einem FREMDEN Geraet. Die App muss
+// DER GRUND: Ein QR-Code kommt von einem FREMDEN Gerät. Die App muss
 //   * fremde Formate abweisen (und das sagen),
-//   * die Peer-ID als UUID pruefen (Audit M1 - sonst waere eine
-//     Pfad-/Filter-Injection moeglich),
-//   * eine gueltige ID zum Server schicken (der Funke entsteht).
+//   * die Peer-ID als UUID prüfen (Audit M1 - sonst wäre eine
+//     Pfad-/Filter-Injection möglich),
+//   * eine gültige ID zum Server schicken (der Funke entsteht).
 import 'dart:async';
 
 import 'package:flutter/material.dart';

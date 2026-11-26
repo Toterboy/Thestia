@@ -1,16 +1,16 @@
-// Die Modus-Auswahl ("Entdecken") - bisher voellig ungetestet.
+// Die Modus-Auswahl ("Entdecken") - bisher völlig ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/swipe_mode_selection_screen.dart 175 offene Zeilen
-// bei 176 Zeilen gesamt - der Bildschirm, ueber den die Nutzer ihre
-// Entdeckungs-Modi waehlen, war komplett ungetestet.
+// bei 176 Zeilen gesamt - der Bildschirm, über den die Nutzer ihre
+// Entdeckungs-Modi wählen, war komplett ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm zeigt alle Modi (in Gruppen),
-//   * ein Modus laesst sich oeffnen,
+//   * ein Modus lässt sich öffnen,
 //   * Transit Spark ist ohne Verifizierung gesperrt - und der Dialog
 //     bietet den Weg zur Verifizierung an (statt den Modus zu
-//     verstecken: sonst weiss der Nutzer nicht, dass es ihn gibt),
+//     verstecken: sonst weiß der Nutzer nicht, dass es ihn gibt),
 //   * mit Verifizierung ist Transit Spark frei,
 //   * Transit Spark ist unter 18 gesperrt (Altersgrenze).
 import 'package:flutter/material.dart';
@@ -78,9 +78,9 @@ void main() {
 
   /// Baut den Bildschirm mit einem Profil.
   ///
-  /// [verifiziert] = true heisst: die Identitaet ist geprueft (der
+  /// [verifiziert] = true heißt: die Identität ist geprüft (der
   /// Modus "Transit Spark" ist dann frei).
-  /// [geburtsdatum] entscheidet ueber die Altersgrenze.
+  /// [geburtsdatum] entscheidet über die Altersgrenze.
   Future<GoRouter> zeigeScreen(
     WidgetTester tester, {
     bool verifiziert = false,
@@ -181,7 +181,7 @@ void main() {
         find.text(L10n.tWithoutContext('dm.groupOnTheGo')),
         findsOneWidget,
       );
-      // Und die fuenf Modi.
+      // Und die fünf Modi.
       for (final modus in [
         'findMatch',
         'datingHour',
@@ -199,7 +199,7 @@ void main() {
 
     testWidgets('ein Modus laesst sich oeffnen', (tester) async {
       // VERIFIZIERT: Find your Spark ist gesperrt, solange das Alter
-      // nicht mit einem Video bestaetigt ist (v0.10.0).
+      // nicht mit einem Video bestätigt ist (v0.10.0).
       await zeigeScreen(tester, verifiziert: true);
 
       await tester.tap(find.byKey(const ValueKey('mode-tile-findMatch')));

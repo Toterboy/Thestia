@@ -50,7 +50,7 @@ class SupabaseService {
   /// einen Function-Aufruf, der nur prüft und speichert.
   ///
   /// [client] ist für die Stellen, die mit einem eigenen Client arbeiten
-  /// (z. B. die Loeschdienste). Ohne ihn gilt der globale Client.
+  /// (z. B. die Löschdienste). Ohne ihn gilt der globale Client.
   static Future<FunctionResponse> rufeEdgeFunktion(
     String name, {
     required Map<String, dynamic> body,

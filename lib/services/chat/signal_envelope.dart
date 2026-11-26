@@ -1,6 +1,6 @@
-// Die Huelle einer verschluesselten Nachricht im Peer-zu-Peer-Kanal.
+// Die Hülle einer verschlüsselten Nachricht im Peer-zu-Peer-Kanal.
 //
-// WARUM EINE EIGENE DATEI (22.11.2026, Fuzzing): Der Huelle kam
+// WARUM EINE EIGENE DATEI (22.11.2026, Fuzzing): Der Hülle kam
 // direkt von der GEGENSEITE - sie kann senden, was sie will. Vorher
 // stand das Auslesen mitten in der WebRTC-Verarbeitung:
 //
@@ -11,9 +11,9 @@
 //     final messageType = data['messageType'] as int;
 //
 // Jeder dieser Casts wirft bei einer falschen Eingabe - eine
-// kaputte (oder boesartige) Nachricht liess damit den Kanal abbrechen
+// kaputte (oder bösartige) Nachricht ließ damit den Kanal abbrechen
 // statt sie zu verwerfen. Jetzt steht das Auslesen hier, wirft NIE
-// und ist damit auch pruefbar (test/fuzzing/).
+// und ist damit auch prüfbar (test/fuzzing/).
 //
 // DIE REGEL: Was nicht sauber lesbar ist, wird verworfen. Nicht
 // geraten, nicht repariert.
@@ -23,13 +23,13 @@ import 'dart:convert';
 
 import 'package:thestia/utils/common/json_leser.dart';
 
-/// Die groesste Huelle, die der Dienst annimmt (512 KB).
+/// Die größte Hülle, die der Dienst annimmt (512 KB).
 const int maxSignalEnvelopeBytes = 512 * 1024;
 
-/// Die hoechste Zahl der Metadaten-Eintraege (Audit S3).
+/// Die höchste Zahl der Metadaten-Einträge (Audit S3).
 ///
-/// DER GRUND: Der Peer darf den nicht beliebig gross machen - sonst
-/// waere die Nachricht ein Angriff auf den Speicher.
+/// DER GRUND: Der Peer darf den nicht beliebig groß machen - sonst
+/// wäre die Nachricht ein Angriff auf den Speicher.
 const int maxSignalMetadataEntries = 16;
 
 /// Der Typ einer Nachricht im Kanal.
@@ -37,11 +37,11 @@ enum SignalEnvelopeType {
   /// Eine Textnachricht (Signal-Protokoll).
   message,
 
-  /// Binaerdaten (Bild, Sprachnachricht).
+  /// Binärdaten (Bild, Sprachnachricht).
   binary,
 }
 
-/// Die Huelle einer Nachricht im Peer-zu-Peer-Kanal.
+/// Die Hülle einer Nachricht im Peer-zu-Peer-Kanal.
 class SignalEnvelope {
   const SignalEnvelope({
     required this.typ,
@@ -51,7 +51,7 @@ class SignalEnvelope {
     this.metadata,
   });
 
-  /// Ob es eine Text- oder eine Binaernachricht ist.
+  /// Ob es eine Text- oder eine Binärnachricht ist.
   final SignalEnvelopeType typ;
 
   /// Die Chiffre (base64) - der eigentliche Inhalt.
@@ -60,18 +60,18 @@ class SignalEnvelope {
   /// Der Signal-Typ der Chiffre (PreKey oder normal).
   final int messageType;
 
-  /// Der Inhaltstyp (nur bei Binaerdaten).
+  /// Der Inhaltstyp (nur bei Binärdaten).
   final String contentType;
 
-  /// Die Metadaten (nur bei Binaerdaten, hoechstens
-  /// [maxSignalMetadataEntries] Eintraege).
+  /// Die Metadaten (nur bei Binärdaten, höchstens
+  /// [maxSignalMetadataEntries] Einträge).
   final Map<String, dynamic>? metadata;
 
-  /// Liest eine Huelle aus dem Text der empfangenen Nachricht.
+  /// Liest eine Hülle aus dem Text der empfangenen Nachricht.
   ///
-  /// GIBT NULL ZURUECK, wenn die Nachricht nicht sauber lesbar ist -
+  /// GIBT NULL ZURÜCK, wenn die Nachricht nicht sauber lesbar ist -
   /// und wirft NIE. Das ist der ganze Zweck: die Gegenseite schickt
-  /// den Inhalt, und der Inhalt entscheidet nicht ueber das Wohlbefinden
+  /// den Inhalt, und der Inhalt entscheidet nicht über das Wohlbefinden
   /// der App.
   static SignalEnvelope? parse(String? text) {
     if (text == null || text.isEmpty) return null;
@@ -100,14 +100,14 @@ class SignalEnvelope {
 
     final chiffertext = textOf(map, ['ciphertext']);
     if (chiffertext == null || chiffertext.isEmpty) return null;
-    // Die Chiffre muss base64 sein - sonst bricht das Entschluesseln
-    // ab. `base64Decode` wirft bei ungueltigem Text, deshalb wird hier
-    // schon geprueft.
+    // Die Chiffre muss base64 sein - sonst bricht das Entschlüsseln
+    // ab. `base64Decode` wirft bei ungültigem Text, deshalb wird hier
+    // schon geprüft.
     if (!_istBase64(chiffertext)) return null;
 
     final typNr = intOf(map, ['messageType']);
 
-    // Die Metadaten: hoechstens [maxSignalMetadataEntries] Eintraege,
+    // Die Metadaten: höchstens [maxSignalMetadataEntries] Einträge,
     // und keine verschachtelten Bomben.
     Map<String, dynamic>? metadata;
     final metadatenRoh = map['metadata'];
@@ -128,8 +128,8 @@ class SignalEnvelope {
   /// Ist der Text base64?
   ///
   /// DER WEG: `base64Decode` wirft bei jedem unbrauchbaren Text
-  /// (FormatException). Hier wird nur die Form geprueft - die
-  /// base64-Alphabe, ihre Laenge und die korrekte Fuellung.
+  /// (FormatException). Hier wird nur die Form geprüft - die
+  /// base64-Alphabe, ihre Länge und die korrekte Füllung.
   static bool _istBase64(String text) {
     if (text.isEmpty || text.length % 4 != 0) return false;
     const erlaubt =

@@ -1,19 +1,19 @@
 // Der Dienst der Bild-Moderierung.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/services/profile/photo_moderation_service.dart nur 39 %
 // Abdeckung.
 //
 // DER WEG: Der Server ist der [FakeSupabaseServer] (test/support/
 // fake_supabase_server.dart).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die NSFW-Moderierung ist AUS (der Standard) - das Bild wird
 //     freigegeben und es entsteht KEIN Eintrag in der Admin-Warteschlange
 //     (der Kommentar des Feature-Flags verspricht genau das),
-//   * der Gesichtsabgleich gibt NIEMALS "ja" zurueck (fail-closed: eine
-//     nicht vorhandene Pruefung darf nicht als bestanden gelten),
-//   * der Admin sieht die wartenden Pruefungen,
+//   * der Gesichtsabgleich gibt NIEMALS "ja" zurück (fail-closed: eine
+//     nicht vorhandene Prüfung darf nicht als bestanden gelten),
+//   * der Admin sieht die wartenden Prüfungen,
 //   * ein Serverfehler beim Admin-Abruf leert die Liste (kein Absturz).
 import 'dart:typed_data';
 

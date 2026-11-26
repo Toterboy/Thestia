@@ -1,20 +1,20 @@
 // Die Reiter-Leiste (MainNavigation) - die Schutzfragen waren ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/core/main_navigation.dart 111 offene Zeilen bei 198 Zeilen
 // gesamt. Die Reiter-Leiste entscheidet, welcher Bereich der App
 // gerade offen ist - und sie fragt nach, wenn der Nutzer ungespeicherte
-// Aenderungen verliert (Nutzerwunsch vom 27.10.2026).
+// Änderungen verliert (Nutzerwunsch vom 27.10.2026).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * alle vier Reiter stehen da,
-//   * mit ungespeicherten Aenderungen fragt die Leiste nach
+//   * mit ungespeicherten Änderungen fragt die Leiste nach
 //     (Speichern / Verwerfen / Abbrechen),
-//   * "Abbrechen" laesst den Nutzer auf seinem Tab,
-//   * "Verwerfen" verwirft die Aenderungen und wechselt,
+//   * "Abbrechen" lässt den Nutzer auf seinem Tab,
+//   * "Verwerfen" verwirft die Änderungen und wechselt,
 //   * "Speichern" merkt sich die Ziel-Route (der Editor springt danach
 //     selbst),
-//   * im Chat wird die Leiste ausgeblendet (der Gespraech hat den
+//   * im Chat wird die Leiste ausgeblendet (der Gespräch hat den
 //     vollen Bildschirm).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

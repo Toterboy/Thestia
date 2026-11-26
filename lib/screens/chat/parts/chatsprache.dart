@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -130,7 +130,7 @@ extension _ChatSprache on _ChatDetailScreenState {
     _recordTimer?.cancel();
     await _ampSub?.cancel();
     // Das cancel()-Future ist asynchron: ein Back-Navigieren im selben
-    // Frame wuerde das folgende setState crashen.
+    // Frame würde das folgende setState crashen.
     if (!mounted) return;
     _ampSub = null;
     final path = _recordingPath;
@@ -350,16 +350,16 @@ extension _ChatSprache on _ChatDetailScreenState {
     } else {
       // Aufnahme starten.
       try {
-        // PROMINENTE OFFENLEGUNG (Google-Play-Richtlinie fuer Mikrofon):
-        // Bevor ueberhaupt der Systemdialog erscheint, muss in der App
-        // erklaert werden, WARUM aufgenommen wird. Vorher stand hier nur
-        // eine hasPermission()-Pruefung; die Berechtigung fragte das
+        // PROMINENTE OFFENLEGUNG (Google-Play-Richtlinie für Mikrofon):
+        // Bevor überhaupt der Systemdialog erscheint, muss in der App
+        // erklärt werden, WARUM aufgenommen wird. Vorher stand hier nur
+        // eine hasPermission()-Prüfung; die Berechtigung fragte das
         // Plugin an, ohne dass die App vorher etwas sagte. Play verlangt
-        // fuer RECORD_AUDIO eine sichtbare Begruendung UND die Anfrage
+        // für RECORD_AUDIO eine sichtbare Begründung UND die Anfrage
         // im Kontext der Funktion - ohne das gibt die Abnahme nicht.
         //
         // Die Offenlegung wird nur einmal gezeigt (der Nutzer kann sie
-        // im Verlauf nicht wiederholen muessen); danach fragt der
+        // im Verlauf nicht wiederholen müssen); danach fragt der
         // Systemdialog. Bei Ablehnung wird nichts aufgenommen.
         if (!await _ensureMicDisclosure()) return;
 
@@ -387,7 +387,7 @@ extension _ChatSprache on _ChatDetailScreenState {
         );
 
         // Mikrofon-Permission + Start dauern real mehrere Hundert ms. Ein
-        // Back-Navigieren in dieser Zeit wuerde das setState crashen.
+        // Back-Navigieren in dieser Zeit würde das setState crashen.
         if (!mounted) {
           await _audioRecorder.stop();
           return;

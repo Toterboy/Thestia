@@ -1,21 +1,21 @@
 // Test gegen die Enumeration im Transit Spark (Migration 215).
 //
 // BEFUND (13.11.2026, Sicherheits-Review): Die Kandidatenliste
-// (list_transit_candidates) und der Soft-Ping im Empfaenger-Weg
-// (send_soft_ping) haben die BESCHREIBUNG vom Client uebernommen, ohne
-// sie zu pruefen:
+// (list_transit_candidates) und der Soft-Ping im Empfänger-Weg
+// (send_soft_ping) haben die BESCHREIBUNG vom Client übernommen, ohne
+// sie zu prüfen:
 //
 //     and (s.tags && coalesce(p_tags, '{}'::text[]) ...)
 //
-// Der Merkmals-Katalog ist fuer jeden angemeldeten Nutzer lesbar. Wer
-// ihn vollstaendig uebergibt, traf damit JEDES aktive Signal - die
+// Der Merkmals-Katalog ist für jeden angemeldeten Nutzer lesbar. Wer
+// ihn vollständig übergibt, traf damit JEDES aktive Signal - die
 // Kandidatenliste lieferte dann alle Personen im 45-Minuten-Fenster mit
 // echter user_id, freier Notiz und selbst genanntem Ort, und der Zuwink
-// war an beliebige nahe Erwachsene moeglich.
+// war an beliebige nahe Erwachsene möglich.
 //
 // DER TEST: Die Migration 215 muss die Beschreibung aus dem EIGENEN
 // Signal des Aufrufers holen und die Client-Argumente nicht mehr
-// auswerten. Das ist statisch pruefbar - und genau das ist der Punkt:
+// auswerten. Das ist statisch prüfbar - und genau das ist der Punkt:
 // ein Fehler, den erst ein echter Angreifer findet, ist zu teuer.
 import 'dart:io';
 
@@ -31,8 +31,8 @@ void main() {
       ).readAsStringSync();
     });
 
-    /// Der Rumpf einer Funktion (ohne Kommentare - die erwaehnen alte
-    /// Parameternamen nur in der Erklaerung).
+    /// Der Rumpf einer Funktion (ohne Kommentare - die erwähnen alte
+    /// Parameternamen nur in der Erklärung).
     String rumpf(String funktion) {
       final start = migration.indexOf('function public.$funktion');
       expect(

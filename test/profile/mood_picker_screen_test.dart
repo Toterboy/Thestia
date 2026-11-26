@@ -1,14 +1,14 @@
 // Der Mood-of-the-Day - bisher ungetestet (1,0 %).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/mood/mood_picker_screen.dart 103 offene Zeilen bei 104
-// Zeilen gesamt - der Bildschirm, ueber den der Nutzer seinen Tages-Mood
-// waehlt, war komplett ungetestet.
+// Zeilen gesamt - der Bildschirm, über den der Nutzer seinen Tages-Mood
+// wählt, war komplett ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * alle Moods stehen zur Auswahl,
 //   * ohne Auswahl kann nicht gespeichert werden,
-//   * der gewaehlte Mood geht an den Server,
+//   * der gewählte Mood geht an den Server,
 //   * der aktuelle Mood des Tages wird angezeigt.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,8 +85,8 @@ void main() {
     );
     await tester.pump();
 
-    // DER BILDSCHIRM WIRD GEOEFFNET (nicht als Start-Route) - sonst kann
-    // der "Zurueck"-Knopf nichts zurueckgeben.
+    // DER BILDSCHIRM WIRD GEÖFFNET (nicht als Start-Route) - sonst kann
+    // der "Zurück"-Knopf nichts zurückgeben.
     router.push('/mood');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -159,7 +159,7 @@ void main() {
       await zeigeScreen(tester);
       await warteAufServer(tester);
 
-      // Den ersten Mood waehlen.
+      // Den ersten Mood wählen.
       final auswahl = find.text(
         L10n.tWithoutContext(Mood.values.first.labelKey),
       );

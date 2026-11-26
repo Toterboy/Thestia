@@ -1,13 +1,13 @@
-"""Prueft, ob fuer den aktuellen Build ein Store-Changelog existiert.
+"""Prüft, ob für den aktuellen Build ein Store-Changelog existiert.
 
-WARUM (07.11.2026, Betreiber: "Checken, ob alles fuer die v0.10.0
-umgesetzt wurde"): Der Store zeigt den Aenderungstext anhand der
+WARUM (07.11.2026, Betreiber: "Checken, ob alles für die v0.10.0
+umgesetzt wurde"): Der Store zeigt den Änderungstext anhand der
 VERSION-CODE. Ohne `changelogs/<versionCode>.txt` (in beiden
 Sprachen) erscheint beim Upload kein "Was ist neu" - oder der Upload
-scheitert. Das ist bei jedem Versionssprung moeglich und wurde bisher
-nicht geprueft.
+scheitert. Das ist bei jedem Versionssprung möglich und wurde bisher
+nicht geprüft.
 
-Die Regel: Die Changelog-Datei fuer die aktuelle Build-Nummer aus
+Die Regel: Die Changelog-Datei für die aktuelle Build-Nummer aus
 pubspec.yaml muss in de-DE und en-US existieren und nicht leer sein.
 """
 import pathlib
@@ -19,8 +19,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():

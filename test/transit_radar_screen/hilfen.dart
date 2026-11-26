@@ -1,4 +1,4 @@
-// Die Helfer fuer die Tests des Bildschirms 'transit_radar_screen'.
+// Die Helfer für die Tests des Bildschirms 'transit_radar_screen'.
 //
 // DER WEG: Die Testdatei war zu lang (> 1000 Zeilen). Die Helfer
 // (Ersatz-Speicher, Aufbau, Bildschirm-Helfer) liegen hier -
@@ -6,32 +6,32 @@
 
 // Der Transit-Radar (Transit Spark) - bisher ungetestet.
 //
-// ANLASS (13.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (13.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/transit_radar_screen.dart 936 offene Zeilen. Der
 // Bildschirm ist der Kern von Transit Spark ("Blicke getauscht, dich
 // nicht getraut?") - und er wurde nie gerendert.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * die Alterssperre ist fail-closed (ohne Geburtsdatum gesperrt),
-//   * beim ersten Oeffnen fragt die App, ob der Name sichtbar sein soll,
+//   * beim ersten Öffnen fragt die App, ob der Name sichtbar sein soll,
 //   * der Start fragt zuerst nach der eigenen Beschreibung,
-//   * "Blicke getauscht" oeffnet die Merkmalsauswahl und sendet die Tags,
+//   * "Blicke getauscht" öffnet die Merkmalsauswahl und sendet die Tags,
 //   * die Kandidatenliste erscheint und der Zuwink meldet Erfolg/Fehlschlag,
-//   * der Ort wird uebernommen (frei gewaehlt - KEIN Standort),
+//   * der Ort wird übernommen (frei gewählt - KEIN Standort),
 //   * der Name-Schalter speichert die Entscheidung.
 //
 // OHNE FUNK, OHNE SERVER: Das BLE-Starten und der Server werden durch
 // einen Fake-Notifier ersetzt (kein Bluetooth, kein Netz). Die
 // Merkmalsauswahl selbst ist das ECHTE Widget der App - sie wird nicht
-// nachgebaut, sonst wuerde der Test nur Flutter pruefen und nicht die
+// nachgebaut, sonst würde der Test nur Flutter prüfen und nicht die
 // App.
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:thestia/models/transit/transit_models.dart';
 import 'package:thestia/models/profile/user_profile.dart';
 import 'package:thestia/providers/profile/profile_provider.dart';
@@ -78,17 +78,17 @@ class FakeSecureProfileStore extends SecureProfileStore {
 class FakeTransit extends TransitNotifier {
   FakeTransit() : super();
 
-  /// Das Ergebnis des naechsten "Blicke getauscht" (null = kein Match).
+  /// Das Ergebnis des nächsten "Blicke getauscht" (null = kein Match).
   ///
   /// DER STANDARD: Das Signal wird gesendet, aber es gibt noch keinen
-  /// Match. Mit `null` waere der Bildschirm nach dem Senden fertig - es
-  /// gaebe keine Kandidatenliste und keinen Zuwink.
+  /// Match. Mit `null` wäre der Bildschirm nach dem Senden fertig - es
+  /// gäbe keine Kandidatenliste und keinen Zuwink.
   TransitSparkResult? sparkErgebnis = const TransitSparkResult(matched: false);
 
-  /// Der Fehlergrund des letzten Sendens (fuer die Snackbar-Diagnose).
+  /// Der Fehlergrund des letzten Sendens (für die Snackbar-Diagnose).
   String? sendFehler;
 
-  /// Die Kandidaten, die der Server liefern wuerde.
+  /// Die Kandidaten, die der Server liefern würde.
   List<TransitCandidate> kandidaten = const [];
 
   /// Antwort auf das Zuwinken.
@@ -104,19 +104,19 @@ class FakeTransit extends TransitNotifier {
   int starts = 0;
   int stops = 0;
 
-  /// Wenn gesetzt: das Starten schlaegt fehl (mit diesem Grund).
+  /// Wenn gesetzt: das Starten schlägt fehl (mit diesem Grund).
   String? startFehler;
 
-  /// Die gesehenen Geraete (die Begegnungsliste).
+  /// Die gesehenen Geräte (die Begegnungsliste).
   List<TransitEncounter> begegnungen = const [];
 
-  /// Die gesendeten Gruesse (Text und eigene Zeile).
+  /// Die gesendeten Grüße (Text und eigene Zeile).
   final List<({String messageKey, String? customLine})> gruesse = [];
 
-  /// Setzt die Anzahl der gesehenen Geraete (ohne den Radar zu starten).
+  /// Setzt die Anzahl der gesehenen Geräte (ohne den Radar zu starten).
   ///
-  /// DER GRUND: Nach dem Radar bleibt die Liste ueber "in Ruhe finden"
-  /// erreichbar - dafuer muss der Zaehler in der App stimmen.
+  /// DER GRUND: Nach dem Radar bleibt die Liste über "in Ruhe finden"
+  /// erreichbar - dafür muss der Zähler in der App stimmen.
   void setzeBegegnungszahl(int anzahl) {
     state = state.copyWith(encounterCount: anzahl);
   }
@@ -196,9 +196,9 @@ ProviderContainer transitRadarScreenContainer({
   if (namensfrageErledigt) {
     storage.saveString(
       AppConstants.prefsSettingsKey,
-      // DER SCHLUESSEL: Lokal werden die Einstellungen mit CAMELCASE
+      // DER SCHLÜSSEL: Lokal werden die Einstellungen mit CAMELCASE
       // gespeichert (siehe AppSettings.fromJson) - nur die Server-Spalten
-      // heissen snake_case.
+      // heißen snake_case.
       jsonEncode(<String, dynamic>{'transitShowNameSet': true}),
     );
   }

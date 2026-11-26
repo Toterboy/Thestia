@@ -2,13 +2,13 @@
 ///
 /// WARUM EINE EIGENE DATEI (22.11.2026): Der Router ist nach 220
 /// Migrationen und vielen Routen an der Grenze von 1000 Zeilen
-/// (`code_datei_groessen_test`). Die drei Safety-Routen gehoeren
+/// (`code_datei_groessen_test`). Die drei Safety-Routen gehören
 /// zusammen - sie sind der Weg in die beiden Listen (blockierte Nutzer,
 /// eigene Meldungen), die je einen eigenen Screen haben.
 ///
 /// NUTZERWUNSCH (22.11.2026): "Blockierte Nutzer und Meldungen sollen
 /// beide als einzelne Screens, damit der Safety Center Screen nicht
-/// ueberladen wird, wenn es viele blockierungen und oder Meldungen
+/// überladen wird, wenn es viele blockierungen und oder Meldungen
 /// gibt."
 library;
 
@@ -19,7 +19,7 @@ import 'package:thestia/screens/safety/blocked_users_screen.dart';
 import 'package:thestia/screens/safety/my_reports_screen.dart';
 import 'package:thestia/screens/safety/safety_center_screen.dart';
 
-/// Die drei Safety-Routen (alle ausserhalb der Reiterleiste).
+/// Die drei Safety-Routen (alle außerhalb der Reiterleiste).
 List<RouteBase> safetyRoutes() => <RouteBase>[
   // Safety Center: Hilfe bei Belästigung/Stalking + In-App-Maßnahmen
   GoRoute(

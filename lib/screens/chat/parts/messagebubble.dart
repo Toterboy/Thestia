@@ -1,9 +1,9 @@
 // Der Teil '_MessageBubble'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -43,17 +43,17 @@ class _MessageBubble extends StatefulWidget {
   /// Anzuzeigender Absendername (z. B. "Du" oder Partnername).
   final String senderName;
 
-  /// "Fuer alle loeschen" (nur eigene Textnachrichten).
+  /// "Für alle löschen" (nur eigene Textnachrichten).
   ///
-  /// BEFUND (11.11.2026): Wie bei Whatsapp - die Nachricht wird fuer
+  /// BEFUND (11.11.2026): Wie bei Whatsapp - die Nachricht wird für
   /// beide Seiten ungelesbar, mit einem Hinweis im Verlauf.
   final void Function(Message msg)? onDelete;
 
   /// Uhrzeit (HH:mm) der Nachricht, lokal formatiert.
   ///
   /// Das Format-Objekt wird einmal pro State-Instanz erzeugt: `DateFormat.Hm()`
-  /// loest bei jedem Aufruf die Locale neu auf - das war bei langen
-  /// Verlaufen ein spuerbarer Kostenfaktor (pro Bubble pro Build).
+  /// löst bei jedem Aufruf die Locale neu auf - das war bei langen
+  /// Verlaufen ein spürbarer Kostenfaktor (pro Bubble pro Build).
   static final DateFormat _timeFormat = DateFormat.Hm();
 
   String get _timeLabel {

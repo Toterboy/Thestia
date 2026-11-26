@@ -1,24 +1,24 @@
 // Der Chat-Speicher (Verlauf und QR-Kontakte) - ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/chat_service.dart 102 offene Zeilen. Der Verlauf wird
-// OPT-IN verschluesselt gespeichert (SecureHive, Schluessel im
-// Keystore) - das ist die Zusage "der Verlauf bleibt auf dem Geraet und
+// OPT-IN verschlüsselt gespeichert (SecureHive, Schlüssel im
+// Keystore) - das ist die Zusage "der Verlauf bleibt auf dem Gerät und
 // niemand sonst sieht ihn".
 //
 // ANMERKUNG: Diese Tests laufen als NORMALE Tests (nicht als
 // Widget-Tests). Der Grund: Hive braucht echte Datei-Arbeit - im
 // Widget-Test (Test-Uhr) kommt der Dateizugriff nie zu Ende, die Box
-// bleibt offen und der Test laeuft in den Timeout.
+// bleibt offen und der Test läuft in den Timeout.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * der Verlauf wird gespeichert und beim naechsten Start wieder
+// WAS HIER GEPRÜFT WIRD:
+//   * der Verlauf wird gespeichert und beim nächsten Start wieder
 //     geladen,
 //   * die Boxen sind pro Konto getrennt (Kontowechsel),
 //   * das Ausschalten leert die gespeicherte Historie,
-//   * der Export enthaelt die Nachrichten,
-//   * die QR-Kontakte ueberleben einen Neustart,
-//   * die Account-Loeschung nimmt alles mit.
+//   * der Export enthält die Nachrichten,
+//   * die QR-Kontakte überleben einen Neustart,
+//   * die Account-Löschung nimmt alles mit.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -35,7 +35,7 @@ void main() {
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // DER KEYSTORE: die Boxen werden verschluesselt (der Schluessel liegt
+    // DER KEYSTORE: die Boxen werden verschlüsselt (der Schlüssel liegt
     // im Keystore).
     mockKeystore();
   });
@@ -49,7 +49,7 @@ void main() {
 
   tearDown(() async {
     await Hive.close();
-    // DER ORDNER BLEIBT LIEGEN: Unter mehreren parallelen Testdateien\n    // kann ein anderer Test Hive gerade noch schreiben - dann schlaegt\n    // das Loeschen hier fehl (PathNotFoundException). Das Betriebssystem\n    // raeumt den Temp-Ordner spaeter auf.\n    // (frueher: await temp.delete(recursive: true))
+    // DER ORDNER BLEIBT LIEGEN: Unter mehreren parallelen Testdateien\n    // kann ein anderer Test Hive gerade noch schreiben - dann schlägt\n    // das Löschen hier fehl (PathNotFoundException). Das Betriebssystem\n    // räumt den Temp-Ordner später auf.\n    // (früher: await temp.delete(recursive: true))
   });
 
   /// Eine Nachricht.
@@ -72,7 +72,7 @@ void main() {
       );
       service.addMessage(match.id, nachricht('m1', 'Hallo'));
 
-      // Der Verlauf liegt in der Box (verschluesselt).
+      // Der Verlauf liegt in der Box (verschlüsselt).
       final boxName = ChatService.historyBoxNameFor('ich');
       await Future<void>.delayed(const Duration(milliseconds: 200));
       expect(
@@ -82,7 +82,7 @@ void main() {
       );
       expect(Hive.box<String>(boxName).get(match.id), isNotNull);
 
-      // Ein neuer Dienst (wie ein App-Neustart) laedt ihn wieder.
+      // Ein neuer Dienst (wie ein App-Neustart) lädt ihn wieder.
       final neu = ChatService();
       await neu.setOwner('ich');
       neu.setHistoryPersistence(true);
@@ -170,7 +170,7 @@ void main() {
       );
       await Future<void>.delayed(const Duration(milliseconds: 200));
 
-      // Ein neuer Dienst laedt sie wieder.
+      // Ein neuer Dienst lädt sie wieder.
       final neu = ChatService();
       await neu.setOwner('ich');
       await neu.restoreQrContacts();

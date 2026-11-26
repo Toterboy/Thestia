@@ -39,13 +39,13 @@ import '../support/live_test_support.dart' show liveTestsLaufen;
 ///   P2P_TEST_EMAIL_B=...
 ///   P2P_TEST_PASSWORD=...
 ///
-/// Ohne diese drei Eintraege werden die alten Adressen
+/// Ohne diese drei Einträge werden die alten Adressen
 /// p2p-test-a@thestia.de / p2p-test-b@thestia.de benutzt.
 void main() {
   final env = _ladeEnv();
-  // BEFUND (13.11.2026): Der Test sprang nur ueber, wenn es gar keine
+  // BEFUND (13.11.2026): Der Test sprang nur über, wenn es gar keine
   // .env gab. Nach der Wiederherstellung der .env (mit Werten, aber ohne
-  // den Secret-Key) lief er und scheiterte. Er braucht echte Schluessel
+  // den Secret-Key) lief er und scheiterte. Er braucht echte Schlüssel
   // UND darf sich abschalten lassen (THESTIA_SKIP_LIVE_TESTS) - wie die
   // beiden anderen Live-Tests.
   final uebersprung =
@@ -59,7 +59,7 @@ void main() {
   test('die Broadcast-Nachricht kommt beim Peer in der Huelle an', () async {
     TestWidgetsFlutterBinding.ensureInitialized();
     // Das Test-Binding ersetzt HttpClient durch einen Mock, der immer
-    // 400 liefert. Fuer diesen Live-Test brauchen wir das echte HTTP -
+    // 400 liefert. Für diesen Live-Test brauchen wir das echte HTTP -
     // deshalb den Override wieder entfernen.
     HttpOverrides.global = null;
     final e = env!;
@@ -70,7 +70,7 @@ void main() {
     final emailB = e['P2P_TEST_EMAIL_B'] ?? 'p2p-test-b@thestia.de';
     final passwort = e['P2P_TEST_PASSWORD'] ?? 'P2pTest2026_a';
 
-    // Zwei Sessions holen (der CAPTCHA-Schutz gilt nur fuer normale
+    // Zwei Sessions holen (der CAPTCHA-Schutz gilt nur für normale
     // Clients; der Secret-Key umgeht ihn).
     final a = await _session(url, secret, emailA, passwort);
     if (a == null) {
@@ -147,7 +147,7 @@ void main() {
     await clientB.realtime.setAuth(b['access_token'] as String);
 
     // Warten, bis BEIDE wirklich gejoint sind. Sonst geht die
-    // Broadcast-Nachricht raus, bevor der Empfaenger im Kanal ist -
+    // Broadcast-Nachricht raus, bevor der Empfänger im Kanal ist -
     // genau das war die Fehlerquelle in diesem Test.
     await joinA.future.timeout(
       const Duration(seconds: 20),
@@ -175,13 +175,13 @@ void main() {
     // ignore: avoid_print
     print('LIVE: die empfangene Nachricht: $roh');
 
-    // 1) Der Realtime-Client hat 'type' mit 'broadcast' ueberschrieben.
-    //    Genau darum benutzt die App 'kind' fuer ihre Nachrichtenart:
-    //    'type' waere beim Empfaenger IMMER 'broadcast'.
+    // 1) Der Realtime-Client hat 'type' mit 'broadcast' überschrieben.
+    //    Genau darum benutzt die App 'kind' für ihre Nachrichtenart:
+    //    'type' wäre beim Empfänger IMMER 'broadcast'.
     expect(roh['type'], 'broadcast');
     expect(roh['event'], 'signal');
 
-    // 2) Die eigene Nachrichtenart und der Absender kommen unveraendert
+    // 2) Die eigene Nachrichtenart und der Absender kommen unverändert
     //    an - 'kind' und 'from' fasst der Client nicht an.
     expect(roh['kind'], 'relay-ping');
     expect(roh['from'], idA);
@@ -211,10 +211,10 @@ Map<String, String>? _ladeEnv() {
   return werte;
 }
 
-/// Holt eine Session fuer das Testkonto.
+/// Holt eine Session für das Testkonto.
 ///
-/// Gibt null zurueck, wenn das Konto nicht existiert oder das Passwort
-/// nicht stimmt - das ist ein Testaufbau-Problem (der Test ueberspringt
+/// Gibt null zurück, wenn das Konto nicht existiert oder das Passwort
+/// nicht stimmt - das ist ein Testaufbau-Problem (der Test überspringt
 /// dann) und kein Fehler der App. Jeder andere Fehler (Netz, Server)
 /// wirft - das IST ein Befund.
 Future<Map<String, dynamic>?> _session(

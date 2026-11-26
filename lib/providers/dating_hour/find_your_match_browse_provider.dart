@@ -20,7 +20,7 @@ class FindYourMatchBrowseState {
     this.laedt = false,
   });
 
-  /// Die gerade gewaehlte Kategorie (null = noch keine).
+  /// Die gerade gewählte Kategorie (null = noch keine).
   final String? kategorie;
 
   /// Die Altersspanne des Browsers (serverseitig begrenzt).
@@ -30,7 +30,7 @@ class FindYourMatchBrowseState {
   /// Die Kategorien mit ihren Zahlen.
   final List<CategoryCount> kategorien;
 
-  /// Die Kandidaten der gewaehlten Kategorie.
+  /// Die Kandidaten der gewählten Kategorie.
   final List<UserProfile> kandidaten;
 
   final bool laedt;
@@ -54,16 +54,16 @@ class FindYourMatchBrowseState {
   }
 }
 
-/// Verwaltet das Stoebern nach Interessens-Kategorien.
+/// Verwaltet das Stöbern nach Interessens-Kategorien.
 ///
 /// BEFUND (09.11.2026, Betreiber): "Der Modus Find your Spark soll
 /// erweitert werden ... dann entweder Zufallsvorstellung oder
 /// Vorstellungen anderer nach Kategorien ansehen."
 ///
 /// DIE ALTERSSGRENZE: Die Grenzen kommen aus `AgeSafetyRules` (die
-/// App-seitige Spiegelung der Server-Regel) - 16/17 fuer
-/// Minderjaehrige, 18-99 fuer Erwachsene. Der Server begrenzt sie
-/// zusaetzlich (`max_age_range_min`, die Obergrenze 17/99) - ein
+/// App-seitige Spiegelung der Server-Regel) - 16/17 für
+/// Minderjährige, 18-99 für Erwachsene. Der Server begrenzt sie
+/// zusätzlich (`max_age_range_min`, die Obergrenze 17/99) - ein
 /// manipulierter Client kann sie also nicht weiten.
 class FindYourMatchBrowseNotifier
     extends StateNotifier<FindYourMatchBrowseState> {
@@ -77,7 +77,7 @@ class FindYourMatchBrowseNotifier
 
   final FindYourMatchService _service;
 
-  /// Laedt die Kategorien (mit ihren Zahlen) fuer die aktuelle
+  /// Lädt die Kategorien (mit ihren Zahlen) für die aktuelle
   /// Altersspanne.
   Future<void> loadKategorien() async {
     if (!SupabaseService.isInitialized) return;
@@ -88,7 +88,7 @@ class FindYourMatchBrowseNotifier
         ageMax: state.alterMax,
       );
       state = state.copyWith(kategorien: kategorien, laedt: false);
-      // Die erste Kategorie mit Treffern gleich auswaehlen - das
+      // Die erste Kategorie mit Treffern gleich auswählen - das
       // spart einen Klick und zeigt sofort, dass es funktioniert.
       if (state.kategorie == null) {
         for (final k in kategorien) {
@@ -104,14 +104,14 @@ class FindYourMatchBrowseNotifier
     }
   }
 
-  /// Setzt die Altersspanne des Browsers und laedt neu.
+  /// Setzt die Altersspanne des Browsers und lädt neu.
   Future<void> setzeAltersspanne(int min, int max) async {
     if (min == state.alterMin && max == state.alterMax) return;
     state = state.copyWith(alterMin: min, alterMax: max, kandidaten: const []);
     await loadKategorien();
   }
 
-  /// Waehlt eine Kategorie und laedt ihre Kandidaten.
+  /// Wählt eine Kategorie und lädt ihre Kandidaten.
   Future<void> waehleKategorie(String kategorie) async {
     state = state.copyWith(
       kategorie: kategorie,
@@ -159,7 +159,7 @@ class FindYourMatchBrowseNotifier
     }
   }
 
-  /// Laedt die aktuelle Kategorie neu.
+  /// Lädt die aktuelle Kategorie neu.
   Future<void> neuLaden() async {
     final kategorie = state.kategorie;
     if (kategorie == null) {
@@ -170,7 +170,7 @@ class FindYourMatchBrowseNotifier
   }
 }
 
-/// Der Provider fuer den Kategorie-Browser.
+/// Der Provider für den Kategorie-Browser.
 final findYourMatchBrowseProvider =
     StateNotifierProvider<
       FindYourMatchBrowseNotifier,

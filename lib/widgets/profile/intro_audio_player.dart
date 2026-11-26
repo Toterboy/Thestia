@@ -48,28 +48,28 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
   /// Wie lange darf das Laden der Vorstellung dauern?
   ///
   /// BEFUND (07.11.2026, Betreiber): "Vorstellung von anderen nicht
-  /// abhoerbar. Sie laedt nicht oder braucht seeeeeeehr lange."
+  /// abhörbar. Sie lädt nicht oder braucht seeeeeeehr lange."
   ///
   /// DER GRUND (zwei Fehler in diesem Widget):
   ///
   ///  1) `await _player.play()` wartet, BIS DIE AUFNAHME ZUENDE IST.
   ///     just_audio liefert das Future von `play()` erst fertig, wenn
   ///     die Wiedergabe durchgelaufen ist. Die ganze Abspielzeit blieb
-  ///     der Lade-Spinner stehen - die App sah aus, als laede sie noch.
+  ///     der Lade-Spinner stehen - die App sah aus, als lüde sie noch.
   ///
-  ///  2) Es gab keinen Zeitlimit. Haengt das Netz (oder die
-  ///     Edge-Function), blieb der Spinner fuer immer stehen - ohne
+  ///  2) Es gab keinen Zeitlimit. Hängt das Netz (oder die
+  ///     Edge-Function), blieb der Spinner für immer stehen - ohne
   ///     jede Meldung.
   ///
   /// Beides ist behoben: `play()` wird nicht mehr abgewartet, und das
-  /// Laden hat ein Zeitlimit mit einer verstaendlichen Meldung.
+  /// Laden hat ein Zeitlimit mit einer verständlichen Meldung.
   static const Duration _ladeTimeout = Duration(seconds: 25);
 
   @override
   void initState() {
     super.initState();
     // Der Zustands-Listener wird VOR dem Abspielen gesetzt, damit das
-    // Ende der Aufnahme zuverlaessig zurueckgemeldet wird.
+    // Ende der Aufnahme zuverlässig zurückgemeldet wird.
     _stateSub = _player.playerStateStream.listen((state) {
       if (!mounted) return;
       if (state.processingState == ProcessingState.completed) {
@@ -80,9 +80,9 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
       }
     });
 
-    // BEFUND (09.11.2026, Betreiber): "Bei Vorstellung anhoeren im Chat
+    // BEFUND (09.11.2026, Betreiber): "Bei Vorstellung anhören im Chat
     // soll eine Zeitanzeige mit Balken sein, falls noch nicht vorhanden."
-    // Der Knopf allein sagt nichts: man hoert nicht, wie lang die
+    // Der Knopf allein sagt nichts: man hört nicht, wie lang die
     // Aufnahme noch ist und wie weit man gekommen ist.
     _positionSub = _player.positionStream.listen((pos) {
       if (!mounted) return;
@@ -119,7 +119,7 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
     try {
       final service = ref.read(findYourMatchServiceProvider);
       // Das Laden hat ein Zeitlimit - sonst bleibt der Spinner bei
-      // einem Netzproblem fuer immer stehen.
+      // einem Netzproblem für immer stehen.
       final url = await service
           .getIntroAudioUrl(widget.targetUserId)
           .timeout(_ladeTimeout);
@@ -142,7 +142,7 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
       }
 
       // WICHTIG: `play()` NICHT abwarten. Das Future endet erst, wenn
-      // die Aufnahme zu Ende ist - das war der Grund fuer den
+      // die Aufnahme zu Ende ist - das war der Grund für den
       // endlosen Lade-Spinner.
       unawaited(_player.play());
       if (mounted) {
@@ -180,18 +180,18 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
         ? 0.0
         : (_position.inMilliseconds / dauer.inMilliseconds).clamp(0.0, 1.0);
 
-    // BEFUND (09.11.2026, Betreiber): "Bei Vorstellung anhoeren ist der
-    // Balken rechts vom Button und geht ueber den Bereich hinaus (Also ein
+    // BEFUND (09.11.2026, Betreiber): "Bei Vorstellung anhören ist der
+    // Balken rechts vom Button und geht über den Bereich hinaus (Also ein
     // overflow). Bitte fixen. Also bei Interessen. Wenn der drunter ist
-    // und nur angezeigt wird, wenn man auf Vorstellung anhoeren drueckt,
-    // waere das besser so."
+    // und nur angezeigt wird, wenn man auf Vorstellung anhören drückt,
+    // wäre das besser so."
     //
     // DER GRUND: Der Knopf, der Balken und die Zeit standen in EINER
     // Zeile. In der schmalen Kachel im Interessen-Screen war die
-    // Zeile breiter als der Platz - und die Zeile lief ueber (Overflow).
+    // Zeile breiter als der Platz - und die Zeile lief über (Overflow).
     //
     // JETZT: Der Knopf steht allein, der Balken DARUNTER - und er ist
-    // nur sichtbar, wenn tatsaechlich etwas laeuft. Vorher standen
+    // nur sichtbar, wenn tatsächlich etwas läuft. Vorher standen
     // "--:--" und ein leerer Balken dauerhaft da.
     final laeuft = _playing || _position > Duration.zero;
     return Column(

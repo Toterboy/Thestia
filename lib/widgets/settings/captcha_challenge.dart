@@ -90,9 +90,9 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
       // Fehler von onError/onExpired/fehlendem Script: Dialog offen lassen,
       // Nutzer kann erneut versuchen oder abbrechen.
       //
-      // Der Text enthaelt jetzt den Turnstile-Code (24.10.2026), z. B.
+      // Der Text enthält jetzt den Turnstile-Code (24.10.2026), z. B.
       // "CAPTCHA_ERROR:invalid-domain" oder "CAPTCHA_ERROR:network-error".
-      // Ohne diesen Code laesst sich der Fehler in der WebView nicht
+      // Ohne diesen Code lässt sich der Fehler in der WebView nicht
       // zuordnen - der Browser zeigt nur ein leeres Feld.
       debugPrint('[CAPTCHA] Fehler aus der WebView: $text');
       setState(() => _error = text.substring('ERROR:'.length));
@@ -102,14 +102,14 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
     //
     // SICHERHEIT (03.11.2026): Der Bridge-Aufruf kommt aus JEDER im
     // WebView geladenen Seite - auch aus einem Iframe. Ohne
-    // Formatpruefung koennte eine manipulierte Seite einen beliebigen
-    // String als "Token" einspielen. Der Server wuerde ihn ablehnen,
+    // Formatprüfung kännte eine manipulierte Seite einen beliebigen
+    // String als "Token" einspielen. Der Server würde ihn ablehnen,
     // aber die App meldete dennoch "Sicherheitscheck bestanden".
     //
-    // Die Formatpruefung steht in lib/utils/chat/captcha_token.dart, damit
+    // Die Formatprüfung steht in lib/utils/chat/captcha_token.dart, damit
     // sie testbar ist - sie hat hier als private Methode gestanden und
     // ist deshalb 04.11.2026 zu streng geworden: sie verlangte das
-    // Praefix "0.", Cloudflare liefert inzwischen "1." (live gemessen).
+    // Präfix "0.", Cloudflare liefert inzwischen "1." (live gemessen).
     if (!isTurnstileToken(text)) {
       debugPrint('[CAPTCHA] Unplausibles Token-Format - verworfen.');
       setState(() => _error = 'CAPTCHA_ERROR:invalid-token');
@@ -163,7 +163,7 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
   /// authorized" - der Turnstile-Sitekey kennt nur auth.thestia.de.
   /// Auf der Wurzel-Domain thestia.de kam genau dieser Code. Deshalb
   /// bekommt die Wurzel-Domain jetzt eine eigene Seite und der
-  /// Sicherheitscheck laeuft nur noch unter auth.thestia.de.
+  /// Sicherheitscheck läuft nur noch unter auth.thestia.de.
   String _errorText(BuildContext context) {
     final roh = _error ?? '';
     final code = roh.contains(':') ? roh.split(':').last.trim() : '';
@@ -183,8 +183,8 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
       hinweis = L10n.t(context, 'captcha.err.timeout');
     }
 
-    // Der Code bleibt IMMER sichtbar - nur mit Erklaerung, nicht
-    // versteckt. Ohne ihn laesst sich der Fehler nicht zuordnen.
+    // Der Code bleibt IMMER sichtbar - nur mit Erklärung, nicht
+    // versteckt. Ohne ihn lässt sich der Fehler nicht zuordnen.
     if (hinweis == null) return roh;
     return '$roh\n\n$hinweis';
   }
@@ -206,16 +206,16 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
             children: [
               if (_error != null) ...[
                 // DER FEHLERTEXT (Befund 23.11.2026, gefunden von einem
-                // Test): Das Fenster hat eine feste Hoehe (200 Pixel).
-                // Bei grosser Systemschrift (die App erlaubt bis 3,2x)
-                // passte der Fehlertext nicht hinein - er lief ueber und
+                // Test): Das Fenster hat eine feste Höhe (200 Pixel).
+                // Bei großer Systemschrift (die App erlaubt bis 3,2x)
+                // passte der Fehlertext nicht hinein - er lief über und
                 // der Dialog wurde unbrauchbar (der Nutzer konnte weder
                 // die Meldung lesen noch auf "Erneut versuchen" tippen).
                 //
-                // Die Loesung: Der Text bekommt seinen eigenen Bereich
+                // Die Lösung: Der Text bekommt seinen eigenen Bereich
                 // mit einer Obergrenze und wird darin scrollbar. So
                 // bleibt der Dialog benutzbar, und die Meldung ist
-                // vollstaendig lesbar (nur bei Bedarf gescrollt).
+                // vollständig lesbar (nur bei Bedarf gescrollt).
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 96),
                   child: SingleChildScrollView(

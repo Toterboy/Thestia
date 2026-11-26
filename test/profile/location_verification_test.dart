@@ -1,23 +1,23 @@
-// Der Standort fuer die Verifizierung (auf dem 5-km-Raster).
+// Der Standort für die Verifizierung (auf dem 5-km-Raster).
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/services/profile/location_verification_service.dart 7 offene
 // Zeilen - den Standortabruf selbst (Berechtigung, Abruf, Rasterung).
 //
-// DER WEG: Der Geolocator laeuft ueber eine Plattform-Schnittstelle und
-// die Berechtigungen ueber eine zweite - beides laesst sich im Test
+// DER WEG: Der Geolocator läuft über eine Plattform-Schnittstelle und
+// die Berechtigungen über eine zweite - beides lässt sich im Test
 // ersetzen (ohne GPS und ohne Plugin).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne Berechtigung gibt es keinen Standort (und die App fragt sie
 //     an),
 //   * der Standort kommt auf dem 5-km-Raster (die App verspricht, den
-//     genauen Standort NICHT zu speichern - auf aelteren Geraeten ist
+//     genauen Standort NICHT zu speichern - auf älteren Geräten ist
 //     die genaue Berechtigung aber Pflicht),
-//   * schlaegt der Abruf fehl, gibt es keinen Standort (kein Absturz).
+//   * schlägt der Abruf fehl, gibt es keinen Standort (kein Absturz).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
-// Die beiden Schnittstellen kommen als Transitivum ueber geolocator
+// Die beiden Schnittstellen kommen als Transitivum über geolocator
 // und permission_handler - der Test braucht nur ihre Typen.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:geolocator_platform_interface/geolocator_platform_interface.dart';
@@ -28,7 +28,7 @@ import 'package:thestia/services/profile/location_verification_service.dart';
 /// Der Geolocator als Ersatz.
 ///
 /// DER GRUND: Ohne GPS liefert das echte Plugin nichts - und die App
-/// muss mit "keiner Position" umgehen koennen.
+/// muss mit "keiner Position" umgehen können.
 class _FakeGeolocator extends GeolocatorPlatform {
   _FakeGeolocator({this.position, this.wirft = false});
 
@@ -123,7 +123,7 @@ void main() {
       // DAS RASTER: Der Standort muss auf dem 5-km-Raster liegen - die
       // App verspricht, den genauen Standort NICHT zu speichern.
       // DER DIENST LIEFERT BEREITS DEN RASTERPUNKT - der Vergleich
-      // laeuft deshalb gegen die ROH-Position des Ersatzes.
+      // läuft deshalb gegen die ROH-Position des Ersatzes.
       final roh = geolocator.position!;
       expect(
         (position!.latitude - roh.latitude).abs() +

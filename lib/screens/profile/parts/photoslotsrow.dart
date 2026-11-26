@@ -1,9 +1,9 @@
 // Der Teil '_PhotoSlotsRow'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -56,8 +56,8 @@ class _PhotoSlotsRow extends StatelessWidget {
     if (pendingBytes != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        // Die Fotos kommen mit 2048 px aus dem Crop. Fuer eine ~110-px-
-        // Kachel reichen 300 px - ohne cacheWidth waeren es bis zu 16 MB
+        // Die Fotos kommen mit 2048 px aus dem Crop. Für eine ~110-px-
+        // Kachel reichen 300 px - ohne cacheWidth wären es bis zu 16 MB
         // dekodierte Bitmap pro Slot (4 Slots = ~64 MB Peak).
         child: Image.memory(pendingBytes, fit: BoxFit.cover, cacheWidth: 300),
       );
@@ -190,14 +190,14 @@ class _PhotoSlotsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Die Slots teilen sich die verfügbare Breite im Verhaeltnis
-    // 132:96:96 (gross:zwei klein). Feste Breiten liefen auf
-    // schmalen Geraeten ueber (RenderFlex-Overflow, 16 px bei 360 dp),
+    // Die Slots teilen sich die verfügbare Breite im Verhältnis
+    // 132:96:96 (groß:zwei klein). Feste Breiten liefen auf
+    // schmalen Geräten über (RenderFlex-Overflow, 16 px bei 360 dp),
     // weil 132+96+96+20 = 344 px > 328 px waren.
     //
     // Das ConstrainedBox begrenzt die Zeile nach oben: auf breiten
-    // Geraeten (Tablet) wachsen die Slots sonst bis zur Bildschirm-
-    // breite. Die Naturgroesse bleibt 132/96/96 px.
+    // Geräten (Tablet) wachsen die Slots sonst bis zur Bildschirm-
+    // breite. Die Naturgrösse bleibt 132/96/96 px.
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 344),

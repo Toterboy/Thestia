@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Findet Funktionen, die etwas zurueckgeben sollen, aber kein RETURN
+"""Findet Funktionen, die etwas zurückgeben sollen, aber kein RETURN
 haben.
 
 BEFUND (07.11.2026, Betreiber): "Nachrichten kommen noch immer nicht an."
@@ -16,18 +16,18 @@ Die Funktion endete mit
   END;
 
 In PL/pgSQL ist ein blosses "RETURNING id;" aber KEIN RETURN - es ist
-nur ein SQL-Befehl, dessen Ergebnis verworfen wird. Die Funktion laeuft
+nur ein SQL-Befehl, dessen Ergebnis verworfen wird. Die Funktion läuft
 danach ins Ende, ohne einen Wert zu liefern. Da sie RETURNS bigint
 deklariert ist, meldet PostgreSQL genau diesen Fehler.
 
-Das heisst: das Relay hat NIE funktioniert. Jede Nachricht, die ueber
+Das heißt: das Relay hat NIE funktioniert. Jede Nachricht, die über
 den Relay-Weg ging (also genau dann, wenn der Direktkanal nicht steht -
 im Mobilfunk, hinter einem Router oder ohne TURN), wurde verworfen.
 
 WARUM EIN WERKZEUG: Der Fehler ist still. Die App merkt nichts, der
 Nutzer sieht nur, dass nichts ankommt. Und ein Test der nur den
 Quelltext liest, sieht es auch nicht - man muss die Funktion aufrufen.
-Diese Pruefung fragt die Datenbank, welche Funktionen betroffen sind.
+Diese Prüfung fragt die Datenbank, welche Funktionen betroffen sind.
 
 Aufruf::
 
@@ -44,8 +44,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():

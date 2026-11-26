@@ -1,19 +1,19 @@
 // Der Datenkanal zwischen zwei Handys (WebRTC).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/webrtc_service.dart 140 offene Zeilen. Der
-// Datenkanal ist die Stelle, an der eine boesartige Gegenseite direkt in
-// die App spricht - dort muss nichts davon zu einem Absturz fuehren.
+// Datenkanal ist die Stelle, an der eine bösartige Gegenseite direkt in
+// die App spricht - dort muss nichts davon zu einem Absturz führen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ein Angebot des Partners baut die Verbindung auf und erzeugt eine
 //     Antwort (ohne Signalkanal geht sie nicht verloren, aber auch nicht
 //     in einen Absturz),
 //   * der Datenkanal meldet seinen Zustand (die App zeigt "verbunden"),
 //   * eine kaputte Nachricht vom Peer wird verworfen, nicht geworfen -
-//     das ist der Unterschied zwischen "Peer ist boesartig" und "App
-//     stuertzt",
-//   * eine zu grosse Nachricht wird verworfen (DoS-Schutz).
+//     das ist der Unterschied zwischen "Peer ist bösartig" und "App
+//     stürtzt",
+//   * eine zu große Nachricht wird verworfen (DoS-Schutz).
 import 'dart:convert';
 import 'dart:io';
 
@@ -35,9 +35,9 @@ void main() {
 
   /// Wie oft wurde die PeerConnection gebaut?
   ///
-  /// DER GRUND: Die Attrappe zaehlt nur createDataChannel - beim
-  /// EMPFAENGER (Antwort auf ein Angebot) wird der Kanal aber von der
-  /// Gegenseite geliefert. Der Zaehler sitzt deshalb am Aufruf der
+  /// DER GRUND: Die Attrappe zählt nur createDataChannel - beim
+  /// EMPFÄNGER (Antwort auf ein Angebot) wird der Kanal aber von der
+  /// Gegenseite geliefert. Der Zähler sitzt deshalb am Aufruf der
   /// Fabrik.
   int verbindungen = 0;
 
@@ -116,7 +116,7 @@ void main() {
       peer.onDataChannel?.call(kanal);
 
       // DIE NACHRICHT DER GEGENSEITE: Kein JSON, kein base64, einfach
-      // Muell. Sie darf die App NICHT umwerfen.
+      // Müll. Sie darf die App NICHT umwerfen.
       kanal.empfange('{{{kein json');
       await Future<void>.delayed(const Duration(milliseconds: 20));
 

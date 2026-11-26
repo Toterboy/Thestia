@@ -1,10 +1,10 @@
-// GENERIERTE DATEI - NICHT VON HAND AENDERN.
+// GENERIERTE DATEI - NICHT VON HAND ÄNDERN.
 // Quelle: tool/web/make_terms.py
 // Neu erzeugen mit: python tool/web/make_terms.py
 
 import 'package:thestia/generated/privacy_policy_blocks.dart';
 
-/// Die Nutzungsbedingungen als Bloecke, in der Reihenfolge der
+/// Die Nutzungsbedingungen als Blöcke, in der Reihenfolge der
 /// Quelle.
 const List<PrivacyBlock> kTermsDe = <PrivacyBlock>[
   PrivacyBlock('h1', 'Nutzungsbedingungen'),

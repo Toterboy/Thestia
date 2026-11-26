@@ -1,13 +1,13 @@
-// Die Standort-Pruefung des Servers (bisher ungetestet - 0 %).
+// Die Standort-Prüfung des Servers (bisher ungetestet - 0 %).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/services/profile/location_check_service.dart 0 %.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Pruefung geht mit der Nutzer-ID und den neuen Koordinaten an
+// WAS HIER GEPRÜFT WIRD:
+//   * die Prüfung geht mit der Nutzer-ID und den neuen Koordinaten an
 //     den Server,
-//   * die Antwort des Servers wird zurueckgegeben,
-//   * ein Fehler fuehrt zu null (kein Absturz, kein falsches Ergebnis).
+//   * die Antwort des Servers wird zurückgegeben,
+//   * ein Fehler fährt zu null (kein Absturz, kein falsches Ergebnis).
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
 // test/support/fake_supabase_server.dart - er zeichnet die
@@ -71,7 +71,7 @@ void main() {
       expect(aufruf['userId'], 'user-42');
       expect(aufruf['newLatitude'], 53.08);
       expect(aufruf['newLongitude'], 8.81);
-      // Und die Antwort kommt zurueck.
+      // Und die Antwort kommt zurück.
       expect(ergebnis, isNotNull);
       expect(ergebnis!['suspicious'], isFalse);
     });

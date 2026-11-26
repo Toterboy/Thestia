@@ -2,31 +2,31 @@
 
 Der CI-Fehler war: die Dateiliste enthielt Windows-Rawstrings
 (r"supabase\\migrations\\..."), die unter Linux kein Verzeichnis
-bezeichnen. Ein solches Skript "laeuft" auf Windows und faellt erst auf
+bezeichnen. Ein solches Skript "läuft" auf Windows und fällt erst auf
 dem Runner auf.
 
 Der Check ist seit dem umbenannt: FILES wird nicht mehr als feste Liste
-geschrieben, sondern per Glob ueber das Migrationsverzeichnis erzeugt.
-Der Grund (22.10.2026): die feste Liste hielt den Stand bei fuenf
-Dateien fest, waehrend die Migrationen auf 158 weiterwuchsen - 109 bis
-155 wurden also NIE geprueft, auch nicht die sicherheitskritischen 144,
-149, 151 und 155. Der Glob waechst automatisch mit.
+geschrieben, sondern per Glob über das Migrationsverzeichnis erzeugt.
+Der Grund (22.10.2026): die feste Liste hielt den Stand bei fünf
+Dateien fest, während die Migrationen auf 158 weiterwuchsen - 109 bis
+155 wurden also NIE geprüft, auch nicht die sicherheitskritischen 144,
+149, 151 und 155. Der Glob wächst automatisch mit.
 
-Der Test laeuft deshalb zweistufig:
+Der Test läuft deshalb zweistufig:
 
 1) Quelltext-Konvention: der Glob muss im Skript stehen, die
    Backslash-Formung muss dabei sein (das ist die eigentliche
-   Linux-Reparatur), und die Pruefung muss am Repo-Root haengen.
+   Linux-Reparatur), und die Prüfung muss am Repo-Root hängen.
 
-2) Ergebnis-Konvention: der Check wird als eigener Prozess ausgefuehrt
-   und die Anzahl seiner geprueften Dateien gegen eine unabhaengige
-   Aufzaehlung des Verzeichnisses gestellt. So ist bewiesen, dass der
+2) Ergebnis-Konvention: der Check wird als eigener Prozess ausgeführt
+   und die Anzahl seiner geprüften Dateien gegen eine unabhängige
+   Aufzählung des Verzeichnisses gestellt. So ist bewiesen, dass der
    Glob wirklich ALLE Migrationen erfasst - und nicht wieder eine
    stillschweigende Teilmenge.
 
 Ein Import von check_migrations_sql als Modul ist bewusst KEIN Weg: das
-Skript laeuft beim Import komplett durch und endet mit sys.exit - ein
-abgebrochener Import liefert das Modulobjekt nicht zurueck.
+Skript läuft beim Import komplett durch und endet mit sys.exit - ein
+abgebrochener Import liefert das Modulobjekt nicht zurück.
 """
 import os
 import pathlib
@@ -80,7 +80,7 @@ check('fehlende Datei wird als Fehler gemeldet',
       'FEHLER - Datei nicht gefunden' in src)
 
 # ---------------------------------------------------------------- Stufe 2: Ergebnis
-# Unabhaengige Aufzaehlung des Migrationsverzeichnisses.
+# Unabhängige Aufzählung des Migrationsverzeichnisses.
 tatsaechlich = sorted(
     n for n in os.listdir(root / 'supabase' / 'migrations')
     if n.endswith('.sql')

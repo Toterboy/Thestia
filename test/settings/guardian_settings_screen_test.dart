@@ -6,9 +6,9 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/guardian/guardian_settings_screen.dart';
 
-/// Der eigene Screen fuer die Elterneinstellungen (04.11.2026).
+/// Der eigene Screen für die Elterneinstellungen (04.11.2026).
 ///
-/// BISHER lage der Bereich "Kinderschutz & Elternzugriff" als grosse
+/// BISHER lage der Bereich "Kinderschutz & Elternzugriff" als große
 /// Karte IN den Einstellungen, dazwischen zwischen Datenschutz und
 /// Community-Regeln. Der Einstellungs-Screen war dadurch zugeballert.
 void main() {

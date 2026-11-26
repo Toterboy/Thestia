@@ -1,6 +1,6 @@
 // Die Aufbewahrungsfrist der Verifikationsvideos.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/services/verification/verification_service.dart 90 offene Zeilen -
 // darunter die Aufräum-Politik, die nach 7 Tagen alte Videos und ihre
 // Dateien entfernt.
@@ -8,26 +8,26 @@
 // DER GRUND: Das Video zeigt Gesicht und Stimme. Es ist damit
 // biometrie-nahe personenbezogene Daten. Die Aufbewahrungsfrist ist
 // keine Kosmetik: sie ist die Zusage "wir behalten dein Video nicht
-// ewig". Ein Fehler darin - ein Filter, der zu wenig loescht - heisst:
-// das Video bleibt auf dem Geraet, ohne dass der Nutzer davon weiss.
+// ewig". Ein Fehler darin - ein Filter, der zu wenig löscht - heißt:
+// das Video bleibt auf dem Gerät, ohne dass der Nutzer davon weiß.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * eine Aufnahme, die aelter als die Frist ist, wird beim naechsten
-//     Start vom Geraet UND aus dem Speicher entfernt,
+// WAS HIER GEPRÜFT WIRD:
+//   * eine Aufnahme, die älter als die Frist ist, wird beim nächsten
+//     Start vom Gerät UND aus dem Speicher entfernt,
 //   * eine frische Aufnahme bleibt erhalten,
 //   * verwaiste Dateien (der Speichereintrag fehlt schon) werden nach
 //     dem Alter der Datei entfernt,
 //   * eine fremde Datei im selben Ordner bleibt unangetastet.
 //
-// ANMERKUNG: Der Aufraeum-Vorgang laeuft im Hintergrund (er blockiert
+// ANMERKUNG: Der Aufräum-Vorgang läuft im Hintergrund (er blockiert
 // die Initialisierung nicht). Der Test wartet deshalb aktiv auf das
 // Ergebnis, statt auf eine feste Zeit zu schlafen.
 //
-// DER WEG BEIM "BLEIBT ERHALTEN": Ein Test, der nur prueft "die Datei
-// ist noch da", kann auch dann gruen sein, wenn der Aufraeum noch gar
+// DER WEG BEIM "BLEIBT ERHALTEN": Ein Test, der nur prüft "die Datei
+// ist noch da", kann auch dann grün sein, wenn der Aufräum noch gar
 // nicht gelaufen ist. Deshalb legt der Test ZUSATZLICH eine abgelaufene
-// Datei an und wartet, BIS DIE WEG IST - erst dann weiss er, dass der
-// Aufraeum gelaufen ist, und kann die frische Datei pruefen.
+// Datei an und wartet, BIS DIE WEG IST - erst dann weiß er, dass der
+// Aufräum gelaufen ist, und kann die frische Datei prüfen.
 import 'dart:convert';
 import 'dart:io';
 
@@ -65,8 +65,8 @@ void main() {
     });
   });
 
-  /// Legt eine Datei an und setzt ihr Alter (der Aufraeum-Vorgang
-  /// beurteilt verwaiste Datei nach ihrer Aenderungszeit).
+  /// Legt eine Datei an und setzt ihr Alter (der Aufräum-Vorgang
+  /// beurteilt verwaiste Datei nach ihrer Änderungszeit).
   Future<File> dateiMitAlter(String ordner, String name, Duration alter) async {
     final datei = File('$ordner/$name');
     await datei.writeAsBytes(<int>[1, 2, 3, 4]);
@@ -74,7 +74,7 @@ void main() {
     return datei;
   }
 
-  /// Wartet aktiv darauf, dass [bedingung] eintritt (hoechstens 5 Sekunden).
+  /// Wartet aktiv darauf, dass [bedingung] eintritt (höchstens 5 Sekunden).
   Future<bool> warteBis(bool Function() bedingung) async {
     for (var i = 0; i < 50; i++) {
       if (bedingung()) return true;
@@ -87,7 +87,7 @@ void main() {
   Future<String> appOrdner() async =>
       (await getApplicationSupportDirectory()).path;
 
-  /// Baut einen frischen Dienst - sein Start loest den Aufraeum aus.
+  /// Baut einen frischen Dienst - sein Start löst den Aufräum aus.
   Future<VerificationService> dienstMitAufraeum() async {
     final dienst = VerificationService();
     await dienst.initialize();
@@ -111,7 +111,7 @@ void main() {
       );
       expect(File(video.filePath).existsSync(), isTrue);
 
-      // DER WEG: Der Aufraeum beurteilt den Box-Eintrag nach dem
+      // DER WEG: Der Aufräum beurteilt den Box-Eintrag nach dem
       // Aufnahmezeitpunkt. Der Test veraltet ihn - so braucht man
       // keine acht Tage zu warten.
       final box = Hive.box<String>(_boxName);
@@ -123,7 +123,7 @@ void main() {
           .toIso8601String();
       await box.put(video.filePath, jsonEncode(eintrag));
 
-      // Der naechste Start raeumt auf.
+      // Der nächste Start räumt auf.
       final neu = await dienstMitAufraeum();
 
       expect(
@@ -157,7 +157,7 @@ void main() {
         challengeData: 'smile',
       );
 
-      // Der Ausloeser fuer "der Aufraeum ist gelaufen": eine abgelaufene
+      // Der Auslöser für "der Aufräum ist gelaufen": eine abgelaufene
       // Datei, die verschwinden MUSS.
       final ordner = await appOrdner();
       final ausloeser = await dateiMitAlter(
@@ -185,8 +185,8 @@ void main() {
 
     test('eine verwaiste alte Datei wird entfernt', () async {
       // DER FALL: Der Box-Eintrag fehlt schon (etwa weil die App
-      // abgestuerzt ist), die Datei liegt aber noch da. Ohne den
-      // zweiten Teil des Aufraeums bliebe sie liegen.
+      // abgestürzt ist), die Datei liegt aber noch da. Ohne den
+      // zweiten Teil des Aufräums bliebe sie liegen.
       final ordner = await appOrdner();
       final verwaist = await dateiMitAlter(
         ordner,
@@ -215,7 +215,7 @@ void main() {
         Duration.zero,
       );
       expect(frisch.existsSync(), isTrue);
-      // Der Ausloeser: eine abgelaufene Datei, die verschwinden MUSS.
+      // Der Auslöser: eine abgelaufene Datei, die verschwinden MUSS.
       final ausloeser = await dateiMitAlter(
         ordner,
         'verification_ausloeser2.mp4',
@@ -239,8 +239,8 @@ void main() {
     });
 
     test('eine fremde Datei bleibt unangetastet', () async {
-      // DER GRUND: Der Aufraeum darf nicht den ganzen Ordner leeren -
-      // er raeumt nur die Verifikationsvideos.
+      // DER GRUND: Der Aufräum darf nicht den ganzen Ordner leeren -
+      // er räumt nur die Verifikationsvideos.
       final ordner = await appOrdner();
       final fremd = await dateiMitAlter(
         ordner,
@@ -248,7 +248,7 @@ void main() {
         const Duration(days: 30),
       );
       expect(fremd.existsSync(), isTrue);
-      // Der Ausloeser: eine abgelaufene Verifikationsdatei.
+      // Der Auslöser: eine abgelaufene Verifikationsdatei.
       final ausloeser = await dateiMitAlter(
         ordner,
         'verification_ausloeser3.mp4',
@@ -272,8 +272,8 @@ void main() {
     });
 
     test('der Aufraeum laeuft auch ohne Aufnahme', () async {
-      // DER GRUND: Der Aufraeum darf nicht abstuerzen, wenn es nichts
-      // zu loeschen gibt - sonst waere der naechste Start der App
+      // DER GRUND: Der Aufräum darf nicht abstürzen, wenn es nichts
+      // zu löschen gibt - sonst wäre der nächste Start der App
       // kaputt.
       final dienst = await dienstMitAufraeum();
       expect(dienst.getVerificationVideo(), isNull);

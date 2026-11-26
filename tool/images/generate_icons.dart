@@ -5,7 +5,7 @@
 // mit weissem Artwork):
 //
 //  1) thestia_icon_foreground.png  (1024x1024, transparent)
-//     - Weiss-Keying (min-Kanal >= 215): weisses Artwork (Figuren, Herz,
+//     - Weiß-Keying (min-Kanal >= 215): weisses Artwork (Figuren, Herz,
 //       Sparkles, Schrift) wird Badge auf Transparenz.
 //     - Badge auf 66 % der Safe-Zone skaliert (wie bisher: Kreis/Squircle).
 //  2) thestia_icon_ios.png         (1024x1024, opak)
@@ -13,7 +13,7 @@
 //       nahtlos; Apple maskt selbst.
 //  3) build/icon_previews/preview_*.png - Masken-Simulation + PASS/FAIL.
 //
-// Ausfuehren: dart run tool/images/generate_icons.dart
+// Ausführen: dart run tool/images/generate_icons.dart
 // Danach:     dart run flutter_launcher_icons
 
 import 'dart:io';
@@ -37,8 +37,8 @@ void main() {
   final h = src.height;
   stdout.writeln('Basis: ${w}x$h');
 
-  // --- 1. Artwork-Bounding-Box (Saettigungs-Key) -----------------------------
-  // Verlaufshintergrund ist stark gesaettigt, Artwork schwach. Die Box
+  // --- 1. Artwork-Bounding-Box (Sättigungs-Key) -----------------------------
+  // Verlaufshintergrund ist stark gesättigt, Artwork schwach. Die Box
   // begrenzt nur den Ausschnitt - der Hintergrund AUSSERHALB wird
   // verworfen, der Rest weich in den Adaptive-Hintergrund geblendet.
   bool artPixel(int x, int y) {
@@ -69,9 +69,9 @@ void main() {
   stdout.writeln('Badge-BBox: x=$minX..$maxX, y=$minY..$maxY');
 
   // --- 2. Crop mit weicher Kante in Adaptive-Hintergrund --------------------
-  // Das Artwork (inkl. eigenem Verlauf + Herz-Body) wird VOLLSTAENDIG
-  // uebernommen und an den Crop-Raendern ueber ~28 px in das
-  // Adaptive-Hintergrund-Pink (#390D3C) geblendet - keine Loecher,
+  // Das Artwork (inkl. eigenem Verlauf + Herz-Body) wird VOLLSTÄNDIG
+  // übernommen und an den Crop-Rändern über ~28 px in das
+  // Adaptive-Hintergrund-Pink (#390D3C) geblendet - keine Löcher,
   // keine harten Rechteck-Kanten.
   const bgR = 0x39, bgG = 0x0D, bgB = 0x3C;
   const pad = 4;
@@ -101,7 +101,7 @@ void main() {
       crop.setPixelRgba(dx + x, dy + y, r, g, b, 255);
     }
   }
-  // Padding-Bereich ausserhalb des Crops: reines Hintergrund-Pink.
+  // Padding-Bereich außerhalb des Crops: reines Hintergrund-Pink.
   for (var y = 0; y < side; y++) {
     for (var x = 0; x < side; x++) {
       final inCrop = x >= dx && x < dx + cw && y >= dy && y < dy + ch;
@@ -180,7 +180,7 @@ void main() {
       height: size,
       interpolation: img.Interpolation.cubic,
     );
-    // Auf Weiss kompositen (Launcher-Hintergrund hell) zur Sichtpruefung.
+    // Auf Weiß kompositen (Launcher-Hintergrund hell) zur Sichtprüfung.
     final flat = img.Image(width: size, height: size, numChannels: 4);
     img.fill(flat, color: img.ColorRgba8(255, 255, 255, 255));
     img.compositeImage(flat, preview);
@@ -191,7 +191,7 @@ void main() {
         final ry = (y + 0.5 - size / 2).abs() / (size / 2);
         final inside = math.pow(rx, power) + math.pow(ry, power) <= 1.0;
         if (!inside) {
-          // Pruefung auf dem Foreground (mit Transparenz), Deko auf Weiss.
+          // Prüfung auf dem Foreground (mit Transparenz), Deko auf Weiß.
           final fp = preview.getPixel(x, y);
           final m = math.min(fp.r, math.min(fp.g, fp.b));
           if (fp.a >= 128 && m >= 235) outside++;

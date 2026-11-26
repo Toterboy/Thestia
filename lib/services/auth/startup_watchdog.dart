@@ -40,14 +40,14 @@ class StartupWatchdog {
 
   static Future<SharedPreferences> _prefs() => SharedPreferences.getInstance();
 
-  /// Kette der Schreibvorgaenge.
+  /// Kette der Schreibvorgänge.
   ///
   /// [reached] ist absichtlich fire-and-forget, damit der Start nie
   /// wartet. Preis davon: mehrere Schritte schreiben gleichzeitig, und
-  /// SharedPreferences garantiert fuer parallele Schreibvorgaenge keine
-  /// Reihenfolge. Ohne diese Kette kann der AELTERE Schritt zuletzt
-  /// ankommen, und im Bericht stuende "Schritt 1", obwohl "Schritt 3"
-  /// erreicht war. Genau darauf verlaesst man sich, wenn man den
+  /// SharedPreferences garantiert für parallele Schreibvorgänge keine
+  /// Reihenfolge. Ohne diese Kette kann der ÄLTERE Schritt zuletzt
+  /// ankommen, und im Bericht stünde "Schritt 1", obwohl "Schritt 3"
+  /// erreicht war. Genau darauf verlässt man sich, wenn man den
   /// Bildschirm liest.
   static Future<void> _queue = Future<void>.value();
 

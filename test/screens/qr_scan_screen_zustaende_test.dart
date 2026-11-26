@@ -1,19 +1,19 @@
 // Der QR-Scanner: die Fehler- und Grenz-Wege.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/qr/qr_scan_screen.dart 63 offene Zeilen - darunter der
 // Fall "das Like klappt nicht", der Fall "ohne Netz" (der Kontakt wird
-// lokal gemerkt) und das Limit von fuenf Kontakten.
+// lokal gemerkt) und das Limit von fünf Kontakten.
 //
 // DER WEG: Der Server ist der [FakeSupabaseServer] - er kann das Like
-// ablehnen. Fuer den Offline-Fall braucht es einen Screen ohne
+// ablehnen. Für den Offline-Fall braucht es einen Screen ohne
 // Supabase-Client (dann nimmt der Bildschirm den anderen Weg).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * schlaegt das Like fehl, wird es dem Nutzer gesagt (nicht
+// WAS HIER GEPRÜFT WIRD:
+//   * schlägt das Like fehl, wird es dem Nutzer gesagt (nicht
 //     verschwiegen - sonst denkt er, das Like sei angekommen),
 //   * ohne Netz wird der Kontakt lokal gemerkt und es geht weiter,
-//   * (der Limit-Weg - fuenf gespeicherte Kontakte - braucht den
+//   * (der Limit-Weg - fünf gespeicherte Kontakte - braucht den
 //     Offline-Weg; der ist ohne einen zweiten Supabase-Client nicht
 //     erreichbar und bleibt offen).
 import 'package:flutter/material.dart';
@@ -154,7 +154,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Gibt den Code eines Freundes ein (der Screen loest ihn auf).
+  /// Gibt den Code eines Freundes ein (der Screen löst ihn auf).
   Future<void> codeEingeben(WidgetTester tester, String code) async {
     await tester.tap(find.text(L10n.tWithoutContext('qr.enterCode')));
     await tester.pump();

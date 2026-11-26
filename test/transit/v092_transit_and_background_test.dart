@@ -7,7 +7,7 @@ import 'package:thestia/utils/chat/chat_backgrounds.dart';
 import 'package:thestia/widgets/transit_mode_selector.dart';
 import '../support/l10n_quellen.dart';
 
-/// Regressionstests fuer die drei Aenderungen aus v0.9.2:
+/// Regressionstests für die drei Änderungen aus v0.9.2:
 ///   1. Chat-Hintergrund: Performance + Mustersemantik
 ///   2. Transit-Bereichsauswahl: eigenes Widget statt SegmentedButton
 ///   3. Transit Spark 18+
@@ -34,7 +34,7 @@ void main() {
     });
 
     test('Hintergrund-Dateiname bleibt fixiert (Pfad-Injection)', () {
-      // Die Umstellung des Painters darf die Datei-Pruefung nicht
+      // Die Umstellung des Painters darf die Datei-Prüfung nicht
       // aufweichen - ein manipulierter Datenimport darf keinen
       // beliebigen Pfad als Hintergrund einschleusen.
       expect(ChatBackgrounds.isOwnBackgroundFile, isNotNull);
@@ -49,13 +49,13 @@ void main() {
     // Sinus/Kosinus). Jetzt wird die Form einmal normalisiert und pro
     // Kachel nur noch verschoben.
     //
-    // Der Test zaehlt echte Zeichenvorgaenge ueber einen RecordingCanvas
+    // Der Test zählt echte Zeichenvorgänge über einen RecordingCanvas
     // und misst die Zeit. Er ist damit kein reiner Rauchtest: bricht
     // jemand die Normalisierung wieder ab, steigen drawPath-Aufrufe und
     // Dauer sichtbar an.
     for (final id in ChatBackgrounds.presets) {
       test('$id: ein Path je Muster, nicht einer je Kachel', () {
-        // 1080x2400 @3x - die Aufloesung eines realistischen Geraets, auf
+        // 1080x2400 @3x - die Auflösung eines realistischen Geräts, auf
         // der die alte Fassung am meisten litt.
         const screen = Size(1080, 2400);
         final rec = _CountingCanvas();
@@ -66,8 +66,8 @@ void main() {
           greaterThan(500),
           reason: 'Testraster zu klein fuer einen aussagekraeftigen Wert',
         );
-        // Muster = genau ein drawPath-Aufruf (bzw. ein drawPoints fuer
-        // "dots"). Vorher waeren es ~817 drawPath + 817 Allokationen.
+        // Muster = genau ein drawPath-Aufruf (bzw. ein drawPoints für
+        // "dots"). Vorher wären es ~817 drawPath + 817 Allokationen.
         expect(
           rec.pathDraws,
           lessThanOrEqualTo(1),
@@ -84,13 +84,13 @@ void main() {
     }
 
     test('Herz-Kurve nutzt 16 statt 64 Stuetzstellen', () {
-      // Eine 16-Ecken-Naeherung eines Herzens ist bei 11 px Radius
+      // Eine 16-Ecken-Näherung eines Herzens ist bei 11 px Radius
       // optisch nicht von einer 64-Ecken-Kurve zu unterscheiden.
       expect(16, lessThan(64));
     });
 
     test('Theme-Wechsel loest genau einen Repaint aus', () {
-      // shouldRepaint darf bei FARBE true liefern (Muster haengt an
+      // shouldRepaint darf bei FARBE true liefern (Muster hängt an
       // der Primärfarbe), aber bei gleicher ID+Farbe false. Letzteres
       // ist der Grund, warum die RepaintBoundary Energie spart.
       expect(
@@ -134,7 +134,7 @@ void main() {
             ),
           );
           // Der Theme-Wechsel auf dem gleichen Screen ist exakt der
-          // Fall, der vorher sichtbar gehaengt hat.
+          // Fall, der vorher sichtbar gehängt hat.
           await tester.pumpAndSettle();
           expect(
             find.byType(ChatBackgroundView),
@@ -154,7 +154,7 @@ void main() {
         );
         // Kein MALS-Painter: SizedBox.shrink() statt CustomPaint. Ein
         // CustomPaint kann auch aus dem Scaffold/Material kommen, daher
-        // gezielt auf den Painter des Musters pruefen.
+        // gezielt auf den Painter des Musters prüfen.
         expect(
           find.byWidgetPredicate(
             (w) => w is CustomPaint && w.painter.toString().contains('Pattern'),
@@ -185,27 +185,27 @@ void main() {
 
     test('Reichweiten unterscheiden sich deutlich', () {
       // Kern des neuen Widgets: die Modi sind funktional, nicht kosmetisch
-      // verschieden. Ohne diesen Abstand waere die erklaerende Anzeige
-      // (RSSI-Chip) irrefuehrend.
+      // verschieden. Ohne diesen Abstand wäre die erklärende Anzeige
+      // (RSSI-Chip) irreführend.
       final t = TransitMode.transit.rssiThreshold;
       final c = TransitMode.convention.rssiThreshold;
       expect(t, -100);
       expect(c, -75);
-      // RSSI ist negativ: -100 dBm ist SCHWAECHER (also weiter) als
-      // -75 dBm. transit nimmt die groessere Reichweite.
+      // RSSI ist negativ: -100 dBm ist SCHWÄCHER (also weiter) als
+      // -75 dBm. transit nimmt die größere Reichweite.
       expect(t, lessThan(c), reason: 'transit = weitere Reichweite');
       expect((t - c).abs(), 25, reason: '25 dBm Abstand zwischen den Modi');
     });
 
     test('nur erlaubte Werte werden an den Server gesendet', () {
-      // Der RPC akzeptiert ausschliesslich 'transit' und 'convention'.
+      // Der RPC akzeptiert ausschließlich 'transit' und 'convention'.
       for (final m in TransitMode.values) {
         expect(['transit', 'convention'], contains(m.value));
       }
     });
 
     test('jeder Modus hat Label und Beschreibung in beiden Sprachen', () {
-      // Sonst zeigt das Widget den Schluessel statt des Textes.
+      // Sonst zeigt das Widget den Schlüssel statt des Textes.
       for (final m in TransitMode.values) {
         for (final key in [m.labelKey, 'transit.modeDesc.${m.value}']) {
           expect(de(key), isNot(key), reason: 'DE fehlt: $key');
@@ -237,7 +237,7 @@ void main() {
 
     test('kein Minderjaehrigen-Hinweistext mehr im Code', () {
       // Der alte Text versprach nur "du siehst altersseitig kompatible
-      // Nutzer" - das war keine Sperre. Wenn er noch existierte, wuerde
+      // Nutzer" - das war keine Sperre. Wenn er noch existierte, würde
       // die Absicht der Migration 131 verschleiert.
       for (final key in ['transit.teenNote']) {
         expect(de(key), key, reason: 'veralteter Hinweis noch aktiv');
@@ -246,7 +246,7 @@ void main() {
 
     test('Altersgrenze ist 18', () {
       // Der Wert ist an drei Stellen hart kodiert (Server-Migration,
-      // Client-Gate, Migration 132). Diese Testsammlung haelt die
+      // Client-Gate, Migration 132). Diese Testsammlung hält die
       // Absicht fest.
       expect(18, 18);
     });
@@ -260,14 +260,14 @@ void main() {
       expect(find.byType(TransitModeSelector), findsOneWidget);
       expect(find.text('Normal'), findsOneWidget);
       expect(find.text('Nur direkt daneben'), findsOneWidget);
-      // Erklaerungstexte sichtbar, nicht nur die Labels.
+      // Erklärungstexte sichtbar, nicht nur die Labels.
       expect(find.textContaining('Übliche Reichweite'), findsOneWidget);
       expect(find.textContaining('Eng begrenzt'), findsOneWidget);
     });
 
     testWidgets('markiert die Auswahl eindeutig', (tester) async {
-      // v0.10.0: kein Haken mehr. Die Kachel traegt die Auswahl selbst
-      // (gefuelltes Icon-Feld, 2-px-Rand in der Primärfarbe, schattierte
+      // v0.10.0: kein Haken mehr. Die Kachel trägt die Auswahl selbst
+      // (gefülltes Icon-Feld, 2-px-Rand in der Primärfarbe, schattierte
       // Fläche). Geprüft wird deshalb, dass GENAU EINE Kachel den
       // Primärrand hat - bei beiden wäre die Auswahl mehrdeutig.
       await tester.pumpWidget(_host(TransitMode.convention));
@@ -278,7 +278,7 @@ void main() {
         reason: 'der Haken sollte nicht mehr da sein',
       );
 
-      // Die Auswahl traegt die Kachel selbst; das Semantics-Flag ist das
+      // Die Auswahl trägt die Kachel selbst; das Semantics-Flag ist das
       // verlässliche Kriterium (siehe unten).
       // Zwei Container mit Rahmen sind hier Container mit Rahmen - kein
       // Auswahlkritium.
@@ -311,8 +311,8 @@ void main() {
     testWidgets('Tippen auf die bereits gewaehlte Option meldet nichts', (
       tester,
     ) async {
-      // Sonst wuerde ein Tipp auf die aktive Option als "Wechsel"
-      // zaehlen und Haptik ausloesen, obwohl sich nichts aendert.
+      // Sonst würde ein Tipp auf die aktive Option als "Wechsel"
+      // zählen und Haptik auslösen, obwohl sich nichts ändert.
       var calls = 0;
       await tester.pumpWidget(
         _host(
@@ -333,18 +333,18 @@ void main() {
     });
 
     testWidgets('zeigt KEINE dBm-Schwellen mehr an', (tester) async {
-      // v0.10.0: der Zahlenwert ist weg. Nutzer koennen mit "Signal ab
+      // v0.10.0: der Zahlenwert ist weg. Nutzer können mit "Signal ab
       // -100 dBm" nichts anfangen, die Balken dahinter zeigen dasselbe
-      // Verhaeltnis und brauchen keine Erklaerung.
+      // Verhältnis und brauchen keine Erklärung.
       //
-      // Geprueft wird bewusst die ABWESENHEIT: vorher standen die Werte
-      // hier als Test, und ein Rueckfall waere sonst unsichtbar.
+      // Geprüft wird bewusst die ABWESENHEIT: vorher standen die Werte
+      // hier als Test, und ein Rückfall wäre sonst unsichtbar.
       await tester.pumpWidget(_host(TransitMode.transit));
       expect(find.textContaining('dBm'), findsNothing);
       expect(find.textContaining('-100'), findsNothing);
       expect(find.textContaining('-75'), findsNothing);
 
-      // Die Balken muessen aber da sein - sie sind die Information.
+      // Die Balken müssen aber da sein - sie sind die Information.
       await tester.pumpWidget(_host(TransitMode.convention));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('transit-threshold-bars')), findsWidgets);
@@ -355,7 +355,7 @@ void main() {
     ) async {
       // Der Wert bleibt in der Semantics-Beschreibung: "transit: ...
       // Signal ab -100 dBm". Nur das SICHTBARE Text-Widget ist weg.
-      // Geprueft wird das Semantics-Widget direkt - ueber `label`, weil
+      // Geprüft wird das Semantics-Widget direkt - über `label`, weil
       // `value` intern als String gehalten wird.
       await tester.pumpWidget(_host(TransitMode.transit));
       expect(
@@ -371,9 +371,9 @@ void main() {
     });
 
     test('die beiden Modi zeigen unterschiedlich starke Signale', () {
-      // Das ist der Grund fuer das Redesign: die Kacheln unterscheiden
-      // sich fuer den Nutzer nur ueber die Signalstaerke. Faellt die
-      // Abbildung auf einen gemeinsamen Wert zurueck, sehen beide
+      // Das ist der Grund für das Redesign: die Kacheln unterscheiden
+      // sich für den Nutzer nur über die Signalstärke. Fällt die
+      // Abbildung auf einen gemeinsamen Wert zurück, sehen beide
       // gleich aus und die Entscheidung ist wieder blind.
       final transit = TransitModeSelector.filledBars(
         TransitMode.transit.rssiThreshold,
@@ -392,7 +392,7 @@ void main() {
       // NUTZERWUNSCH (27.10.2026): die Abbildung war UMGEKEHRT. Der Modus
       // mit der niedrigen Schwelle (-100 dBm, normale Reichweite) zeigte
       // nur 1 von 5 Balken, der mit der hohen (-75 dBm) dagegen 4. Ein
-      // Nutzer liest "mehr Balken" aber als "empfaengt mehr" - und genau
+      // Nutzer liest "mehr Balken" aber als "empfängt mehr" - und genau
       // umgekehrt ist es. Die Balken zeigen jetzt die REICHWEITE.
       expect(transit, 5);
       expect(convention, 2);
@@ -445,15 +445,15 @@ Widget _host(
 }
 
 // ---------------------------------------------------------------------------
-// Hilfen fuer die Zeichenlast-Pruefung
+// Hilfen für die Zeichenlast-Prüfung
 // ---------------------------------------------------------------------------
 
-/// Zaehlt Zeichenvorgaenge und Pfad-Segmente.
+/// Zählt Zeichenvorgänge und Pfad-Segmente.
 ///
-/// [_PatternPainter] ist privat, deshalb wird der Malvorgang ueber eine
+/// [_PatternPainter] ist privat, deshalb wird der Malvorgang über eine
 /// Spiegelung der Produktionslogik nachgebaut - aber mit exakt denselben
-/// Werten (Kachelgroesse 56, Radius 11, 16 Stuetzstellen, 28er-
-/// Zeilenabstand, 14er-Abtastung). Veraendert jemand die Konstanten in
+/// Werten (Kachelgrösse 56, Radius 11, 16 Stützstellen, 28er-
+/// Zeilenabstand, 14er-Abtastung). Verändert jemand die Konstanten in
 /// `chat_backgrounds.dart`, muss dieser Test die Werte hier nachziehen;
 /// das ist Absicht, weil die Grenzwerte dann sichtbar diskutiert werden.
 class _CountingCanvas implements Canvas {
@@ -521,8 +521,8 @@ int _tileCount(Size size) {
 }
 
 /// Bildet [CustomPainter.shouldRepaint] nach - die Entscheidung ist
-/// trivial, aber sie IST die Erklaerung fuer das RepaintBoundary-Verhalten:
-/// gleiche ID + gleiche Farbe darf nicht neu zeichnen, jede Aenderung schon.
+/// trivial, aber sie IST die Erklärung für das RepaintBoundary-Verhalten:
+/// gleiche ID + gleiche Farbe darf nicht neu zeichnen, jede Änderung schon.
 bool _repaintDecision({
   required String oldId,
   required Color oldColor,
@@ -530,9 +530,9 @@ bool _repaintDecision({
   required Color color,
 }) => oldId != id || oldColor != color;
 
-// L10n-Schluessel werden statisch aus app_strings.dart gelesen: `L10n.t`
-// braucht einen BuildContext mit gesetzter Locale, was ausserhalb eines
-// Widget-Tests nur ueber pumpWidget geht. Fuer Schluesselpruefungen reicht
+// L10n-Schlüssel werden statisch aus app_strings.dart gelesen: `L10n.t`
+// braucht einen BuildContext mit gesetzter Locale, was außerhalb eines
+// Widget-Tests nur über pumpWidget geht. Für Schlüsselprüfungen reicht
 // die Quelle - so macht es der bestehende l10n_test.dart ebenfalls.
 late final Map<String, String> _de;
 late final Map<String, String> _en;

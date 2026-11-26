@@ -1,13 +1,13 @@
-// Regressionstests fuer die zwei Fehler vom 13.11.2026.
+// Regressionstests für die zwei Fehler vom 13.11.2026.
 //
-// 1) DER ZUFALLSCHAT FRAGT BEIM ZURUECK-WISCHEN (Befund des Betreibers:
-//    "Wenn man zurueck wischt bei Zufallschat, wird man nicht nochmal
-//    gefragt, ob man ihn beenden moechte.")
+// 1) DER ZUFALLSCHAT FRAGT BEIM ZURÜCK-WISCHEN (Befund des Betreibers:
+//    "Wenn man zurück wischt bei Zufallschat, wird man nicht nochmal
+//    gefragt, ob man ihn beenden mächte.")
 //
-// 2) EIN AUSGEWAEHLTES CHIP SPRINGT NICHT IN DIE NAECHSTE ZEILE
-//    (Befund des Betreibers: "Wenn man Buttons auswaehlt, z. B. in den
-//    Profileinstellungen, sollen sie sich nicht in die naechste Zeile
-//    durch auswaehlen verschieben").
+// 2) EIN AUSGEWAEHLTES CHIP SPRINGT NICHT IN DIE NÄCHSTE ZEILE
+//    (Befund des Betreibers: "Wenn man Buttons auswählt, z. B. in den
+//    Profileinstellungen, sollen sie sich nicht in die nächste Zeile
+//    durch auswählen verschieben").
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +20,7 @@ import 'package:thestia/services/chat/chat_service.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/widgets/common/stable_chip.dart';
 
-/// In-Memory-Implementierung von [LocalStorage] fuer Tests.
+/// In-Memory-Implementierung von [LocalStorage] für Tests.
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _data = {};
 
@@ -50,7 +50,7 @@ class _FakeLocalStorage implements LocalStorage {
       _data[key] == null ? null : int.tryParse(_data[key]!);
 }
 
-/// Ein Chat-Zustand fuer den Test (der Screen braucht die Chatliste).
+/// Ein Chat-Zustand für den Test (der Screen braucht die Chatliste).
 ChatNotifier _chatNotifier() {
   final service = ChatService();
   service.createMatch(
@@ -64,7 +64,7 @@ ChatNotifier _chatNotifier() {
   return ChatNotifier(service);
 }
 
-/// Die Overrides fuer den Zufallschat-Screen.
+/// Die Overrides für den Zufallschat-Screen.
 List<Override> _overrides() => [
   localStorageProvider.overrideWithValue(_FakeLocalStorage()),
   chatProvider.overrideWith((ref) => _chatNotifier()),
@@ -105,20 +105,20 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
 
-      // Den Zufallschat oeffnen (er muss auf einer Route liegen, die
-      // sich zurueckpoppen laesst - die Startseite laesst das nicht).
+      // Den Zufallschat öffnen (er muss auf einer Route liegen, die
+      // sich zurückpoppen lässt - die Startseite lässt das nicht).
       await tester.tap(find.text('oeffnen'));
       await tester.pumpAndSettle();
 
-      // Das System-Zurueck - so ruft es der Randwisch (und der
-      // Zurueck-Knopf des Systems) auf. `maybePop()` ist der Weg, der
-      // den PopScope beachtet; ein direktes `pop()` wuerde daran
-      // vorbeikommen (und wuerde genau den Befund wiederholen).
+      // Das System-Zurück - so ruft es der Randwisch (und der
+      // Zurück-Knopf des Systems) auf. `maybePop()` ist der Weg, der
+      // den PopScope beachtet; ein direktes `pop()` würde daran
+      // vorbeikommen (und würde genau den Befund wiederholen).
       final navigator = tester.state<NavigatorState>(find.byType(Navigator));
       await navigator.maybePop();
       await tester.pumpAndSettle();
 
-      // Die Rueckfrage steht da.
+      // Die Rückfrage steht da.
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Zufallschat beenden?'), findsOneWidget);
     });
@@ -217,7 +217,7 @@ void main() {
       tester,
     ) async {
       // Die Gegenprobe: mit dem normalen FilterChip springt das Chip,
-      // weil Material das Haekchen einblendet und der Wrap neu packt.
+      // weil Material das Häkchen einblendet und der Wrap neu packt.
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 

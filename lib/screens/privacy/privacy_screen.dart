@@ -78,10 +78,10 @@ class PrivacyScreen extends ConsumerWidget {
         {'name': 'Brevo', 'purpose': 'Transaktions-E-Mails'},
         {'name': 'Cloudflare Inc.', 'purpose': 'CAPTCHA (Turnstile)'},
         {'name': 'Netlify Inc.', 'purpose': 'Hosting Auth-/CAPTCHA-Seite'},
-        // BEFUND (16.11.2026, Audit): Die vier oeffentlichen STUN-Server
-        // sehen beim Aufbau der Direktverbindung die oeffentliche
+        // BEFUND (16.11.2026, Audit): Die vier öffentlichen STUN-Server
+        // sehen beim Aufbau der Direktverbindung die öffentliche
         // IP-Adresse des Nutzers - das ist eine Verarbeitung im Auftrag
-        // und gehoert in den Export. Ebenso der Hinweis, dass es derzeit
+        // und gehört in den Export. Ebenso der Hinweis, dass es derzeit
         // KEINEN TURN-Relay gibt (die Liste behauptete vorher, Cloudflare
         // betreibe TURN - das war falsch).
         {
@@ -102,7 +102,7 @@ class PrivacyScreen extends ConsumerWidget {
         // "Apple Inc. (App-Store-Verteilung)" - der Datenschutz-Screen
         // sagt aber (seit 14.11.2026, auf Wunsch des Betreibers), dass
         // es KEINE App-Store-Verteilung gibt. Der Export widersprach
-        // also dem Bildschirm und der veroeffentlichten Erklaerung.
+        // also dem Bildschirm und der veröffentlichten Erklärung.
         //
         // DER WEG: Die Liste nennt dieselben Auftragsverarbeiter wie
         // der Bildschirm - ohne Apple.
@@ -250,8 +250,8 @@ class PrivacyScreen extends ConsumerWidget {
         await notifier.setDistanceFilterMode(prefs.distanceFilterMode);
         await notifier.setMaxDistanceKm(prefs.maxDistanceKm);
         await notifier.setPreferredState(prefs.preferredState);
-        // v0.10.0: prefs.location entfaellt - der Import darf keinen
-        // Ortsnamen aus einer alten Datensicherung zurueckbringen.
+        // v0.10.0: prefs.location entfällt - der Import darf keinen
+        // Ortsnamen aus einer alten Datensicherung zurückbringen.
         await notifier.setRelationshipType(prefs.relationshipType);
       }
       if (!context.mounted) return;
@@ -380,7 +380,7 @@ class PrivacyScreen extends ConsumerWidget {
           FilledButton(
             // DER GRUND (19.11.2026, gefunden von einem Test): Mit
             // `pop(validate())` schloss sich der Dialog auch bei
-            // ungueltiger Eingabe - die Fehlermeldung war einen
+            // ungültiger Eingabe - die Fehlermeldung war einen
             // Augenblick da und dann weg. Der Nutzer sah NICHTS und
             // wusste nicht, warum es nicht ging. Jetzt bleibt der
             // Dialog offen, bis die Eingabe stimmt.
@@ -490,7 +490,7 @@ class PrivacyScreen extends ConsumerWidget {
           FilledButton(
             // DER GRUND (19.11.2026, gefunden von einem Test): Mit
             // `pop(validate())` schloss sich der Dialog auch bei
-            // ungueltiger Eingabe - die Fehlermeldung war einen
+            // ungültiger Eingabe - die Fehlermeldung war einen
             // Augenblick da und dann weg. Der Nutzer sah NICHTS und
             // wusste nicht, warum es nicht ging. Jetzt bleibt der
             // Dialog offen, bis die Eingabe stimmt.
@@ -536,7 +536,7 @@ class PrivacyScreen extends ConsumerWidget {
     }
   }
 
-  /// Der Konto-Loesch-Ablauf - jetzt als gemeinsame Funktion, damit ihn
+  /// Der Konto-Lösch-Ablauf - jetzt als gemeinsame Funktion, damit ihn
   /// auch die Einstellungen nutzen (06.11.2026).
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref) =>
       deleteAccountWithConfirmation(context, ref);
@@ -584,7 +584,7 @@ class PrivacyScreen extends ConsumerWidget {
             onTap: () => _changePassword(context, ref),
           ),
           const Divider(height: 32),
-          // Google Play verlangt die Datenschutzerklaerung als Text
+          // Google Play verlangt die Datenschutzerklärung als Text
           // INNERHALB der App, nicht nur als Link im Store. Deshalb
           // steht hier ein eigener Eintrag und nicht nur ein Hinweis
           // auf das Impressum.
@@ -595,7 +595,7 @@ class PrivacyScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.privacyPolicy),
           ),
-          // Das Impressum ist Pflicht, nicht Kuer: die App ist selbst
+          // Das Impressum ist Pflicht, nicht Kür: die App ist selbst
           // ein digitaler Dienst im Sinne des Par. 5 DDG. Ohne diesen
           // Eintrag kann die App die Anbieterkennzeichnung nicht
           // liefern (Recherche 05.11.2026).
@@ -604,7 +604,7 @@ class PrivacyScreen extends ConsumerWidget {
           // funktioniert nicht." Vorher stand hier ein Link auf
           // thestia.de/impressum. Diese Domain ist ein VERIFIZIERTER
           // APP-LINK (assetlinks.json + android:autoVerify) - Android
-          // oeffnete den Link in der App selbst, nicht im Browser. Die
+          // öffnete den Link in der App selbst, nicht im Browser. Die
           // App bekam ihren eigenen Link und zeigte nichts.
           //
           // Der Text steht jetzt IN der App (wie Datenschutz und
@@ -617,17 +617,17 @@ class PrivacyScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.imprint),
           ),
-          // Die Nutzungsbedingungen gehoeren ebenfalls in die App:
-          // Google Play verlangt fuer jede App eine erreichbare Adresse
-          // der Nutzungsbedingungen, und in der App selbst gehoeren die
-          // Bedingungen neben der Datenschutzerklaerung und dem
+          // Die Nutzungsbedingungen gehören ebenfalls in die App:
+          // Google Play verlangt für jede App eine erreichbare Adresse
+          // der Nutzungsbedingungen, und in der App selbst gehören die
+          // Bedingungen neben der Datenschutzerklärung und dem
           // Impressum zu finden.
           //
           // BEFUND (14.11.2026, Betreiber): "Die Nutzungsbedingungen
           // funktionieren in der App nicht." Sie waren nur ein Link auf
           // die Webseite - das braucht einen installierten Browser und
           // eine erreichbare Seite. Der Text steht jetzt IN der App
-          // (wie die Datenschutzerklaerung).
+          // (wie die Datenschutzerklärung).
           ListTile(
             leading: const Icon(Icons.description),
             title: Text(L10n.t(context, 'privacy.termsTitle')),
@@ -665,10 +665,10 @@ class PrivacyScreen extends ConsumerWidget {
             subtitle: Text(L10n.t(context, 'privacy.processorNetlify')),
           ),
           // BEFUND (16.11.2026, Audit): Hier stand kein STUN-Dienst -
-          // obwohl vier oeffentliche STUN-Server beim Direktverbindungs-
-          // Aufbau die oeffentliche IP-Adresse des Nutzers sehen. Das
+          // obwohl vier öffentliche STUN-Server beim Direktverbindungs-
+          // Aufbau die öffentliche IP-Adresse des Nutzers sehen. Das
           // ist eine Verarbeitung im Auftrag (Art. 28 DSGVO) und
-          // gehoert in die Liste.
+          // gehört in die Liste.
           ListTile(
             leading: const Icon(Icons.router_outlined),
             title: Text(L10n.t(context, 'privacy.processorStunNames')),
@@ -676,7 +676,7 @@ class PrivacyScreen extends ConsumerWidget {
           ),
           // Der Hinweis auf den fehlenden TURN-Relay: Die Direkt-
           // verbindung kommt ohne fremden Relay-Server aus. Kommt sie
-          // nicht zustande, laeuft der Chat ueber den Server des
+          // nicht zustande, läuft der Chat über den Server des
           // Betreibers - der sieht dann, wer mit wem schreibt (nicht
           // den Inhalt).
           ListTile(
@@ -687,7 +687,7 @@ class PrivacyScreen extends ConsumerWidget {
           // BEFUND (14.11.2026, Betreiber): "apple bei auftragsverarbeiter
           // ist aktuell falsch, da ich es dort nicht anbiete aktuell."
           // Es gibt keine App-Store-Verteilung - also steht Apple hier
-          // nicht mehr. Wer die App im Play Store laedt, hat mit Google
+          // nicht mehr. Wer die App im Play Store lädt, hat mit Google
           // (Firebase) den Push-Dienst genannt; die F-Droid-Fassung
           // nutzt UnifiedPush.
           const Divider(height: 32),
@@ -712,7 +712,7 @@ class PrivacyScreen extends ConsumerWidget {
           ),
           const Divider(height: 32),
           _SectionTitle(L10n.t(context, 'privacy.dangerZone')),
-          // BEIDE Loesch-Wege stehen hier zusammen (06.11.2026,
+          // BEIDE Lösch-Wege stehen hier zusammen (06.11.2026,
           // Betreiber): "Daten löschen" (ohne das Konto aufzugeben) und
           // "Konto löschen" (mit).
           ListTile(

@@ -3,15 +3,15 @@
 // ANLASS (19.11.2026): `lib/screens/profile/profile_screen.dart` war nur
 // zu 48 % abgedeckt. Die Kopfzeile ist das, was der Nutzer zuerst
 // sieht: Alter, Geschlecht, Bundesland. Ein Fehler dort ist sofort
-// sichtbar - und die Zeile stand frueher doppelt im File (einmal mit
+// sichtbar - und die Zeile stand früher doppelt im File (einmal mit
 // dem Ort, einmal mit dem Bundesland), was zu zwei verschiedenen
-// Anzeigen fuehren konnte.
+// Anzeigen führen konnte.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Kopfzeile nennt Alter, Geschlecht und Bundesland,
 //   * ohne Bundesland endet die Zeile nicht mit einem Trennzeichen,
 //   * ein unbekanntes Geschlecht macht die Zeile nicht kaputt,
-//   * der Persoenlichkeitstyp steht als Chip da,
+//   * der Persönlichkeitstyp steht als Chip da,
 //   * ohne Namen steht "Unbekannt" (nicht eine leere Zeile).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,12 +96,12 @@ UserProfile _profil({
 
 void main() {
   setUpAll(() async {
-    // DER SPEICHER DES GERAETS: der Auth-Client holt sich daraus die
-    // Sitzung - ohne den Mock schlaegt der Aufbau fehl.
+    // DER SPEICHER DES GERÄTS: der Auth-Client holt sich daraus die
+    // Sitzung - ohne den Mock schlägt der Aufbau fehl.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     await mockPfadProvider();
-    // Der Supabase-Client wird genau einmal fuer die ganze Datei
+    // Der Supabase-Client wird genau einmal für die ganze Datei
     // aufgesetzt: die Stimmungskarte des Profils liest ihn.
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -183,7 +183,7 @@ void main() {
       final zeile = kopfzeile(tester);
       expect(zeile, isNotEmpty);
       // Das Alter rechnet der Screen aus dem Geburtsdatum - der Test
-      // rechnet mit derselben Quelle (sonst waere "30" gegen "29" der
+      // rechnet mit derselben Quelle (sonst wäre "30" gegen "29" der
       // Fehler, nicht der Bildschirm).
       expect(zeile, contains('${_profil().age}'));
       expect(

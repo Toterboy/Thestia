@@ -8,7 +8,7 @@ import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/utils/common/constants.dart';
 
-/// In-Memory-Implementierung von [LocalStorage] fuer Tests
+/// In-Memory-Implementierung von [LocalStorage] für Tests
 /// (Muster aus settings_provider_test.dart).
 class _FakeStorage implements LocalStorage {
   final Map<String, String> _data = {};

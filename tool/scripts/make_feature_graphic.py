@@ -1,16 +1,16 @@
-"""Erzeugt die Play-Feature-Graphic (1024x500) fuer com.thestia.app.
+"""Erzeugt die Play-Feature-Graphic (1024x500) für com.thestia.app.
 
 Warum das nicht einfach das App-Icon ist: Play zeigt die Feature Graphic
 als querformatiges Banner - im Kopf des Store-Listings, in der Suche,
 im Karussell. Das Icon ist quadratisch (1:1), die Graphic hat 2,05:1.
-Ein hochskaliertes Icon darin waere entweder von Leerraum umgeben oder
+Ein hochskaliertes Icon darin wäre entweder von Leerraum umgeben oder
 beschnitten. Die Graphic ist also eine eigene Komposition, in der das
 Icon nur als Baustein vorkommt.
 
 Plakatwerbung nach Googles eigenen Vorgaben: "design for scale and keep
 important elements toward the center". In der Play-Suche wird die
 Graphic klein angezeigt - deshalb Logo, Name und ein Claim, kein
-Screenshot. Ein Mockup waere dort unlesbar.
+Screenshot. Ein Mockup wäre dort unlesbar.
 
 Vorgaben von Play (Hilfeseite):
   - exakt 1024 x 500 px
@@ -19,7 +19,7 @@ Vorgaben von Play (Hilfeseite):
 Alphakanal wird deshalb auf den Verlauf komponiert und das Ergebnis
 konsequent nach RGB konvertiert.
 
-Farben aus dem App-Icon gezogen (haeufigste Töne):
+Farben aus dem App-Icon gezogen (häufigste Töne):
   #6000C0  Violett, #7800A8 / #9000A8  Mittelviolett,
   #D80078 / #F01860  Magenta, #F0F0F0 / #F0D8F0  Hell
 Daraus ein diagonaler Verlauf, der die Markenrichtung trifft.
@@ -34,8 +34,8 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -63,8 +63,8 @@ OUT_NAME = 'featureGraphic.png'
 #   * PLAY: 24-Bit-PNG OHNE Alphakanal ("JPEG oder 24-Bit-PNG (kein
 #     Alpha)"). Eine abgerundete Graphic braucht aber genau den
 #     Alphakanal - sonst sind die Ecken entweder eckig oder mit einer
-#     Farbe gefuellt, die auf fremdem Grund wie ein Fehler aussieht.
-#     Fuer Play bleibt die Graphic deshalb eckig.
+#     Farbe gefüllt, die auf fremdem Grund wie ein Fehler aussieht.
+#     Für Play bleibt die Graphic deshalb eckig.
 #   * README und Webseite: dort sind transparente Ecken richtig - der
 #     Hintergrund der Seite bzw. GitHubs zeigt durch.
 #
@@ -88,23 +88,23 @@ INK_SOFT = (0xF0, 0xD8, 0xF0)
 BRAND = 'Thestia'
 HOOK = 'Person statt Bild.'
 # KEIN "P2P" als Werbeaussage. Betreiber-Angabe: die P2P-Verbindung
-# funktioniert nicht zuverlaessig, es greift durchgehend der E2E-Transport
-# ueber den Server. "Ende-zu-Ende verschluesselt" bleibt wahr - der Server
-# sieht nur Ciphertext. "P2P" waere eine Zusage, die der Betrieb nicht
-# einloest. Derselbe Fehler stand in fastlane short_description (beide
-# Sprachen) und in docs/recht/DATENSCHUTZ.md Abschnitt 3, dort eingeraenkt.
+# funktioniert nicht zuverlässig, es greift durchgehend der E2E-Transport
+# über den Server. "Ende-zu-Ende verschlüsselt" bleibt wahr - der Server
+# sieht nur Ciphertext. "P2P" wäre eine Zusage, die der Betrieb nicht
+# einlöst. Derselbe Fehler stand in fastlane short_description (beide
+# Sprachen) und in docs/recht/DATENSCHUTZ.md Abschnitt 3, dort eingeränkt.
 PROOF = 'Datenschutzfreundliches Dating  ·  Ende-zu-Ende verschlüsselt'
 
-# Die englischen Gegenstuecke (03.11.2026).
+# Die englischen Gegenstücke (03.11.2026).
 #
-# BISHER wurde fuer BEIDE Sprachen dasselbe deutsche Motiv ausgeliefert
+# BISHER wurde für BEIDE Sprachen dasselbe deutsche Motiv ausgeliefert
 # ("Person statt Bild. / Datenschutzfreundliches Dating"). Im
 # englischen Listing stand damit ein deutscher Claim - der erste
-# deutsche Text, den ein englischsprachiger Besucher gesehen haette.
+# deutsche Text, den ein englischsprachiger Besucher gesehen hätte.
 #
 # Die Aussage ist dieselbe und genauso belegbar: die App zeigt vor dem
 # ersten Funken kein Foto, und die Chats sind Ende-zu-Ende
-# verschluesselt (auch ueber das Relay).
+# verschlüsselt (auch über das Relay).
 HOOK_EN = 'Person, not picture.'
 PROOF_EN = 'Privacy-friendly dating  ·  End-to-end encrypted'
 
@@ -119,8 +119,8 @@ def gradient(size: tuple[int, int]) -> Image.Image:
     """Diagonaler Verlauf, in drei Stufen interpoliert.
 
     In zwei Schritten interpoliert statt in einem: ein reiner
-    Zweipunkt-Verlauf von Violett nach Magenta laeuft durch ein
-    entsaettetes Kirscha, das in der Icon-Palette gar nicht vorkommt.
+    Zweipunkt-Verlauf von Violett nach Magenta läuft durch ein
+    entsättetes Kirscha, das in der Icon-Palette gar nicht vorkommt.
     """
     w, h = size
     base = Image.new('RGB', (w, h))
@@ -142,11 +142,11 @@ def gradient(size: tuple[int, int]) -> Image.Image:
 
 def fit_font(draw: ImageDraw.ImageDraw, text: str, path: pathlib.Path,
              start: int, max_w: int, floor: int = 14) -> ImageFont.FreeTypeFont:
-    """Groesste Schriftgroesse, bei der die Zeile in max_w passt.
+    """Größte Schriftgrösse, bei der die Zeile in max_w passt.
 
     Die erste Version der Graphic hat die Proof-Zeile ohne Messung
-    gesetzt - sie lief rechts aus dem Bild, "P2P" fehlte vollstaendig.
-    Ein Layout ohne Breitenpruefung ist kein Layout, deshalb wird hier
+    gesetzt - sie lief rechts aus dem Bild, "P2P" fehlte vollständig.
+    Ein Layout ohne Breitenprüfung ist kein Layout, deshalb wird hier
     gemessen und solange verkleinert, bis es passt.
     """
     for size in range(start, floor - 1, -1):
@@ -164,12 +164,12 @@ def fit_font(draw: ImageDraw.ImageDraw, text: str, path: pathlib.Path,
 
 
 # Das Emblem ist das App-Icon in seiner nativen Form - die abgerundete
-# Kachel. Drei Anlaengeuehr vorheriger Versuche:
+# Kachel. Drei Anlängeühr vorheriger Versuche:
 #
-# 1) Icon unveraendert, kein Beschnitt: der Name stand zweimal da
-#    (Schriftzug im Icon + grosser Text), das konkurrierte.
-# 2) Anschnitt am unteren Rand + Kreismaske: die Kachel fuellt das
-#    Quadrat fast vollstaendig, deshalb dominierte ihre eigene Form die
+# 1) Icon unverändert, kein Beschnitt: der Name stand zweimal da
+#    (Schriftzug im Icon + großer Text), das konkurrierte.
+# 2) Anschnitt am unteren Rand + Kreismaske: die Kachel füllt das
+#    Quadrat fast vollständig, deshalb dominierte ihre eigene Form die
 #    Maske. Ergebnis war wieder eine Kachel, diesmal beschnitten, mit
 #    einem Rest des Schriftzugs unten - sichtbar kaputt.
 # 3) Quadrat INNERHALB der Kachel + Kreismaske: kein Schriftzug mehr,
@@ -177,16 +177,16 @@ def fit_font(draw: ImageDraw.ImageDraw, text: str, path: pathlib.Path,
 #    Kreis stand. Genau das war die Beanstandung: man erkennt einen
 #    viereckigen Kasten und damit, dass etwas eingesetzt wurde.
 #
-# Die Loesung ist nicht eine dritte Maske, sondern gar keine. Die Kachel
+# Die Lösung ist nicht eine dritte Maske, sondern gar keine. Die Kachel
 # IST die Form des Logos; sie wirkt nicht eingesetzt, wenn man sie nicht
-# zusaetzlich verformt. Alles ungeschnitten, nichts abgeschnitten oben.
+# zusätzlich verformt. Alles ungeschnitten, nichts abgeschnitten oben.
 def emblem(size: int) -> Image.Image:
     with Image.open(ICON) as im:
         return im.convert('RGBA').resize((size, size), Image.LANCZOS)
 
 
 def _draw(hook: str, proof: str, sprache: str):
-    """Zeichnet die Feature Graphic fuer EINE Sprache.
+    """Zeichnet die Feature Graphic für EINE Sprache.
 
     Getrennt je Sprache, weil der Claim ein Text ist: ein deutscher
     Claim im englischen Listing ist ein Fehler, keine Sparmassnahme.
@@ -198,18 +198,18 @@ def _draw(hook: str, proof: str, sprache: str):
     EMB = 250
     ix, iy = MARGIN, (H - EMB) // 2
 
-    # KEIN Schlagschatten. Drei Anlaenge hintereinander:
+    # KEIN Schlagschatten. Drei Anlänge hintereinander:
     # 1) Elliptischer Schatten unter einem eckigen Icon - an den vier
     #    Stellen hervorstehend, wo das Icon gerade ist.
     # 2) Kein Schatten, aber die Kachelmaske schnitt die Icon-Ecken an,
     #    es blieb ein Rechteck im Kreis.
     # 3) Schatten in Kachelform - passte, erzeugte aber auf dem
     #    Violett-Magenta-Grund eine dunkle Kontur um die Kachel, die als
-    #    schwarze Umrandung las und die Kachel eckig wirken liess.
+    #    schwarze Umrandung las und die Kachel eckig wirken ließ.
     #
     # Der Schatten war reine Zutat: das App-Icon ist auf seinen
     # eigenen Verlauf gesetzt und braucht keinen. Betreiberwunsch ist
-    # ausdruecklich "nur das Logo, ohne schwarze Umrandung".
+    # ausdrücklich "nur das Logo, ohne schwarze Umrandung".
     mark = emblem(EMB)
     canvas.paste(mark, (ix, iy), mark)
 
@@ -243,7 +243,7 @@ def _draw(hook: str, proof: str, sprache: str):
     b = d.textbbox((0, 0), proof, font=f_proof)
     d.text((tx, y - b[1]), proof, font=f_proof, fill=INK_SOFT)
 
-    # Harte Zusicherung: nichts darf ueber den Rand hinausragen
+    # Harte Zusicherung: nichts darf über den Rand hinausragen
     for label, txt, f in (('Marke', BRAND, f_brand), ('Claim', hook, f_hook),
                           ('Nachweis', proof, f_proof)):
         b = d.textbbox((0, 0), txt, font=f)
@@ -265,9 +265,9 @@ def _draw(hook: str, proof: str, sprache: str):
 def _runde_ecken(bild: Image.Image, radius: int) -> Image.Image:
     """Rundet die vier Ecken eines Bildes (mit transparenten Ecken).
 
-    Die Maske ist ein abgerundetes Rechteck ueber die volle Flaeche.
+    Die Maske ist ein abgerundetes Rechteck über die volle Fläche.
     Der Radius wird auf die kleinere Kante begrenzt, damit er bei
-    quadratischen Bildern nicht ueber die Mitte hinausgeht.
+    quadratischen Bildern nicht über die Mitte hinausgeht.
     """
     w, h = bild.size
     r = max(1, min(radius, w // 2, h // 2))
@@ -300,10 +300,10 @@ def main() -> int:
         out_paths.extend(paths)
         canvases.append((sprache, canvas))
 
-    # Die abgerundete Fassung fuer README und Webseite (mit Alpha).
+    # Die abgerundete Fassung für README und Webseite (mit Alpha).
     #
     # Der Radius wird als Maske gesetzt, nicht als Rechteck - sonst
-    # waeren die Ecken eckig. Die Spielexpectspruefung bleibt, damit
+    # wären die Ecken eckig. Die Spielexpectsprüfung bleibt, damit
     # die Play-Datei nach wie vor 24-Bit ohne Alpha ist.
     rund = _runde_ecken(canvases[0][1], ROUNDED_RADIUS)
     ROUNDED_OUT.parent.mkdir(parents=True, exist_ok=True)

@@ -1,10 +1,10 @@
 // Der Event-Bildschirm der Dating Hour (bisher ungetestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/dating_hour/dating_hour_event_screen.dart 528 offene
 // Zeilen - die Seite, auf der der Nutzer der Dating Hour beitritt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * ohne Event steht der Hinweis da (nicht ein leerer Bildschirm),
 //   * ein Serverfehler zeigt die Fehlermeldung,
@@ -32,7 +32,7 @@ import 'package:thestia/services/storage/local_storage.dart';
 ///
 /// DER GRUND: Der automatische Beitritt liest die Einstellung aus dem
 /// Anbieter. Der Test muss sie also VOR dem Aufbau setzen - danach
-/// waere der Bildschirm schon gebaut.
+/// wäre der Bildschirm schon gebaut.
 class _Einstellungen extends SettingsNotifier {
   _Einstellungen(Ref ref, {bool autoJoin = false})
     : super(_FakeLocalStorage(), ref) {
@@ -75,10 +75,10 @@ class _FakeLocalStorage implements LocalStorage {
 
 /// Hand-Fake des Dating-Hour-Dienstes.
 ///
-/// Der echte Dienst spricht mit der Datenbank. Der Fake haelt das Event
+/// Der echte Dienst spricht mit der Datenbank. Der Fake hält das Event
 /// im RAM und merkt sich, ob der Nutzer beigetreten ist und das Event
 /// wieder verlassen hat - so wird sichtbar, ob die App wirklich etwas
-/// beim Server ausgeloest hat.
+/// beim Server ausgelöst hat.
 class _FakeDatingHourService extends DatingHourService {
   _FakeDatingHourService({this.event, this.teilnahme = false});
 
@@ -135,7 +135,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  /// Ein Event, das JETZT laeuft (Start vor 10 Minuten, Ende in 50).
+  /// Ein Event, das JETZT läuft (Start vor 10 Minuten, Ende in 50).
   DatingHourEvent laufendesEvent() {
     final jetzt = DateTime.now();
     return DatingHourEvent(
@@ -152,7 +152,7 @@ void main() {
     );
   }
 
-  /// Ein Event, das NOCH NICHT laeuft (Start in 30 Minuten).
+  /// Ein Event, das NOCH NICHT läuft (Start in 30 Minuten).
   DatingHourEvent kommendesEvent() {
     final jetzt = DateTime.now();
     final start = jetzt.add(const Duration(minutes: 30));
@@ -208,7 +208,7 @@ void main() {
       );
     }
     // Der Knopf kann auch gebaut, aber unterhalb der Falz liegen - dann
-    // waere der Tipp ins Leere.
+    // wäre der Tipp ins Leere.
     await tester.ensureVisible(ziel);
     await pumpFrames(tester);
   }
@@ -306,7 +306,7 @@ void main() {
       await tester.tap(find.text('Jetzt beitreten & chatten'));
       await pumpFrames(tester);
 
-      // Die Rueckfrage steht da.
+      // Die Rückfrage steht da.
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Am Event teilnehmen?'), findsOneWidget);
 
@@ -331,7 +331,7 @@ void main() {
       expect(tester.takeException(), isNull);
       // Der Server wurde wirklich informiert ...
       expect(service.beigetreten, contains('event-1'));
-      // ... und der Nutzer bekommt die Bestaetigung.
+      // ... und der Nutzer bekommt die Bestätigung.
       expect(find.text('Du nimmst am Dating Hour Event teil!'), findsOneWidget);
     });
 
@@ -361,7 +361,7 @@ void main() {
         service: _FakeDatingHourService(event: laufendesEvent()),
       );
 
-      // Die Regeln sind der Kern der Dating Hour - sie muessen da
+      // Die Regeln sind der Kern der Dating Hour - sie müssen da
       // stehen, nicht nur im Kleingedruckten.
       expect(find.text('Wichtige Regeln'), findsOneWidget);
     });
@@ -371,7 +371,7 @@ void main() {
         tester,
       ) async {
         // DER FALL: Das Event ist vorbei und der Nutzer war dabei.
-        // Einmal fragen, ob er beim naechsten Mal automatisch wieder
+        // Einmal fragen, ob er beim nächsten Mal automatisch wieder
         // dabei sein will - das ist die Zusage aus dem Event.
         final service = await zeigeScreen(
           tester,
@@ -404,7 +404,7 @@ void main() {
         tester,
       ) async {
         // DER FALL: Der Nutzer hat beim letzten Mal "Ja, gerne" gesagt.
-        // Beim naechsten laufenden Event nimmt er automatisch teil - ohne
+        // Beim nächsten laufenden Event nimmt er automatisch teil - ohne
         // erneut gefragt zu werden.
         final service = await zeigeScreen(
           tester,

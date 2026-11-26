@@ -2,16 +2,16 @@
 //
 // ANLASS (19.11.2026): `lib/models/profile/user_profile.dart` war nur zu 91 %
 // abgedeckt. Gerade die R\u00fcckfall-Wege sind wichtig: kommt ein
-// unerwarteter Wert vom Server, darf die App nicht abstuerzen und
+// unerwarteter Wert vom Server, darf die App nicht abstürzen und
 // nicht die falsche Stufe anzeigen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Verifikationsstand wird aus der Projektion gelesen, mit
-//     Rueckfall auf das alte `is_verified`,
+//     Rückfall auf das alte `is_verified`,
 //   * der gespeicherte Zustand wird gelesen (ENUM-Name oder Serverwert),
 //   * Wahrheitswerte kommen als bool ODER als Text ("true") an,
 //   * zwei Profile mit gleichem Inhalt sind gleich (und haben denselben
-//     Hash - sonst wuerde der Cache sie als verschieden halten).
+//     Hash - sonst würde der Cache sie als verschieden halten).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/profile/user_profile.dart';
 
@@ -75,7 +75,7 @@ void main() {
   group('Das Lesen des Profils', () {
     test('ein Text "true" wird als Wahrheit gelesen', () {
       // DER GRUND: Ein Cache kann "true" als TEXT liefern. Ein
-      // `as bool?` wuerde dann die ganze Profilerzeugung sprengen.
+      // `as bool?` würde dann die ganze Profilerzeugung sprengen.
       final profil = UserProfile.fromJson(<String, dynamic>{
         'id': 'u1',
         'name': 'Lena',
@@ -106,7 +106,7 @@ void main() {
     });
 
     test('das Lieblingsband wird in der oeffentlichen Sicht getrimmt', () {
-      // DER GRUND: In der oeffentlichen Projektion kommt der Wert vom
+      // DER GRUND: In der öffentlichen Projektion kommt der Wert vom
       // Server - mit Leerzeichen drum. Ohne Trim steht " Kontra Kugel "
       // in der Anzeige.
       final profil = UserProfile.fromPublicView(<String, dynamic>{
@@ -147,7 +147,7 @@ void main() {
     test('ein anderes Objekt ist nicht gleich', () {
       const a = UserProfile(id: 'u1', name: 'Lena', bio: '');
       // Als Object verglichen - sonst meint der Analyser, der Vergleich
-      // sei schon beim Lesen sinnlos (und wuerde den Test bemangeln).
+      // sei schon beim Lesen sinnlos (und würde den Test bemangeln).
       final Object anders = 'u1';
       expect(a == anders, isFalse);
     });

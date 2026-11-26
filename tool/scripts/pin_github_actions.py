@@ -3,14 +3,14 @@
 WARUM (Sicherheits-Audit 16.11.2026, P2): Ein Action-**Tag** ist eine
 veränderliche Referenz. Wer das Tag-Repository (oder ein Konto mit
 Push-Recht darauf) kompromittiert, schiebt neuen Code in den
-Workflow - und der Nachtlauf haette dann Zugriff auf die
+Workflow - und der Nachtlauf hätte dann Zugriff auf die
 Repository-Secrets (Supabase-Key, DB-Verbindung). Mit einem Commit-SHA
-ist die ausgefuehrte Version fest.
+ist die ausgeführte Version fest.
 
 NACH DEM LAUFEN: Die Tags nicht vergessen - jede neue Version muss
 bewusst per SHA nachgezogen werden (das Skript unten macht das).
 
-    python tool\pin_github_actions.py --check    # nur pruefen (CI-Gate)
+    python tool\pin_github_actions.py --check    # nur prüfen (CI-Gate)
     python tool\pin_github_actions.py --write    # auf SHAs umstellen
 """
 
@@ -25,8 +25,8 @@ from pathlib import Path
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> Path:
     for kandidat in Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -43,13 +43,13 @@ ROOT = _projektwurzel()
 
 WORKFLOWS = ROOT / ".github" / "workflows"
 
-# Aktuelle Stände (16.11.2026, gegen die GitHub-API geprueft).
+# Aktuelle Stände (16.11.2026, gegen die GitHub-API geprüft).
 BEKANNT = {
     "actions/checkout": "v5",
     "actions/setup-java": "v5",
     "actions/setup-python": "v6",
     "actions/upload-artifact": "v6",
-    # Der Cache fuer die onnxruntime-Bibliothek (18.11.2026): ohne ihn
+    # Der Cache für die onnxruntime-Bibliothek (18.11.2026): ohne ihn
     # scheitert der Lauf am Download (GitHub-Antwortet dann mit einem
     # Timeout).
     "actions/cache": "v4",
@@ -64,7 +64,7 @@ VERWENDUNG = re.compile(
 
 
 def hole_sha(repo: str, tag: str) -> str:
-    """Loest ein Tag auf den Commit-SHA auf (annotated tags mitfuehren)."""
+    """Löst ein Tag auf den Commit-SHA auf (annotated tags mitführen)."""
     url = f"https://api.github.com/repos/{repo}/git/ref/tags/{tag}"
     anfrage = urllib.request.Request(
         url, headers={"User-Agent": "thesia-pin-actions", "Accept": "application/json"}
@@ -94,7 +94,7 @@ def main() -> int:
         return 1
 
     shas: dict[str, str] = {}
-    # Actions, deren Soll-SHA sich gerade nicht abrufen laesst (die
+    # Actions, deren Soll-SHA sich gerade nicht abrufen lässt (die
     # GitHub-API ist manchmal nicht erreichbar - Rate-Limit).
     unaufgeloest: set[str] = set()
     for repo, tag in BEKANNT.items():
@@ -102,8 +102,8 @@ def main() -> int:
             shas[repo] = hole_sha(repo, tag)
         except (urllib.error.URLError, urllib.error.HTTPError, KeyError) as fehler:
             # KEIN Projektfehler: die API war nicht erreichbar. Die Pins
-            # werden weiterhin geprueft - nur die Soll-SHA fehlt, und
-            # damit laesst sich kein Sollwert nennen.
+            # werden weiterhin geprüft - nur die Soll-SHA fehlt, und
+            # damit lässt sich kein Sollwert nennen.
             print(
                 f"WARNUNG: {repo}@{tag} nicht abrufbar ({fehler}) - "
                 "geprueft wird nur, ob die Verwendung gepinnt ist."
@@ -120,7 +120,7 @@ def main() -> int:
             tag = treffer.group("tag")
             if repo not in shas:
                 # Ohne Soll-SHA (die API war nicht erreichbar) bleibt nur
-                # die Form pruefen: eine Tag-Referenz ist immer ein
+                # die Form prüfen: eine Tag-Referenz ist immer ein
                 # Fehler - gepinnt kann man auch ohne Soll-SHA sehen.
                 if repo in unaufgeloest and not re.fullmatch(r"[0-9a-f]{40}", tag):
                     gefunden = True

@@ -1,6 +1,6 @@
 // Der Anruf-Screen ohne Anmeldung.
 //
-// ANLASS (23.11.2026): Der Screen baut das Signaling ueber die
+// ANLASS (23.11.2026): Der Screen baut das Signaling über die
 // Nutzer-ID auf. Fehlt sie (die Sitzung ist abgelaufen, der Aufruf
 // kommt aus einem alten Zustand), darf der Bildschirm nicht endlos
 // klingeln - er muss sagen, dass es nicht geht.
@@ -16,7 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-// webrtc_interface kommt als Transitivum ueber flutter_webrtc - der Test
+// webrtc_interface kommt als Transitivum über flutter_webrtc - der Test
 // braucht nur den DataChannel-Zustand.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -72,7 +72,7 @@ void main() {
     await mockHive();
     mockAudioPlayer();
     mockAufnahme();
-    // DER SERVER NUR FUER DIE INITIALISIERUNG: Es wird sich NICHT
+    // DER SERVER NUR FÜR DIE INITIALISIERUNG: Es wird sich NICHT
     // angemeldet - genau darum geht es in diesem Test.
     final server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(

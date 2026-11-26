@@ -292,13 +292,13 @@ class _EmailVerificationScreenState
           context.go(AppRoutes.login);
           return;
         }
-        // Der Nachweis der Inhaberschaft laeuft ueber einen
+        // Der Nachweis der Inhaberschaft läuft über einen
         // Anmeldeversuch - und der verlangt bei aktivierter
         // Dashboard-CAPTCHA ein Token. Ohne Token kam "captcha_failed"
         // statt "email_not_confirmed", der Nachweis schlug fehl und die
-        // Funktion antwortete mit 401 (NUTZERWUNSCH 01.11.2026: "Loeschen
-        // des Profils (Registrierung abbrechen) bei Email bestaetigen
-        // schlaegt mit 401 fehl. unauthorized.").
+        // Funktion antwortete mit 401 (NUTZERWUNSCH 01.11.2026: "Löschen
+        // des Profils (Registrierung abbrechen) bei Email bestätigen
+        // schlägt mit 401 fehl. unauthorized.").
         await _loescheUnbestaetigtesKonto(creds.email, creds.password);
         await ref.read(authProvider.notifier).logout();
       }
@@ -333,12 +333,12 @@ class _EmailVerificationScreenState
     return showCaptchaChallenge(context);
   }
 
-  /// Loescht ein unbestätigtes Konto.
+  /// Löscht ein unbestätigtes Konto.
   ///
-  /// Der Nachweis der Inhaberschaft laeuft ueber einen Anmeldeversuch
-  /// mit E-Mail und Passwort (beides nur im Speicher). GoTrue prueft
+  /// Der Nachweis der Inhaberschaft läuft über einen Anmeldeversuch
+  /// mit E-Mail und Passwort (beides nur im Speicher). GoTrue prüft
   /// dabei die CAPTCHA VOR dem Konto - ohne Token kommt
-  /// "captcha_failed" und der Nachweis waere nie erbracht.
+  /// "captcha_failed" und der Nachweis wäre nie erbracht.
   Future<void> _loescheUnbestaetigtesKonto(
     String email,
     String passwort,
@@ -370,25 +370,25 @@ class _EmailVerificationScreenState
     }
   }
 
-  /// Aendert die E-Mail-Adresse der laufenden Registrierung.
+  /// Ändert die E-Mail-Adresse der laufenden Registrierung.
   ///
-  /// NUTZERWUNSCH (01.11.2026): "Bei Email bestaetigen soll die
+  /// NUTZERWUNSCH (01.11.2026): "Bei Email bestätigen soll die
   /// Emailadresse nochmal angezeigt werden. Falls man einen Fehler
   /// bemerkt, soll man an dieser Stelle die Emailadresse nochmal
-  /// aendern."
+  /// ändern."
   ///
-  /// Ablauf: das unbestätigte Konto wird geloescht (Nachweis ueber
+  /// Ablauf: das unbestätigte Konto wird gelöscht (Nachweis über
   /// Passwort + CAPTCHA) und mit der neuen Adresse neu registriert.
-  /// Ein direktes "Aendern" ist nicht moeglich: ohne Session kann der
+  /// Ein direktes "Ändern" ist nicht möglich: ohne Session kann der
   /// Client die Adresse nicht setzen (updateUser verlangt ein JWT).
   ///
   /// Die Angaben aus dem Registrierungsformular liegen im
-  /// pendingVerificationCredentialsProvider - ohne sie entstuende ein
+  /// pendingVerificationCredentialsProvider - ohne sie entstünde ein
   /// Profil ohne Name und ohne Geburtsdatum.
   Future<void> _changeEmail() async {
     // Die Texte VOR der ersten Warteschleife holen: nach einem await
     // darf der Context nicht mehr benutzt werden (der Bildschirm
-    // koennte weg sein).
+    // kännte weg sein).
     final abgelaufenText = L10n.t(context, 'email.cancelExpired');
     final captchaHinweis = L10n.t(context, 'email.captchaNeeded');
     final creds = ref.read(pendingVerificationCredentialsProvider);
@@ -571,9 +571,9 @@ class _EmailVerificationScreenState
             ),
             const SizedBox(height: 12),
             // DIE ADRESSE (NUTZERWUNSCH 01.11.2026): "Bei Email
-            // bestaetigen soll die Emailadresse nochmal angezeigt
+            // bestätigen soll die Emailadresse nochmal angezeigt
             // werden. Falls man einen Fehler bemerkt, soll man an
-            // dieser Stelle die Emailadresse nochmal aendern."
+            // dieser Stelle die Emailadresse nochmal ändern."
             //
             // Vorher stand hier nur ein Text ohne Adresse - der
             // Nutzer musste in sein Postfach, um zu sehen, an welche
@@ -730,14 +730,14 @@ class _EmailVerificationScreenState
 
 /// Die E-Mail-Adresse der laufenden Registrierung.
 ///
-/// NUTZERWUNSCH (01.11.2026): "Bei Email bestaetigen soll die
+/// NUTZERWUNSCH (01.11.2026): "Bei Email bestätigen soll die
 /// Emailadresse nochmal angezeigt werden. Falls man einen Fehler
 /// bemerkt, soll man an dieser Stelle die Emailadresse nochmal
-/// aendern."
+/// ändern."
 ///
-/// Die Adresse ist auswaehlbar (der Nutzer soll sie kopieren koennen,
+/// Die Adresse ist auswählbar (der Nutzer soll sie kopieren können,
 /// ohne den Bildschirm zu verlassen) und darunter steht der Knopf
-/// fuer die Aenderung.
+/// für die Änderung.
 class _Adresskarte extends StatelessWidget {
   const _Adresskarte({
     required this.email,
@@ -816,10 +816,10 @@ class _Adresskarte extends StatelessWidget {
 /// Der Dialog zum Wechseln der E-Mail-Adresse.
 ///
 /// DER GRUND (19.11.2026, gefunden von einem Test): Der Text-Controller
-/// wurde direkt nach dem Schliessen des Dialogs freigegeben - aber der
+/// wurde direkt nach dem Schließen des Dialogs freigegeben - aber der
 /// Dialog blendet noch aus und sein TextField baut sich dabei noch.
 /// Das Ergebnis war "A TextEditingController was used after being
-/// disposed": der Bildschirm stuerzte beim Schliessen ab.
+/// disposed": der Bildschirm stürzte beim Schließen ab.
 ///
 /// DER WEG: Das Widget besitzt den Controller und gibt ihn erst frei,
 /// wenn es wirklich aus dem Baum ist.
@@ -839,13 +839,13 @@ class _AdressDialog extends StatefulWidget {
   /// Der Titel des Dialogs.
   final String title;
 
-  /// Der Erklaerungstext.
+  /// Der Erklärungstext.
   final String body;
 
   /// Die Beschriftung des Eingabefelds.
   final String label;
 
-  /// Der Knopf, der die Aenderung bestaetigt.
+  /// Der Knopf, der die Änderung bestätigt.
   final String confirmLabel;
 
   /// Der Knopf, der abbricht.

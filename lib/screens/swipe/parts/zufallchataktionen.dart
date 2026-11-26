@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -63,8 +63,8 @@ extension _ZufallChatAktionen on _RandomChatScreenState {
         debugPrint('[RandomChat] Server-Like fehlgeschlagen: $e');
       }
       // BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen
-      // fuer das Selbe." Der Push an die Person kommt vom DB-Trigger
-      // (notify_push_trigger) - der Server-Like oben loest ihn aus. Ein
+      // für das Selbe." Der Push an die Person kommt vom DB-Trigger
+      // (notify_push_trigger) - der Server-Like oben löst ihn aus. Ein
       // eigener Aufruf von notify-user erzeugte die ZWEITE Meldung.
     }
     if (mounted) {
@@ -79,7 +79,7 @@ extension _ZufallChatAktionen on _RandomChatScreenState {
 
   /// Push an die Gegenseite: es wartet eine Nachricht.
   ///
-  /// Der Text wird serverseitig erzeugt - uebertragen wird nur, dass
+  /// Der Text wird serverseitig erzeugt - übertragen wird nur, dass
   /// etwas wartet (keine Inhalte).
   Future<void> _notifyPeerAboutMessage() async {
     final partnerId = _partnerId;
@@ -100,7 +100,7 @@ extension _ZufallChatAktionen on _RandomChatScreenState {
     if (text.isEmpty) return;
     if (_partnerId == null || _myUserId == null) {
       // Allein in der Warteschlange (Test mit nur einem Konto) oder ohne
-      // Session: still verwerfen statt irrefuehrendem Sende-Fehler.
+      // Session: still verwerfen statt irreführendem Sende-Fehler.
       return;
     }
     _ctrl.clear();
@@ -141,7 +141,7 @@ extension _ZufallChatAktionen on _RandomChatScreenState {
     // BEFUND (07.11.2026, Betreiber): Im Zufallschat kam keine
     // Nachricht an ("Zufallschat ohne Nachrichten").
     //
-    // DER GRUND: Der Zufallschat sendete AUSSCHLIESSLICH ueber den
+    // DER GRUND: Der Zufallschat sendete AUSSCHLIESSLICH über den
     // P2P-DataChannel. Der Relay-Fallback gab es nur, wenn der Bildschirm
     // schon im Relay-Modus war - der wird aber erst eingeschaltet, wenn
     // ICE DEFINITIV gescheitert ist. In der Zeit davor (der Handshake
@@ -151,7 +151,7 @@ extension _ZufallChatAktionen on _RandomChatScreenState {
     //
     // Jetzt derselbe Dreistufen-Weg wie im normalen Chat:
     //   1. P2P-DataChannel (wenn offen),
-    //   2. E2E-verschluesselter Server-Relay,
+    //   2. E2E-verschlüsselter Server-Relay,
     //   3. lokale Outbox als letzte Reserve.
     final p2p = _p2p;
     if (p2p != null) {
@@ -166,7 +166,7 @@ extension _ZufallChatAktionen on _RandomChatScreenState {
       }
     }
 
-    // Kanal zu: ueber den E2E-Relay zustellen.
+    // Kanal zu: über den E2E-Relay zustellen.
     final ueberRelay = await bestEffortOr(
       'relayServiceProvider.storeText',
       () async {
@@ -176,7 +176,7 @@ extension _ZufallChatAktionen on _RandomChatScreenState {
         // Dual-Delivery-Schutz: trySendText hat die Nachricht bei
         // geschlossenem Kanal bereits eingereiht - nach erfolgreichem
         // Relay-Store muss der Eintrag raus, sonst kommt sie bei einer
-        // spaeteren Kanaloeffnung doppelt.
+        // späteren Kanalöffnung doppelt.
         p2p?.dequeueText(text);
         unawaited(p2p?.sendRelayPing());
         unawaited(_notifyPeerAboutMessage());

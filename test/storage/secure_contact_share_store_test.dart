@@ -1,21 +1,21 @@
 // Der Speicher der freiwilligen Kontaktdaten.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/services/storage/secure_contact_share_store.dart nur 33 %
 // Abdeckung.
 //
-// DATENSCHUTZ: Telefonnummer und Handles liegen ausschliesslich im
+// DATENSCHUTZ: Telefonnummer und Handles liegen ausschließlich im
 // Keystore (Android) bzw. in der Keychain (iOS) - sie gehen NIE zum
 // Server. Dieser Speicher ist also der einzige Ort, an dem sie stehen.
 //
 // DER WEG: Der Keystore ist die Attrappe aus
 // test/support/plugin_mocks.dart (mockKeystore).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Kontaktdaten kommen wieder heraus (unveraendert),
+// WAS HIER GEPRÜFT WIRD:
+//   * die Kontaktdaten kommen wieder heraus (unverändert),
 //   * ohne gespeicherte Daten gibt es ein leeres Profil (kein Fehler),
 //   * kaputte Daten blockieren die App nicht,
-//   * das Loeschen nimmt die Daten wirklich weg.
+//   * das Löschen nimmt die Daten wirklich weg.
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:thestia/models/profile/contact_share_profile.dart';

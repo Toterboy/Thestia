@@ -1,18 +1,18 @@
-// Unit-Tests fuer die Melde-Funktion (Reports).
+// Unit-Tests für die Melde-Funktion (Reports).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Pseudonymisierung der Nutzer-IDs (SHA-256, H-06/X-M-08),
 //   * das Anlegen einer Meldung (lokal in Hive + beim Support),
 //   * die Whitelist der Meldetypen und der Melde-Text,
-//   * das Melden mit angehaengten Nachrichten (Bild-Meldung),
+//   * das Melden mit angehängten Nachrichten (Bild-Meldung),
 //   * die Filter der Liste (nach Melder, nach gemeldetem Nutzer, nach Tag),
-//   * die Fehlerfaelle: Serverfehler, leere Antworten.
+//   * die Fehlerfälle: Serverfehler, leere Antworten.
 //
 // WIE DER SERVER ERSETZT WIRD:
-//   Der Service spricht mit Supabase ueber HTTP. Ein handgeschriebener
+//   Der Service spricht mit Supabase über HTTP. Ein handgeschriebener
 //   Fake ([_FakeServer]) beantwortet die drei RPCs (submit_report,
 //   list_my_reports, list_blocked_users). Der Keystore von flutter_secure_storage
-//   ( fuer die verschluesselte Hive-Box) wird ueber den Method-Channel
+//   ( für die verschlüsselte Hive-Box) wird über den Method-Channel
 //   mit einem In-Memory-Speicher beantwortet.
 import 'dart:convert';
 import 'dart:io';
@@ -31,7 +31,7 @@ import 'package:thestia/services/profile/report_service.dart';
 
 import '../support/plugin_mocks.dart';
 
-/// Der Kanal von flutter_secure_storage ( fuer die Hive-Verschluesselung).
+/// Der Kanal von flutter_secure_storage ( für die Hive-Verschlüsselung).
 const MethodChannel _keystoreKanal = MethodChannel(
   'plugins.it_nomads.com/flutter_secure_storage',
 );
@@ -62,14 +62,14 @@ Future<Object?> _keystoreAntwort(MethodCall anfrage) async {
   return null;
 }
 
-/// Der handgeschriebene Supabase-Server fuer die Report-RPCs.
+/// Der handgeschriebene Supabase-Server für die Report-RPCs.
 class _FakeServer {
   _FakeServer();
 
   /// Die Anfragen, die der Server gesehen hat (inkl. Query).
   final List<String> anfragen = [];
 
-  /// Die Koerper der RPC-Aufrufe (nach RPC-Namen).
+  /// Die Körper der RPC-Aufrufe (nach RPC-Namen).
   final Map<String, List<Map<String, dynamic>>> koerper = {};
 
   /// Die Antwort von list_my_reports.
@@ -78,7 +78,7 @@ class _FakeServer {
   /// Die Antwort von list_blocked_users.
   List<Map<String, dynamic>> blockierte = [];
 
-  /// Wenn true, schlaegt submit_report mit einem Serverfehler fehl.
+  /// Wenn true, schlägt submit_report mit einem Serverfehler fehl.
   bool submitFehler = false;
 
   /// Die Anfrage, die gerade beantwortet wird.
@@ -96,7 +96,7 @@ class _FakeServer {
 
     if (pfad.contains('/rest/v1/rpc/')) {
       final rpc = pfad.split('/rest/v1/rpc/').last;
-      // DER GRUND: Ein RPC ohne Parameter hat den Koerper "null" - der
+      // DER GRUND: Ein RPC ohne Parameter hat den Körper "null" - der
       // darf nicht als Karte gelesen werden.
       final parameter = anfrage.body.isEmpty
           ? <String, dynamic>{}
@@ -126,7 +126,7 @@ class _FakeServer {
     status,
     headers: {'content-type': 'application/json'},
     // DER GRUND: PostgREST liest die Methode aus "response.request" - ohne
-    // das Feld stuerzt der Client auf einem Null-Check ab.
+    // das Feld stürzt der Client auf einem Null-Check ab.
     request: _aktuell,
   );
 }
@@ -149,8 +149,8 @@ void main() {
     // Enum-Adapter kann Hive den Meldetyp nicht schreiben ("Cannot write,
     // unknown type: ReportType") - die Meldung wird dann schon beim
     // lokalen Speichern abgewiesen und kommt nie beim Support an. Der
-    // Test registriert den Adapter deshalb ausdruecklich, damit er das
-    // gewuenschte Verhalten pruefen kann.
+    // Test registriert den Adapter deshalb ausdrücklich, damit er das
+    // gewünschte Verhalten prüfen kann.
     if (!Hive.isAdapterRegistered(ReportTypeAdapter().typeId)) {
       Hive.registerAdapter(ReportTypeAdapter());
     }
@@ -197,7 +197,7 @@ void main() {
     server.eigeneMeldungen = [];
     server.blockierte = [];
     server.submitFehler = false;
-    // Die Meldungen der vorherigen Tests wegraeumen, damit die Filter
+    // Die Meldungen der vorherigen Tests wegräumen, damit die Filter
     // jeweils nur ihre eigenen Meldungen sehen.
     await service.clearDrafts();
   });
@@ -205,7 +205,7 @@ void main() {
   group('hashPii', () {
     test('die Kennung wird pseudonymisiert (SHA-256)', () {
       // DER GRUND (H-06/X-M-08): Bei einer Storage-Inspektion (verlorenes
-      // Geraet, Debug-Bridge) darf nicht lesbar sein, wer gemeldet hat.
+      // Gerät, Debug-Bridge) darf nicht lesbar sein, wer gemeldet hat.
       expect(
         hashPii('reporter-1'),
         'd10b749e163a296ee0916a4fd2326c33721246622f243fd2c242ec61cfbe731e',
@@ -299,7 +299,7 @@ void main() {
 
     test('lokal werden nur die Hashes gespeichert', () async {
       // DER GRUND (X-M-07/X-M-08): Wer gemeldet hat und wer gemeldet
-      // wurde, darf auf dem Geraet nicht im Klartext liegen.
+      // wurde, darf auf dem Gerät nicht im Klartext liegen.
       final ergebnis = await service.createReport(
         reporterId: 'reporter-1',
         reporterUserName: 'Lena',
@@ -320,7 +320,7 @@ void main() {
     });
 
     test('an den Server geht die ROH-ID des gemeldeten Nutzers', () async {
-      // DER GRUND (Audit N-18): Der Server braucht die echte ID fuer
+      // DER GRUND (Audit N-18): Der Server braucht die echte ID für
       // Moderation und RLS. Nur die lokale Ablage ist pseudonymisiert.
       await service.createReport(
         reporterId: 'reporter-1',
@@ -339,7 +339,7 @@ void main() {
 
     test('alle Meldetypen sind erlaubt und behalten ihren Namen', () async {
       // DER GRUND: Die Whitelist der Typen (H-06) ist servergebunden -
-      // der Client muss jeden erlaubten Typ auch melden koennen. Der
+      // der Client muss jeden erlaubten Typ auch melden können. Der
       // Wert [ReportType.value] geht an den Server.
       for (final typ in ReportType.values) {
         final ergebnis = await service.createReport(
@@ -360,7 +360,7 @@ void main() {
 
     test('der Melde-Text wird unveraendert an den Server gereicht', () async {
       // DER GRUND: Das Trimmen passiert im Melde-Dialog, nicht im
-      // Service - der Service reicht den Text unveraendert durch. Und
+      // Service - der Service reicht den Text unverändert durch. Und
       // "kein Text" (null) geht als null an den Server, nicht als
       // Leerstring.
       await service.createReport(
@@ -387,8 +387,8 @@ void main() {
     });
 
     test('eine Bild-Meldung haengt die Nachrichten an', () async {
-      // DER GRUND: Chats sind E2E-verschluesselt - nur ueber die Meldung
-      // kann der Support den Inhalt sehen. Die angehaengten Nachrichten
+      // DER GRUND: Chats sind E2E-verschlüsselt - nur über die Meldung
+      // kann der Support den Inhalt sehen. Die angehängten Nachrichten
       // sind deshalb genau der Punkt der Meldung.
       final jetzt = DateTime.now();
       await service.createReport(

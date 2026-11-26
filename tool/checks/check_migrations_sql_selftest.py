@@ -1,8 +1,8 @@
-"""Negativtest fuer tool/checks/check_migrations_sql.py.
+"""Negativtest für tool/checks/check_migrations_sql.py.
 
-Die Umgehung in Abschnitt 2b (sqlglot-Parserluecke bei
-LANGUAGE sql SECURITY DEFINER) darf den Check nicht entschaerfen. Der
-Test laesst bewusst kaputte SQL durch dieselbe Pipeline laufen und
+Die Umgehung in Abschnitt 2b (sqlglot-Parserlücke bei
+LANGUAGE sql SECURITY DEFINER) darf den Check nicht entschärfen. Der
+Test lässt bewusst kaputte SQL durch dieselbe Pipeline laufen und
 verlangt, dass die vorhandenen Schritte anschlagen.
 
 Aufruf: python tool/checks/check_migrations_sql_selftest.py

@@ -1,20 +1,20 @@
 // Der Router: die Umleitungen - bisher ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/routing/app_router.dart 236 offene Zeilen. Genau hier entscheidet
 // die App, was der Nutzer zu sehen bekommt: Willkommen oder Login, die
-// E-Mail-Bestaetigung, die Einrichtung, der Admin-Bereich, die
-// Verifikationssperre. Ein Fehler hier faellt niemandem auf - der Nutzer
+// E-Mail-Bestätigung, die Einrichtung, der Admin-Bereich, die
+// Verifikationssperre. Ein Fehler hier fällt niemandem auf - der Nutzer
 // landet einfach auf dem falschen Bildschirm.
 //
 // WIE GETESTET WIRD: Die Umleitungs-Logik steckt jetzt in der eigenen
 // Funktion `umleitung` (lib/routing/app_router.dart). Der Test ruft sie
-// mit den Werten auf, die der Router vom Provider bekommt, und prueft,
+// mit den Werten auf, die der Router vom Provider bekommt, und prüft,
 // WOHIN der Nutzer geschickt wird (null = er bleibt, wo er ist).
 //
 // DER AUFBAU: Der Test setzt die Werte erst unmittelbar vor der
 // Umleitung - so kann kein Hintergrundlauf (z. B. der Server-Sync nach
-// dem Login) das Ergebnis ueberholen.
+// dem Login) das Ergebnis überholen.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,7 +34,7 @@ import 'package:thestia/services/storage/secure_storage.dart';
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
-/// Die Anmeldung, die auf die E-Mail-Bestaetigung wartet.
+/// Die Anmeldung, die auf die E-Mail-Bestätigung wartet.
 typedef _Anmeldung = ({
   String email,
   String password,
@@ -96,22 +96,22 @@ class _Keystore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {
-    // Der Test loescht kein Profil im Keystore.
+    // Der Test löscht kein Profil im Keystore.
   }
 }
 
 /// Der Auth-Dienst als Ersatz.
 ///
-/// DER GRUND: Der echte Dienst holt die Session vom Server. Fuer den
+/// DER GRUND: Der echte Dienst holt die Session vom Server. Für den
 /// Test ist nur wichtig, OB jemand eingeloggt ist - und das entscheidet
 /// der Test selbst, nicht der Server.
 class _Auth implements AppAuthService {
   @override
   Future<bool> restoreSession() async {
     // DER WEG: Die Wiederherstellung antwortet erst nach einem kleinen
-    // Augenblick. Sonst wuerde sie den Auth-Status UEBERSCHreiben, bevor
+    // Augenblick. Sonst würde sie den Auth-Status Überschreiben, bevor
     // der Router ihn liest - und der Server-Sync, der nach der Anmeldung
-    // laeuft, wuerde die Test-Werte zerstoeren.
+    // läuft, würde die Test-Werte zerstören.
     await Future<void>.delayed(const Duration(milliseconds: 20));
     return false;
   }
@@ -137,7 +137,7 @@ class _Auth implements AppAuthService {
 
   @override
   Future<void> deleteAccount() async {
-    // Der Test loescht kein Konto.
+    // Der Test löscht kein Konto.
   }
 
   @override
@@ -215,11 +215,11 @@ class _Testfall {
   /// Der Stand der Zwei-Faktor-Absicherung.
   final MfaStatus mfa;
 
-  /// Setzt die Lage und fragt die Umleitung fuer [pfad].
+  /// Setzt die Lage und fragt die Umleitung für [pfad].
   ///
   /// DER WEG: Die Werte werden erst HIER gesetzt - ein Hintergrundlauf
   /// (z. B. der Server-Sync nach dem Login) kann das Ergebnis so nicht
-  /// ueberholen.
+  /// überholen.
   Future<String?> ziel(String pfad) async {
     container.read(authProvider.notifier).state = eingeloggt
         ? const AsyncValue.data(true)
@@ -258,8 +258,8 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
     mockZeitzone();
-    // DER SPEICHER: der Chat-Dienst oeffnet beim Start seine Box
-    // (die Kontakte). Ohne den Ersatz schlaegt das im Test fehl.
+    // DER SPEICHER: der Chat-Dienst öffnet beim Start seine Box
+    // (die Kontakte). Ohne den Ersatz schlägt das im Test fehl.
     await mockHive();
 
     server = FakeSupabaseServer(userId: 'ich');
@@ -296,7 +296,7 @@ void main() {
   /// Baut den Testfall.
   ///
   /// [session] entscheidet, ob der Server den Nutzer kennt. Ohne
-  /// Session schickt der Router eingeloggte Nutzer zurueck zum Login
+  /// Session schickt der Router eingeloggte Nutzer zurück zum Login
   /// ("Geister-Login" nach einem Datenbank-Reset).
   Future<_Testfall> baueTestfall({
     required bool eingeloggt,
@@ -339,14 +339,14 @@ void main() {
       ],
     );
     // Der Auth-Status: er wird gleich gesetzt - die Wiederherstellung
-    // (im Hintergrund) darf ihn nicht ueberschreiben. Ohne diese Reihen-
+    // (im Hintergrund) darf ihn nicht überschreiben. Ohne diese Reihen-
     // folge startet der Server-Sync nach der Anmeldung und zerstört die
     // Test-Werte.
     container.read(authProvider.notifier).state = eingeloggt
         ? const AsyncValue.data(true)
         : const AsyncValue.data(false);
-    // Die Wiederherstellung laeuft im Hintergrund - der Test wartet sie
-    // ab, damit sie nicht spaeter an einem abgebauten Container
+    // Die Wiederherstellung läuft im Hintergrund - der Test wartet sie
+    // ab, damit sie nicht später an einem abgebauten Container
     // scheitert.
     await Future<void>.delayed(const Duration(milliseconds: 60));
     return _Testfall(

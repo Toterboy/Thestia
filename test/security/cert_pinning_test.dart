@@ -55,9 +55,9 @@ void main() {
   //
   // BEFUND: Der Fallback war DAUERHAFT offen. Ein Leaf-Pin-Mismatch
   // wurde still auf CA-Ebene degradiert - der Leaf-Pin war damit
-  // faktisch optional (ein CA-Kompromiss waere sofort MITM-faehig).
+  // faktisch optional (ein CA-Kompromiss wäre sofort MITM-fähig).
   // Live belegt: der gepinnte Leaf-Pin war am 24.10.2026 veraltet, und
-  // die App lief nur noch ueber diesen Fallback.
+  // die App lief nur noch über diesen Fallback.
   // ---------------------------------------------------------------------
   group('Das Rotationsfenster', () {
     test('ein Pin-Mismatch ist ausserhalb des Fensters fatal', () {
@@ -118,9 +118,9 @@ void main() {
   group('Der gepinnte Leaf ist nicht veraltet', () {
     test('der Leaf-Pin laeuft nicht bald ab', () {
       // BEFUND (Audit 16.11.2026): Der gepinnte Leaf-Pin war am
-      // 24.10.2026 veraltet - die App lief nur noch ueber den
+      // 24.10.2026 veraltet - die App lief nur noch über den
       // (dauerhaft offenen) Aussteller-Fallback. Dieser Test verhindert,
-      // dass das wieder passiert: laeuft der Pin in unter 30 Tagen ab,
+      // dass das wieder passiert: läuft der Pin in unter 30 Tagen ab,
       // muss er vor dem Release erneuert werden.
       final bis = CertPinning.pinnedLeafValidUntil(
         'jftuigjbmmuvrckbchqo.supabase.co',

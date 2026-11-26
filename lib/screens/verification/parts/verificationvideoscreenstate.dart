@@ -1,9 +1,9 @@
 // Der Teil '_VerificationVideoScreenState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -28,38 +28,38 @@ class _VerificationVideoScreenState
   void initState() {
     super.initState();
     // NUTZERWUNSCH (01.11.2026): "Die App laggt extrem, wenn ich die
-    // Videoerifizierung mache" und "soll die Kamera weg, um Ressourcen
+    // Videörifizierung mache" und "soll die Kamera weg, um Ressourcen
     // zu sparen".
     //
     // Ohne Lifecycle-Behandlung bleibt die Kamera offen, wenn der
-    // Nutzer die App waehrend der Aufnahme in den Hintergrund
+    // Nutzer die App während der Aufnahme in den Hintergrund
     // schaltet: der Preview-Texture lebt weiter, der Sensor bleibt
     // belegt. Die camera-Doku verlangt dispose() bei inactive und
     // einen Neuaufbau bei resumed.
     WidgetsBinding.instance.addObserver(this);
     _generateChallenge();
-    // Kamera erst NACH der Offenlegung oeffnen - siehe _initializeCamera.
+    // Kamera erst NACH der Offenlegung öffnen - siehe _initializeCamera.
     //
     // Das Holen des ersten Frames ist zugleich der Grund, warum das
-    // ueberhaupt noetig war: in initState hat der Context noch keinen
-    // Frame, ein Dialog kann dort nicht zuverlaessig stehen.
+    // überhaupt nötig war: in initState hat der Context noch keinen
+    // Frame, ein Dialog kann dort nicht zuverlässig stehen.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(_ensureCameraDisclosureThenOpen());
     });
   }
 
-  /// Zeigt die prominente Kamera-Offenlegung und oeffnet danach die
+  /// Zeigt die prominente Kamera-Offenlegung und öffnet danach die
   /// Kamera.
   ///
-  /// Google Play verlangt fuer CAMERA dieselbe vorangezeigte
-  /// Begruendung wie fuer das Mikrofon: die App muss erklaeren, warum
+  /// Google Play verlangt für CAMERA dieselbe vorangezeigte
+  /// Begründung wie für das Mikrofon: die App muss erklären, warum
   /// sie aufnimmt bzw. filmt, BEVOR der Systemdialog erscheint.
-  /// Gerade dieser Schritt oeffnete die Kamera bislang sofort beim
+  /// Gerade dieser Schritt öffnete die Kamera bislang sofort beim
   /// Betreten - der Nutzer sah den Kamera-Dialog, ohne vorher zu
   /// erfahren, worum es ging.
   ///
-  /// Ohne Kamera ist die Verifikation nicht moeglich, deshalb endet der
-  /// Dialog mit einer Ablehnung in einem erklaerenden Zustand statt in
+  /// Ohne Kamera ist die Verifikation nicht möglich, deshalb endet der
+  /// Dialog mit einer Ablehnung in einem erklärenden Zustand statt in
   /// einem Absturz: der bestehende Fehlerpfad zeigt den Grund an.
   Future<void> _ensureCameraDisclosureThenOpen() async {
     final settings = ref.read(settingsProvider);
@@ -72,11 +72,11 @@ class _VerificationVideoScreenState
         return;
       }
       // Beide Flaggen setzen, nicht nur die Kamera: der Dialog hat oben
-      // ausdruecklich fuer Kamera UND Mikrofon gewarnt, weil die
-      // Aufnahme mit enableAudio laeuft. Wer hier bestaetigt, weiss
+      // ausdrücklich für Kamera UND Mikrofon gewarnt, weil die
+      // Aufnahme mit enableAudio läuft. Wer hier bestätigt, weiß
       // also beides und soll im Chat nicht denselben Hinweis nochmal
-      // bekommen. Das Mikrofon-Flag bleibt ansonsten unberuehrt - wer
-      // nur verifiziert und nie chattet, sieht den Hinweis spaeter
+      // bekommen. Das Mikrofon-Flag bleibt ansonsten unberührt - wer
+      // nur verifiziert und nie chattet, sieht den Hinweis später
       // genau dann, wenn er ihn braucht.
       await ref
           .read(settingsProvider.notifier)
@@ -151,9 +151,9 @@ class _VerificationVideoScreenState
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Die Kamera bei inactive/paused freigeben und bei resumed neu
-    // aufbauen. Das camera-Plugin verlangt das ausdruecklich: ein
+    // aufbauen. Das camera-Plugin verlangt das ausdrücklich: ein
     // weiterlaufender Preview-Texture im Hintergrund kostet Akku und
-    // haelt den Sensor belegt.
+    // hält den Sensor belegt.
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
@@ -175,8 +175,8 @@ class _VerificationVideoScreenState
   /// NUTZERWUNSCH (01.11.2026): "Wenn es verifiziert wird, nach der
   /// Aufnahme, soll die Kamera weg, um Ressourcen zu sparen."
   ///
-  /// Vorher lief die Kamera waehrend der kompletten Nachbearbeitung
-  /// weiter - Frames entnehmen, KI-Schaetzung, Upload. Das sind
+  /// Vorher lief die Kamera während der kompletten Nachbearbeitung
+  /// weiter - Frames entnehmen, KI-Schätzung, Upload. Das sind
   /// mehrere Sekunden, in denen die Kamera ohne Zweck offen war.
   Future<void> _kameraFreigeben() async {
     final controller = _cameraController;
@@ -285,12 +285,12 @@ class _VerificationVideoScreenState
     // schiefgeht, fehlt einfach als Sample.
     Future<List<Uint8List>> extractFrames(String videoPath) async {
       // PARALLEL (NUTZERWUNSCH 01.11.2026): "Die App laggt extrem,
-      // wenn ich die Videoerifizierung mache."
+      // wenn ich die Videörifizierung mache."
       //
-      // Vorher wurden die fuenf Thumbnails NACHEINANDER entnommen. Das
-      // Plugin dekodiert auf Android ein voll aufgeloestes Frame und
+      // Vorher wurden die fünf Thumbnails NACHEINANDER entnommen. Das
+      // Plugin dekodiert auf Android ein voll aufgelöstes Frame und
       // komprimiert es neu - pro Frame einige hundert Millisekunden.
-      // Fuenf mal hintereinander war einer der laengsten Einzelposten
+      // Fünf mal hintereinander war einer der längsten Einzelposten
       // der gesamten Verifizierung.
       //
       // Das Plugin arbeitet mit einem Thread-Pool
@@ -413,8 +413,8 @@ class _VerificationVideoScreenState
       // Die Kamera wird ab hier nicht mehr gebraucht: die Aufnahme ist
       // zu Ende und das Selfie ist geholt. Sie hier freizugeben spart
       // Akku, schont die Sensoren und beendet den Preview-Texture -
-      // vorher lief die Kamera waehrend der kompletten Auswertung
-      // (Frames, KI-Schaetzung, Upload) weiter.
+      // vorher lief die Kamera während der kompletten Auswertung
+      // (Frames, KI-Schätzung, Upload) weiter.
       await _kameraFreigeben();
 
       final samples = <Uint8List>[...frames];
@@ -650,7 +650,7 @@ class _VerificationVideoScreenState
                     // Nach der Aufnahme wird die Kamera freigegeben -
                     // dann gibt es keinen Preview mehr. Der schwarze
                     // Hintergrund ist der Hintergrund des
-                    // Verarbeitungs-Hinweises darueber.
+                    // Verarbeitungs-Hinweises darüber.
                     if (_cameraController != null)
                       FittedBox(
                         fit: BoxFit.cover,

@@ -1,4 +1,4 @@
-"""Findet Provider-Aenderungen in einem Widget-Lebenszyklus.
+"""Findet Provider-Änderungen in einem Widget-Lebenszyklus.
 
 WARUM (06.11.2026): Im app.dart wurde in initState ein StateProvider
 gesetzt:
@@ -26,8 +26,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -53,7 +53,7 @@ PROVIDER = re.compile(r"\b(ref|_ref|widget\.ref)\s*\.\s*(read|watch)\s*\(")
 
 
 def finde_methoden(zeilen):
-    """Liefert (name, start, ende, koerper_einrueckung) je Methode."""
+    """Liefert (name, start, ende, körper_einrückung) je Methode."""
     methoden = []
     for i, z in enumerate(zeilen):
         m = re.match(r"\s*(?:Future<[^>]*>|void|Widget|bool|int|String|"
@@ -66,7 +66,7 @@ def finde_methoden(zeilen):
             koerper = None
             for k in range(i, len(zeilen)):
                 tiefe += zeilen[k].count("{") - zeilen[k].count("}")
-                # Die Einrueckung des Koerpers steht in der ERSTEN Zeile
+                # Die Einrückung des Körpers steht in der ERSTEN Zeile
                 # nach dem Kopf - nicht in der Kopfzeile selbst.
                 if koerper is None and tiefe == 1 and k > i:
                     koerper = len(zeilen[k]) - len(zeilen[k].lstrip())
@@ -86,9 +86,9 @@ def pruefe_datei(pfad: pathlib.Path) -> list:
             z = zeilen[k]
             if not (ZUWEISUNG.search(z) and PROVIDER.search(z)):
                 continue
-            # Nur der direkte Koerper der Methode zaehlt. Was in einem
+            # Nur der direkte Körper der Methode zählt. Was in einem
             # Callback darunter liegt (addListener, addPostFrameCallback)
-            # laeuft spaeter - dort ist das Setzen erlaubt.
+            # läuft später - dort ist das Setzen erlaubt.
             if koerper_einrueckung and (
                 len(z) - len(z.lstrip())
             ) > koerper_einrueckung:
@@ -116,7 +116,7 @@ def main() -> int:
     print("  %d Dateien geprueft" % geprueft)
 
     if hinweise:
-        # In dispose ist das Setzen ueblich und flusslos: der Widgetbaum
+        # In dispose ist das Setzen üblich und flusslos: der Widgetbaum
         # wird da nicht gebaut. Riverpod nennt dispose zwar auch auf,
         # die Praxis zeigt aber: es funktioniert.
         print("  Hinweise (in dispose - dort wird nichts gebaut): %d"

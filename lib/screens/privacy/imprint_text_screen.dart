@@ -13,7 +13,7 @@ import 'package:thestia/screens/privacy/legal_text_screen.dart';
 /// funktioniert nicht." Die App verlinkte auf
 /// `https://thestia.de/impressum`. Diese Domain ist ein VERIFIZIERTER
 /// APP-LINK (assetlinks.json + `android:autoVerify` im Manifest):
-/// Android oeffnet einen solchen Link in der App selbst, nicht im
+/// Android öffnet einen solchen Link in der App selbst, nicht im
 /// Browser. Die App bekam also ihren eigenen Link und zeigte nichts.
 ///
 /// Wie bei den Nutzungsbedingungen (14.11.2026) steht der Text jetzt
@@ -34,12 +34,12 @@ class ImprintTextScreen extends ConsumerWidget {
     return LegalTextScreen(
       blocks: blocks,
       title: L10n.t(context, 'privacy.imprintTitle'),
-      // Die Webfassung bleibt erreichbar - aber ueber auth.thestia.de.
+      // Die Webfassung bleibt erreichbar - aber über auth.thestia.de.
       //
       // WARUM NICHT thestia.de: Diese Domain ist der App-Link (siehe
-      // oben) - der Button wuerde die App selbst oeffnen statt der
-      // Seite. auth.thestia.de ist nicht fuer die App verifiziert,
-      // dort oeffnet sich der Browser.
+      // oben) - der Button würde die App selbst öffnen statt der
+      // Seite. auth.thestia.de ist nicht für die App verifiziert,
+      // dort öffnet sich der Browser.
       footer: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Align(

@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsDating = {
@@ -101,7 +101,7 @@ const Map<String, Map<String, String>> stringsDating = {
     'dh.event.noThanks': 'Nein, danke',
     'dh.event.nonePlanned': 'Aktuell ist kein Dating Hour Event geplant.',
     'dh.event.pairedBody':
-        'Dein Gegenueber wartet im Chat. Moechtest du jetzt reinschauen?',
+        'Dein Gegenüber wartet im Chat. Möchtest du jetzt reinschauen?',
     'dh.event.pairedTitle': 'Du wurdest gepaart',
     'dh.event.participants': '{n} Teilnehmer dabei',
     'dh.event.participantsSub':

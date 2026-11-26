@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -20,12 +20,12 @@ extension _TransitRadarVorbereitung on _TransitRadarScreenState {
   /// Entscheidung beim User und er kann bewusst entscheiden."
   Future<void> _askNameDecisionOnce() async {
     if (!mounted) return;
-    // Nur Volljaehrige - fuer sie ist Transit Spark ueberhaupt frei.
+    // Nur Volljährige - für sie ist Transit Spark überhaupt frei.
     final myAge = ref.read(profileProvider).age;
     if (myAge == null || myAge < 18) return;
     // Schon entschieden? Dann kein Dialog.
     if (ref.read(settingsProvider).transitShowNameSet) return;
-    // Ein zweiter Aufruf, waehrend der Dialog offen ist, soll ihn nicht
+    // Ein zweiter Aufruf, während der Dialog offen ist, soll ihn nicht
     // verdoppeln.
     if (_nameDecisionOpen) return;
     _nameDecisionOpen = true;
@@ -63,7 +63,7 @@ extension _TransitRadarVorbereitung on _TransitRadarScreenState {
         ),
       );
       if (!mounted) return;
-      // Egal, was gewaehlt wurde: die Entscheidung ist damit gefallen.
+      // Egal, was gewählt wurde: die Entscheidung ist damit gefallen.
       // `setTransitShowName` setzt das Flag mit - der Dialog kommt nicht
       // wieder.
       await ref
@@ -81,7 +81,7 @@ extension _TransitRadarVorbereitung on _TransitRadarScreenState {
           .getBool(kTransitRadioCleanupKey);
       // DER VORGABE-WERT (BEFUND 18.11.2026, gefunden von einem Test):
       // "Nach Radar erinnern" ist AN - so wollte es der Nutzerwunsch
-      // ("Standard AN statt AUS (opt-out) - der Toggle war standardmaessig
+      // ("Standard AN statt AUS (opt-out) - der Toggle war standardmässig
       // deaktiviert und die Erinnerung kam deshalb nie").
       //
       // DER FEHLER: Hier stand "v ?? false" - ohne gespeicherten Wert

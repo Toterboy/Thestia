@@ -36,9 +36,9 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
   /// BEFUND (09.11.2026, Betreiber): "dann entweder Zufallsvorstellung
   /// oder Vorstellungen anderer nach Kategorien ansehen."
   ///
-  /// Die Auswahl kommt **nach** der Vorstellungs-Pruefung: erst die
+  /// Die Auswahl kommt **nach** der Vorstellungs-Prüfung: erst die
   /// eigene Vorstellung, dann die Wahl, wie es weitergeht. Und die
-  /// Vorstellungs-Pruefung darf nicht doppelt fragen: `_showIntroSetup`
+  /// Vorstellungs-Prüfung darf nicht doppelt fragen: `_showIntroSetup`
   /// ist genau dann true, wenn es noch keine gibt.
   bool _showChoice = false;
 
@@ -131,7 +131,7 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
     );
   }
 
-  /// Die Wahl: Zufallsvorstellung oder nach Kategorie stoebern.
+  /// Die Wahl: Zufallsvorstellung oder nach Kategorie stöbern.
   Widget _wahl(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -189,18 +189,18 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
             ),
         ],
       ),
-      // DER ZURUECK-WEG (BEFUND 09.11.2026, Betreiber): "Der
-      // Vorstellungsbutton daneben geht, aber wenn ich dort zurueck
-      // druecke komme ich nicht auf Find your Spark sondern auf
+      // DER ZURÜCK-WEG (BEFUND 09.11.2026, Betreiber): "Der
+      // Vorstellungsbutton daneben geht, aber wenn ich dort zurück
+      // drücke komme ich nicht auf Find your Spark sondern auf
       // Entdecken."
       //
       // DER GRUND: Der Vorstellungs-Editor ist kein eigener Screen,
       // sondern ein Zustand dieses Screens. Ein Pop lief deshalb durch
       // den ganzen Screen hindurch - bis "Entdecken".
       //
-      // JETZT: Solange der Editor offen ist, faengt der Screen den
-      // Pop ab und schliesst nur den Editor. Der Screen selbst bleibt
-      // stehen; erst der naechste Zurück geht eine Ebene weiter.
+      // JETZT: Solange der Editor offen ist, fängt der Screen den
+      // Pop ab und schließt nur den Editor. Der Screen selbst bleibt
+      // stehen; erst der nächste Zurück geht eine Ebene weiter.
       body: PopScope(
         canPop: !_showIntroSetup,
         onPopInvokedWithResult: (didPop, _) {
@@ -341,7 +341,7 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                                         // v0.10.0: Der Ortsname ist
                                         // entfallen. Stattdessen das
                                         // Bundesland - die grobe
-                                        // Angabe, die ohnehin fuer
+                                        // Angabe, die ohnehin für
                                         // andere sichtbar ist.
                                         if ((current.state ?? '').isNotEmpty)
                                           Text(

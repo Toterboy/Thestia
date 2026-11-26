@@ -2,7 +2,7 @@
 import 'dart:io';
 import 'package:image/image.dart' as img;
 
-/// Inspeziert die neuen Logo-Dateien: Groesse, Transparenz, Form.
+/// Inspeziert die neuen Logo-Dateien: Größe, Transparenz, Form.
 void main(List<String> args) {
   final dir = r'C:\Users\Thoralf\Downloads\Blind-Date-App Repository';
   final files = [

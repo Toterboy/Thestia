@@ -1,11 +1,11 @@
 // Der Zufallschat: die Suche und der Zustand (bisher wenig getestet).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/random_chat_screen.dart 383 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
-//   * die Suche laeuft und der Zustand wird angezeigt,
+//   * die Suche läuft und der Zustand wird angezeigt,
 //   * ohne Gegenstelle kommt der Hinweis (kein endloses Warten).
 //
 // OHNE SERVER: Der Zufallschat-Dienst ist ein Hand-Fake.

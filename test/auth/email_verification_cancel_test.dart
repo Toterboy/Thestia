@@ -1,17 +1,17 @@
-// Das Loeschen eines unbestaetigten Kontos (der Weg "Registrierung
+// Das Löschen eines unbestätigten Kontos (der Weg "Registrierung
 // abbrechen") - in einer EIGENEN Datei.
 //
 // WARUM EIGENE DATEI (17.11.2026): Der Supabase-Client ist ein
 // Singleton - er kann pro Testlauf nur einmal gestartet werden. Der
 // Auth-Client merkt sich darin seinen Zustand (Sitzung, PKCE-Verifier).
 // In einer gemeinsamen Datei ist der Zustand beim Test "Registrierung
-// abbrechen" durch die vorherigen Tests bereits veraendert - der
-// Aufruf laeuft dann in einen anderen Zweig. In einer eigenen Datei
+// abbrechen" durch die vorherigen Tests bereits verändert - der
+// Aufruf läuft dann in einen anderen Zweig. In einer eigenen Datei
 // (eigener Isolate) ist der Zustand frisch.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Dialog "Registrierung abbrechen?" erscheint,
-//   * das Bestaetigen ruft die Funktion cancel-registration beim Server
+//   * das Bestätigen ruft die Funktion cancel-registration beim Server
 //     auf - mit Adresse und Passwort (der Nachweis der Inhaberschaft),
 //   * der Abbruch endet auf dem Login-Screen.
 import 'package:flutter/material.dart';
@@ -19,17 +19,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 // Der PKCE-Speicher des Auth-Clients im RAM.
 //
-// DER GRUND (17.11.2026): Der Standard-Speicher schreibt ueber die
+// DER GRUND (17.11.2026): Der Standard-Speicher schreibt über die
 // Plattform (SharedPreferences). Das kommt im Widget-Test nicht voran -
-// der Aufruf bleibt haengen (der Knopf zeigt ewig "Wird gesendet...").
-// Mit diesem Ersatz laeuft er sofort.
+// der Aufruf bleibt hängen (der Knopf zeigt ewig "Wird gesendet...").
+// Mit diesem Ersatz läuft er sofort.
 //
 // DER IMPORT-HINWEIS: `GotrueAsyncStorage` kommt aus dem Paket `gotrue`
-// (eine indirekte Abhaengigkeit von supabase_flutter) - es wird hier
+// (eine indirekte Abhängigkeit von supabase_flutter) - es wird hier
 // nur als Typ des Parameters gebraucht.
 // ignore: depend_on_referenced_packages
 import 'package:gotrue/gotrue.dart' show GotrueAsyncStorage;
@@ -86,7 +86,7 @@ class _SitzungImRam implements supabase.LocalStorage {
   }
 }
 
-/// In-Memory-Speicher fuer die lokalen Einstellungen.
+/// In-Memory-Speicher für die lokalen Einstellungen.
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _daten = <String, String>{};
 
@@ -117,7 +117,7 @@ class _FakeLocalStorage implements LocalStorage {
       _daten[key] == null ? null : int.tryParse(_daten[key]!);
 }
 
-/// Der Router fuer den Test.
+/// Der Router für den Test.
 GoRouter _router() {
   return GoRouter(
     initialLocation: AppRoutes.emailVerification,
@@ -184,7 +184,7 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    // Die Registrierungsdaten (die E-Mail und das Passwort fuer den
+    // Die Registrierungsdaten (die E-Mail und das Passwort für den
     // Nachweis der Inhaberschaft).
     container.read(pendingVerificationEmailProvider.notifier).state =
         'neu@example.de';
@@ -238,7 +238,7 @@ void main() {
     );
     await tester.pump();
 
-    // Die Antwort muss verarbeitet werden (im Widget-Test laeuft sie nur
+    // Die Antwort muss verarbeitet werden (im Widget-Test läuft sie nur
     // in runAsync).
     for (var i = 0; i < 10; i++) {
       await tester.runAsync(() async {
@@ -261,8 +261,8 @@ void main() {
     }
 
     expect(tester.takeException(), isNull);
-    // Die Funktion cancel-registration wurde aufgerufen - das loescht
-    // das unbestaetigte Konto serverseitig.
+    // Die Funktion cancel-registration wurde aufgerufen - das löscht
+    // das unbestätigte Konto serverseitig.
     expect(
       server.funktionsAufrufe.any(
         (c) => c['funktion'] == 'cancel-registration',
@@ -273,7 +273,7 @@ void main() {
           'das nur lokal verschwindet, bleibt bestehen und stoert die '
           'spaeteren Registrierungen.',
     );
-    // Der Aufruf traegt die Adresse (und das Passwort als Nachweis der
+    // Der Aufruf trägt die Adresse (und das Passwort als Nachweis der
     // Inhaberschaft).
     final aufruf = server.funktionsAufrufe.firstWhere(
       (c) => c['funktion'] == 'cancel-registration',

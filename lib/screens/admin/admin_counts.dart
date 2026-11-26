@@ -3,15 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/services/server/supabase_database_service.dart';
 
-/// Filtert Sperren nach E-Mail, Begruendung oder Person.
+/// Filtert Sperren nach E-Mail, Begründung oder Person.
 ///
-/// Leerer Suchbegriff liefert die volle Liste zurueck: der Normalzustand
+/// Leerer Suchbegriff liefert die volle Liste zurück: der Normalzustand
 /// soll keinen Filtercode durchlaufen, und ein Tippfehler im Suchfeld darf
 /// nicht als "keine Sperren" enden.
 ///
 /// Exportiert (statt `private` im Screen), weil die Suchlogik der Teil ist,
 /// der wahrscheinlichst falsch ist: zu enge Suche findet nichts, zu weite
-/// findet alles. Beides faellt nur mit einem Test auf.
+/// findet alles. Beides fällt nur mit einem Test auf.
 List<Map<String, dynamic>> filterBans(
   List<Map<String, dynamic>> items,
   String query,
@@ -28,11 +28,11 @@ List<Map<String, dynamic>> filterBans(
   }).toList();
 }
 
-/// Kennzahlen fuer den Admin-Screen (ROADMAP Zeile 807).
+/// Kennzahlen für den Admin-Screen (ROADMAP Zeile 807).
 ///
 /// Clientseitig aus den Listen berechnet, bewusst OHNE neue RPC: Migration
 /// 133 ist noch nicht angewendet, und eine zweite ungetestete Migration
-/// direkt danach waere das schlechteste Timing.
+/// direkt danach wäre das schlechteste Timing.
 class AdminCounts {
   const AdminCounts({
     required this.openReports,
@@ -54,8 +54,8 @@ class AdminCounts {
   /// bug_reports der letzten 24 Stunden.
   final int bugsLast24h;
 
-  /// bug_reports des Zeitraums 24 bis 48 Stunden zurueck. Ohne diese
-  /// Vergleichsgroesse sagt "3 neue Bugs" nichts: drei Meldungen sind an
+  /// bug_reports des Zeitraums 24 bis 48 Stunden zurück. Ohne diese
+  /// Vergleichsgrösse sagt "3 neue Bugs" nichts: drei Meldungen sind an
   /// einem Montag normal und an einem Sonntag ein Ausreisser.
   final int bugsPrevious24h;
 
@@ -65,9 +65,9 @@ class AdminCounts {
   final int pendingAppeals;
   final int bans;
 
-  /// `true`, wenn die Bug-Zahl gegenueber dem Vortag mehr als verdoppelt
+  /// `true`, wenn die Bug-Zahl gegenüber dem Vortag mehr als verdoppelt
   /// hat UND mindestens drei neue dazugekommen sind. Ohne die Mindestmenge
-  /// waere "1 -> 2" ein Alarm, der jeder Fehlbedienung folgt.
+  /// wäre "1 -> 2" ein Alarm, der jeder Fehlbedienung folgt.
   bool get bugsRising => bugsLast24h >= 3 && bugsLast24h > bugsPrevious24h * 2;
 
   /// Platzhalter, solange nichts geladen ist: -1 statt 0, weil eine echte
@@ -86,28 +86,28 @@ class AdminCounts {
   bool get isLoaded => openReports >= 0;
 }
 
-/// Zaehlt Meldungen mit Status `pending`.
+/// Zählt Meldungen mit Status `pending`.
 ///
-/// Als eigene Funktion, nicht inline: das Zaehlen IST die Aussage dieser
+/// Als eigene Funktion, nicht inline: das Zählen IST die Aussage dieser
 /// Kennzahl und braucht einen Test. Ein Fehler zeigt eine falsche Zahl an,
 /// keinen Absturz - die schlimmere Fehlerart.
 int countOpenReports(List<Map<String, dynamic>> reports) {
   return reports.where((r) => r['status'] == 'pending').length;
 }
 
-/// Zaehlt Bug-Reports mit `createdAt` im Fenster `[from, to)`.
+/// Zählt Bug-Reports mit `createdAt` im Fenster `[from, to)`.
 ///
 /// Die Zeitstempel kommen als ISO-String aus JSONB. Ein Eintrag ohne
-/// parsebares Datum zaehlt in KEINEM Fenster, statt pauschal als alt oder
-/// neu gewertet zu werden: sonst wuerde ein kaputter Zeitstempel still die
+/// parsebares Datum zählt in KEINEM Fenster, statt pauschal als alt oder
+/// neu gewertet zu werden: sonst würde ein kaputter Zeitstempel still die
 /// Kennzahl verschieben.
 ///
-/// Der Vergleich laeuft in UTC, weil die Server-Zeitstempel zeitzonen-
-/// behaftet sind und der Geraete-Offset sonst zwischen 0 und 24 Stunden
-/// schwanken wuerde.
+/// Der Vergleich läuft in UTC, weil die Server-Zeitstempel zeitzonen-
+/// behaftet sind und der Geräte-Offset sonst zwischen 0 und 24 Stunden
+/// schwanken würde.
 ///
-/// `from` und `to` muessen in der Reihenfolge liegen: die Grenzen werden
-/// nicht getauscht. Der Aufrufer garantiert das ueber
+/// `from` und `to` müssen in der Reihenfolge liegen: die Grenzen werden
+/// nicht getauscht. Der Aufrufer garantiert das über
 /// [bugsRecentWindows], damit nicht jemand die Argumente vertauscht und
 /// jede Kennzahl als Anstieg gemeldet bekommt.
 int countBugsInWindow(
@@ -126,14 +126,14 @@ int countBugsInWindow(
   return n;
 }
 
-/// Die beiden 24-Stunden-Fenster fuer [countBugsInWindow].
+/// Die beiden 24-Stunden-Fenster für [countBugsInWindow].
 ///
 /// Als eine Funktion, damit `now` nur an EINER Stelle im Code steht. Zwei
 /// getrennte `DateTime.now()`-Aufrufe liegen um Mikosekunden
-/// auseinander: die Grenze zwischen "letzte 24 h" und "vorige 24 h" waere
+/// auseinander: die Grenze zwischen "letzte 24 h" und "vorige 24 h" wäre
 /// dann ein Schnitt von unter einer Mikrosekunde Breite, und die Summe
-/// beider Fenster koennte einen Bug doppelt zaehlen oder gar nicht.
-/// Beide Fenster sind halboffen und ueberschneiden sich deshalb nicht.
+/// beider Fenster kännte einen Bug doppelt zählen oder gar nicht.
+/// Beide Fenster sind halboffen und überschneiden sich deshalb nicht.
 ({DateTime dayAgo, DateTime twoDaysAgo, DateTime now}) bugsRecentWindows(
   DateTime now,
 ) {
@@ -145,10 +145,10 @@ int countBugsInWindow(
   );
 }
 
-/// Laedt die Kennzahlen.
+/// Lädt die Kennzahlen.
 ///
 /// Jeder Nebenabruf hat einen eigenen try/catch: fehlt eine Migration
-/// (118 fuer Einsprueche, 120 fuer Auto-Freigaben), darf daraus keine
+/// (118 für Einsprüche, 120 für Auto-Freigaben), darf daraus keine
 /// falsche Null im gesunden Teil der Zeile werden - und vor allem kein
 /// kompletter Ausfall der Zeile.
 final adminCountsProvider = FutureProvider<AdminCounts>((ref) async {
@@ -197,7 +197,7 @@ final adminCountsProvider = FutureProvider<AdminCounts>((ref) async {
 /// Nach JEDER schreibenden Aktion in einem Tab aufzurufen: sonst zeigt die
 /// Zeile weiter die Zahl von vor der Aktion, und der Admin glaubt, es sei
 /// noch offen. Bewusst zentral - die Alternative (jeder Tab ruft es selbst)
-/// ist bei sechs Tabs die Variante, die spaeter einer vergisst.
+/// ist bei sechs Tabs die Variante, die später einer vergisst.
 void refreshAdminCounts(WidgetRef ref) {
   ref.invalidate(adminCountsProvider);
 }

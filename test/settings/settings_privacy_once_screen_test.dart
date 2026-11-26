@@ -1,18 +1,18 @@
 // Der Einrichtungs-Bildschirm "Einstellungen & Privatsphäre" (bisher
 // ungetestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/onboarding/settings_privacy_once_screen.dart 746 offene
 // Zeilen - der Screen, den jeder neue Nutzer als erstes sieht.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * die Fortschrittsanzeige nennt alle zehn Schritte,
 //   * die Filter-Seite fragt nach Wunsch und Entfernung,
-//   * "Weiter" fuehrt weiter - aber die Pflichtangaben (Bio, Interesse)
-//     werden abgeprueft (der Nutzer darf die Einrichtung nicht mit einer
+//   * "Weiter" fährt weiter - aber die Pflichtangaben (Bio, Interesse)
+//     werden abgeprüft (der Nutzer darf die Einrichtung nicht mit einer
 //     leeren Seite verlassen),
-//   * der zurueck-Button der Kopfzeile geht nur nach Rueckfrage.
+//   * der zurück-Button der Kopfzeile geht nur nach Rückfrage.
 //
 // OHNE SERVER: Der Supabase-Client wird gar nicht erst initialisiert -
 // damit bleibt der Serverteil aus und der Test greift nur auf den
@@ -96,7 +96,7 @@ void main() {
 
   /// Pumpt eine feste Zahl von Frames.
   ///
-  /// `pumpAndSettle` waere hier falsch: die Seite hat Animationen, die
+  /// `pumpAndSettle` wäre hier falsch: die Seite hat Animationen, die
   /// nicht enden (der Kreis beim Laden des Profils). Deshalb feste Frames.
   Future<void> pumpFrames(WidgetTester tester) async {
     for (var i = 0; i < 6; i++) {
@@ -139,7 +139,7 @@ void main() {
             );
             // Ein Profil mit Geburtsdatum: mit bekanntem Alter greifen
             // die Schutzregeln (Altersspanne, Suchradius) - mit unbekanntem
-            // Alter wuerde der Screen sie stillschweigend uebergehen.
+            // Alter würde der Screen sie stillschweigend übergehen.
             notifier.setProfile(
               UserProfile(
                 id: 'ich',
@@ -249,7 +249,7 @@ void main() {
       await zeigeScreen(tester);
 
       // DER FILTER: Es gibt drei Arten - nach Entfernung, nach Bundesland
-      // oder ganz Deutschland. Jede Art hat ihre eigene Oberflaeche.
+      // oder ganz Deutschland. Jede Art hat ihre eigene Oberfläche.
       final auswahl = find.byType(DropdownButtonFormField<DistanceFilterMode>);
       expect(auswahl, findsWidgets, reason: 'Der Entfernungsfilter fehlt.');
 
@@ -293,7 +293,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text(L10n.tWithoutContext('setupq.profile')), findsOneWidget);
       expect(find.text('Schritt 2 von 10'), findsOneWidget);
-      // Und es gibt jetzt einen Zurueck-Knopf in der Kopfzeile.
+      // Und es gibt jetzt einen Zurück-Knopf in der Kopfzeile.
       expect(
         find.byTooltip(L10n.tWithoutContext('common.back')),
         findsOneWidget,
@@ -322,7 +322,7 @@ void main() {
       await zeigeScreen(tester);
       await weiter(tester);
 
-      // Bio eintragen, aber kein Interesse waehlen.
+      // Bio eintragen, aber kein Interesse wählen.
       await tester.enterText(
         find.byType(TextFormField).first,
         'Ich mag lange Spaziergaenge am Fluss.',
@@ -434,7 +434,7 @@ void main() {
         await pumpFrames(tester);
 
         expect(tester.takeException(), isNull);
-        // Ohne Passkey und ohne 2FA ist die Einrichtung nicht vollstaendig
+        // Ohne Passkey und ohne 2FA ist die Einrichtung nicht vollständig
         // - die App sagt das DEUTLICH, statt es zu verschweigen.
         expect(find.byType(AlertDialog), findsOneWidget);
         expect(
@@ -518,12 +518,12 @@ void main() {
     testWidgets('das Zurueckgehen fragt nach', (tester) async {
       await zeigeScreen(tester);
 
-      // Das System-Zurueck (Randwisch, Zurueck-Knopf des Systems).
+      // Das System-Zurück (Randwisch, Zurück-Knopf des Systems).
       final navigator = tester.state<NavigatorState>(find.byType(Navigator));
       await navigator.maybePop();
       await pumpFrames(tester);
 
-      // Die Rueckfrage steht da - ohne sie waere die Einrichtung nach
+      // Die Rückfrage steht da - ohne sie wäre die Einrichtung nach
       // einem Versehen weg.
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(

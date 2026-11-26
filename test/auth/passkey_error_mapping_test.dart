@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/services/auth/auth_exception.dart';
 import 'package:thestia/services/auth/passkey_auth.dart';
 
-/// Tests fuer das Fehler-Mapping der Passkey-Integration: Kryptische
+/// Tests für das Fehler-Mapping der Passkey-Integration: Kryptische
 /// Plugin-/WebAuthn-Fehler (DOM-Exception-Typen, PlatformException-Codes)
-/// muessen in verstaendliche, handlungsorientierte Meldungen uebersetzt
+/// müssen in verständliche, handlungsorientierte Meldungen übersetzt
 /// werden - ohne Interna im Release durchzulassen.
 void main() {
   group('PasskeyAuth.explainError', () {
@@ -113,7 +113,7 @@ void main() {
 
     test('andere Fehler loesen KEINEN Sicherheitscheck aus', () {
       // Sonst fragt die App nach einem Captcha, das niemand braucht -
-      // genau die "extra Captcha Abfrage", die stoert.
+      // genau die "extra Captcha Abfrage", die stört.
       for (final text in [
         'android-unhandled: NotAllowedError',
         'AuthApiException: status: 400, message: credential verification failed',

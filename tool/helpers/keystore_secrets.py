@@ -1,6 +1,6 @@
-"""Woher kommen die Signier-Angaben? (Eine Quelle fuer alle Werkzeuge.)
+"""Woher kommen die Signier-Angaben? (Eine Quelle für alle Werkzeuge.)
 
-GRUND (04.11.2026): Die Passwoerter des Release-Keystores lagen im
+GRUND (04.11.2026): Die Passwörter des Release-Keystores lagen im
 Klartext in `android/key.properties`. Die Datei war gitignored - aber
 sie lag im Projektordner, also in Backups, in Sync-Mappen und in
 Screenshots des Verzeichnisses.
@@ -8,18 +8,18 @@ Screenshots des Verzeichnisses.
 Jetzt gilt eine Reihenfolge, die in drei Werkzeugen identisch ist
 (Gradle, `tool/release/build_release.ps1`, `tool/checks/check_passkey_assetlinks.py`):
 
-  1. Umgebungsvariablen - der Weg fuer CI und Build-Server:
+  1. Umgebungsvariablen - der Weg für CI und Build-Server:
        THESTIA_KEYSTORE_PASSWORD, THESTIA_KEY_PASSWORD,
        THESTIA_KEY_ALIAS, THESTIA_KEYSTORE_FILE
   2. Eine Secret-Datei AUSSERHALB des Projekts:
        %THESTIA_KEYSTORE_PROPERTIES% oder (Vorgabe)
        %USERPROFILE%\\.secrets\\thestia-release.properties
        bzw. ~/.secrets/thestia-release.properties
-  3. `android/key.properties` - enthaelt nur noch keyAlias und
+  3. `android/key.properties` - enthält nur noch keyAlias und
      storeFile, also nichts Geheimes.
 
-Dieses Modul ist bewusst abhaengigkeitsfrei (nur Standardbibliothek),
-damit es ohne weitere Installation ueberall laeuft.
+Dieses Modul ist bewusst abhängigkeitsfrei (nur Standardbibliothek),
+damit es ohne weitere Installation überall läuft.
 """
 
 import os
@@ -29,8 +29,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -82,7 +82,7 @@ def _read(path: pathlib.Path) -> dict:
 
 
 def read_props() -> dict:
-    """Alle Signier-Angaben, aufgeloest nach der Reihenfolge oben."""
+    """Alle Signier-Angaben, aufgelöst nach der Reihenfolge oben."""
     props: dict = {}
     secret = secret_file_path()
     if secret is not None:
@@ -108,7 +108,7 @@ def signing_ready(props: dict | None = None) -> bool:
 
 
 def describe() -> str:
-    """Ein kurzer, gefahrener Status fuer Logs und Fehlermeldungen."""
+    """Ein kurzer, gefahrener Status für Logs und Fehlermeldungen."""
     p = read_props()
     secret = secret_file_path()
     quelle = []

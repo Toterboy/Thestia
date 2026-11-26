@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/services/chat/encryption_service.dart';
 import 'package:thestia/services/chat/webrtc_service.dart';
 
-/// Tests fuer das Signaling ueber Supabase Realtime.
+/// Tests für das Signaling über Supabase Realtime.
 ///
 /// WARUM DIESE DATEI (06.11.2026): Das P2P hat nie funktioniert.
 /// Ursache: Das realtime_client setzt in seiner send()-Methode
@@ -10,12 +10,12 @@ import 'package:thestia/services/chat/webrtc_service.dart';
 ///
 ///   payload['type'] = 'broadcast';
 ///
-/// und ueberschreibt damit das EIGENE Feld 'type' der App. Der
-/// Empfaenger sah darum immer type == 'broadcast' statt
+/// und überschreibt damit das EIGENE Feld 'type' der App. Der
+/// Empfänger sah darum immer type == 'broadcast' statt
 /// 'offer'/'answer'/'ice'/'relay-ping' - und der Schalter in
 /// _handleSignal fiel bei jedem Fall in 'default'. JEDE
 /// Signaling-Nachricht wurde stillschweigend verworfen, der
-/// DataChannel oeffnete nie.
+/// DataChannel öffnete nie.
 ///
 /// LIVE AM ECHTEN SERVER gemessen (zwei echte Clients, echter
 /// Broadcast): die empfangene Nachricht war
@@ -23,7 +23,7 @@ import 'package:thestia/services/chat/webrtc_service.dart';
 /// obwohl gesendet wurde: {type: relay-ping, from: 11111111-...}
 ///
 /// DER TEST NACHSTELLT DEN CLIENT: [wieRealtime] macht genau das, was
-/// das Paket beim Senden macht. So laesst sich der Fehler nachstellen
+/// das Paket beim Senden macht. So lässt sich der Fehler nachstellen
 /// und der Fix absichern - ohne echten Server.
 void main() {
   /// Wie der realtime_client es beim Senden macht
@@ -60,7 +60,7 @@ void main() {
     test(
       'das alte Feld "type" geht verloren (der urspruengliche Bug)',
       () async {
-        // Der Client ueberschreibt 'type' mit 'broadcast' - die Nachricht
+        // Der Client überschreibt 'type' mit 'broadcast' - die Nachricht
         // kommt also als type='broadcast' an und der Schalter in
         // _handleSignal verwirft sie. Genau das war der Grund, warum P2P
         // nie aufging.
@@ -86,7 +86,7 @@ void main() {
     );
 
     test('ein fremder Absender wird verworfen', () async {
-      // Der Fix darf die Haertung NICHT aufweichen.
+      // Der Fix darf die Härtung NICHT aufweichen.
       final service = WebRTCService(EncryptionService());
       service.currentPeerIdForTesting = 'peer-1';
       var pings = 0;
@@ -104,7 +104,7 @@ void main() {
 
   group('Die Answer-Race nach einem Retry', () {
     test('eine Answer zu einem alten Offer wird erkannt', () {
-      // Szenario: Der Initiator schliesst die PeerConnection und
+      // Szenario: Der Initiator schließt die PeerConnection und
       // erzeugt ein neues Offer (Generation 2). Eine noch fliegende
       // Answer der alten Runde (Generation 1) darf die NEUE
       // PeerConnection nicht setzen - sonst wird die echte Answer
@@ -118,8 +118,8 @@ void main() {
     });
 
     test('eine Answer ohne Generation wird angenommen', () {
-      // Toleranz: eine aeltere App-Version schickt keine Generation
-      // mit - sonst wuerden Alt- und Neu-Version nicht miteinander
+      // Toleranz: eine ältere App-Version schickt keine Generation
+      // mit - sonst würden Alt- und Neu-Version nicht miteinander
       // sprechen.
       expect(WebRTCService.isStaleAnswer({}, 2), isFalse);
       expect(WebRTCService.isStaleAnswer({'sdp': 'x'}, 7), isFalse);

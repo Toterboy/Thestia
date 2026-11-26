@@ -55,10 +55,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
   StreamSubscription<AuthState>? _authStateSub;
 
   /// Nach dem allerersten _syncFromServer Aufruf true.
-  /// Selbstheilung laeuft NUR danach – so werden lokale Restwerte
-  /// (von einem frueheren Test/Install) nicht faelschlich zum Server
+  /// Selbstheilung läuft NUR danach – so werden lokale Restwerte
+  /// (von einem früheren Test/Install) nicht fälschlich zum Server
   /// gepusht und die Einrichtung bei der ersten Registrierung nicht
-  /// uebersprungen.
+  /// übersprungen.
   bool _initialServerSyncDone = false;
 
   /// Hält den Auth-Status synchron zu Supabase Auth.
@@ -225,20 +225,20 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       _ref.read(pendingVerificationEmailProvider.notifier).state = null;
       _ref.read(pendingVerificationCredentialsProvider.notifier).state = null;
       state = const AsyncValue.data(true);
-      // Der E-Mail-Status wird sofort neu geprueft (statt auf den
+      // Der E-Mail-Status wird sofort neu geprüft (statt auf den
       // 3-s-Poller zu warten) - das verhindert ein kurzes Aufblitzen
       // des Verifikations-Screens direkt nach dem Login.
       //
       // WICHTIG (06.11.2026): Hier darf NICHT
       // "invalidate(emailConfirmedProvider)" stehen. Der Erzeuger des
-      // Providers hoert im Konstruktor auf den authProvider - eine
+      // Providers hört im Konstruktor auf den authProvider - eine
       // Invalidierung aus dem authProvider heraus ist ein Kreis, und
       // Riverpod wirft dann "CircularDependencyError". Live im Emulator
       // gesehen: die Anmeldung war erfolgreich, trotzdem blieb der
       // Login-Screen mit einer Fehlermeldung stehen.
       //
-      // Der Notifier prueft selbst: sein Listener auf den authProvider
-      // laeuft beim Anmelden ohnehin (siehe EmailConfirmedNotifier).
+      // Der Notifier prüft selbst: sein Listener auf den authProvider
+      // läuft beim Anmelden ohnehin (siehe EmailConfirmedNotifier).
       unawaited(_syncFromServer());
     } catch (e, st) {
       if (kDebugMode) {
@@ -265,9 +265,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       _ref.read(pendingVerificationEmailProvider.notifier).state = null;
       _ref.read(pendingVerificationCredentialsProvider.notifier).state = null;
       state = const AsyncValue.data(true);
-      // Wie im Passwort-Pfad: der E-Mail-Status wird sofort neu geprueft.
+      // Wie im Passwort-Pfad: der E-Mail-Status wird sofort neu geprüft.
       // Das darf hier KEIN invalidate(emailConfirmedProvider) sein -
-      // siehe die Begruendung im login()-Pfad (Riverpod-Zirkel).
+      // siehe die Begründung im login()-Pfad (Riverpod-Zirkel).
       unawaited(_syncFromServer());
     } catch (e, st) {
       if (kDebugMode) {
@@ -338,12 +338,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     });
     // DER DIENST NEU BAUEN (BEFUND 18.11.2026, gefunden von einem Test):
     // Nach dem Leeren hat der Dienst keinen Identity-Key mehr (null) -
-    // jeder Zugriff darauf waere ein Absturz ("Null check operator used
+    // jeder Zugriff darauf wäre ein Absturz ("Null check operator used
     // on a null value"). Die App liefe also nach dem Abmelden mit einem
-    // kaputten Dienst weiter (bis zum naechsten App-Neustart).
+    // kaputten Dienst weiter (bis zum nächsten App-Neustart).
     //
-    // DER WEG: Der Provider wird verworfen - der naechste Zugriff baut
-    // ihn neu auf (mit einem neuen Schluessel, wie nach einem Neustart).
+    // DER WEG: Der Provider wird verworfen - der nächste Zugriff baut
+    // ihn neu auf (mit einem neuen Schlüssel, wie nach einem Neustart).
     _ref.invalidate(encryptionServiceProvider);
     bestEffortSync('preKeyServiceProvider.reset', () {
       _ref.read(preKeyServiceProvider).reset();
@@ -436,7 +436,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       debugPrint('[AuthNotifier] Encryption-Cleanup fehlgeschlagen: $e');
     }
     // DER DIENST NEU BAUEN: Nach dem Leeren hat er keinen Identity-Key
-    // mehr (siehe die Erklaerung beim Abmelden).
+    // mehr (siehe die Erklärung beim Abmelden).
     _ref.invalidate(encryptionServiceProvider);
     try {
       _ref.read(preKeyServiceProvider).reset();
@@ -456,8 +456,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       debugPrint('[AuthNotifier] WebRTC-Cleanup fehlgeschlagen: $e');
     }
     // SECURITY (Audit 2026-09-26): Transit-Encounter-Cache (Begehnachweise
-    // fremder Geraete per BLE) war bis hierher NICHT in der Loeschkette - die
-    // Daten ueberlebten die Kontoloeschung im lokalen Speicher.
+    // fremder Geräte per BLE) war bis hierher NICHT in der Löschkette - die
+    // Daten überlebten die Kontolöschung im lokalen Speicher.
     try {
       await TransitEncounterService(SecurePreferencesStorage()).clear();
     } catch (e) {
@@ -514,7 +514,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
   ///
   /// DER GRUND: In einer Erweiterung darf `state` nicht gesetzt
   /// werden (der Analyser erlaubt es nur in Instanzmitgliedern des
-  /// Notifiers). Diese Methode gehoert zur Klasse - die Erweiterung
+  /// Notifiers). Diese Methode gehört zur Klasse - die Erweiterung
   /// ruft sie auf.
   void _setzeWert(AsyncValue<bool> wert) => state = wert;
 }
@@ -568,7 +568,7 @@ final authProvider = StateNotifierProvider<AuthNotifier, AsyncValue<bool>>((
     );
   } else {
     // Weder Supabase noch Demo-Modus: Es gibt bewusst KEIN Legacy-Backend
-    // mehr (der fruehere ApiClient mit Platzhalter-URL ist entfernt).
+    // mehr (der frühere ApiClient mit Platzhalter-URL ist entfernt).
     // Fail-closed mit klarer Meldung statt garantiert fehlschlagender
     // Netzwerk-Calls.
     throw StateError(
@@ -638,7 +638,7 @@ final serverSyncDoneProvider = StateProvider<bool>((ref) => false);
 /// ist von dieser Ausnahme ausgenommen: Dort ist die Einrichtung gewollt.
 final setupFlagsKnownProvider = StateProvider<bool>((ref) => false);
 
-/// Prüft, ob die E-Mail des aktuellen Supabase-Nutzers bestaetigt ist.
+/// Prüft, ob die E-Mail des aktuellen Supabase-Nutzers bestätigt ist.
 ///
 /// Pollt den Auth-Status alle 3 Sekunden, damit der Nutzer nach Klick auf
 /// den Bestätigungslink in der E-Mail automatisch weiterkommt, ohne die
@@ -646,8 +646,8 @@ final setupFlagsKnownProvider = StateProvider<bool>((ref) => false);
 /// um Akku und Daten zu schonen.
 ///
 /// Liefert:
-/// - `true`, wenn E-Mail bestaetigt ist
-/// - `false`, wenn E-Mail noch nicht bestaetigt ist
+/// - `true`, wenn E-Mail bestätigt ist
+/// - `false`, wenn E-Mail noch nicht bestätigt ist
 /// - `null`, wenn kein Supabase-Modus aktiv ist oder keine Session existiert
 class EmailConfirmedNotifier extends StateNotifier<bool?>
     with WidgetsBindingObserver {
@@ -655,28 +655,28 @@ class EmailConfirmedNotifier extends StateNotifier<bool?>
     WidgetsBinding.instance.addObserver(this);
 
     // BEFUND (01.11.2026): Der Poller wurde beim ersten "nicht
-    // angemeldet" endgueltig gestoppt - und die Registrierung laeuft
-    // OHNE Session (bei aktivierter E-Mail-Bestaetigung liefert
+    // angemeldet" endgültig gestoppt - und die Registrierung läuft
+    // OHNE Session (bei aktivierter E-Mail-Bestätigung liefert
     // signUp keine). Damit blieb der Wert dauerhaft null, der
-    // Bildschirm bekam die Bestaetigung nie gemeldet, und der
+    // Bildschirm bekam die Bestätigung nie gemeldet, und der
     // einzige Weg weiter war der stille Auto-Login.
     //
-    // Ausserdem blieb ein "true" aus einem VORHERIGEN Konto stehen:
-    // der Wert wurde beim Abmelden nie zurueckgesetzt. Danach
-    // umging das Router-Gate die E-Mail-Bestaetigung vollstaendig -
+    // Außerdem blieb ein "true" aus einem VORHERIGEN Konto stehen:
+    // der Wert wurde beim Abmelden nie zurückgesetzt. Danach
+    // umging das Router-Gate die E-Mail-Bestätigung vollständig -
     // der Nutzer kam direkt zum Willkommens-Screen.
     //
     // Der Anmeldestatus ist deshalb jetzt die Quelle: bei der
-    // Anmeldung laeuft der Poller wieder an, beim Abmelden wird der
-    // Wert zurueckgesetzt.
+    // Anmeldung läuft der Poller wieder an, beim Abmelden wird der
+    // Wert zurückgesetzt.
     _ref.listen(authProvider, (prev, next) {
       final angemeldet = next.valueOrNull ?? false;
       if (angemeldet) {
         if (_timer == null) {
           _startPolling();
         } else {
-          // Der Poller laeuft schon: trotzdem sofort pruefen. Vorher
-          // wurde das ueber "invalidate(emailConfirmedProvider)" vom
+          // Der Poller läuft schon: trotzdem sofort prüfen. Vorher
+          // wurde das über "invalidate(emailConfirmedProvider)" vom
           // authProvider aus erledigt - das war der Kreis (siehe
           // auth_provider.dart, login()).
           unawaited(_check());
@@ -730,10 +730,10 @@ class EmailConfirmedNotifier extends StateNotifier<bool?>
       final loggedIn = auth.valueOrNull ?? false;
       if (!loggedIn) {
         if (state != null) state = null;
-        // Ohne eingeloggten Nutzer gibt es nichts zu bestaetigen. Vorher lief
+        // Ohne eingeloggten Nutzer gibt es nichts zu bestätigen. Vorher lief
         // der 3-s-Timer trotzdem die gesamte App-Lebenszeit weiter (20
         // Aufrufe/Minute, auch im Welcome-/Login-Screen) - das war einer der
-        // groessten Dauer-Verbraucher im Vordergrund.
+        // größten Dauer-Verbraucher im Vordergrund.
         _stopPolling();
         return;
       }

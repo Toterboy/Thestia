@@ -80,10 +80,10 @@ class AppTheme {
   /// Vorher wurde bei JEDEM Settings-Change ein komplettes ThemeData inkl.
   /// `ColorScheme.fromSeed` neu berechnet (zweimal: hell + dunkel, obwohl
   /// nur eines benutzt wird). Das kostete CPU und erzeugte bei jedem
-  /// Rebuild eine neue Theme-Identitaet, wodurch `AnimatedTheme` die ganze
-  /// Oberflaeche erneut animierte - Hell/Dunkel brauchte dadurch sichtbar
-  /// "Zeit", bis sich Chat-Hintergruende, Cards und Texte angleichten.
-  /// Jetzt: einmal berechnen, stabile Identitaet, sofortiger Wechsel.
+  /// Rebuild eine neue Theme-Identität, wodurch `AnimatedTheme` die ganze
+  /// Oberfläche erneut animierte - Hell/Dunkel brauchte dadurch sichtbar
+  /// "Zeit", bis sich Chat-Hintergründe, Cards und Texte angleichten.
+  /// Jetzt: einmal berechnen, stabile Identität, sofortiger Wechsel.
   static final Map<String, ThemeData> _cache = <String, ThemeData>{};
 
   /// Gecachtes Theme. [theme] und [brightness] bestimmen den Cache-Key.
@@ -111,11 +111,11 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
-      // Emoji-Rueckfall (31.10.2026): Die Begruessung der Startseite
-      // nutzt ein Emoji. Ohne Rueckfall-Liste fehlt das Zeichen auf
-      // Geraeten, die die Emoji-Schrift nicht als erste Schrift fuehren -
+      // Emoji-Rückfall (31.10.2026): Die Begrüßung der Startseite
+      // nutzt ein Emoji. Ohne Rückfall-Liste fehlt das Zeichen auf
+      // Geräten, die die Emoji-Schrift nicht als erste Schrift führen -
       // und im Store-Screenshot (Render ohne Systemschriften) blieb
-      // ein leeres Kaestchen stehen. Die Liste deckt Android (Noto),
+      // ein leeres Kästchen stehen. Die Liste deckt Android (Noto),
       // iOS/macOS (Apple) und Windows (Segoe) ab.
       fontFamilyFallback: const [
         'Noto Color Emoji',
@@ -142,8 +142,8 @@ class AppTheme {
       outlinedButtonTheme: _outlinedButtonTheme,
       // NUTZERWUNSCH (31.10.2026): "Ladekreise sollen auch abgerundet
       // sein." Die Enden des Kreises sind jetzt rund statt flach -
-      // das passt zur uebrigen runden Sprache der App (Karten mit 24 px,
-      // Knöpfe, Snackbars) und gilt fuer JEDEN Ladeindikator, ohne
+      // das passt zur übrigen runden Sprache der App (Karten mit 24 px,
+      // Knöpfe, Snackbars) und gilt für JEDEN Ladeindikator, ohne
       // dass eine einzige Stelle im Code angefasst werden muss.
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         strokeCap: StrokeCap.round,
@@ -170,10 +170,10 @@ class AppTheme {
           statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
         ),
       ),
-      // Die Navigationsleiste unten laeuft ueber SystemUiOverlayStyle -
-      // ThemeData kennt dafuer kein eigenes Feld. Die passende Angabe
+      // Die Navigationsleiste unten läuft über SystemUiOverlayStyle -
+      // ThemeData kennt dafür kein eigenes Feld. Die passende Angabe
       // steht in der AnnotatedRegion der Hauptnavigation
-      // (main_navigation.dart), damit sie fuer den ganzen Bildschirm
+      // (main_navigation.dart), damit sie für den ganzen Bildschirm
       // gilt.
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         elevation: 8,
@@ -254,7 +254,7 @@ class AppTheme {
     // FIX Farbthemes: Bisher waren die Rahmen auf die Classic-Pink
     // (AppColors.primary/primaryLight) hartcodiert - Ozean, Wald,
     // Sonnenuntergang, Lavendel und Schiefer wurden an den Rahmen
-    // nicht uebernommen. Jetzt leiten sich beide aus der aktiven
+    // nicht übernommen. Jetzt leiten sich beide aus der aktiven
     // Primärfarbe ab (aktiv halbtransparent, fokussiert voll).
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),

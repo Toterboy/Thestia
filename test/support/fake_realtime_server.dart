@@ -1,11 +1,11 @@
-// Ein winziger Ersatz fuer den Supabase-Realtime-Server - fuer die Tests.
+// Ein winziger Ersatz für den Supabase-Realtime-Server - für die Tests.
 //
-// WOFUER (24.11.2026): Der WebRTC-Dienst holt seinen Signaling-Kanal
-// ueber `Supabase.instance.client.channel(...)` und wartet dann auf die
-// Bestaetigung des Servers ("subscribed"). Ohne Server bleibt der Kanal
-// im Zustand "joining" - nach 15 Sekunden laeuft `connect()` in einen
+// WOFÜR (24.11.2026): Der WebRTC-Dienst holt seinen Signaling-Kanal
+// über `Supabase.instance.client.channel(...)` und wartet dann auf die
+// Bestätigung des Servers ("subscribed"). Ohne Server bleibt der Kanal
+// im Zustand "joining" - nach 15 Sekunden läuft `connect()` in einen
 // Timeout. Damit war der komplette Signaling-Aufbau (Kanal, Einladung,
-// eingehende Nachricht) im Test nicht pruefbar.
+// eingehende Nachricht) im Test nicht prüfbar.
 //
 // DER WEG: Der Ersatz spricht das Phoenix-Protokoll des Realtime-Clients
 // (Version 2.0.0). Die Frames sind JSON-Listen:
@@ -17,8 +17,8 @@
 //     Antwort bleibt der Kanal im Zustand "joining" (und der Dienst
 //     wartet 15 Sekunden auf sein Ende).
 //   * BROADCAST: Der Server schickt
-//     `[joinRef, ref, topic, "broadcast", payload]` - damit laeuft der
-//     Broadcast-Haendler des Kanals auf und die App bekommt die
+//     `[joinRef, ref, topic, "broadcast", payload]` - damit läuft der
+//     Broadcast-Händler des Kanals auf und die App bekommt die
 //     Nachricht.
 //
 // DER WERT: Der Test sieht damit genau das, was die App sendet (der
@@ -26,15 +26,15 @@
 // App hineinschieben - ohne echten Server und ohne Netz.
 //
 // KEINE ZEIT: Der Ersatz antwortet sofort. Die Wartezeiten der App
-// (15 Sekunden fuer den Kanal) kommen im Test also nicht vor.
+// (15 Sekunden für den Kanal) kommen im Test also nicht vor.
 import 'dart:convert';
 import 'dart:io';
 
-/// Der Ersatz fuer den Supabase-Realtime-Server.
+/// Der Ersatz für den Supabase-Realtime-Server.
 ///
 /// DER AUFBAU: Ein echter WebSocket-Server auf dem Loopback. Der
 /// Realtime-Client verbindet sich mit dem Pfad
-/// "ws://127.0.0.1:PORT/realtime/v1/websocket" - deshalb genuegt ein
+/// "ws://127.0.0.1:PORT/realtime/v1/websocket" - deshalb genügt ein
 /// einfacher HTTP-Server, der die WebSocket-Verbindung annimmt.
 class FakeRealtimeServer {
   FakeRealtimeServer._(this._server);
@@ -53,7 +53,7 @@ class FakeRealtimeServer {
 
   /// Die Nutzlasten der Broadcasts, die der Client geschickt hat.
   ///
-  /// DER WERT: Der Test sieht damit, WAS die App ueber den Kanal
+  /// DER WERT: Der Test sieht damit, WAS die App über den Kanal
   /// schickt - das Angebot, die Antwort, den Relay-Ping.
   final List<Map<String, dynamic>> gesendeteBroadcasts =
       <Map<String, dynamic>>[];
@@ -76,7 +76,7 @@ class FakeRealtimeServer {
   /// Zustand "joining".
   bool joinBeantworten = true;
 
-  /// Der Port, auf dem der Server laeuft.
+  /// Der Port, auf dem der Server läuft.
   int get port => _server.port;
 
   /// Die Adresse, die man als Supabase-URL an den Client geben kann.
@@ -109,7 +109,7 @@ class FakeRealtimeServer {
 
   /// Die Broadcast-Nutzlasten einer bestimmten Art (z. B. 'offer').
   ///
-  /// DER WEG: Der Realtime-Client setzt in die Nutzlast zusaetzlich
+  /// DER WEG: Der Realtime-Client setzt in die Nutzlast zusätzlich
   /// 'type' und 'event' - die eigene Art der Nachricht steht im Feld
   /// 'kind' (deshalb sucht der Test danach).
   List<Map<String, dynamic>> broadcastsMitArt(String art) =>
@@ -117,7 +117,7 @@ class FakeRealtimeServer {
 
   /// Schickt eine Broadcast-Nachricht an alle angemeldeten Clients.
   ///
-  /// [topic] ist das volle Topic des Kanals (mit dem Praefix
+  /// [topic] ist das volle Topic des Kanals (mit dem Präfix
   /// 'realtime:'), [event] der Ereignisname (in der App 'signal') und
   /// [nutzlast] die Nachricht selbst.
   void sendeBroadcast({

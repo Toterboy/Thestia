@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -11,10 +11,10 @@
 part of '../transit_radar_screen.dart';
 
 extension _TransitRadarKandidaten on _TransitRadarScreenState {
-  /// Ersatzansicht fuer Nutzende unter 18 bzw. ohne hinterlegtes
-  /// Geburtsdatum. Erklaert die Sperre, statt sie kommentarlos zu
+  /// Ersatzansicht für Nutzende unter 18 bzw. ohne hinterlegtes
+  /// Geburtsdatum. Erklärt die Sperre, statt sie kommentarlos zu
   /// zeigen - und verlinkt auf die Profildaten, damit der Weg zur
-  /// Loesung sichtbar ist.
+  /// Lösung sichtbar ist.
   Widget _adultOnlyNotice({required bool missingBirthDate}) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -60,15 +60,15 @@ extension _TransitRadarKandidaten on _TransitRadarScreenState {
     return confirmTransitExit(context, ref, onStopped: _maybeOfferRadioCleanup);
   }
 
-  /// Die Ortsangabe: wo bin ich gerade (ungefaehr)?
+  /// Die Ortsangabe: wo bin ich gerade (ungefähr)?
   ///
-  /// BEFUND (11.11.2026, Betreiber): "Man soll auch seinen ungefaehren
-  /// Standort angeben koennen, also wenn man im Zug ist z.B. Wagen 3 oder
+  /// BEFUND (11.11.2026, Betreiber): "Man soll auch seinen ungefähren
+  /// Standort angeben können, also wenn man im Zug ist z.B. Wagen 3 oder
   /// so oder wenn man auf ner Messe ist z.B. Halle 2 und da dann vielleicht
   /// bei den Toiletten oder Stand xy und so."
   ///
   /// DER PRIVATHEITSAUFLAS: Der Ort wird NICHT ermittelt - der Nutzer
-  /// nennt ihn selbst. Die App weiss danach nur, was er freiwillig
+  /// nennt ihn selbst. Die App weiß danach nur, was er freiwillig
   /// geschrieben hat. Das steht auch im Text, damit niemand etwas anderes
   /// vermutet.
   Widget _placePicker(BuildContext context) {
@@ -132,11 +132,11 @@ extension _TransitRadarKandidaten on _TransitRadarScreenState {
     ];
   }
 
-  /// Zeigt die Personen in der Naehe, deren Beschreibung passt.
+  /// Zeigt die Personen in der Nähe, deren Beschreibung passt.
   ///
   /// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
-  /// der selben Beschreibung geben sollte, dass man dann alle dafuer
-  /// vorgeschlagen bekommt und die Moeglichkeit hat auch mehrere
+  /// der selben Beschreibung geben sollte, dass man dann alle dafür
+  /// vorgeschlagen bekommt und die Möglichkeit hat auch mehrere
   /// anzuschreiben."
   Future<void> _showCandidates(List<String> tags) async {
     final notifier = ref.read(transitProvider.notifier);
@@ -226,7 +226,7 @@ extension _TransitRadarKandidaten on _TransitRadarScreenState {
   }
 
   /// v0.9.0: Nachgeschaute Personen der 2-Stunden-Ruhezeit - Bottom
-  /// Sheet mit der gewohnten Gruessen-Liste (Pingen nach 45-min-TTL
+  /// Sheet mit der gewohnten Grüßen-Liste (Pingen nach 45-min-TTL
   /// kann serverseitig ins Leere laufen; das Sheet erklärt das).
   Future<void> _showRetainedEncounters() async {
     final until = ref.read(transitProvider.notifier).softUntil();

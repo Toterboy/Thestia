@@ -1,17 +1,17 @@
-// Die Kamera-Aufnahme fuer die Verifikation.
+// Die Kamera-Aufnahme für die Verifikation.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/verification/parts/verificationvideoscreenstate.dart 263
 // offene Zeilen bei 334 gesamt - der Screen, auf dem der Nutzer sein
 // Alter nachweisen muss, war ungetestet.
 //
-// DER WEG: Die Kamera spricht ueber `CameraPlatform.instance` - der
+// DER WEG: Die Kamera spricht über `CameraPlatform.instance` - der
 // Test zieht eine Attrappe ein (test/support/fake_camera.dart). Es
-// braucht KEINE Aenderung am Produktionscode.
+// braucht KEINE Änderung am Produktionscode.
 //
-// DER GRUND: Dieser Screen ist der Nachweis fuer die Altersgrenze. Er
+// DER GRUND: Dieser Screen ist der Nachweis für die Altersgrenze. Er
 // muss
-//   * die Kamera erst nach der ausdruecklichen Offenlegung oeffnen
+//   * die Kamera erst nach der ausdrücklichen Offenlegung öffnen
 //     (Play-Richtlinie CAMERA - die Kamera darf nicht ungefragt laufen),
 //   * die Aufgabe klar zeigen (was der Nutzer tun soll),
 //   * die Aufnahme starten und den Zustand anzeigen,
@@ -77,22 +77,22 @@ void main() {
 
   tearDown(() {
     CameraPlatform.instance = original;
-    // DER KANAL BLEIBT OFFEN: Das Schliessen wuerde das noch wartende
+    // DER KANAL BLEIBT OFFEN: Das Schließen würde das noch wartende
     // `.first` des Kamera-Controllers mit "No element" beenden - und der
-    // Test wuerde an diesem Fehler scheitern, nicht an seinem eigent-
+    // Test würde an diesem Fehler scheitern, nicht an seinem eigent-
     // lichen Zweck.
   });
 
   Widget harness() => ProviderScope(
     overrides: [
       // localStorageProvider wirft UnimplementedError, wenn es nicht
-      // gesetzt ist - die echte Einstellungskette laeuft darueber.
+      // gesetzt ist - die echte Einstellungskette läuft darüber.
       localStorageProvider.overrideWithValue(_FakeLocalStorage()),
     ],
     child: const MaterialApp(home: VerificationVideoScreen()),
   );
 
-  /// Bestaetigt die Kamera-Offenlegung (wenn sie erscheint).
+  /// Bestätigt die Kamera-Offenlegung (wenn sie erscheint).
   Future<void> bestaetigeOffenlegung(WidgetTester tester) async {
     final knopf = find.text(
       L10n.tWithoutContext('verify.cameraDisclosureAccept'),
@@ -164,8 +164,8 @@ void main() {
     testWidgets('ohne Kamera gibt es einen erklärenden Zustand', (
       tester,
     ) async {
-      // DER FALL: Das Geraet hat keine Kamera (oder der Nutzer hat sie
-      // nicht erlaubt). Der Screen muss das erklaeren - und einen Weg
+      // DER FALL: Das Gerät hat keine Kamera (oder der Nutzer hat sie
+      // nicht erlaubt). Der Screen muss das erklären - und einen Weg
       // weiter anbieten.
       CameraPlatform.instance = FakeCameraPlatform(hatKamera: false);
 

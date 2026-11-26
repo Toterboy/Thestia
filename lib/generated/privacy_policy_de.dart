@@ -1,10 +1,10 @@
-// GENERIERTE DATEI - NICHT VON HAND AENDERN.
+// GENERIERTE DATEI - NICHT VON HAND ÄNDERN.
 // Quelle: docs/recht/DATENSCHUTZ.md
 // Neu erzeugen mit: python tool/web/make_privacy_policy.py
 
 import 'package:thestia/generated/privacy_policy_blocks.dart';
 
-/// Die vollstaendige Datenschutzerklaerung als Bloecke, in der
+/// Die vollständige Datenschutzerklärung als Blöcke, in der
 /// Reihenfolge der Quelle.
 const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('h1', 'Datenschutzerklärung für Thestia'),
@@ -1085,7 +1085,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     cells: <String>[
       '15',
       '2026-10',
-      '**Speicherfristen eingeloest und Kontaktweg ergänzt:** Die Erklärung kündigte seit Version 8 die Löschung des Verifikations-Videos nach 30 Tagen an - eingelöst war sie nicht (es gab keinen Löschjob). Der Cronjob `cleanup-verification-videos` (Migration 160) entfernt jetzt Chiffrat und Schlüssel nach 30 Tagen. Außerdem: der Kontaktweg nennt eine eigene E-Mail-Adresse, die verantwortliche Stelle wird namentlich benannt, und Spaceship ist als Auftragsverarbeiter für das Mail-Hosting eingetragen. Der Satz zu den Transit-Spark-Signalen in Abschnitt 7 war zudem zerbrochen',
+      '**Speicherfristen eingelöst und Kontaktweg ergänzt:** Die Erklärung kündigte seit Version 8 die Löschung des Verifikations-Videos nach 30 Tagen an - eingelöst war sie nicht (es gab keinen Löschjob). Der Cronjob `cleanup-verification-videos` (Migration 160) entfernt jetzt Chiffrat und Schlüssel nach 30 Tagen. Außerdem: der Kontaktweg nennt eine eigene E-Mail-Adresse, die verantwortliche Stelle wird namentlich benannt, und Spaceship ist als Auftragsverarbeiter für das Mail-Hosting eingetragen. Der Satz zu den Transit-Spark-Signalen in Abschnitt 7 war zudem zerbrochen',
     ],
   ),
   PrivacyBlock(
@@ -1148,7 +1148,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     cells: <String>[
       '9',
       '2026-10',
-      '**Jugendschutz verschaerft:** Die Sichtbarkeit ist jetzt beidseitig gefiltert - 16- und 17-Jährige sehen nur Gleichaltrige, nie einen Erwachsenen, und ein Erwachsener sie nie. Die Altersspanne ist nach unten auf 10 Jahre unter dem eigenen Alter begrenzt. Minderjährige werden bei der Video-Verifizierung immer von Hand geprüft',
+      '**Jugendschutz verschärft:** Die Sichtbarkeit ist jetzt beidseitig gefiltert - 16- und 17-Jährige sehen nur Gleichaltrige, nie einen Erwachsenen, und ein Erwachsener sie nie. Die Altersspanne ist nach unten auf 10 Jahre unter dem eigenen Alter begrenzt. Minderjährige werden bei der Video-Verifizierung immer von Hand geprüft',
     ],
   ),
   PrivacyBlock(

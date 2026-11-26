@@ -1,9 +1,9 @@
 // Der Teil '_MessageBubbleState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -65,8 +65,8 @@ class _MessageBubbleState extends State<_MessageBubble> {
           ),
         GestureDetector(
           // BEFUND (11.11.2026): Long-Press auf eine eigene Textnachricht
-          // bietet "Fuer alle loeschen" an (wie bei Whatsapp). Fremde
-          // Nachrichten lassen sich nicht loeschen - das waere eine
+          // bietet "Für alle löschen" an (wie bei Whatsapp). Fremde
+          // Nachrichten lassen sich nicht löschen - das wäre eine
           // Rechteausweitung.
           onLongPress: widget.onDelete == null
               ? null
@@ -232,10 +232,10 @@ class _MessageBubbleState extends State<_MessageBubble> {
     );
   }
 
-  /// Fragt nach, ob die Nachricht fuer alle geloescht werden soll.
+  /// Fragt nach, ob die Nachricht für alle gelöscht werden soll.
   ///
   /// BEFUND (11.11.2026): "Wie bei Whatsapp - die Nachricht kann man
-  /// irgendwie fuer alle loeschen, aber ein Hinweis steht dann da."
+  /// irgendwie für alle löschen, aber ein Hinweis steht dann da."
   Future<void> _confirmDelete(BuildContext context) async {
     final onDelete = widget.onDelete;
     if (onDelete == null) return;
@@ -357,7 +357,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
         // Zurück-Wisch des Systems. Das Bild blieb stehen, während der
         // Hintergrund schon zurückging. Und der eigene `Navigator.pop()`
         // im Handler wurde von demselben Verbot wieder blockiert (er
-        // loeste nur wieder den Handler aus).
+        // lüste nur wieder den Handler aus).
         //
         // JETZT: Der Pop ist erlaubt. Das Bild wird beim Schließen als
         // gesehen markiert - es kann danach nicht wieder geöffnet

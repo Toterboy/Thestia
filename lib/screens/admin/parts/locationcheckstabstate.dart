@@ -1,9 +1,9 @@
 // Der Teil '_LocationChecksTabState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -53,8 +53,8 @@ class _LocationChecksTabState extends ConsumerState<_LocationChecksTab> {
       emptyTitle: L10n.t(context, 'admin.locationsTitle'),
       emptyText: L10n.t(context, 'admin.locationsEmpty'),
       onRetry: _load,
-      // Der Hinweis steht ueber der Liste: ohne ihn haelt der Admin
-      // das Flag fuer ein Verdict.
+      // Der Hinweis steht über der Liste: ohne ihn hält der Admin
+      // das Flag für ein Verdict.
       header: Padding(
         padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
         child: Text(
@@ -86,7 +86,7 @@ class _LocationChecksTabState extends ConsumerState<_LocationChecksTab> {
                 style: thema.textTheme.bodySmall,
               ),
               // Die User-ID: ohne sie kann der Admin den Fall nicht
-              // zuordnen (der Name ist frei gewaehlt).
+              // zuordnen (der Name ist frei gewählt).
               SelectableText(
                 data['userId'] as String? ?? '?',
                 style: thema.textTheme.bodySmall?.copyWith(

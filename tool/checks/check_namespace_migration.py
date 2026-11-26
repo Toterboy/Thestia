@@ -1,12 +1,12 @@
-"""Regressionstest fuer den Release-Blocker vom 2026-09-27.
+"""Regressionstest für den Release-Blocker vom 2026-09-27.
 
 Die Keystore-Namespaces wurden umgestellt, aber zwei davon wurden nicht
-migriert. Das faellt im Review NICHT auf, weil der Code je fuer sich
+migriert. Das fällt im Review NICHT auf, weil der Code je für sich
 korrekt ist - erst beim Update bricht es:
 
   - `session`  -> alle Bestandsnutzer abgemeldet
-  - `signals`  -> neuer Hive-Schluessel, verschluesselte Boxen unlesbar
-                  (bei Signal-Keys: Verlust der E2E-Identitaet)
+  - `signals`  -> neuer Hive-Schlüssel, verschlüsselte Boxen unlesbar
+                  (bei Signal-Keys: Verlust der E2E-Identität)
 
 Der Test liest deshalb die QUELLDATEIEN statisch und vergleicht jede
 Umstellung eines Namespaces mit der Migrationsliste. Eine Umstellung ohne
@@ -19,8 +19,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -55,7 +55,7 @@ for k, v in sorted(declared.items()):
 # Ein Namespace braucht einen Migrations-Eintrag nur, wenn im Legacy-
 # Namespace ALTDATEN lagen. Ein brandneuer Namespace hat keine
 # Vorgeschichte - dort gibt es nichts zu verschieben. Solche Namespaces
-# muessen aber AUSDRUECKLICH als neu deklariert werden, damit der Weg
+# müssen aber AUSDRÜCKLICH als neu deklariert werden, damit der Weg
 # nicht stillschweigend zunehmend weiter wird.
 neu_ohne_migration = set()
 m_neu = re.search(
@@ -99,11 +99,11 @@ for f in sorted(LIB.rglob('*.dart')):
     if 'secure_storage_namespaces' not in src and 'storageNamespace' not in src:
         continue
     used = set(re.findall(r'SecureNamespaces\.(\w+)', src))
-    # Nur Dateien, die den Namespace auch tatsaetzlich an WEAK GIFTEN
+    # Nur Dateien, die den Namespace auch tatsätzlich an WEAK GIFTEN
     if 'storageNamespace' not in src and 'accountName' not in src:
         continue
     # Die Migrationsdatei selbst referenziert alle Namespaces nur als
-    # Map-Schluessel - das ist kein Umstellungs-Fund. Ebenso ist \_\ der
+    # Map-Schlüssel - das ist kein Umstellungs-Fund. Ebenso ist \_\ der
     # private Konstruktor, kein Namespace.
     if rel == 'lib/services/storage/secure_storage_namespaces.dart':
         continue
@@ -132,7 +132,7 @@ for rel, ns in results:
         continue
     if ns not in migrated:
         if ns in neu_ohne_migration:
-            # Neu: es gibt keine Altdaten, die migriert werden muessten.
+            # Neu: es gibt keine Altdaten, die migriert werden müssten.
             continue
         problems.append(f'{rel}: {ns} wird benutzt, aber NICHT migriert '
                         f'-> Datenverlust beim Update')
@@ -159,13 +159,13 @@ if problems:
 # -------------------------------------------------
 # Zweite Ebene: ein Namespace-NAME allein reicht nicht.
 # Eine leere Key-Liste ist ein stiller No-op - die
-# Migration laeuft durch und kopiert nichts.
+# Migration läuft durch und kopiert nichts.
 # -------------------------------------------------
 print('\nZweite Ebene: leere Migrationslisten')
 empty_problems = []
-# Wichtig: es muss die DEKLARATION des Parameters geprueft werden, nicht
-# nur seine Erwaehnung. Sonst waere ein entfernter Parameter (Kompilier-
-# fehler) fuer diesen Text-Checker unsichtbar.
+# Wichtig: es muss die DEKLARATION des Parameters geprüft werden, nicht
+# nur seine Erwähnung. Sonst wäre ein entfernter Parameter (Kompilier-
+# fehler) für diesen Text-Checker unsichtbar.
 runtime_ok = bool(re.search(
     r'List<String>\s+extraSessionKeys\s*=', ns_src))
 if not runtime_ok:

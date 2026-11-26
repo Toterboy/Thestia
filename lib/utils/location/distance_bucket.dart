@@ -1,4 +1,4 @@
-/// Grobung der Entfernung fuer die Anzeige bei anderen Nutzern.
+/// Grobung der Entfernung für die Anzeige bei anderen Nutzern.
 ///
 /// Grundsatz (Nutzerwunsch 2026-10-06): andere sollen wissen, OB jemand
 /// nah oder weit weg ist - "ich in Bremen, die andere Person in
@@ -8,22 +8,22 @@
 /// Deshalb zwei Stufige Grobung, in dieser Reihenfolge:
 ///
 ///  1. **Kaskadierung von innen.** Eine Person 200 km entfernt ist
-///     "ueber 100 km", nicht "180 km". Alle werden mit 10-km-Stufen
-///     feiner, je naeher desto genauer - wer nah wohnt, erfaehrt auch
+///     "über 100 km", nicht "180 km". Alle werden mit 10-km-Stufen
+///     feiner, je näher desto genauer - wer nah wohnt, erfährt auch
 ///     mehr, aber eben nur in Stufen.
 ///  2. **Rundung auf 10 km**, nicht auf 5. 5 km waren in der
-///     Anforderung als *Raster fuer die Speicherung* gemeint; fuer die
-///     *Anzeige* waeren 5-km-Stufen genau die Genauigkeit, die man
+///     Anforderung als *Raster für die Speicherung* gemeint; für die
+///     *Anzeige* wären 5-km-Stufen genau die Genauigkeit, die man
 ///     eigentlich loswerden wollte.
 ///
-/// Fuer weniger als 10 km wird bewusst nur "unter 10 km" gesagt: die
+/// Für weniger als 10 km wird bewusst nur "unter 10 km" gesagt: die
 /// erste Stufe enthielte sonst die Information "weniger als 10 km",
-/// gefolgt von "10 bis 20 km" - ein Sprung, der sich sauber anfaengt,
+/// gefolgt von "10 bis 20 km" - ein Sprung, der sich sauber anfängt,
 /// sobald man die Nachkommastelle weglässt.
 class DistanceBucket {
   const DistanceBucket._();
 
-  /// Obergrenze der Stufe in km. `null` heisst: ueber der letzten Stufe,
+  /// Obergrenze der Stufe in km. `null` heißt: über der letzten Stufe,
   /// die Zahl wird bewusst nicht verraten.
   static const int lastThresholdKm = 100;
 
@@ -31,10 +31,10 @@ class DistanceBucket {
   /// 10-20, 20-30, ... 90-100 = 9 Stufen, plus "unter 10" = 10.
   static const int stepCount = 10;
 
-  /// Stufenbreite in km fuer die Anzeige.
+  /// Stufenbreite in km für die Anzeige.
   static const int stepKm = 10;
 
-  /// Untergrenze in km fuer eine ueberhaupt sichtbare Entfernung.
+  /// Untergrenze in km für eine überhaupt sichtbare Entfernung.
   ///
   /// Alles darunter bekommt keinen Bucket. 5 km sind zwar "nah", aber
   /// in einem Land mit Millionen Einwohnern kann der Unterschied
@@ -44,13 +44,13 @@ class DistanceBucket {
   /// Stufe einer Entfernung, oder `null` wenn zu klein zum Zeigen.
   ///
   /// [km] = untere Schranke der Stufe, [kmUpper] = obere Schranke.
-  /// Beide null = ueber [lastThresholdKm].
+  /// Beide null = über [lastThresholdKm].
   ///
   /// Die Stufe ist das 10-km-Band `[untere, untere + 10)`, in das [km]
-  /// faellt - mathematisch `floor(km / 10) * 10`. Damit ist jede Grenze
+  /// fällt - mathematisch `floor(km / 10) * 10`. Damit ist jede Grenze
   /// genau einmal besetzt: 9,9 -> [0,10), 10,0 -> [10,20), 19,9 -> [10,20),
   /// 20,0 -> [20,30). Ein "rundet bei exakter Grenze nach oben"-Zweig
-  /// waere hier falsch und wuerde 10 km als "20 bis 30" ausgeben.
+  /// wäre hier falsch und würde 10 km als "20 bis 30" ausgeben.
   static ({int? km, int? kmUpper})? bucketFor(double? km) {
     if (km == null || km.isNaN) return null;
     if (km < visibleFromKm) return null;
@@ -63,7 +63,7 @@ class DistanceBucket {
     return (km: lower, kmUpper: lower + stepKm);
   }
 
-  /// Der lokalisierte Text fuer eine Stufe.
+  /// Der lokalisierte Text für eine Stufe.
   ///
   /// Der Aufrufer gibt [L10n.t] als Funktion, damit dieses Widget ohne
   /// BuildContext und damit testbar bleibt.

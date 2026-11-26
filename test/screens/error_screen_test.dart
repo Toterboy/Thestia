@@ -1,13 +1,13 @@
-// Die Fehlerseite (Fallback fuer unbekannte Routen).
+// Die Fehlerseite (Fallback für unbekannte Routen).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/core/error_screen.dart nur 4,5 % Abdeckung. Die Seite ist
-// die letzte Rueckfallebene: wenn eine Route nicht existiert oder der
+// die letzte Rückfallebene: wenn eine Route nicht existiert oder der
 // Nutzer nicht dahin darf, sieht er DIESEN Bildschirm.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Seite erklaert, was passiert ist, und bietet einen Ausgang,
-//   * der Ausgang fuehrt eingeloggte Nutzer nach Hause,
+// WAS HIER GEPRÜFT WIRD:
+//   * die Seite erklärt, was passiert ist, und bietet einen Ausgang,
+//   * der Ausgang fährt eingeloggte Nutzer nach Hause,
 //   * nicht eingeloggte Nutzer kommen zur Anmeldung (wenn sie den
 //     Willkommenstext schon gesehen haben) oder zum Willkommenstext.
 import 'package:flutter/material.dart';
@@ -75,8 +75,8 @@ class _Auth implements AppAuthService {
 
   /// Meldet der Dienst eine Sitzung?
   ///
-  /// DER GRUND: Die Wiederherstellung laeuft im Hintergrund - sie darf
-  /// den Zustand des Tests nicht ueberschreiben.
+  /// DER GRUND: Die Wiederherstellung läuft im Hintergrund - sie darf
+  /// den Zustand des Tests nicht überschreiben.
   final bool eingeloggt;
 
   @override
@@ -118,7 +118,7 @@ void main() {
     await SharedPreferences.getInstance();
   });
 
-  /// Baut die Fehlerseite mit dem gewuenschten Zustand.
+  /// Baut die Fehlerseite mit dem gewünschten Zustand.
   Future<void> zeige(
     WidgetTester tester, {
     required bool eingeloggt,
@@ -169,7 +169,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    // DER ZUSTAND: Die Wiederherstellung laeuft im Hintergrund - der
+    // DER ZUSTAND: Die Wiederherstellung läuft im Hintergrund - der
     // Test setzt den Status deshalb selbst (und danach gewinnt er).
     container.read(authProvider.notifier).state = eingeloggt
         ? const AsyncValue.data(true)

@@ -1,21 +1,21 @@
-// Die 2FA-Einrichtung (TOTP) - bisher voellig ungetestet.
+// Die 2FA-Einrichtung (TOTP) - bisher völlig ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/mfa_setup_screen.dart 205 offene Zeilen bei 206 Zeilen
 // gesamt - der Bildschirm, auf dem die Person die zweite factors
 // einrichtet, war komplett ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (der Intro-Schritt steht da),
 //   * ist 2FA schon aktiv, steht die aktive Ansicht statt des Flows,
-//   * die Einrichtung zeigt den Schluessel (der manuelle Weg, wenn der
+//   * die Einrichtung zeigt den Schlüssel (der manuelle Weg, wenn der
 //     QR-Scan nicht klappt),
-//   * der Schluessel laesst sich kopieren,
-//   * ohne Code geht es nicht weiter (die Eingabe wird geprueft),
-//   * ein falscher Code wird abgewiesen - der Nutzer erfaehrt es.
+//   * der Schlüssel lässt sich kopieren,
+//   * ohne Code geht es nicht weiter (die Eingabe wird geprüft),
+//   * ein falscher Code wird abgewiesen - der Nutzer erfährt es.
 //
 // DER MFA-DIENST: Die echte Anmeldung braucht die Supabase-MFA-API.
-// Im Test spricht ein Ersatz dafuer - der echte Weg waere der ganze
+// Im Test spricht ein Ersatz dafür - der echte Weg wäre der ganze
 // Auth-Stack.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,10 +37,10 @@ class _FakeMfaService extends MfaService {
   /// Der Fehler beim Starten der Einrichtung.
   Object? enrollFehler;
 
-  /// Der Fehler beim Bestaetigen des Codes.
+  /// Der Fehler beim Bestätigen des Codes.
   Object? verifyFehler;
 
-  /// Der Code, der bestaetigt wurde.
+  /// Der Code, der bestätigt wurde.
   String? bestaetigterCode;
 
   /// Wurde die Einrichtung verworfen (der Screen wurde verlassen)?
@@ -135,7 +135,7 @@ void main() {
       expect(tester.takeException(), isNull);
       // Der Intro-Schritt steht da: was 2FA ist und wie man es einrichtet.
       expect(find.text(L10n.tWithoutContext('mfa.introTitle')), findsOneWidget);
-      // Der Einstieg (scannen) und der Weg "spaeter".
+      // Der Einstieg (scannen) und der Weg "später".
       expect(find.text(L10n.tWithoutContext('mfa.setupScan')), findsOneWidget);
       expect(find.text(L10n.tWithoutContext('mfa.setupLater')), findsOneWidget);
     });
@@ -154,7 +154,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(tester.takeException(), isNull);
-      // Der Nutzer sieht, dass 2FA schon laeuft (Befund: "steht nicht,
+      // Der Nutzer sieht, dass 2FA schon läuft (Befund: "steht nicht,
       // dass ich es eingerichtet habe").
       expect(
         find.text(L10n.tWithoutContext('mfa.activeTitle')),
@@ -178,7 +178,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(tester.takeException(), isNull);
-      // Der Schluessel steht da - damit kann der Nutzer die App auch
+      // Der Schlüssel steht da - damit kann der Nutzer die App auch
       // ohne Kamera einrichten.
       expect(find.text('ABCDEFGHIJKLMNOP'), findsWidgets);
     });
@@ -195,8 +195,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Der Schluessel steht da - ein Tippen darauf kopiert ihn (der
-      // Absender-Apps koennen ihn nicht abtippen).
+      // Der Schlüssel steht da - ein Tippen darauf kopiert ihn (der
+      // Absender-Apps können ihn nicht abtippen).
       final schluessel = find.text('ABCDEFGHIJKLMNOP');
       expect(schluessel, findsWidgets);
       await tester.tap(schluessel.first);
@@ -204,11 +204,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(tester.takeException(), isNull);
-      // Und die App sagt, dass der Schluessel kopiert wurde.
+      // Und die App sagt, dass der Schlüssel kopiert wurde.
       expect(find.text(L10n.tWithoutContext('mfa.copied')), findsOneWidget);
 
       // Der Bildschirm wird abgebaut - der Timer, der das Secret nach
-      // 30 Sekunden aus der Zwischenablage loescht, muss beendet werden.
+      // 30 Sekunden aus der Zwischenablage löscht, muss beendet werden.
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(milliseconds: 50));
     });
@@ -225,7 +225,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Weiter zum Bestaetigungsschritt.
+      // Weiter zum Bestätigungsschritt.
       final weiter = find.widgetWithText(
         FilledButton,
         L10n.tWithoutContext('mfa.setupNext'),
@@ -237,13 +237,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(tester.takeException(), isNull);
-      // Der Bestaetigungsschritt steht da.
+      // Der Bestätigungsschritt steht da.
       expect(
         find.text(L10n.tWithoutContext('mfa.confirmStep')),
         findsOneWidget,
       );
 
-      // Ohne Code wird nicht bestaetigt.
+      // Ohne Code wird nicht bestätigt.
       await tester.tap(
         find.widgetWithText(
           FilledButton,
@@ -280,7 +280,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Den Code eintippen und bestaetigen.
+      // Den Code eintippen und bestätigen.
       await tester.enterText(find.byType(TextField).first, '123456');
       await tester.pump();
       await tester.tap(

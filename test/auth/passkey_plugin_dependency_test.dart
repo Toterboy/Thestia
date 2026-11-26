@@ -78,8 +78,8 @@ void main() {
 
     test('der Plugin wird als Android-Plugin gefuehrt', () {
       // Die Datei wird von `flutter pub get` erzeugt. Fehlt sie, gibt es
-      // in dieser Umgebung keine Aufloesung - dann sagt der Test nichts
-      // und laeuft durch.
+      // in dieser Umgebung keine Auflösung - dann sagt der Test nichts
+      // und läuft durch.
       final datei = File('.flutter-plugins-dependencies');
       if (!datei.existsSync()) return;
 

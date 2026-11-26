@@ -3,22 +3,22 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import '../support/quelltext.dart';
 
-/// Tests fuer die Anzeige des Standort-Verdachtsflags im Admin-Bereich.
+/// Tests für die Anzeige des Standort-Verdachtsflags im Admin-Bereich.
 ///
 /// BETREIBER-ENTSCHEIDUNG (06.11.2026): Das Flag
 /// `is_location_suspicious` wird seit Migration 180 korrekt
 /// geschrieben, aber von KEINER Abfrage ausgewertet - es war ein
 /// Hinweis ohne Wirkung. Die Entscheidung des Betreibers: das Flag
 /// soll im Admin-Bereich sichtbar werden, das Verhalten der App
-/// bleibt unveraendert.
+/// bleibt unverändert.
 ///
-/// DIESER TEST HAELT GENAU DAS FEST:
-///   1) Die Liste ist nur fuer Admins erreichbar.
-///   2) Die Funktion liest nur - sie aendert kein Flag.
+/// DIESER TEST HÄLT GENAU DAS FEST:
+///   1) Die Liste ist nur für Admins erreichbar.
+///   2) Die Funktion liest nur - sie ändert kein Flag.
 ///   3) Das Flag wirkt weiterhin auf NIEMANDEN ausser dem Admin:
 ///      keine Abfrage filtert danach. Das ist der Kern der
-///      Entscheidung - waere das anders, waere es eine
-///      Verhaltensaenderung, die der Betreiber nicht wollte.
+///      Entscheidung - wäre das anders, wäre es eine
+///      Verhaltensänderung, die der Betreiber nicht wollte.
 void main() {
   final migration = liesQuelltext(
     'supabase/migrations/183_admin_list_location_checks.sql',
@@ -36,8 +36,8 @@ void main() {
     });
 
     test('die Funktion liest nur', () {
-      // Ein Schreibzugriff waere eine Verhaltensaenderung: das Flag
-      // zuruecksetzen oder ein Profil sperren.
+      // Ein Schreibzugriff wäre eine Verhaltensänderung: das Flag
+      // zurücksetzen oder ein Profil sperren.
       for (final verb in const [
         'UPDATE public.profiles',
         'DELETE FROM public.profiles',
@@ -92,7 +92,7 @@ void main() {
   group('Das Flag wirkt auf niemanden ausser dem Admin', () {
     test('keine Abfrage filtert nach dem Flag', () {
       // Jede Stelle, an der das Flag in einer WHERE-Klausel auftaucht,
-      // waere eine Verhaltensaenderung: der Nutzer wuerde aus der
+      // wäre eine Verhaltensänderung: der Nutzer würde aus der
       // Discovery verschwinden. Erlaubt ist nur die Admin-Liste.
       final verzeichnis = Directory('supabase/migrations');
       final treffer = <String>[];
@@ -104,7 +104,7 @@ void main() {
           final zeile = zeilen[i];
           if (!zeile.contains('is_location_suspicious')) continue;
           if (!zeile.toLowerCase().contains('where')) continue;
-          // Die Zeile muss zur Admin-Funktion gehoeren.
+          // Die Zeile muss zur Admin-Funktion gehören.
           const fenster = 12;
           final umgebung = zeilen
               .sublist(

@@ -2,15 +2,15 @@
 //
 // ANLASS (15.11.2026, gefunden von einem Test): Der Admin-Bereich rief
 // die Edge Function "verify-account" ohne Zeitlimit auf. Kam keine
-// Antwort (Server gestoert, Mobilfunk voll), blieb der Bildschirm mit
+// Antwort (Server gestört, Mobilfunk voll), blieb der Bildschirm mit
 // dem Ladeindikator stehen - bis der Nutzer ihn verliess.
 //
-// DER WEG: Alle Edge-Function-Aufrufe laufen jetzt ueber
+// DER WEG: Alle Edge-Function-Aufrufe laufen jetzt über
 // [SupabaseService.rufeEdgeFunktion] - mit einem Zeitlimit von 20
 // Sekunden. Danach kommt eine TimeoutException, die der Aufrufer als
-// Fehlermeldung zeigt (nie als haengender Bildschirm).
+// Fehlermeldung zeigt (nie als hängender Bildschirm).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Aufruf bricht nach dem Zeitlimit ab (statt endlos zu warten),
 //   * die Antwort kommt an, wenn der Server antwortet,
 //   * ein Serverfehler (HTTP 500) wird NICHT als Timeout behandelt,
@@ -138,8 +138,8 @@ void main() {
     );
     // KEINE Anmeldung: der Client schickt ohne Sitzung den
     // Publishable-Key als Bearer - der Aufruf kommt also beim Server an
-    // (mit Sitzung wuerde er vorher eine Token-Aktualisierung versuchen -
-    // genau der Weg, der ohne Antwort haengen bleibt).
+    // (mit Sitzung würde er vorher eine Token-Aktualisierung versuchen -
+    // genau der Weg, der ohne Antwort hängen bleibt).
   });
 
   test('der Aufruf bricht nach dem Zeitlimit ab', () async {

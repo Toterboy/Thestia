@@ -1,20 +1,20 @@
 # tool/scripts/set_hook_secret.ps1
 #
 # Setzt das Hook-Secret des Send-Email-Hooks in die Edge Function - und
-# prueft sofort, ob es passt. Alles in einem Schritt, ohne dass der
+# prüft sofort, ob es passt. Alles in einem Schritt, ohne dass der
 # Wert irgendwo sichtbar wird.
 #
 # WARUM ES DAS GIBT (24.10.2026):
 #
 # Das Secret steht im Dashboard MASKIERT. Man kann es nicht "sehen",
 # aber man kann es KOPIEREN. Das Kopier-Symbol neben dem Feld legt den
-# vollstaendigen Wert in die Zwischenablage - auch wenn die Anzeige
+# vollständigen Wert in die Zwischenablage - auch wenn die Anzeige
 # maskiert ist. Wer den Wert nicht sieht, hat ihn trotzdem: er ist in
 # der Zwischenablage.
 #
-# Zusaetzlich gibt es einen Fallstrick, der in der bisherigen Anleitung
+# Zusätzlich gibt es einen Fallstrick, der in der bisherigen Anleitung
 # nicht vorkam: der Laufzeit-Zustand der Function ist zum DEPLOY-
-# Zeitpunkt fixiert. Setzt man das Secret, laeuft die bereits
+# Zeitpunkt fixiert. Setzt man das Secret, läuft die bereits
 # gestartete Function weiter mit dem ALTEN Secret. Erst ein erneutes
 # Deploy nimmt das neue Secret auf. Das Skript macht deshalb beides.
 #
@@ -26,9 +26,9 @@
 #        powershell -ExecutionPolicy Bypass -File tool\set_hook_secret.ps1
 #
 # Optionen:
-#   -DryRun    zeigt nur, was passieren wuerde (aendert nichts)
+#   -DryRun    zeigt nur, was passieren würde (ändert nichts)
 #   -Value     statt der Zwischenablage diesen Wert verwenden
-#              (NUR fuer automatisierte Laeufe - der Wert landet dann
+#              (NUR für automatisierte Läufe - der Wert landet dann
 #              in der Prozessliste und im Verlauf)
 #
 # AUSGABE: "PASS" oder "FAIL" - ohne Interpretationsspielraum.
@@ -73,13 +73,13 @@ if (-not $secret) {
     exit 2
 }
 
-# Maskierte Kopien abfangen. Das ist der haeufigste Fehler: Das Dashboard
+# Maskierte Kopien abfangen. Das ist der häufigste Fehler: Das Dashboard
 # zeigt das Secret maskiert ("v1,whsec_****abcd"). Wer den Text
 # markiert statt das Kopier-Symbol zu nutzen, bekommt eine Zeichenkette
 # mit Sternchen - und B64DEKODIEREN ignoriert Sternchen stillschweigend
-# (validate=False). Daraus entsteht ein scheinbar gueltiger, aber
-# falscher Schluessel, und die Pruefung sagt spaeter "401" - ohne dass
-# klar waere, dass die Kopie maskiert war.
+# (validate=False). Daraus entsteht ein scheinbar gültiger, aber
+# falscher Schlüssel, und die Prüfung sagt später "401" - ohne dass
+# klar wäre, dass die Kopie maskiert war.
 if ($secret -match '[\*\u2022\u2023]|\.\.\.|\[|\]') {
     Write-Host 'FEHLER: Der kopierte Wert sieht MASKIERT aus.' -ForegroundColor Red
     Write-Host '  Er enthaelt Sternchen oder Auslassungspunkte.'
@@ -91,8 +91,8 @@ if ($secret -match '[\*\u2022\u2023]|\.\.\.|\[|\]') {
     exit 2
 }
 
-# Base64-Dekodierbarkeit pruefen - ein Secret, das nicht dekodierbar
-# ist, kann keine Signatur pruefen.
+# Base64-Dekodierbarkeit prüfen - ein Secret, das nicht dekodierbar
+# ist, kann keine Signatur prüfen.
 $b64teil = $secret -replace '^v1,','' -replace '^whsec_',''
 if ($b64teil -notmatch '^[A-Za-z0-9+/]+={0,2}$' -and
     $secret -notmatch '^[0-9a-fA-F]+$') {
@@ -102,7 +102,7 @@ if ($b64teil -notmatch '^[A-Za-z0-9+/]+={0,2}$' -and
     exit 2
 }
 
-# Nichts ausgeben, was das Secret verraten koennte - nur Form und Laenge.
+# Nichts ausgeben, was das Secret verraten kännte - nur Form und Länge.
 $form = 'unbekannt'
 if ($secret -match '^v1,whsec_[A-Za-z0-9+/=_-]+$') { $form = 'v1,whsec_ (Standard-Webhooks)' }
 elseif ($secret -match '^whsec_[A-Za-z0-9+/=_-]+$') { $form = 'whsec_ (ohne v1-Marker)' }
@@ -139,7 +139,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # --- 3) Function neu deployen --------------------------------------------
-# Ohne das Deploy laeuft die Function mit dem ALTEN Secret weiter: die
+# Ohne das Deploy läuft die Function mit dem ALTEN Secret weiter: die
 # Umgebung ist zum Deploy-Zeitpunkt fixiert (supabase/supabase#51535).
 Write-Host '2/3  Function neu deployen (nimmt das neue Secret auf) ...' -ForegroundColor Cyan
 & $Supabase functions deploy $FunctionName --project-ref $ProjectRef | Out-Null
@@ -148,7 +148,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# --- 4) Pruefen -----------------------------------------------------------
+# --- 4) Prüfen -----------------------------------------------------------
 Write-Host '3/3  Pruefung gegen die laufende Function ...' -ForegroundColor Cyan
 Write-Host ''
 
@@ -161,9 +161,9 @@ try:
 except SystemExit:
     pass
 secret = os.environ["HOOK_SECRET_VALUE"]
-# EIN Timestamp fuer Signatur UND Header. Zwei getrennte time.time()-
-# Aufrufe koennen die Sekunde wechseln - dann stimmt die Signatur nicht
-# mehr und der Test meldet faelschlich "FAIL".
+# EIN Timestamp für Signatur UND Header. Zwei getrennte time.time()-
+# Aufrufe können die Sekunde wechseln - dann stimmt die Signatur nicht
+# mehr und der Test meldet fälschlich "FAIL".
 import time
 wid, ts = "msg_secret_check", str(int(time.time()))
 hit = False

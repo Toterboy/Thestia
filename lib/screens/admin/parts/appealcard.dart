@@ -1,9 +1,9 @@
 // Der Teil '_AppealCard'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -87,11 +87,11 @@ class _AppealCard extends ConsumerWidget {
           if (status == 'pending') ...[
             const SizedBox(height: 10),
             // DER UMBRUCH (18.11.2026, gefunden von einem Test): Die beiden
-            // Knopfe standen in einer festen Reihe - bei grosser Schrift
-            // lief die Reihe ueber den Rand ("RenderFlex overflowed").
+            // Knopfe standen in einer festen Reihe - bei großer Schrift
+            // lief die Reihe über den Rand ("RenderFlex overflowed").
             //
             // DER WEG: Ein "Wrap" bricht die Reihe um, statt zu
-            // ueberlaufen. Bei normaler Schrift steht alles nebeneinander.
+            // überlaufen. Bei normaler Schrift steht alles nebeneinander.
             Wrap(
               alignment: WrapAlignment.end,
               spacing: 8,

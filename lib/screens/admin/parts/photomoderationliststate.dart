@@ -1,9 +1,9 @@
 // Der Teil '_PhotoModerationListState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -36,8 +36,8 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
     } catch (e) {
       // Fehler merken statt schlucken: fetchPendingReviews liefert zwar
       // selbst [] statt zu werfen, aber der Admin soll einen Ladefehler
-      // von einer leeren Queue unterscheiden koennen - die Kennzahl
-      // oben zaehlt naemlich die Queue mit.
+      // von einer leeren Queue unterscheiden können - die Kennzahl
+      // oben zählt nämlich die Queue mit.
       if (kDebugMode) debugPrint('[Admin] Reviews laden fehlgeschlagen: $e');
       if (mounted) _error = e.toString();
     } finally {
@@ -65,7 +65,7 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
 
   @override
   Widget build(BuildContext context) {
-    // Ueber _AsyncList statt eigenes ListView: das war der einzige Tab mit
+    // Über _AsyncList statt eigenes ListView: das war der einzige Tab mit
     // einem abweichenden Rahmen (Divider zwischen Zeilen statt Karten) und
     // ohne Pull-to-refresh.
     return _AsyncList(
@@ -80,7 +80,7 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
         final userId = data['user_id'] as String? ?? '?';
         final userName = data['user']?['name'] as String? ?? userId;
         final hashFull = data['photo_hash'] as String? ?? '';
-        // Guard: kuerzerer Hash darf keinen RangeError werfen.
+        // Guard: kürzerer Hash darf keinen RangeError werfen.
         final hash = hashFull.length > 12
             ? '${hashFull.substring(0, 12)}…'
             : hashFull;

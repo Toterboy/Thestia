@@ -1,12 +1,12 @@
 // Die Sicherheits-Aufklärung nach der E-Mail-Bestätigung.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/onboarding/dating_safety_education_screen.dart 66 offene
 // Zeilen. Der Screen ist die Pflichtstation vor dem Setup - er muss
 // den Nutzer durch die Aufklärung führen, den Fortschritt merken und
 // nach fünf Minuten Schluss machen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Bestätigungsseite steht da,
 //   * wer schon eine Dating-App benutzt hat, kommt zur zweiten Frage,
 //   * wer keine benutzt hat, bekommt die fünfseitige Aufklärung,
@@ -33,7 +33,7 @@ import 'package:thestia/services/storage/local_storage.dart';
 
 import '../support/router_harness.dart';
 
-/// Der Schluessel, unter dem der Fortschritt liegt.
+/// Der Schlüssel, unter dem der Fortschritt liegt.
 const String _fortschrittKey = 'dating_safety_education_v1';
 
 void main() {
@@ -88,7 +88,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    // DER SCREEN WIRD ABGEBAUT: Die Aufklaeung hat eine laufende Uhr -
+    // DER SCREEN WIRD ABGEBAUT: Die Aufkläung hat eine laufende Uhr -
     // ohne das bleibt ein Timer am Ende des Tests stehen.
     addTearDown(() => tester.pumpWidget(const SizedBox()));
   }
@@ -237,7 +237,7 @@ void main() {
   });
 
   group('Die Aufklaeung', () {
-    /// Startet die Aufklaerung (Antwort: "Nein" auf die erste Frage).
+    /// Startet die Aufklärung (Antwort: "Nein" auf die erste Frage).
     Future<void> starteAufklaeung(WidgetTester tester) async {
       await tester.tap(
         find.text(L10n.tWithoutContext('safetyOnboarding.ackButton')),
@@ -304,8 +304,8 @@ void main() {
       await zeigeScreen(tester);
       await starteAufklaeung(tester);
 
-      // Der Browser laesst sich im Test nicht oeffnen - der Weg darf
-      // daran aber nicht scheitern (die Aufklaeung laeuft weiter).
+      // Der Browser lässt sich im Test nicht öffnen - der Weg darf
+      // daran aber nicht scheitern (die Aufkläung läuft weiter).
       await tester.tap(
         find.text(L10n.tWithoutContext('safetyOnboarding.moreInfo')),
       );
@@ -367,7 +367,7 @@ void main() {
 
     testWidgets('nach fuenf Minuten ist Schluss', (tester) async {
       // DIE UHR IST ABGELAUFEN: Der Fortschritt liegt sechs Minuten
-      // zurueck - die Aufklaerung ist damit vorbei.
+      // zurück - die Aufklärung ist damit vorbei.
       await zeigeScreen(
         tester,
         fortschritt: jsonEncode(<String, dynamic>{

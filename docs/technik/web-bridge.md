@@ -1,4 +1,4 @@
-# Web-Bridge und Zero-Install-Gastverbindungen - der Plan fuer 0.12.0
+# Web-Bridge und Zero-Install-Gastverbindungen - der Plan für 0.12.0
 
 Aus der Roadmap (Stand 23.11.2026) in ein eigenes Dokument verschoben.
 
@@ -129,20 +129,20 @@ Aus der Roadmap (Stand 23.11.2026) in ein eigenes Dokument verschoben.
         Kontaktdaten** zuspitzen, nicht auf „keine personenbezogenen
         Daten" – sonst weckt sie einen Eindruck, den die Einrichtung
         nicht erfüllt
-- [ ] **TURN-Relay fuer WebRTC-Anrufe (Video/Sprache)**: Aktuell
-  wird ausschliesslich STUN verwendet. Hinter symmetrischem NAT oder
+- [ ] **TURN-Relay für WebRTC-Anrufe (Video/Sprache)**: Aktuell
+  wird ausschließlich STUN verwendet. Hinter symmetrischem NAT oder
   strengen Firmen-Firewalls kommt deshalb keine Verbindung zustande.
   Es fehlt ein Relay-Anbieter, der ohne Kreditkarte und ohne
   Eigenbetrieb nutzbar ist. **Reihenfolge:** Anbieter festlegen ->
   `ice-config` um den Credential-Modus des Anbieters erweitern ->
-  **Datenschutz-Erklaerung um den Anbieter ergaenzen (Abschnitt 6)** ->
-  erst dann freischalten. Ohne den Erklaerungs-Eintrag waere die
-  veroeffentlichte Aussage falsch.
+  **Datenschutz-Erklärung um den Anbieter ergänzen (Abschnitt 6)** ->
+  erst dann freischalten. Ohne den Erklärungs-Eintrag wäre die
+  veröffentlichte Aussage falsch.
   - Bekannte Stolperstelle: `openrelay.metered.ca` zeigt auf
     Test-Net-Adressen (192.0.2.1 / 100::1) und ist nicht benutzbar;
     `openrelayai.com` ist ein Tunnel-Dienst, kein TURN-Server, und eine
     `wss://`-Adresse ist ein Signalisierungskanal, kein ICE-Server.
-  - Eine WebRTC-Signalisierung ueber WebSocket ist davon **nicht**
+  - Eine WebRTC-Signalisierung über WebSocket ist davon **nicht**
     betroffen - das ist ein eigener Weg, kein TURN.
 - [ ] **E2E-verschlüsselter P2P-Chat** direkt im mobilen Browser (WebRTC
       via WebAssembly) zur nativen App des Thestia-Nutzers

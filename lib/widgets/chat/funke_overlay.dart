@@ -15,18 +15,18 @@ class FunkeOverlay extends StatefulWidget {
   /// v0.9.1-Fix (Android 16): barrierLabel für Accessibility, SafeArea
   /// gegen edge-to-edge-Insets und robustes Schließen (auch wenn canPop
   /// auf neuen Android-Versionen mit Predictive Back anders meldet).
-  /// BEFUND (07.11.2026, Betreiber): "Heart-Bestaetigung schneller."
+  /// BEFUND (07.11.2026, Betreiber): "Heart-Bestätigung schneller."
   /// Die Animation blockierte den Bildschirm 1,9 Sekunden lang und
   /// konnte nicht abgebrochen werden - man musste warten, obwohl die
   /// Information (der Funke) schon da war.
   ///
-  /// Deshalb: 1,1 Sekunden statt 1,8 - und ein Tippen schliesst sie
+  /// Deshalb: 1,1 Sekunden statt 1,8 - und ein Tippen schließt sie
   /// sofort. Der Spielflug des Herzens bleibt, die Wartezeit nicht.
   static Future<void> show(BuildContext context) {
     try {
       return showGeneralDialog(
         context: context,
-        // Abbrechbar: ein Tippen schliesst die Animation sofort.
+        // Abbrechbar: ein Tippen schließt die Animation sofort.
         barrierDismissible: true,
         barrierLabel: 'Funke-Animation',
         barrierColor: Colors.black54,
@@ -102,8 +102,8 @@ class _FunkeOverlayState extends State<FunkeOverlay>
           animation: _ctrl,
           builder: (context, _) {
             // BEFUND (14.11.2026, gefunden von einem Test): Der Wert des
-            // Controllers kann knapp ueber 1,0 landen (1.0000000000000002).
-            // Daraus wurde ein Parameter von 1.0000000000000013 fuer die
+            // Controllers kann knapp über 1,0 landen (1.0000000000000002).
+            // Daraus wurde ein Parameter von 1.0000000000000013 für die
             // Kurve - und Flutter wirft dann die Assertion "parametric
             // value is outside of [0, 1] range". Die Animation lief also
             // im Debug-Modus in einen Fehler, genau in dem Moment, in dem

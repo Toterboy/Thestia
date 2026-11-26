@@ -1,8 +1,8 @@
 ﻿/// Die Texte der App (alle Dateien unter `lib/l10n/strings/`).
 ///
 /// DIE TEXTE LIEGEN NACH THEMEN GETRENNT: `lib/l10n/app_strings.dart` ist
-/// nur noch die Zusammenfuehrung. Tests, die die Texte statisch lesen
-/// (z. B. um zu pruefen, ob ein Schluessel in beiden Sprachen da ist),
+/// nur noch die Zusammenführung. Tests, die die Texte statisch lesen
+/// (z. B. um zu prüfen, ob ein Schlüssel in beiden Sprachen da ist),
 /// brauchen beide Sprachen getrennt - deshalb gibt es hier beides.
 ///
 /// Die Reihenfolge ist nach dem Namen sortiert - damit sind die Zeilen
@@ -42,7 +42,7 @@ String _ohneSchluss(String text) {
   return rest;
 }
 
-/// Die Sprachbloecke je Datei (ohne die schliessenden Klammern).
+/// Die Sprachblöcke je Datei (ohne die schliessenden Klammern).
 List<({String de, String en})> _bloecke() {
   final ergebnis = <({String de, String en})>[];
   for (final datei in _textDateien()) {

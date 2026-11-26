@@ -1,12 +1,12 @@
 // Der Schalter aus der Server-Konfiguration (bisher ungetestet).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/services/storage/app_config_service.dart 0 %.
 //
 // WARUM DAS WICHTIG IST: Der Server kann Transit Spark per
 // `app_config` abschalten - ohne Deploy und ohne App-Update. Das ist
-// die NOTBREMSE fuer den Fall, dass der BLE-Geraetetest nicht besteht.
-// Und: Schlaegt das Lesen fehl, muss das Feature AN bleiben (fail-open)
+// die NOTBREMSE für den Fall, dass der BLE-Gerätetest nicht besteht.
+// Und: Schlägt das Lesen fehl, muss das Feature AN bleiben (fail-open)
 // - ein Lesefehler darf Transit Spark nicht ungefragt stilllegen.
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
@@ -63,7 +63,7 @@ void main() {
 
     test('ohne Eintrag bleibt Transit Spark an', () async {
       // Kein Eintrag = der Schalter wurde nie gesetzt = das Feature
-      // laeuft (so war es immer).
+      // läuft (so war es immer).
       server.zeilen.clear();
 
       expect(await AppConfigService.fetchTransitSparkEnabled(), isTrue);
@@ -86,7 +86,7 @@ void main() {
     test('ohne Eintrag gibt es keine Mindest-Build-Nummer', () async {
       server.zeilen.clear();
 
-      // null heisst: keine Vorgabe - die App laesst den Nutzer
+      // null heißt: keine Vorgabe - die App lässt den Nutzer
       // ungefragt auf die alte Version.
       expect(await AppConfigService.fetchMinAppVersionBuild(), isNull);
     });

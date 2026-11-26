@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Prueft, ob die ausgelieferten Artefakte zum aktuellen Quellstand
+"""Prüft, ob die ausgelieferten Artefakte zum aktuellen Quellstand
 passen.
 
 WARUM (07.11.2026, Betreiber): "wie es die ganze Zeit neue Probleme
-geben kann, wenn du es immer pruefst. Bitte deck das mit tests besser
+geben kann, wenn du es immer prüfst. Bitte deck das mit tests besser
 ab oder irgendwie anders sinnvoll."
 
-DIE ANTWORT: Die Tests pruefen den CODE. Sie pruefen nicht, ob die
-AUSGELIEFERTE DATEI den geprueften Code enthaelt. Genau da sind
+DIE ANTWORT: Die Tests prüfen den CODE. Sie prüfen nicht, ob die
+AUSGELIEFERTE DATEI den geprüften Code enthält. Genau da sind
 beide Fehler passiert:
 
   1) Die Admin-APK im Release-Ordner war Build 33, der Quellstand
      Build 38. Der Betreiber hat sie getestet und einen Fehler
      gemeldet, den es im aktuellen Stand nicht mehr gab. Der
-     versionCode-Vergleich haette es beim Release-Abnehmen gemeldet.
+     versionCode-Vergleich hätte es beim Release-Abnehmen gemeldet.
 
   2) In den alten Release-Ordnern lagen 16 Admin-APKs mit der alten,
      als kompromittiert geltenden UUID. Sie sahen aus wie die
@@ -23,28 +23,28 @@ Beides sind keine Codefehler, sondern Auslieferungsfehler. Und
 Auslieferungsfehler kann kein Test der App finden - sie entstehen
 durch das Zusammenspiel aus Bau, Kopieren und Verteilen.
 
-DIESE PRUEFUNG macht drei Dinge:
+DIESE PRÜFUNG macht drei Dinge:
 
   A) Die Build-Nummer im Artefakt muss zur Version in pubspec.yaml
-     passen. Fuer die oeffentlichen Artefakte ist das die Basis-
-     Nummer (plus der ABI-Aufschlag bei den geteilten APKs), fuer die
+     passen. Für die öffentlichen Artefakte ist das die Basis-
+     Nummer (plus der ABI-Aufschlag bei den geteilten APKs), für die
      Admin-Builds die Basis plus ADMIN_BUILD_OFFSET.
 
-  B) Das Artefakt muss nach der letzten Aenderung am App-Quellstand
-     gebaut sein. Ein Build, der aelter ist als die letzte
-     Quellzeile, traegt den alten Code - auch wenn die Versionsnummer
-     zufaellig passt.
+  B) Das Artefakt muss nach der letzten Änderung am App-Quellstand
+     gebaut sein. Ein Build, der älter ist als die letzte
+     Quellzeile, trägt den alten Code - auch wenn die Versionsnummer
+     zufällig passt.
 
   C) Der Quellstand muss den Code wirklich enthalten, den das
      Artefakt behauptet: Das Werkzeug sucht einen Marker im
-     kompilierten Code (z. B. eine neu hinzugefuegte Fehlermeldung).
+     kompilierten Code (z. B. eine neu hinzugefügte Fehlermeldung).
 
 Aufruf::
 
     python tool/checks/check_release_version.py
 
-Ohne Artefakte sagt das Skript, dass es nichts pruefen konnte - es
-behauptet nicht, es sei gruen.
+Ohne Artefakte sagt das Skript, dass es nichts prüfen konnte - es
+behauptet nicht, es sei grün.
 """
 
 import hashlib
@@ -59,8 +59,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -92,8 +92,8 @@ ABI_OFFSETS = {
 }
 
 # Dateien, die bei JEDEM Build angefasst werden, aber kein Quellstand
-# sind. local.properties enthaelt den SDK-Pfad des Rechners - der
-# aendert sich bei jedem Build und wuerde jedes Artefakt als "zu alt"
+# sind. local.properties enthält den SDK-Pfad des Rechners - der
+# ändert sich bei jedem Build und würde jedes Artefakt als "zu alt"
 # melden.
 KEIN_QUELLSTAND = ("local.properties", "key.properties")
 
@@ -133,9 +133,9 @@ def version_code(aapt2_exe, pfad):
 def version_code_aus_aab(pfad):
     """Die Build-Nummer aus dem Manifest eines App-Bundles.
 
-    Das Manifest eines AAB ist Protobuff (kein Binaer-XML), deshalb
+    Das Manifest eines AAB ist Protobuff (kein Binär-XML), deshalb
     kann aapt2 es nicht lesen. Der Leser steckt in
-    tool/checks/check_release_consistency.py - dort wird er fuer genau
+    tool/checks/check_release_consistency.py - dort wird er für genau
     diesen Zweck gepflegt.
     """
     try:
@@ -148,7 +148,7 @@ def version_code_aus_aab(pfad):
 
 
 def juengste_quell_aenderung():
-    """Die juengste Aenderung am App-Quellstand: (mtime, pfad)."""
+    """Die jüngste Änderung am App-Quellstand: (mtime, pfad)."""
     kandidaten = []
     for ordner in ("lib", "android"):
         basis = ROOT / ordner
@@ -172,20 +172,20 @@ def juengste_quell_aenderung():
 
 
 def marker_aus_dem_quellstand():
-    """Marker, die im kompilierten Code sein MUESSTEN.
+    """Marker, die im kompilierten Code sein MÜSSTEN.
 
     Gesucht wird eine Fehlermeldung, die der App den aktuellen
     Quellstand beweist: eine Zeile, die es im Quelltext gibt und die
     erst mit dem letzten Stand dazugekommen ist.
 
     HERANGEKOMMEN wird der Text nicht geraten, sondern aus dem
-    Git-Verlauf gelesen: die zuletzt hinzugefuegten Schluessel in
-    lib/l10n/app_strings.dart. Ohne Git (frischer Checkout) faellt der
-    Check auf die Versionsnummer zurueck.
+    Git-Verlauf gelesen: die zuletzt hinzugefügten Schlüssel in
+    lib/l10n/app_strings.dart. Ohne Git (frischer Checkout) fällt der
+    Check auf die Versionsnummer zurück.
     """
     try:
         # DIE TEXTE LIEGEN NACH THEMEN GETRENNT (lib/l10n/strings/) -
-        # der Verlauf wird darueber gelesen.
+        # der Verlauf wird darüber gelesen.
         textpfad = "lib/l10n/strings"
         ergebnis = subprocess.run(
             ["git", "log", "-1", "--format=%H", "--", textpfad],
@@ -267,8 +267,8 @@ def main() -> int:
             fehler.append("%s: Build-Nummer nicht lesbar" % name)
             continue
 
-        # Der MARKER zuerst: er sagt das Wichtigste - der Build traegt
-        # einen aelteren CODE. Die Build-Nummer kann zufaellig passen
+        # Der MARKER zuerst: er sagt das Wichtigste - der Build trägt
+        # einen älteren CODE. Die Build-Nummer kann zufällig passen
         # (etwa weil sie von Hand gesetzt wurde), der Code nicht.
         if marker:
             fehlt_marker = None
@@ -308,7 +308,7 @@ def main() -> int:
         print("  OK %-40s Build %d" % (name, ist))
 
     # Die alten Ordner: liegen dort Admin-Builds, die jemand nehmen
-    # koennte?
+    # kännte?
     alte = []
     for ordner2 in sorted(RELEASES.iterdir()):
         if not ordner2.is_dir() or ordner2 == ordner:

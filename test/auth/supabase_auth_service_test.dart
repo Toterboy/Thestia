@@ -1,16 +1,16 @@
-// Unit-Tests fuer die Supabase-Anmeldung.
+// Unit-Tests für die Supabase-Anmeldung.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Anmeldung (Erfolg, falsche Zugangsdaten, Serverfehler),
 //   * die Registrierung (Profil, Duplikat-Schutz, gesperrte E-Mail),
-//   * das Zuruecksetzen des Passworts (E-Mail-Flow),
+//   * das Zurücksetzen des Passworts (E-Mail-Flow),
 //   * die MFA-Anbindung (AAL/Challenge-Pfad des Auth-Servers),
 //   * die Sperre nach zu vielen Fehlversuchen (Lockout),
-//   * das Abmelden und das Loeschen des Kontos,
+//   * das Abmelden und das Löschen des Kontos,
 //   * das Wiederherstellen der Sitzung (inkl. Refresh und Ablauf).
 //
 // WIE DER SERVER ERSETZT WIRD:
-//   Der Auth-Service nutzt den echten Supabase-Client. Der Test haengt
+//   Der Auth-Service nutzt den echten Supabase-Client. Der Test hängt
 //   einen handgeschriebenen Fake ([_FakeAuthServer]) an, der genau die
 //   Auth-Endpunkte beantwortet, die der Service braucht. So werden auch
 //   die echten Fehlerbehandlungen des Clients mitgetestet (400 vs. 500).
@@ -29,7 +29,7 @@ import 'package:thestia/services/storage/secure_storage.dart';
 import 'package:thestia/services/auth/supabase_auth_service.dart';
 import 'package:thestia/services/server/supabase_database_service.dart';
 
-/// Baut ein JWT mit gewuenschter Laufzeit.
+/// Baut ein JWT mit gewünschter Laufzeit.
 String _jwt({int laufzeitSekunden = 3600, String sub = 'nutzer-1'}) {
   String teil(Map<String, dynamic> inhalt) =>
       base64Url.encode(utf8.encode(jsonEncode(inhalt))).replaceAll('=', '');
@@ -39,7 +39,7 @@ String _jwt({int laufzeitSekunden = 3600, String sub = 'nutzer-1'}) {
       '.c2ln';
 }
 
-/// In-Memory-Keystore fuer die Tokens (statt echter Keystore).
+/// In-Memory-Keystore für die Tokens (statt echter Keystore).
 class _FakeSecureStorage extends FlutterSecureStorage {
   _FakeSecureStorage(this.store);
 
@@ -84,14 +84,14 @@ class _FakeSecureStorage extends FlutterSecureStorage {
   }
 }
 
-/// Der Verschluesselungsdienst ohne echte Schluessel (die App braucht von
-/// ihm nur die User-ID fuer die Safety-Nummern).
+/// Der Verschlüsselungsdienst ohne echte Schlüssel (die App braucht von
+/// ihm nur die User-ID für die Safety-Nummern).
 class _FakeEncryptionService extends EncryptionService {
   @override
   Future<void> get initialized => Future<void>.value();
 }
 
-/// Der handgeschriebene Supabase-Auth-Server fuer die Tests.
+/// Der handgeschriebene Supabase-Auth-Server für die Tests.
 class _FakeAuthServer {
   _FakeAuthServer();
 
@@ -104,10 +104,10 @@ class _FakeAuthServer {
   /// HTTP-Status bei der Registrierung (0 = Erfolg).
   int signupStatus = 0;
 
-  /// Liefert die Registrierung ohne Session (Bestaetigungs-Flow)?
+  /// Liefert die Registrierung ohne Session (Bestätigungs-Flow)?
   bool signupOhneSession = false;
 
-  /// Liefert die Registrierung einen bereits bestaetigten Nutzer?
+  /// Liefert die Registrierung einen bereits bestätigten Nutzer?
   bool signupBereitsBestaetigt = false;
 
   /// Das Erstellungsdatum des registrierten Nutzers.
@@ -122,7 +122,7 @@ class _FakeAuthServer {
   /// HTTP-Status bei getUser (0 = Erfolg).
   int getUserStatus = 0;
 
-  /// Der Nutzer, den getUser liefert (ohne E-Mail-Bestaetigung?).
+  /// Der Nutzer, den getUser liefert (ohne E-Mail-Bestätigung?).
   bool getUserOhneBestaetigung = false;
 
   /// Ist die E-Mail-Adresse gesperrt?
@@ -140,7 +140,7 @@ class _FakeAuthServer {
   /// Alle Anfragen, die der Server gesehen hat.
   final List<String> anfragen = [];
 
-  /// Die Koerper der Anfragen (nach Pfad-Endung).
+  /// Die Körper der Anfragen (nach Pfad-Endung).
   final Map<String, List<Map<String, dynamic>>> koerper = {};
 
   /// Die Anfrage, die gerade beantwortet wird.
@@ -172,7 +172,7 @@ class _FakeAuthServer {
     status,
     headers: {'content-type': 'application/json'},
     // DER GRUND: PostgREST liest die Methode aus "response.request" - ohne
-    // das Feld stuerzt der Client auf einem Null-Check ab.
+    // das Feld stürzt der Client auf einem Null-Check ab.
     request: _aktuell,
   );
 
@@ -210,7 +210,7 @@ class _FakeAuthServer {
         return _json({'msg': 'Registrierung nicht erlaubt'}, signupStatus);
       }
       if (signupBereitsBestaetigt) {
-        // DER GRUND FUER DIE FLACHE ANTWORT: Ohne Session liefert
+        // DER GRUND FÜR DIE FLACHE ANTWORT: Ohne Session liefert
         // Supabase das Nutzer-Objekt selbst (nicht unter "user") - so
         // baut der Client die [AuthResponse].
         return _json(_userJson(erstellt: signupErstellt));
@@ -237,17 +237,17 @@ class _FakeAuthServer {
       return http.Response('', 204, request: anfrage);
     }
 
-    // POST /auth/v1/resend - die Bestaetigungs-Mail.
+    // POST /auth/v1/resend - die Bestätigungs-Mail.
     if (pfad.endsWith('/auth/v1/resend')) {
       return _json({'message_id': 'mail-1'});
     }
 
-    // POST /auth/v1/recover - das Passwort-Zuruecksetzen.
+    // POST /auth/v1/recover - das Passwort-Zurücksetzen.
     if (pfad.endsWith('/auth/v1/recover')) {
       return _json({'message_id': 'mail-2'});
     }
 
-    // POST /rest/v1/rpc/check_email_ban_status - die Sperr-Pruefung.
+    // POST /rest/v1/rpc/check_email_ban_status - die Sperr-Prüfung.
     if (pfad.contains('/rest/v1/rpc/check_email_ban_status')) {
       return _json({
         'banned': emailGesperrt,
@@ -255,7 +255,7 @@ class _FakeAuthServer {
       });
     }
 
-    // POST /functions/v1/delete-account - die Kontoloeschung.
+    // POST /functions/v1/delete-account - die Kontolöschung.
     if (pfad.endsWith('/functions/v1/delete-account')) {
       if (deleteStatus != 200) {
         return _json(deleteBody, deleteStatus);
@@ -281,15 +281,15 @@ void main() {
     encryption = _FakeEncryptionService();
     tokens = SecureTokenStore(_FakeSecureStorage(keystore));
     // DER GRUND: Der Login-Lockout liegt in den SharedPreferences. Der
-    // Test startet deshalb jeden Fall mit einem leeren Zaehler.
+    // Test startet deshalb jeden Fall mit einem leeren Zähler.
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
   /// Baut einen Supabase-Client gegen den Fake-Server.
   ///
-  /// DER GRUND FUER DEN PKCE-SPEICHER: [SupabaseAuthService.register]
-  /// ruft "signUp" auf - und der Auth-Client braucht fuer den
-  /// PKCE-Flow einen Speicher fuer den Code-Verifier. Ohne ihn bricht
+  /// DER GRUND FÜR DEN PKCE-SPEICHER: [SupabaseAuthService.register]
+  /// ruft "signUp" auf - und der Auth-Client braucht für den
+  /// PKCE-Flow einen Speicher für den Code-Verifier. Ohne ihn bricht
   /// der Aufruf mit einer Assertion ab.
   SupabaseClient testClient() {
     final client = SupabaseClient(
@@ -353,8 +353,8 @@ void main() {
     });
 
     test('ein Serverfehler zaehlt nicht als Fehlversuch', () async {
-      // DER GRUND: Nur echte "falsche Zugangsdaten" (400) duerfen den
-      // Zaehler hochzaehlen. Ein Serverausfall (500) ist kein Angriff -
+      // DER GRUND: Nur echte "falsche Zugangsdaten" (400) dürfen den
+      // Zähler hochzählen. Ein Serverausfall (500) ist kein Angriff -
       // sonst sperrt die App den Nutzer wegen eines Server-Problems aus.
       server.loginStatus = 500;
       final service = neuerService();
@@ -398,7 +398,7 @@ void main() {
         );
       }
 
-      // DER zehnte Versuch loest die Sperre aus.
+      // DER zehnte Versuch löst die Sperre aus.
       await expectLater(
         service.login(email: 'lena@thestia.de', password: 'falsch'),
         throwsA(
@@ -504,7 +504,7 @@ void main() {
 
     test('das Passwort landet NIE in den Nutzerdaten', () async {
       // DER GRUND (H-5): raw_user_meta_data wird serverseitig gelesen und
-      // ist fuer jeden mit Admin-Zugriff sichtbar. Ein Passwort dort waere
+      // ist für jeden mit Admin-Zugriff sichtbar. Ein Passwort dort wäre
       // ein Klartext-Sekret in der Datenbank.
       final service = neuerService();
 
@@ -530,7 +530,7 @@ void main() {
     });
 
     test('ohne Session (Bestaetigungs-Flow): kein Fehler', () async {
-      // DER GRUND: Bei aktivierter E-Mail-Bestaetigung liefert Supabase
+      // DER GRUND: Bei aktivierter E-Mail-Bestätigung liefert Supabase
       // absichtlich KEINE Session. Das ist der Normalfall, kein Fehler.
       server.signupOhneSession = true;
       final service = neuerService();
@@ -553,8 +553,8 @@ void main() {
     test('eine bereits registrierte E-Mail wird erkannt', () async {
       // DER GRUND: Supabase meldet bei einer vorhandenen E-Mail KEINEN
       // Fehler (keine Enumeration). Der Client erkennt den Fall an der
-      // fehlenden Session plus bestaetigtem Konto - sonst wuerde der
-      // Nutzer endlos auf den Bestaetigungs-Screen warten.
+      // fehlenden Session plus bestätigtem Konto - sonst würde der
+      // Nutzer endlos auf den Bestätigungs-Screen warten.
       server.signupBereitsBestaetigt = true;
       final service = neuerService();
 
@@ -578,9 +578,9 @@ void main() {
     test(
       'eine verwaiste, nie bestaetigte Registrierung wird erkannt',
       () async {
-        // DER GRUND: Eine Registrierung, die vor ueber 30 Minuten ohne
-        // Bestaetigung liegen blieb, ist "verwaist" - der Nutzer soll
-        // nicht in der Bestaetigungsschleife hängen bleiben.
+        // DER GRUND: Eine Registrierung, die vor über 30 Minuten ohne
+        // Bestätigung liegen blieb, ist "verwaist" - der Nutzer soll
+        // nicht in der Bestätigungsschleife hängen bleiben.
         server.signupOhneSession = true;
         server.signupErstellt = DateTime.now().subtract(
           const Duration(hours: 2),
@@ -650,9 +650,9 @@ void main() {
     });
 
     test('ein abgelaufener Token wird aufgefrischt', () async {
-      // DER GRUND: Der Access-Token laeuft nach ~1 h ab. War die App
-      // laenger im Hintergrund, muss der Token erneuert werden - sonst
-      // waere der Nutzer ohne Vorwarnen ausgeloggt.
+      // DER GRUND: Der Access-Token läuft nach ~1 h ab. War die App
+      // länger im Hintergrund, muss der Token erneuert werden - sonst
+      // wäre der Nutzer ohne Vorwarnen ausgeloggt.
       final client = testClient();
       await client.auth.setSession(
         'refresh-token',
@@ -677,7 +677,7 @@ void main() {
 
     test('ein abgelaufener Token, der sich nicht erneuern laesst: '
         'abgemeldet', () async {
-      // DER GRUND (Auto-Logout-Haertung): Schlaegt der Refresh dauerhaft
+      // DER GRUND (Auto-Logout-Härtung): Schlägt der Refresh dauerhaft
       // fehl, ist der Token widerrufen - die Sitzung muss verworfen
       // werden. Sonst zeigte die App einen "eingeloggten" Zustand, der
       // gar nicht mehr gilt.
@@ -710,7 +710,7 @@ void main() {
     test('der Server wird abgemeldet, die Tokens werden geloescht', () async {
       final service = neuerService();
       // Erst anmelden: nur mit einer Session spricht der Client den
-      // Logout-Endpoint des Servers an (sonst waere es nur lokal).
+      // Logout-Endpoint des Servers an (sonst wäre es nur lokal).
       await service.login(email: 'lena@thestia.de', password: 'geheim123');
       await tokens.saveTokens(
         accessToken: 'a',
@@ -731,8 +731,8 @@ void main() {
     });
 
     test('ohne Netz wird lokal trotzdem abgemeldet', () async {
-      // DER GRUND: Der Nutzer muss sich auch offline abmelden koennen -
-      // der Token laeuft ohnehin bis zum Ablauf weiter.
+      // DER GRUND: Der Nutzer muss sich auch offline abmelden können -
+      // der Token läuft ohnehin bis zum Ablauf weiter.
       server.logoutStatus = 500;
       final service = neuerService();
       await tokens.saveTokens(

@@ -8,7 +8,7 @@ import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/utils/chat/chat_backgrounds.dart';
 import 'package:thestia/utils/common/constants.dart';
 
-/// Zaehlt Schreibvorgaenge, damit die Deduplizierung geprueft werden kann.
+/// Zählt Schreibvorgänge, damit die Deduplizierung geprüft werden kann.
 class _CountingStorage implements LocalStorage {
   final Map<String, String> _data = {};
   int writes = 0;
@@ -95,8 +95,8 @@ void main() {
   group('Persist-Deduplizierung', () {
     test('unveraenderter State schreibt nicht erneut', () async {
       final notifier = container.read(settingsProvider.notifier);
-      // Der Blind Mode laesst sich nicht mehr abschalten
-      // (NUTZERWUNSCH 01.11.2026) - fuer den Schreib-Test wird
+      // Der Blind Mode lässt sich nicht mehr abschalten
+      // (NUTZERWUNSCH 01.11.2026) - für den Schreib-Test wird
       // deshalb eine andere boolesche Einstellung genommen.
       await notifier.setMfaSetupDismissed(true);
       final afterFirst = storage.writes;
@@ -109,8 +109,8 @@ void main() {
     test('echte Aenderung schreibt genau einmal', () async {
       final notifier = container.read(settingsProvider.notifier);
       storage.writes = 0;
-      // Der Blind Mode laesst sich nicht mehr abschalten
-      // (NUTZERWUNSCH 01.11.2026) - fuer den Schreib-Test wird
+      // Der Blind Mode lässt sich nicht mehr abschalten
+      // (NUTZERWUNSCH 01.11.2026) - für den Schreib-Test wird
       // deshalb eine andere boolesche Einstellung genommen.
       await notifier.setMfaSetupDismissed(true);
       await notifier.setMfaSetupDismissed(true);
@@ -130,7 +130,7 @@ void main() {
           overrides: [localStorageProvider.overrideWithValue(broken)],
         );
         // Der State wird optimistisch gesetzt; der Schreibfehler darf die UI
-        // nicht mit einer unbehandelten Async-Exception zerstoeren.
+        // nicht mit einer unbehandelten Async-Exception zerstören.
         await c.read(settingsProvider.notifier).setMfaSetupDismissed(true);
         expect(c.read(settingsProvider).mfaSetupDismissed, isTrue);
         expect(broken.attempts, greaterThan(0));

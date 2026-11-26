@@ -7,11 +7,11 @@ import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/server/data_deletion_service.dart';
 import 'package:thestia/widgets/common/buttons.dart';
 
-/// Screen zum Loeschen einzelner Datenkategorien.
+/// Screen zum Löschen einzelner Datenkategorien.
 ///
 /// Das Konto bleibt erhalten - nur die angekreuzten Daten gehen. Die
-/// Loeschung ist unwiderruflich, deshalb gibt es vor dem Loeschen eine
-/// Bestaetigung, die auflistet, was genau verschwindet.
+/// Löschung ist unwiderruflich, deshalb gibt es vor dem Löschen eine
+/// Bestätigung, die auflistet, was genau verschwindet.
 ///
 /// Der Server macht die Arbeit (Edge Function `delete-user-data`).
 /// Dieser Screen schickt nur die Auswahl.
@@ -30,7 +30,7 @@ class _DeleteDataScreenState extends ConsumerState<DeleteDataScreen> {
   ///
   /// Jede Zeile sagt, WAS genau verschwindet - und, wenn etwas auch die
   /// Gegenseite betrifft, dass es das tut. Das ist der Punkt: eine
-  /// Loeschung, die im Hintergrund auch den Chat der anderen Person
+  /// Löschung, die im Hintergrund auch den Chat der anderen Person
   /// beendet, muss das sagen.
   List<({String key, String titel, String text})> _kategorien() {
     return [
@@ -240,7 +240,7 @@ class _DeleteDataScreenState extends ConsumerState<DeleteDataScreen> {
                   : () => _loeschen(_gewaehlt.toList()),
             ),
             const SizedBox(height: 32),
-            // Alles loeschen: das Konto bleibt, der Inhalt nicht.
+            // Alles löschen: das Konto bleibt, der Inhalt nicht.
             Text(
               L10n.t(context, 'del.allTitle'),
               style: theme.textTheme.titleMedium?.copyWith(
@@ -267,7 +267,7 @@ class _DeleteDataScreenState extends ConsumerState<DeleteDataScreen> {
             ),
             const SizedBox(height: 8),
             TextButton(
-              // Die vollstaendige Kontoloeschung liegt im
+              // Die vollständige Kontolöschung liegt im
               // Datenschutz-Screen - dort mit MFA-Step-up.
               onPressed: () => context.push(AppRoutes.privacy),
               child: Text(L10n.t(context, 'del.accountLink')),

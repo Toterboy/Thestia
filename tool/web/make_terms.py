@@ -1,23 +1,23 @@
 """Erzeugt die Nutzungsbedingungen (DE + EN).
 
-WARUM (Recherche 05.11.2026): Fuer eine Webanwendung mit
-Nutzergeneriertem Inhalt verlangt DSA Art. 16 die "Bedingungen fuer die
+WARUM (Recherche 05.11.2026): Für eine Webanwendung mit
+Nutzergeneriertem Inhalt verlangt DSA Art. 16 die "Bedingungen für die
 Vereinbarung von Leistungen" (Nutzungsbedingungen) und Art. 17 eine
-Erklaerungspflicht fuer Moderationsentscheidungen. Play Store und
-F-Droid verlangen zusaetzlich eine "User-Generated-Content-Policy".
+Erklärungspflicht für Moderationsentscheidungen. Play Store und
+F-Droid verlangen zusätzlich eine "User-Generated-Content-Policy".
 
 Die Seiten entstehen aus einem Generator (tool/web/make_terms.py), damit
 beide Sprachfassungen nicht auseinanderlaufen und die Seiten bei
-Aenderungen neu erzeugt werden koennen.
+Änderungen neu erzeugt werden können.
 
-Die Inhalte sind bewusst auf das beschraenkt, was das Projekt
-tatsaechlich tut:
+Die Inhalte sind bewusst auf das beschränkt, was das Projekt
+tatsächlich tut:
   * Mindestalter 16, ab 18 volljährig
-  * elterliche Freigabe fuer 16/17-Jaehrige
+  * elterliche Freigabe für 16/17-Jährige
   * Verhaltensregeln (Respekt, keine Belästigung, kein Nacktbild etc.)
   * Moderation und Rechte bei Verstossen
   * Haftung und Freischaltung
-  * Daten und ihre Loeschung (Verweis auf die Datenschutzerklaerung)
+  * Daten und ihre Löschung (Verweis auf die Datenschutzerklärung)
 """
 import pathlib
 import sys
@@ -27,8 +27,8 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -264,7 +264,7 @@ EN = {
 
 # Design und Sprachknopf kommen aus tool/helpers/web_theme.py. Damit ist die
 # Seite genau so gebaut, wie apply_theme sie erzeugt - und der
-# Idempotenz-Gate der CI ("Web-Theme wiederholbar") ist erfuellt.
+# Idempotenz-Gate der CI ("Web-Theme wiederholbar") ist erfüllt.
 import sys as _sys
 _sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 sys.path.insert(
@@ -299,7 +299,7 @@ def seite(sprache, daten, pfad):
              # stehen auch in der SEITEN-Liste von apply_web_theme.py.
              # Ohne diese Links fehlten sie nach jedem Erzeugen wieder -
              # und der Idempotenz-Gate der CI ("Web-Theme wiederholbar")
-             # meldete: ein Durchlauf aendert die Datei. Sie stehen
+             # meldete: ein Durchlauf ändert die Datei. Sie stehen
              # deshalb hier (wie in tool/web/make_privacy_policy.py).
              '  <link rel="icon" href="/favicon.ico" sizes="any">',
              '  <link rel="icon" type="image/png" sizes="192x192" '
@@ -347,11 +347,11 @@ def main():
 
 
 # BEFUND (14.11.2026): Das Schreiben passiert NUR, wenn das Skript
-# selbst laeuft. Vorher standen die zwei Aufrufe ohne Guard hier - und
+# selbst läuft. Vorher standen die zwei Aufrufe ohne Guard hier - und
 # tool/web/make_terms_app.py importiert dieses Modul (es braucht die
-# Inhalte fuer die App-Dateien). Dadurch schrieb der Import die
+# Inhalte für die App-Dateien). Dadurch schrieb der Import die
 # Webseiten neu - und die Favicon-Links (die apply_web_theme.py
 # eingesetzt hatte) waren weg. Der Idempotenz-Gate der CI meldete
-# daraufhin: "ein Durchlauf aendert die Datei".
+# daraufhin: "ein Durchlauf ändert die Datei".
 if __name__ == '__main__':
     main()

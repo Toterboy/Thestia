@@ -12,21 +12,21 @@ import 'package:thestia/widgets/common/mode_icons.dart';
 /// ## Warum hier KEINE Material-Symbole stehen
 ///
 /// Die erste Fassung verglich mit `Icons.event` und `Icons.qr_code_scanner`
-/// und kam auf "30.0dp, 56 % Tinte" - fuer sechs voellig verschiedene
+/// und kam auf "30.0dp, 56 % Tinte" - für sechs völlig verschiedene
 /// Glyphen exakt denselben Wert. Kontrollsymbole haben es verraten:
 /// `Icons.add` (ein dünnes Plus) und `Icons.close` (ein Kreuz) kamen auf
 /// dieselben 30.0dp / 56 %. Das ist nicht die Glyphe, das ist ein
 /// Ersatzkästchen: in `flutter_test` steht die echte Material-Schrift
-/// nicht zur Verfuegung, `Icon` rendert also nicht die Glyphe.
+/// nicht zur Verfügung, `Icon` rendert also nicht die Glyphe.
 ///
-/// Ein Vergleich gegen Material ist hier also NICHT moeglich. Die
+/// Ein Vergleich gegen Material ist hier also NICHT möglich. Die
 /// Eigenzeichen sind Vektoren und werden echt gezeichnet, ihre Zahlen
-/// stimmen - der Anker fuer die Groesse ist deshalb die Augenmaessung
-/// auf dem Geraet, nicht diese Datei.
+/// stimmen - der Anker für die Größe ist deshalb die Augenmässung
+/// auf dem Gerät, nicht diese Datei.
 ///
 /// Als Gitter hilft der Umriss-Vergleich: Material-Symbole sind Umrisse
-/// mit viel Weiss darin. Ein gefuellter Block gleicher Ausdehnung wiegt
-/// optisch schwerer und sieht groesser aus.
+/// mit viel Weiß darin. Ein gefüllter Block gleicher Ausdehnung wiegt
+/// optisch schwerer und sieht größer aus.
 ///
 ///   flutter test test/mode_icon_metrics_test.dart
 void main() {
@@ -59,8 +59,8 @@ void main() {
         home: RepaintBoundary(
           key: key,
           // KEIN Hintergrund: gemessen wird der Alphakanal. Ein weisses
-          // Rect haette dort ueber Alpha 255 und die Tinte wuerde die
-          // ganze Flaeche fuellen.
+          // Rect hätte dort über Alpha 255 und die Tinte würde die
+          // ganze Fläche füllen.
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -99,9 +99,9 @@ void main() {
         for (var x = 0; x < w; x++) {
           final p = (y * w + x) * 4;
           if (px[p + 3] < 8) continue;
-          // Schwarz auf transparent: weiche Raender haben geringe
-          // Deckkraft UND niedrige Farbkanaele - beides pruefen, sonst
-          // zaehlt der Anti-Aliasing-Rand als volle Tinte.
+          // Schwarz auf transparent: weiche Ränder haben geringe
+          // Deckkraft UND niedrige Farbkanäle - beides prüfen, sonst
+          // zählt der Anti-Aliasing-Rand als volle Tinte.
           if (px[p] > 120 || px[p + 1] > 120 || px[p + 2] > 120) continue;
           tinte++;
           if (x < minX) minX = x;

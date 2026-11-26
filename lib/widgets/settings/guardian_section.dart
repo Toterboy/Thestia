@@ -11,20 +11,20 @@ import 'package:thestia/widgets/settings/privacy_section.dart';
 
 /// Der Abschnitt "Kinderschutz & Elternzugriff" in den Einstellungen.
 ///
-/// fuer ALLE sichtbar, nicht nur fuer Minderjaehrige: wer mit 18
+/// für ALLE sichtbar, nicht nur für Minderjährige: wer mit 18
 /// geworden ist, hat die Freigabe aus der Zeit mit 16/17 noch - und
-/// entscheidet hier ueber ihr Ende.
+/// entscheidet hier über ihr Ende.
 ///
-/// Die Einstellungen der Aufsicht (Rhythmus, Nutzungszeit) aendert der
+/// Die Einstellungen der Aufsicht (Rhythmus, Nutzungszeit) ändert der
 /// ELTERNTEIL im Portal. Der Jugendliche kann sie nur mit der PIN
-/// aendern - und die Pruefung laeuft auf dem Server. Deshalb steht hier
-/// die PIN als Weg zur Aenderung, nicht als Schutz vor dem Jugendlichen:
+/// ändern - und die Prüfung läuft auf dem Server. Deshalb steht hier
+/// die PIN als Weg zur Änderung, nicht als Schutz vor dem Jugendlichen:
 /// er kennt sie nicht, der Elternteil schon.
 class GuardianSection extends ConsumerStatefulWidget {
   const GuardianSection({super.key, this.showTitle = true});
 
   /// Der Titel wird im eigenen Screen in der AppBar gezeigt - dort
-  /// waere er doppelt.
+  /// wäre er doppelt.
   final bool showTitle;
 
   @override
@@ -54,7 +54,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
     }
   }
 
-  /// Der Controller fuer die PIN-Eingabe.
+  /// Der Controller für die PIN-Eingabe.
   ///
   /// BEFUND (16.11.2026, gefunden von einem Test): Der Controller wurde
   /// direkt nach dem Dialog freigegeben - der Dialog baut aber noch
@@ -118,8 +118,8 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
       _meldung(L10n.t(context, 'guardian.pinWrong'));
       return;
     }
-    // Die PIN wird nur fuer die Dauer der Bearbeitung gehalten und
-    // danach verworfen. Sie gehoert dem Elternteil - der Jugendliche
+    // Die PIN wird nur für die Dauer der Bearbeitung gehalten und
+    // danach verworfen. Sie gehört dem Elternteil - der Jugendliche
     // soll sie nicht kennen.
     setState(() {
       _entsperrt = true;
@@ -167,17 +167,17 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
     await ref.read(guardianProvider.notifier).load();
   }
 
-  /// Die PIN wird nur fuer die Dauer der Bearbeitung gehalten.
+  /// Die PIN wird nur für die Dauer der Bearbeitung gehalten.
   String? _pinAusDemDialog;
 
   Future<void> _zeitWaehlen(bool start) async {
     // DER GRUND (19.11.2026, gefunden von einem Test): Der lokale Wert
     // (_startMin/_endMin) ist erst nach der ERSTEN Auswahl gesetzt.
-    // Vorher zeigte der Waehler 12:00 an, obwohl z. B. 09:00 galt -
-    // wer ihn nur ansah und bestaetigte, schob die Grenze ungefragt
+    // Vorher zeigte der Wähler 12:00 an, obwohl z. B. 09:00 galt -
+    // wer ihn nur ansah und bestätigte, schob die Grenze ungefragt
     // auf 12:00 (und bei beiden Grenzen auf 12:00 - die Nutzungszeit
-    // waere auf null zusammengeschrumpft). Darum der Rueckfall auf den
-    // Serverstand: der Waehler muss mit dem aktuellen Wert starten.
+    // wäre auf null zusammengeschrumpft). Darum der Rückfall auf den
+    // Serverstand: der Wähler muss mit dem aktuellen Wert starten.
     final stand = ref.read(guardianProvider);
     final lokal = start ? _startMin : _endMin;
     final serverWert = start ? stand.usageStartMin : stand.usageEndMin;
@@ -248,7 +248,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
 
   /// Der Abruf ist gescheitert.
   ///
-  /// BEFUND (06.11.2026, Betreiber): "Der Elternbereich laedt ewig
+  /// BEFUND (06.11.2026, Betreiber): "Der Elternbereich lädt ewig
   /// lang." Vorher stand hier - bei JEDEM Fehler - ein endloser
   /// Ladekreis: der Nutzer konnte den Bereich nicht verlassen und
   /// nicht erfahren, dass etwas nicht funktioniert hat. Jetzt gibt es
@@ -309,7 +309,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
     // nie eine Freigabe". Das war falsch und uninformativ: Der
     // Jugendliche wusste nicht, ob seine Freigabe endete - und erst
     // recht nicht, dass dabei die E-Mail-Adresse des Elternteils
-    // geloescht wurde (Migration 179).
+    // gelöscht wurde (Migration 179).
     if (status.isEnded) {
       final endgueltigGeloescht = status.isGuardianEmailDeleted;
       return Column(
@@ -371,7 +371,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
       );
     }
 
-    // Freigabe wartet auf die Bestaetigung des Elternteils.
+    // Freigabe wartet auf die Bestätigung des Elternteils.
     if (status.isPending) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -509,7 +509,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
     eintraege.add(const SizedBox(height: 6));
 
     if (_entsperrt) {
-      // Bearbeitbar - die Aenderung geht nur mit der PIN durch.
+      // Bearbeitbar - die Änderung geht nur mit der PIN durch.
       final frequenz = _frequency ?? status.notifyFrequency;
       final aktiv = _usageAktiv ?? status.usageLimitEnabled;
       final start = _startMin ?? status.usageStartMin;

@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -28,7 +28,7 @@ extension _DatingHourSitzung on _DatingHourChatScreenState {
     // (Platzhalter 'Dein Gegenüber') - der Partner sah ihn nie, das Profil
     // war unbekannt und der Funke verschwand nach Neuinstallation. Jetzt:
     // serverseitiger Like -> bestehende Mutual-Like-Pipeline erzeugt das
-    // kanonische Match (fuer BEIDE, samt Push), und das ECHTE Profil
+    // kanonische Match (für BEIDE, samt Push), und das ECHTE Profil
     // wird geladen.
     //
     // NUTZERWUNSCH "Doppelte Funken": Der lokale addMatch legte parallel
@@ -92,10 +92,10 @@ extension _DatingHourSitzung on _DatingHourChatScreenState {
     }
   }
 
-  /// Beendet das Gespraech - von einer Seite aus, jederzeit.
+  /// Beendet das Gespräch - von einer Seite aus, jederzeit.
   ///
   /// NUTZERWUNSCH 04.11.2026: "Wenn man das aber nicht will, kann
-  /// die eine Seite ja jederzeit das Gespraech beenden und es gibt
+  /// die eine Seite ja jederzeit das Gespräch beenden und es gibt
   /// keinen automatischen Funke von beiden Seiten."
   Future<void> _endConversation() async {
     final service = ref.read(datingHourServiceProvider);
@@ -219,8 +219,8 @@ extension _DatingHourSitzung on _DatingHourChatScreenState {
         );
       }
     } catch (e) {
-      // _loadSession wird unawaited aufgerufen und laeuft im Timer. Ein
-      // Postgrest-/Socket-Fehler ist KEIN DatingHourException und wuerde
+      // _loadSession wird unawaited aufgerufen und läuft im Timer. Ein
+      // Postgrest-/Socket-Fehler ist KEIN DatingHourException und würde
       // sonst unhandled aus dem Timer fliegen - alle 10 s erneut.
       debugPrint('[DatingHourChat] Session konnte nicht geladen werden: ');
     }
@@ -263,10 +263,10 @@ extension _DatingHourSitzung on _DatingHourChatScreenState {
         _showDecisionDialog();
       }
 
-      // Die Fuenf-Minuten-Marke als mittiger Hinweis im Chat
+      // Die Fünf-Minuten-Marke als mittiger Hinweis im Chat
       // (NUTZERWUNSCH 04.11.2026).
       //
-      // Sie steht an der Position, an der die Fuenf Minuten
+      // Sie steht an der Position, an der die Fünf Minuten
       // vorbeigegangen sind - alles, was danach geschrieben wird,
       // steht darunter. Der Ton ist bewusst sanft: es ist eine
       // Einladung, in Ruhe zu entscheiden, kein Countdown-Druck.

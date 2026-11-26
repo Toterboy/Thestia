@@ -24,9 +24,9 @@ void main() {
   // Passwort-Fixture: NICHT aus der Produktion, offensichtlich als Test.
   const testPassword = 'TEST_ONLY_p4ssw0rd-not-used-anywhere-else!';
 
-  // DIE ZEIT: Jede Verschluesselung leitet den Schluessel mit einem
-  // langsamen KDF ab (das ist Absicht - ein schneller KDF waere eine
-  // Einladung zum Brute-Force). Ein Test mit sechs Passwoertern
+  // DIE ZEIT: Jede Verschlüsselung leitet den Schlüssel mit einem
+  // langsamen KDF ab (das ist Absicht - ein schneller KDF wäre eine
+  // Einladung zum Brute-Force). Ein Test mit sechs Passwörtern
   // braucht darum unter Last (viele Testdateien parallel) mehr als die
   // 30 Sekunden des Standard-Zeitlimits.
   group('AES-256-GCM Backup-Krypto', () {
@@ -161,9 +161,9 @@ void main() {
       expect(c1, isNot(equals(c2)));
     });
 
-    // DIE ZEIT: Jede Verschluesselung leitet den Schluessel mit einem
-    // langsamen KDF ab (das ist Absicht - ein schneller KDF waere eine
-    // Einladung zum Brute-Force). Der Test mit sechs Passwoertern
+    // DIE ZEIT: Jede Verschlüsselung leitet den Schlüssel mit einem
+    // langsamen KDF ab (das ist Absicht - ein schneller KDF wäre eine
+    // Einladung zum Brute-Force). Der Test mit sechs Passwörtern
     // braucht darum unter Last (viele Testdateien parallel) mehr als
     // die 30 Sekunden des Standard-Zeitlimits.
     test('Roundtrip mit Sonderzeichen im Passwort (Emoji, Umlaute, '

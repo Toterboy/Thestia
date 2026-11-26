@@ -1,23 +1,23 @@
-// Die Zustaende des Elternbereichs (Kinderschutz & Elternzugriff).
+// Die Zustände des Elternbereichs (Kinderschutz & Elternzugriff).
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/settings/guardian_section.dart 63 offene Zeilen. Der
-// Abschnitt entscheidet, was der Jugendliche ueber die Aufsicht seiner
-// Eltern sieht - und ob er etwas aendern darf (nur mit der PIN des
+// Abschnitt entscheidet, was der Jugendliche über die Aufsicht seiner
+// Eltern sieht - und ob er etwas ändern darf (nur mit der PIN des
 // Elternteils).
 //
 // DER WEG: Der Test "guardian_section_test.dart" antwortet dem SERVER
-// (die PIN laeuft dort). Dieser Test hier deckt die ZUSTAENDE ab - er
+// (die PIN läuft dort). Dieser Test hier deckt die ZUSTÄNDE ab - er
 // gibt dem Dienst einen handgeschriebenen Ersatz und sieht genau, was
 // an den Server ginge.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * der Abruf schlaegt fehl: es gibt einen Grund und einen Knopf
+// WAS HIER GEPRÜFT WIRD:
+//   * der Abruf schlägt fehl: es gibt einen Grund und einen Knopf
 //     (kein endloser Ladekreis - das war ein gemeldeter Fehler),
 //   * ohne Freigabe steht das da,
 //   * eine wartende Freigabe nennt die Adresse des Elternteils,
 //   * eine aktive Freigabe zeigt Rhythmus und Nutzungszeit,
-//   * ohne PIN gibt es keinen Knopf zum Aendern (die PIN gehoert dem
+//   * ohne PIN gibt es keinen Knopf zum Ändern (die PIN gehört dem
 //     Elternteil) und der Nutzer sieht den Hinweis,
 //   * die falsche PIN wird abgelehnt (mit klarer Meldung),
 //   * mit der PIN wird der Bereich bearbeitbar,
@@ -38,7 +38,7 @@ import 'package:thestia/widgets/settings/guardian_section.dart';
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
-/// Der Ersatz fuer den Eltern-Dienst (kein Netz im Test).
+/// Der Ersatz für den Eltern-Dienst (kein Netz im Test).
 class _FakeGuardianDienst extends GuardianService {
   _FakeGuardianDienst() : super(SupabaseService.client);
 
@@ -54,7 +54,7 @@ class _FakeGuardianDienst extends GuardianService {
   /// Wie oft wurde der Stand gelesen?
   int anzahlLaden = 0;
 
-  /// Die gespeicherten Aenderungen.
+  /// Die gespeicherten Änderungen.
   final List<Map<String, dynamic>> gespeichert = <Map<String, dynamic>>[];
 
   @override
@@ -269,7 +269,7 @@ void main() {
   });
 
   group('Die PIN', () {
-    /// Tippt die PIN ein und bestaetigt.
+    /// Tippt die PIN ein und bestätigt.
     Future<void> tippePin(WidgetTester tester, String pin) async {
       final knopf = find.text(L10n.tWithoutContext('guardian.pinLocked'));
       await tester.ensureVisible(knopf);

@@ -1,21 +1,21 @@
 ﻿// Der Auth-Anbieter: Registrieren, Anmelden, Abmelden.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/providers/auth/auth_provider.dart 109 offene Zeilen - darunter
 // die Registrierung und die Anmeldung.
 //
-// DER GRUND: Der Anbieter ist die Quelle der Wahrheit fuer "wer ist
+// DER GRUND: Der Anbieter ist die Quelle der Wahrheit für "wer ist
 // angemeldet". Drei Dinge sind dort heikel:
 //   * nach der Registrierung merkt er sich die E-Mail-Adresse UND das
-//     Passwort - nur im Speicher, fuer den stillen Auto-Login nach der
-//     Bestaetigung. Vergisst er das, bleibt der Nutzer auf dem
-//     Bestaetigungs-Screen hängen,
-//   * nach der Anmeldung raeumt er die Merkliste wieder auf (das
+//     Passwort - nur im Speicher, für den stillen Auto-Login nach der
+//     Bestätigung. Vergisst er das, bleibt der Nutzer auf dem
+//     Bestätigungs-Screen hängen,
+//   * nach der Anmeldung räumt er die Merkliste wieder auf (das
 //     Passwort darf nicht liegen bleiben),
 //   * ein Fehler muss als Fehler ankommen - nicht als "nicht
-//     angemeldet" (dann wuerde der Nutzer denkt, sein Konto sei weg).
+//     angemeldet" (dann würde der Nutzer denkt, sein Konto sei weg).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Registrierung merkt sich Adresse und Passwort (nur im Speicher),
 //   * die Registrierung setzt das Profil,
 //   * ein Registrierungsfehler wird als Fehler gemeldet,
@@ -42,16 +42,16 @@ void main() {
     await SharedPreferences.getInstance();
     mockKeystore();
     mockZeitzone();
-    // HIVE: Das Abmelden raeumt die verschluesselten Boxen auf - ohne
+    // HIVE: Das Abmelden räumt die verschlüsselten Boxen auf - ohne
     // initialisierten Hive scheitert es.
     await mockHive();
   });
 
   /// Baut den Container mit dem Auth-Anbieter.
   ///
-  /// DER WEG: Die Wiederherstellung laeuft im Hintergrund und setzt
+  /// DER WEG: Die Wiederherstellung läuft im Hintergrund und setzt
   /// danach den Status - wenn der Test sofort danach anmeldet, wird
-  /// sein Ergebnis gleich wieder ueberschrieben. Der Test wartet sie
+  /// sein Ergebnis gleich wieder überschrieben. Der Test wartet sie
   /// deshalb ab.
   Future<ProviderContainer> baueContainer(TestAuth auth) async {
     final container = ProviderContainer(
@@ -66,7 +66,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    // DER ANBIETER: Er wird jetzt erzeugt (sonst entstuende er erst im
+    // DER ANBIETER: Er wird jetzt erzeugt (sonst entstünde er erst im
     // Test und die Wiederherstellung liefe danach).
     container.read(authProvider.notifier);
     // Und die Wiederherstellung wird abgewartet - sonst setzt sie den
@@ -88,8 +88,8 @@ void main() {
             gender: 'female',
             birthDate: DateTime(1996, 6, 15),
           );
-      // DER SYNC: Nach der Registrierung laeuft der Abgleich mit dem
-      // Server im Hintergrund. Der Test wartet ihn ab - sonst laeuft er
+      // DER SYNC: Nach der Registrierung läuft der Abgleich mit dem
+      // Server im Hintergrund. Der Test wartet ihn ab - sonst läuft er
       // nach dem Abbau des Containers weiter.
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
@@ -140,7 +140,7 @@ void main() {
       );
 
       // DER FEHLER WIRD DURCHGEREICHT: der Anbieter setzt den Zustand
-      // auf "Fehler" UND wirft weiter - so zeigt die Oberflaeche die
+      // auf "Fehler" UND wirft weiter - so zeigt die Oberfläche die
       // Meldung an.
       await expectLater(
         container

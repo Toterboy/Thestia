@@ -96,14 +96,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     // der Router leitet ohnehin um. Fail-safe: einfach den Login zeigen.
     //
     // BEFUND (18.11.2026, gefunden von einem Test): Nach dem erfolgreichen
-    // Reset wird das Recovery-Flag geloescht - der Bildschirm hat dann
+    // Reset wird das Recovery-Flag gelöscht - der Bildschirm hat dann
     // `pending == false` und hat sich selbst zur Anmeldung umgeleitet. Die
-    // Bestaetigung "Passwort geaendert" war dadurch nur EINEN Frame lang
+    // Bestätigung "Passwort geändert" war dadurch nur EINEN Frame lang
     // sichtbar: der Nutzer landete auf der Anmeldeseite und wusste nicht,
-    // ob sein Passwort wirklich geaendert wurde.
+    // ob sein Passwort wirklich geändert wurde.
     //
-    // DER WEG: Solange die Bestaetigung steht (also `_done`), bleibt der
-    // Bildschirm stehen. Der Knopf "Zur Anmeldung" darunter fuehrt weiter.
+    // DER WEG: Solange die Bestätigung steht (also `_done`), bleibt der
+    // Bildschirm stehen. Der Knopf "Zur Anmeldung" darunter fährt weiter.
     final pending = ref.watch(passwordRecoveryPendingProvider);
     if (!pending && !_done) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

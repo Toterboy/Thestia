@@ -1,20 +1,20 @@
-// Die Bild-Meldung: die KI-Pruefung und der Melde-Dialog.
+// Die Bild-Meldung: die KI-Prüfung und der Melde-Dialog.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/services/profile/image_report_service.dart 76 offene Zeilen. Der
-// Weg ist heikel: der Nutzer meldet ein Bild, die App prueft es lokal
-// (auf dem Geraet), schickt es zum Server und bekommt das KI-Ergebnis
-// zurueck.
+// Weg ist heikel: der Nutzer meldet ein Bild, die App prüft es lokal
+// (auf dem Gerät), schickt es zum Server und bekommt das KI-Ergebnis
+// zurück.
 //
-// DIE WICHTIGEN EIGENSCHAFTEN (und die Testfaelle dazu):
-//   * das Bild verlaesst das Geraet ERST, wenn der Nutzer auf
+// DIE WICHTIGEN EIGENSCHAFTEN (und die Testfälle dazu):
+//   * das Bild verlässt das Gerät ERST, wenn der Nutzer auf
 //     "Meldung absenden" tippt (nicht vorher, nicht automatisch),
 //   * die Reporter-ID geht pseudonymisiert raus (kein Klartext-UUID),
-//   * die KI bestaetigt die Meldung -> der Nutzer sieht die
-//     Bestaetigung,
+//   * die KI bestätigt die Meldung -> der Nutzer sieht die
+//     Bestätigung,
 //   * die KI widerspricht -> der Nutzer kann eskalieren (an das Team),
 //   * ohne Bild sagt der Dialog das (statt still zu nichts zu tun),
-//   * schlaegt die Meldung fehl, wird das gesagt (eine Meldung, die
+//   * schlägt die Meldung fehl, wird das gesagt (eine Meldung, die
 //     nicht ankommt, ist keine Meldung).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,12 +40,12 @@ import '../support/router_harness.dart';
 const String _bildDataUrl =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
-/// Der Ersatz fuer den Bild-Melde-Dienst.
+/// Der Ersatz für den Bild-Melde-Dienst.
 ///
-/// DER GRUND FUER DEN ERSATZ: Im Widget-Test laeuft die Uhr des
-/// Test-Fensters, nicht die des Netzes - eine echte Anfrage wuerde dort
-/// haengenbleiben. Der Dialog selbst wird mit dem Ersatz geprueft; die
-/// Anfrage an den Server pruefen die Tests weiter unten (mit dem echten
+/// DER GRUND FÜR DEN ERSATZ: Im Widget-Test läuft die Uhr des
+/// Test-Fensters, nicht die des Netzes - eine echte Anfrage würde dort
+/// hängenbleiben. Der Dialog selbst wird mit dem Ersatz geprüft; die
+/// Anfrage an den Server prüfen die Tests weiter unten (mit dem echten
 /// Dienst).
 class _FakeBildMeldeDienst extends ImageReportService {
   /// Das Ergebnis, das der Dienst liefert.
@@ -59,7 +59,7 @@ class _FakeBildMeldeDienst extends ImageReportService {
   /// Wirft der Dienst einen Fehler? (der Fall "die Meldung kommt nicht an")
   bool wirftFehler = false;
 
-  /// Die Aufrufe (damit der Test sieht, was rausgegangen waere).
+  /// Die Aufrufe (damit der Test sieht, was rausgegangen wäre).
   final List<Map<String, dynamic>> aufrufe = <Map<String, dynamic>>[];
 
   @override
@@ -87,7 +87,7 @@ class _FakeBildMeldeDienst extends ImageReportService {
   }
 }
 
-/// Der Ersatz fuer den Melde-Dienst (kein Speicher, kein Netz).
+/// Der Ersatz für den Melde-Dienst (kein Speicher, kein Netz).
 class _FakeMeldeDienst extends ReportService {
   /// Wie viele Meldungen wurden erzeugt?
   int anzahl = 0;
@@ -117,9 +117,9 @@ class _FakeMeldeDienst extends ReportService {
   }
 }
 
-/// Der Knopf, der den Melde-Dialog oeffnet.
+/// Der Knopf, der den Melde-Dialog öffnet.
 ///
-/// EIGENTLICHER GRUND FUER DIESE KLASSE: Der Dialog braucht einen
+/// EIGENTLICHER GRUND FÜR DIESE KLASSE: Der Dialog braucht einen
 /// [WidgetRef] (er liest daraus das Profil und den Melde-Dienst). Der
 /// Ref kommt nur aus einem Consumer-Widget - deshalb ist der Knopf hier
 /// ein [ConsumerWidget].
@@ -176,8 +176,8 @@ void main() {
     server.funktionsAufrufe.clear();
     server.funktionsAntworten.clear();
     server.rpcAufrufe.clear();
-    // DIE FEHLERANTWORTEN: Sie gelten nur fuer den einen Test, der sie
-    // stellt - sonst wuerde der naechste Test denselben Fehler sehen.
+    // DIE FEHLERANTWORTEN: Sie gelten nur für den einen Test, der sie
+    // stellt - sonst würde der nächste Test denselben Fehler sehen.
     server.fehlerAntworten.clear();
     ImageSafetyService.classifyOverride = null;
   });
@@ -278,10 +278,10 @@ void main() {
   });
 
   group('Der Melde-Dialog', () {
-    /// Der Ersatz fuer den Bild-Melde-Dienst.
+    /// Der Ersatz für den Bild-Melde-Dienst.
     final _FakeBildMeldeDienst bildDienst = _FakeBildMeldeDienst();
 
-    /// Der Ersatz fuer den Melde-Dienst (kein Speicher, kein Netz).
+    /// Der Ersatz für den Melde-Dienst (kein Speicher, kein Netz).
     final _FakeMeldeDienst meldeDienst = _FakeMeldeDienst();
 
     setUp(() {
@@ -294,7 +294,7 @@ void main() {
         operatorNotified: true,
       );
       meldeDienst.anzahl = 0;
-      // DIE LOKALE PRUEFUNG: Ohne das laeuft das echte Modell (das
+      // DIE LOKALE PRÜFUNG: Ohne das läuft das echte Modell (das
       // dauert Sekunden). Der Test gibt den Befund selbst vor.
       ImageSafetyService.classifyOverride = (bytes) =>
           const ImageSafetyResult(nsfl: 0.0, nsfw: 0.0, sfw: 1.0);
@@ -335,7 +335,7 @@ void main() {
       timestamp: DateTime.now(),
     );
 
-    /// Waehlt den Grund "Unangemessene Inhalte" und schickt die Meldung.
+    /// Wählt den Grund "Unangemessene Inhalte" und schickt die Meldung.
     Future<void> waehleGrund(WidgetTester tester) async {
       final grund = find.text(
         L10n.tWithoutContext('report.type.inappropriateContent'),
@@ -440,9 +440,9 @@ void main() {
     testWidgets('die lokale Pruefung meldet ein anstoessiges Bild', (
       tester,
     ) async {
-      // DER BEFUND DER LOKALEN PRUEFUNG: Das Bild ist auffaellig. Der
+      // DER BEFUND DER LOKALEN PRÜFUNG: Das Bild ist auffällig. Der
       // Nutzer soll das WISSEN - die Meldung geht trotzdem raus, aber er
-      // weiss, was er meldet.
+      // weiß, was er meldet.
       ImageSafetyService.classifyOverride = (bytes) =>
           const ImageSafetyResult(nsfl: 0.1, nsfw: 0.9, sfw: 0.0);
       await zeigeMeldeKnopf(tester, nachricht: bildNachricht());
@@ -484,8 +484,8 @@ void main() {
     testWidgets('die KI widerspricht: der Nutzer kann eskalieren', (
       tester,
     ) async {
-      // DIE KI SIEHT ES ANDERS: Das Bild ist fuer sie harmlos. Der
-      // Nutzer muss die Meldung trotzdem an das Team geben koennen.
+      // DIE KI SIEHT ES ANDERS: Das Bild ist für sie harmlos. Der
+      // Nutzer muss die Meldung trotzdem an das Team geben können.
       bildDienst.ergebnis = const ImageReportOutcome(
         aiAvailable: true,
         aiAgrees: false,
@@ -510,7 +510,7 @@ void main() {
             'weiterleiten koennen, wenn die KI falsch liegt.',
       );
 
-      // DIE ESKALATION: Der zweite Aufruf traegt "escalate" - erst dann
+      // DIE ESKALATION: Der zweite Aufruf trägt "escalate" - erst dann
       // geht das Bild an das Team.
       await tester.tap(
         find.widgetWithText(

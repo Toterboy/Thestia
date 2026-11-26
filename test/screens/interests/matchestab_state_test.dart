@@ -1,36 +1,36 @@
 // Die Wege des Funken-Tabs, die die Coverage-Messung als offen zeigte.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung meldete fuer
+// ANLASS (25.11.2026): Die Coverage-Messung meldete für
 // lib/screens/interests/parts/matchestabstate.dart 57 offene Zeilen -
 // genau die Wege, die der Betreiber im November 2026 benutzt hat.
 //
-// WAS HIER GEPRUEFT WIRD (und was der Nutzer davon merkt):
-//   * Beim Zurueckkommen aus dem Chat laedt die Funkenliste neu - im
+// WAS HIER GEPRÜFT WIRD (und was der Nutzer davon merkt):
+//   * Beim Zurückkommen aus dem Chat lädt die Funkenliste neu - im
 //     Chat kann ja dazwischen geschrieben worden sein.
-//   * Ein Funke ohne Aktivitaet wandert nach 72 Stunden von allein in die
+//   * Ein Funke ohne Aktivität wandert nach 72 Stunden von allein in die
 //     "Archivierten Funken"; eine frische Nachricht oder ein Re-Funke
-//     haelt ihn am Leben.
+//     hält ihn am Leben.
 //   * Wird der LETZTE Funke abgewahlt, endet der Auswahl-Modus von
 //     selbst - der Nutzer muss nicht noch auf "Abbrechen" tippen.
 //   * Der Absage-Text beim Beenden geht wirklich als Nachricht raus und
 //     die Gegenseite wird benachrichtigt (gegen das Ghosting).
-//   * Das Oeffnen eines Funken geht in den Chat - auch dann, wenn die
-//     einmalige Rueckfrage beim automatischen Funke scheitert.
-//   * Ein Fehler beim Loeschen wird dem Nutzer gemeldet (nicht
+//   * Das Öffnen eines Funken geht in den Chat - auch dann, wenn die
+//     einmalige Rückfrage beim automatischen Funke scheitert.
+//   * Ein Fehler beim Löschen wird dem Nutzer gemeldet (nicht
 //     verschluckt).
 //   * Ein Chat mit ungelesenen Nachrichten steht oben in der Liste; bei
-//     gleicher Zahl gewinnt der juengste Funke.
+//     gleicher Zahl gewinnt der jüngste Funke.
 //   * Der Re-Funke meldet einen Fehler.
-//   * Das gespeicherte Profil (QR-Kontakt) laesst sich oeffnen.
+//   * Das gespeicherte Profil (QR-Kontakt) lässt sich öffnen.
 //
 // NICHT TESTBAR (und warum):
 //   * Der Leerzustand und der RefreshIndicator OHNE Einbettung - der
 //     Abschnitt "_MatchesTab" ist privat, und die App benutzt ihn immer
 //     eingebettet ("embedded: true"). Ein Test kann die private Klasse
 //     nicht erzeugen.
-//   * "Ein bereits gekuehlter Funke wird nochmal gekuehlt" - der Knopf
+//   * "Ein bereits gekühlter Funke wird nochmal gekühlt" - der Knopf
 //     "Archivieren" steht nur an den Kacheln der AKTIVEN Funken (und an
-//     den fixierten, die auch aktiv sind). Ein gekuehlter Funke hat seine
+//     den fixierten, die auch aktiv sind). Ein gekühlter Funke hat seine
 //     eigene Kachel ohne diesen Knopf - der Weg ist im Bildschirm nicht
 //     erreichbar.
 //
@@ -43,7 +43,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
@@ -63,7 +63,7 @@ import '../../support/plugin_mocks.dart';
 
 /// Das Relay als Ersatz: merkt sich, was zugestellt wurde.
 ///
-/// DER GRUND: Der echte Relay-Dienst verschluesselt die Nachricht mit
+/// DER GRUND: Der echte Relay-Dienst verschlüsselt die Nachricht mit
 /// Signal und legt sie beim Server ab. Das kann der Test nicht - der
 /// Ersatz merkt sich nur, WELCHER Text an WEN geht. Genau das ist die
 /// Frage des Nutzers: "ist mein Absage-Text angekommen?"
@@ -84,10 +84,10 @@ class FakeRelayService extends RelayService {
   }
 }
 
-/// Der Find-your-Match-Dienst mit zusaetzlichen Fehlerwegen.
+/// Der Find-your-Match-Dienst mit zusätzlichen Fehlerwegen.
 ///
-/// DER GRUND: Der gemeinsame Ersatz kann nur beim Laden, Kuehlen und
-/// Ausblenden scheitern. Fuer "Loeschen" und "Re-Funke" braucht es
+/// DER GRUND: Der gemeinsame Ersatz kann nur beim Laden, Kühlen und
+/// Ausblenden scheitern. Für "Löschen" und "Re-Funke" braucht es
 /// eigene Fehler - dort soll der Nutzer ja auch erfahren, wenn es
 /// nicht geklappt hat.
 class FehlerDienst extends FakeFindYourMatchService {
@@ -114,7 +114,7 @@ class FehlerDienst extends FakeFindYourMatchService {
   }
 }
 
-/// Ein Funke fuer den Test - mit eigener Person und eigenen Zeiten.
+/// Ein Funke für den Test - mit eigener Person und eigenen Zeiten.
 MatchWithState funkeVon({
   required int id,
   required String personId,
@@ -131,7 +131,7 @@ MatchWithState funkeVon({
     failedAttempts: 0,
     createdVia: 'swipe',
     status: status,
-    // FRISCH: ein alter Funke wuerde von der Auto-Kuehlung (72 h)
+    // FRISCH: ein alter Funke würde von der Auto-Kühlung (72 h)
     // erfasst - das will der Test nur, wenn er es sagt.
     createdAt: erstellt ?? DateTime.now(),
     resparkedAt: reEntzuendet,
@@ -142,8 +142,8 @@ MatchWithState funkeVon({
 /// Der Router des Tests - mit dem Routen-Beobachter der App.
 ///
 /// DER GRUND: Der Beobachter meldet dem Tab, dass der Nutzer
-/// zurueckgekommen ist - dann laedt der Tab neu. Ohne den Beobachter
-/// koennte der Test diesen Weg gar nicht stellen.
+/// zurückgekommen ist - dann lädt der Tab neu. Ohne den Beobachter
+/// kännte der Test diesen Weg gar nicht stellen.
 GoRouter _router() {
   return GoRouter(
     initialLocation: '/interessen',
@@ -169,8 +169,8 @@ GoRouter _router() {
 
 /// Baut den Screen auf (wie die anderen Tests des Bildschirms).
 ///
-/// [groesse] ist die Bildschirmgroesse. Manche Tests brauchen einen
-/// breiteren Bildschirm - das wird dort begruendet.
+/// [größe] ist die Bildschirmgrösse. Manche Tests brauchen einen
+/// breiteren Bildschirm - das wird dort begründet.
 Future<void> _pump(
   WidgetTester tester, {
   required FindYourMatchService service,
@@ -198,13 +198,13 @@ Future<void> _pump(
   await pumpFrames(tester);
 }
 
-/// Der Dienst fuer die meisten Tests.
+/// Der Dienst für die meisten Tests.
 FehlerDienst _dienst() => FehlerDienst(supabase.Supabase.instance.client);
 
-/// Das Menue (die drei Punkte) der Kachel mit diesem Namen.
+/// Das Menü (die drei Punkte) der Kachel mit diesem Namen.
 ///
-/// DER GRUND: Die Kacheln liegen untereinander - ohne den Umweg ueber
-/// den Namen wuerde der Test das Menue der FALSCHEN Kachel antippen.
+/// DER GRUND: Die Kacheln liegen untereinander - ohne den Umweg über
+/// den Namen würde der Test das Menü der FALSCHEN Kachel antippen.
 Finder _menueVon(String name) {
   return find.descendant(
     of: find.ancestor(of: find.text(name), matching: find.byType(Card)),
@@ -262,7 +262,7 @@ void main() {
             'ganze Zweck der Kachel.',
       );
 
-      // Und kommt zurueck.
+      // Und kommt zurück.
       final router = GoRouter.of(tester.element(find.text('Chat')));
       router.pop();
       await pumpFrames(tester);
@@ -399,7 +399,7 @@ void main() {
       await pumpFrames(tester);
       expect(find.byType(CheckboxListTile), findsOneWidget);
 
-      // Der Funke wird angewaehlt ...
+      // Der Funke wird angewählt ...
       await tester.tap(find.byType(CheckboxListTile));
       await pumpFrames(tester);
 
@@ -445,14 +445,14 @@ void main() {
         ],
       );
 
-      // Das Menue der Kachel -> "Archivieren".
+      // Das Menü der Kachel -> "Archivieren".
       await tester.tap(find.byIcon(Icons.more_vert).first);
       await pumpFrames(tester);
       await tester.tap(find.text('Archivieren'));
       await pumpFrames(tester);
 
       // Der Dialog: "Ruhig enden lassen" ist voreingestellt - der Nutzer
-      // waehlt einen vorbereiteten Absage-Text.
+      // wählt einen vorbereiteten Absage-Text.
       final absage = find.text(L10n.tWithoutContext('chat.goodbye.1'));
       await tester.ensureVisible(absage);
       await tester.pump(const Duration(milliseconds: 200));
@@ -494,7 +494,7 @@ void main() {
   group('Das Oeffnen eines Funken', () {
     testWidgets('der automatische Funke fragt nach - der Chat geht auch bei '
         'einem Fehler auf', (tester) async {
-      // Der Server schweigt bei der Rueckfrage.
+      // Der Server schweigt bei der Rückfrage.
       server.rpcFehler.add('resolve_dating_hour_auto_match');
 
       final dienst = _dienst()
@@ -506,8 +506,8 @@ void main() {
       await tester.tap(find.text('Mira, 30'));
       await pumpFrames(tester);
 
-      // DIE EINMALIGE RUECKFRAGE: der automatische Funke wurde nicht von
-      // beiden Seiten bestaetigt.
+      // DIE EINMALIGE RÜCKFRAGE: der automatische Funke wurde nicht von
+      // beiden Seiten bestätigt.
       expect(
         find.text(L10n.tWithoutContext('dh.autoMatch.title')),
         findsOneWidget,
@@ -559,7 +559,7 @@ void main() {
         reason: 'Der fixierte Funke steht im eigenen Abschnitt.',
       );
 
-      // Der fixierte Funke laesst sich antippen ...
+      // Der fixierte Funke lässt sich antippen ...
       await tester.tap(find.text('Mira, 30'));
       await pumpFrames(tester);
       expect(
@@ -618,7 +618,7 @@ void main() {
             'die Fixierung ist eine Anordnung, kein Vertrag.',
       );
 
-      // Das endgueltige Loeschen.
+      // Das endgültige Löschen.
       await tester.tap(_menueVon('Mira, 30'));
       await pumpFrames(tester);
       await tester.tap(
@@ -675,7 +675,7 @@ void main() {
       );
       await pumpFrames(tester);
 
-      // Die Rueckfrage: ohne sie waere das Loeschen ein Unfall.
+      // Die Rückfrage: ohne sie wäre das Löschen ein Unfall.
       expect(
         find.text(L10n.tWithoutContext('interests.deleteSparkTitle')),
         findsOneWidget,
@@ -865,7 +865,7 @@ void main() {
             'das ist der ganze Zweck des gespeicherten Profils.',
       );
 
-      // Und zurueck: der Knopf rechts tut dasselbe.
+      // Und zurück: der Knopf rechts tut dasselbe.
       GoRouter.of(tester.element(find.text('Profil'))).pop();
       await pumpFrames(tester);
       final knopf = find.byTooltip(
@@ -919,8 +919,8 @@ void main() {
           funkeVon(id: 7, personId: 'p1', name: 'Mira', status: 'cooled'),
         ];
       // DER BREITERE BILDSCHIRM: Die Kachel der archivierten Funken hat
-      // drei Knoepfe rechts (Profil, Re-Funke, Loeschen). Auf einem schmalen
-      // Bildschirm bleibt fuer den Namen kein Platz mehr - der Name hat
+      // drei Knöpfe rechts (Profil, Re-Funke, Löschen). Auf einem schmalen
+      // Bildschirm bleibt für den Namen kein Platz mehr - der Name hat
       // dann keine Breite und kann nicht getippt werden. Auf dem breiten
       // Bildschirm steht der Name da, und der Nutzer tippt ihn an.
       await _pump(tester, service: dienst, groesse: const Size(600, 900));

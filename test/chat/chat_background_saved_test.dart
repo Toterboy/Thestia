@@ -1,18 +1,18 @@
-// Test: der gewaehlte Chat-Hintergrund wird gespeichert.
+// Test: der gewählte Chat-Hintergrund wird gespeichert.
 //
-// BEFUND (07.11.2026, Betreiber): "Der Hintergrund, den man auswaehlt,
+// BEFUND (07.11.2026, Betreiber): "Der Hintergrund, den man auswählt,
 // wird nicht gespeichert."
 //
 // Der Test macht den kompletten Weg:
-//   1. Der Picker wird getippt (ein Muster waehlen).
+//   1. Der Picker wird getippt (ein Muster wählen).
 //   2. Der Zustand muss den Hintergrund tragen.
 //   3. Er muss im Speicher (Keystore-Ersatz) stehen - sonst ist er
-//      beim naechsten Start weg.
+//      beim nächsten Start weg.
 //
 // SCHRITT 3 ist der wichtige: der Fehler im Feld war still - die
-// Oberflaeche zeigte den neuen Hintergrund sofort an (optimistisch),
+// Oberfläche zeigte den neuen Hintergrund sofort an (optimistisch),
 // aber das Schreiben schlug fehl und wurde nur protokolliert. Der
-// Nutzer sah es erst beim naechsten Start.
+// Nutzer sah es erst beim nächsten Start.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -60,10 +60,10 @@ class _FakeLocalStorage implements LocalStorage {
   Future<void> remove(String key) async => map.remove(key);
 }
 
-/// Der uebersetzte Text eines Musters ("Punkte", "Linien", ...).
+/// Der übersetzte Text eines Musters ("Punkte", "Linien", ...).
 ///
 /// Die Beschriftung kommt aus den App-Texten - im Test muss man also
-/// den Text finden, den der Nutzer sieht, nicht den Schluessel.
+/// den Text finden, den der Nutzer sieht, nicht den Schlüssel.
 String _text(String id) {
   const namen = {
     'none': 'Keiner',
@@ -95,7 +95,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Das erste Muster waehlen.
+    // Das erste Muster wählen.
     final muster = ChatBackgrounds.presets.first;
     await tester.tap(find.text(_text(muster)));
     await tester.pumpAndSettle();
@@ -122,9 +122,9 @@ void main() {
   testWidgets('schlaegt das Schreiben fehl, ist er beim naechsten Start weg', (
     tester,
   ) async {
-    // DER BEFUND: Das Schreiben schlug still fehl. Die Oberflaeche zeigte
+    // DER BEFUND: Das Schreiben schlug still fehl. Die Oberfläche zeigte
     // den Hintergrund trotzdem an (sie setzt den Zustand zuerst). Beim
-    // naechsten Start war er weg - und niemand wusste warum.
+    // nächsten Start war er weg - und niemand wusste warum.
     final speicher = _FakeLocalStorage(schlaegtFehl: true);
     final container = ProviderContainer(
       overrides: [localStorageProvider.overrideWithValue(speicher)],

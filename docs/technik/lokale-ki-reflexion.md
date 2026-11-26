@@ -1,4 +1,4 @@
-# Lokale KI-Reflexion (Sanctuary) - der Plan fuer 0.11.0
+# Lokale KI-Reflexion (Sanctuary) - der Plan für 0.11.0
 
 Aus der Roadmap (Stand 23.11.2026) in ein eigenes Dokument verschoben.
 

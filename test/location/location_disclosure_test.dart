@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 // Das Plattform-Interface wird von permission_handler exportiert, aber
-// nicht weitergereicht - der Test setzt die Attrappe darueber.
-// Das Paket ist ueber permission_handler ohnehin im Baum (es wird nur
+// nicht weitergereicht - der Test setzt die Attrappe darüber.
+// Das Paket ist über permission_handler ohnehin im Baum (es wird nur
 // nicht direkt deklariert, weil die App es nicht selbst benutzt).
 // ignore: depend_on_referenced_packages
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
@@ -13,17 +13,17 @@ import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/widgets/settings/location_disclosure.dart';
 
-/// Tests fuer die prominente Standort-Offenlegung.
+/// Tests für die prominente Standort-Offenlegung.
 ///
-/// WARUM (06.11.2026): Google Play verlangt fuer EMPFINDLICHE
+/// WARUM (06.11.2026): Google Play verlangt für EMPFINDLICHE
 /// Berechtigungen (Kamera, Mikrofon, Standort) eine sichtbare
-/// Begruendung IN DER APP, bevor der Systemdialog erscheint. Die App
-/// hatte das fuer Kamera und Mikrofon - fuer den Standort fehlte es.
+/// Begründung IN DER APP, bevor der Systemdialog erscheint. Die App
+/// hatte das für Kamera und Mikrofon - für den Standort fehlte es.
 ///
 /// Diese Tests halten fest:
 ///   1) Fehlt die Berechtigung, erscheint die Offenlegung.
 ///   2) Ist sie erteilt, wird der Nutzer NICHT behelligt.
-///   3) Einmal bestaetigt - dann nie wieder.
+///   3) Einmal bestätigt - dann nie wieder.
 class _Berechtigungen extends PermissionHandlerPlatform {
   _Berechtigungen();
 
@@ -150,7 +150,7 @@ void main() {
     );
     expect(container.read(settingsProvider).locationDisclosureAccepted, isTrue);
 
-    // Und beim naechsten Mal kommt kein Dialog mehr.
+    // Und beim nächsten Mal kommt kein Dialog mehr.
     berechtigungen.erteilt = false;
     await tester.pumpWidget(
       ProviderScope(

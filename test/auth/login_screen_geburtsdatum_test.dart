@@ -1,15 +1,15 @@
 // Das Geburtsdatum und "angemeldet bleiben" auf dem Login-Screen.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/login_screen.dart 119 offene Zeilen - darunter der
-// ganze Registrierungs-Weg (Geburtsdatum waehlen, Alters-Bestaetigung)
+// ganze Registrierungs-Weg (Geburtsdatum wählen, Alters-Bestätigung)
 // und der Schalter "angemeldet bleiben".
 //
 // DER GRUND:
-//   * das Geburtsdatum entscheidet ueber die Altersregeln (der Nutzer
+//   * das Geburtsdatum entscheidet über die Altersregeln (der Nutzer
 //     unter 18 hat andere Grenzen). Fehlt es, wird die Registrierung
-//     abgewiesen - und der Nutzer weiss nicht warum,
-//   * "angemeldet bleiben" heisst: die Sitzung bleibt auf dem Geraet.
+//     abgewiesen - und der Nutzer weiß nicht warum,
+//   * "angemeldet bleiben" heißt: die Sitzung bleibt auf dem Gerät.
 //     Der Schalter wird beim Start gelesen - geht er verloren, ist der
 //     Nutzer nach jedem Neustart ausgeloggt.
 import 'package:flutter/material.dart';
@@ -69,7 +69,7 @@ class _Keystore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {
-    // Der Test loescht kein Profil im Keystore.
+    // Der Test löscht kein Profil im Keystore.
   }
 }
 
@@ -135,8 +135,8 @@ void main() {
       await zeigeScreen(tester);
       await wechsleZurRegistrierung(tester);
 
-      // DER KNOPF: Das Geburtsdatum wird ueber einen eigenen Knopf
-      // gewaehlt (nicht ueber die Tastatur - die Daten sollen nicht
+      // DER KNOPF: Das Geburtsdatum wird über einen eigenen Knopf
+      // gewählt (nicht über die Tastatur - die Daten sollen nicht
       // geraten werden).
       final knopf = find.text(L10n.tWithoutContext('auth.birthDatePick'));
       if (knopf.evaluate().isEmpty) {
@@ -158,7 +158,7 @@ void main() {
             'eine Eingabe per Tastatur waere fehleranfaellig.',
       );
 
-      // Und der Dialog laesst sich wieder schliessen.
+      // Und der Dialog lässt sich wieder schließen.
       final l10n = Localizations.of<MaterialLocalizations>(
         tester.element(find.byType(DatePickerDialog)),
         MaterialLocalizations,
@@ -174,8 +174,8 @@ void main() {
     testWidgets('der Schalter wird gespeichert', (tester) async {
       await zeigeScreen(tester);
 
-      // DER SCHALTER: Er entscheidet, ob die Sitzung auf dem Geraet
-      // bleibt. Ohne das Merken waere der Nutzer nach jedem Neustart
+      // DER SCHALTER: Er entscheidet, ob die Sitzung auf dem Gerät
+      // bleibt. Ohne das Merken wäre der Nutzer nach jedem Neustart
       // wieder ausgeloggt.
       final schalter = find.byType(Switch);
       if (schalter.evaluate().isEmpty) {
@@ -208,7 +208,7 @@ void main() {
       tester,
     ) async {
       // DER WEG: Der Schalter wird aus dem Speicher gelesen, BEVOR der
-      // Bildschirm erscheint. Ohne das waere der Schalter immer an.
+      // Bildschirm erscheint. Ohne das wäre der Schalter immer an.
       SharedPreferences.setMockInitialValues(<String, Object>{
         'keep_logged_in': false,
       });

@@ -1,18 +1,18 @@
-/// Die Huelle einer Chat-Nachricht auf dem Draht.
+/// Die Hülle einer Chat-Nachricht auf dem Draht.
 ///
-/// WARUM ES SIE GIBT (11.11.2026): "Nachricht fuer alle loeschen" - wie
-/// bei WhatsApp. Damit das ueberhaupt geht, muss BEIDEN Seiten dieselbe
-/// Nachrichten-ID kennen: die loeschende Seite markiert eine ID, die
+/// WARUM ES SIE GIBT (11.11.2026): "Nachricht für alle löschen" - wie
+/// bei WhatsApp. Damit das überhaupt geht, muss BEIDEN Seiten dieselbe
+/// Nachrichten-ID kennen: die löschende Seite markiert eine ID, die
 /// empfangende Seite muss genau diese Nachricht ersetzen.
 ///
 /// Bisher hatte jede Nachricht eine lokale ID:
 ///   - im Relay: `relay_<serverzeile>` (die ID der Relay-Zeile)
 ///   - im P2P-Kanal: `p2p_<millisekunde>_<zaehler>` (lokal erzeugt)
 ///
-/// Zwei Geraete hatten damit zwei verschiedene IDs fuer dieselbe Nachricht
-/// - ein Loeschen haette beim Empfaenger nichts gefunden. Und dieselbe
-/// Nachricht, die ueber BEIDE Wege kam (P2P und Relay), sahen die
-/// Geraete auch als zwei verschiedene an.
+/// Zwei Geräte hatten damit zwei verschiedene IDs für dieselbe Nachricht
+/// - ein Löschen hätte beim Empfänger nichts gefunden. Und dieselbe
+/// Nachricht, die über BEIDE Wege kam (P2P und Relay), sahen die
+/// Geräte auch als zwei verschiedene an.
 ///
 /// DIE HULLE: `__T2__|<id>|<art>|<text>`
 ///   - `id`   die Nachrichten-ID des SENDERS (auf beiden Seiten gleich)
@@ -21,13 +21,13 @@
 ///     drei Trennern getrennt)
 ///
 /// RUECKWAERTSKOMPATIBILITAET: Eine Nachricht ohne `__T2__|` ist von
-/// einer aelteren App. Sie wird wie bisher behandelt (lokale ID, der
-/// Eisbreker-Praefix wird erkannt). Da die App noch nicht im Store ist,
-/// gibt es solche alten Clients nur auf den Geraeten des Betreibers -
+/// einer älteren App. Sie wird wie bisher behandelt (lokale ID, der
+/// Eisbreker-Präfix wird erkannt). Da die App noch nicht im Store ist,
+/// gibt es solche alten Clients nur auf den Geräten des Betreibers -
 /// beide Handys brauchen den neuen Build.
 library;
 
-/// Der Anfang jeder neuen Huelle.
+/// Der Anfang jeder neuen Hülle.
 const String envelopePrefix = '__T2__|';
 
 /// Die Art einer Nachricht auf dem Draht.
@@ -40,10 +40,10 @@ enum WireKind {
 
   const WireKind(this.code);
 
-  /// Das Kuerzel im Drahtformat.
+  /// Das Kürzel im Drahtformat.
   final String code;
 
-  /// Aus dem Kuerzel die Art machen (null bei unbekannt).
+  /// Aus dem Kürzel die Art machen (null bei unbekannt).
   static WireKind? fromCode(String code) {
     for (final k in WireKind.values) {
       if (k.code == code) return k;
@@ -70,14 +70,14 @@ class WireMessage {
   /// Der Text.
   final String text;
 
-  /// Kommt die Nachricht aus der neuen Huelle?
+  /// Kommt die Nachricht aus der neuen Hülle?
   ///
   /// Bei `false` muss die aufrufende Seite selbst eine ID vergeben (so wie
-  /// es vor der Huelle war).
+  /// es vor der Hülle war).
   final bool fromNewFormat;
 }
 
-/// Baut die Huelle fuer eine Nachricht.
+/// Baut die Hülle für eine Nachricht.
 ///
 /// [id] muss die ID des Senders sein - sie wird auf beiden Seiten
 /// benutzt.
@@ -92,7 +92,7 @@ String buildEnvelope({
 /// Zerlegt eine Nachricht aus dem Draht.
 ///
 /// Ist die Nachricht nicht in der neuen Form, kommt
-/// [WireMessage.fromNewFormat] zurueck - der Aufrufer vergibt dann wie
+/// [WireMessage.fromNewFormat] zurück - der Aufrufer vergibt dann wie
 /// bisher eine lokale ID.
 WireMessage parseEnvelope(String wire) {
   if (!wire.startsWith(envelopePrefix)) {
@@ -107,7 +107,7 @@ WireMessage parseEnvelope(String wire) {
   // Nur die ersten drei Trenner trennen - der Text darf '|' enthalten.
   final teile = rest.split('|');
   if (teile.length < 3) {
-    // Unvollstaendige Huelle: als Text behandeln (lieber anzeigen als
+    // Unvollständige Hülle: als Text behandeln (lieber anzeigen als
     // verlieren).
     return WireMessage(
       id: '',

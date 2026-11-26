@@ -1,20 +1,20 @@
-// Die zweite Haelfte der Ersteinrichtung: Gewohnheiten, Geburtstags-Stil,
+// Die zweite Hälfte der Ersteinrichtung: Gewohnheiten, Geburtstags-Stil,
 // Profilbild und die Formular-Zweige.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/onboarding/parts/einrichtungspeichern.dart 66 offene Zeilen
-// und fuer lib/screens/onboarding/parts/einrichtungsaufbau.dart 73 offene
+// und für lib/screens/onboarding/parts/einrichtungsaufbau.dart 73 offene
 // Zeilen - der Weg vom Formular zum Server war ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Gewohnheiten (Rauchen, Alkohol, Drogen) und der Dealbreaker
-//     landen beim Server - nicht nur lokal (sonst waeren sie nach der
+//     landen beim Server - nicht nur lokal (sonst wären sie nach der
 //     Ersteinrichtung wieder weg),
 //   * der Geburtstags-Stil landet beim Server,
 //   * das Profilbild: ohne Bild-Picker bekommt der Nutzer eine Meldung
 //     (sonst passiert gar nichts und der Nutzer wundert sich),
 //   * das Land und das Bundesland werden mitgespeichert,
-//   * die Altersregeln greifen bei Minderjaehrigen (Altersspanne und
+//   * die Altersregeln greifen bei Minderjährigen (Altersspanne und
 //     Suchradius werden geklemmt, "Ganz Deutschland" ist gesperrt).
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
@@ -28,7 +28,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:image/image.dart' as img;
 // Das Plattform-Interface wird von image_picker exportiert, aber nicht
-// weitergereicht - der Test setzt die Attrappe darueber.
+// weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:image_cropper_platform_interface/image_cropper_platform_interface.dart';
 // ignore: depend_on_referenced_packages
@@ -112,9 +112,9 @@ class _FakeImagePicker extends ImagePickerPlatform {
 
 /// Der Bildauswahl-Ersatz, der einen Fehler meldet.
 ///
-/// DAS IST DER FEHLFALL: Auf einem Geraet, auf dem die Galerie nicht
+/// DAS IST DER FEHLFALL: Auf einem Gerät, auf dem die Galerie nicht
 /// erreichbar ist, wirft der Bild-Picker. Ohne Meldung an den Nutzer
-/// wuerde er denken, sein Bild sei geladen - und so waere es nicht.
+/// würde er denken, sein Bild sei geladen - und so wäre es nicht.
 class _FehlerBildPicker extends ImagePickerPlatform {
   @override
   Future<XFile?> getImageFromSource({
@@ -134,7 +134,7 @@ class _AbbrecherBildPicker extends ImagePickerPlatform {
   }) async => null;
 }
 
-/// Der Zuschneider-Ersatz (liefert dieselbe Datei zurueck).
+/// Der Zuschneider-Ersatz (liefert dieselbe Datei zurück).
 class _FakeCropper extends ImageCropperPlatform {
   _FakeCropper(this.datei);
 
@@ -174,13 +174,13 @@ void main() {
       ),
     );
 
-    // HIVE: die verschluesselten Schluessel (Signal-Protokoll) liegen in
-    // Hive-Boxen - ohne initialisierten Hive schlaegt der Aufbau fehl.
+    // HIVE: die verschlüsselten Schlüssel (Signal-Protokoll) liegen in
+    // Hive-Boxen - ohne initialisierten Hive schlägt der Aufbau fehl.
     final tempDir = await Directory.systemTemp.createTemp('thesia_habiten');
     Hive.init(tempDir.path);
 
     // ANGEMELDET: Ohne Sitzung gibt der Server-Dienst nichts frei
-    // ("Nicht eingeloggt") - es wuerde nichts gespeichert.
+    // ("Nicht eingeloggt") - es würde nichts gespeichert.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
 
@@ -202,11 +202,11 @@ void main() {
   /// Baut die Ersteinrichtung und liefert den Container der Provider.
   ///
   /// [geburtsdatum] decides, ob die Altersregeln greifen (ein
-  /// Minderjaehriger bekommt eine engere Altersspanne und einen kleineren
+  /// Minderjähriger bekommt eine engere Altersspanne und einen kleineren
   /// Suchradius).
   ///
   /// [breite] ist die Breite des Bildschirms. Manche Zeilen brauchen mehr
-  /// Platz (das Feld "Bundesland" misst das laengste Bundesland).
+  /// Platz (das Feld "Bundesland" misst das längste Bundesland).
   Future<ProviderContainer> zeigeEinrichtung(
     WidgetTester tester, {
     DateTime? geburtsdatum,
@@ -276,7 +276,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Fuellt die Pflichtangaben der Profilseite (Bio und ein Interesse).
+  /// Füllt die Pflichtangaben der Profilseite (Bio und ein Interesse).
   Future<void> fuelleFormular(WidgetTester tester) async {
     await tester.enterText(
       find.byType(TextFormField).first,
@@ -285,7 +285,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Ein Interesse waehlen (der Chip liegt unterhalb der Falz).
+    // Ein Interesse wählen (der Chip liegt unterhalb der Falz).
     final chip = find.widgetWithText(
       FilterChip,
       AppConstants.presetInterests.first,
@@ -298,7 +298,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   }
 
-  /// Geht zur Profilseite und fuellt sie (Bio und ein Interesse).
+  /// Geht zur Profilseite und füllt sie (Bio und ein Interesse).
   Future<void> fuelleProfil(WidgetTester tester) async {
     await weiter(tester);
     await fuelleFormular(tester);
@@ -323,7 +323,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  /// Das letzte Profil-Update, das den Schluessel enthaelt.
+  /// Das letzte Profil-Update, das den Schlüssel enthält.
   Map<String, dynamic>? profilUpdateMit(String schluessel) {
     for (final s in server.schreibvorgaenge.reversed) {
       if (s['tabelle'] == 'profiles' && s.containsKey(schluessel)) return s;
@@ -337,7 +337,7 @@ void main() {
         w is DropdownButtonFormField<String> && w.decoration.labelText == label,
   );
 
-  /// Waehlt im Dropdown den gewuenschten Wert.
+  /// Wählt im Dropdown den gewünschten Wert.
   Future<void> waehleImDropdown<T>(
     WidgetTester tester,
     Finder feld,
@@ -356,7 +356,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Tippt auf den Chip einer Gewohnheit (z. B. "Taeglich" beim Rauchen).
+  /// Tippt auf den Chip einer Gewohnheit (z. B. "Täglich" beim Rauchen).
   Future<void> tippeGewohnheit(
     WidgetTester tester,
     HabitudeTopic thema,
@@ -386,7 +386,7 @@ void main() {
     addTearDown(() => ImagePickerPlatform.instance = alter);
   }
 
-  /// Laesst die Entprell-Timer (1,5 s) der Praeferenz-Synchronisation
+  /// Lässt die Entprell-Timer (1,5 s) der Präferenz-Synchronisation
   /// ablaufen - sonst steht am Testende ein offener Timer.
   Future<void> lassTimerLaufen(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 1600));
@@ -459,7 +459,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       // Ohne Auswahl wird "keine Angabe" geschrieben - das Feld darf nicht
-      // einfach fehlen (der Server wuerde den alten Wert behalten).
+      // einfach fehlen (der Server würde den alten Wert behalten).
       final update = profilUpdateMit('smoking');
       expect(update, isNotNull, reason: 'Es muss ein Update geben.');
       expect(update!.containsKey('smoking'), isTrue);
@@ -477,7 +477,7 @@ void main() {
       await weiter(tester); // Vorstellung
       await weiter(tester); // Geburtstag
 
-      // DER STIL: die grossen Kacheln sind eine Zeile mit Chips.
+      // DER STIL: die großen Kacheln sind eine Zeile mit Chips.
       final chip = find.widgetWithText(
         InkWell,
         L10n.tWithoutContext('birthday.style.midnight'),
@@ -519,8 +519,8 @@ void main() {
 
       expect(tester.takeException(), isNull);
 
-      // DER NUTZER MUST ES WISSEN: ohne Meldung wuerde er denken, das
-      // Bild waere geladen - und so waere es nicht.
+      // DER NUTZER MUST ES WISSEN: ohne Meldung würde er denken, das
+      // Bild wäre geladen - und so wäre es nicht.
       expect(
         find.text(L10n.tWithoutContext('setupp.photoFail')),
         findsOneWidget,
@@ -550,7 +550,7 @@ void main() {
     });
 
     testWidgets('das gewaehlte Bild landet beim Server', (tester) async {
-      // EIN ECHTES BILD: der Weg liest die Datei wirklich und laesst die
+      // EIN ECHTES BILD: der Weg liest die Datei wirklich und lässt die
       // Metadaten entfernen - das braucht echte Bilddaten.
       final ordner = Directory.systemTemp.createTempSync('setup_bild');
       final datei = File('${ordner.path}/bild.jpg');
@@ -563,8 +563,8 @@ void main() {
             ordner.deleteSync(recursive: true);
           }
         } catch (e) {
-          // Der Temp-Ordner wird ohnehin irgendwann vom System geraeumt -
-          // das Loeschen darf den Test aber nicht scheitern lassen.
+          // Der Temp-Ordner wird ohnehin irgendwann vom System geräumt -
+          // das Löschen darf den Test aber nicht scheitern lassen.
           debugPrint('Der Temp-Ordner blieb liegen: $e');
         }
       });
@@ -594,7 +594,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
 
-      // DER SERVER: das Bild gehoert in profiles.photos.
+      // DER SERVER: das Bild gehört in profiles.photos.
       final update = profilUpdateMit('photos');
       expect(update, isNotNull, reason: 'Es muss ein Update geben.');
       final bilder = update!['photos'];
@@ -656,7 +656,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
-      // ZWEI INTERESSEN WAEHLEN ...
+      // ZWEI INTERESSEN WÄHLEN ...
       for (final interesse in AppConstants.presetInterests.take(2)) {
         final chip = find.widgetWithText(FilterChip, interesse);
         await tester.ensureVisible(chip);
@@ -667,7 +667,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 200));
       }
 
-      // ... UND EINES WIEDER ABWAEHLEN.
+      // ... UND EINES WIEDER ABWÄHLEN.
       final chip = find.widgetWithText(
         FilterChip,
         AppConstants.presetInterests[1],
@@ -696,7 +696,7 @@ void main() {
     testWidgets('bei Minderjaehrigen werden Spanne und Radius geklemmt', (
       tester,
     ) async {
-      // EIN MINDERJAEHRIGER: 16 Jahre alt.
+      // EIN MINDERJÄHRIGER: 16 Jahre alt.
       final container = await zeigeEinrichtung(
         tester,
         geburtsdatum: DateTime(DateTime.now().year - 16, 5, 4),
@@ -704,14 +704,14 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // DIE ALTERSSPANNE: 18-65 passt nicht zu einem 16-Jaehrigen - der
-      // Server liefert fuer Minderjaehrige nur 16 und 17. Der gespeicherte
+      // DIE ALTERSSPANNE: 18-65 passt nicht zu einem 16-Jährigen - der
+      // Server liefert für Minderjährige nur 16 und 17. Der gespeicherte
       // Stand wird deshalb auf den erlaubten Bereich geklemmt.
       final settings = container.read(settingsProvider);
       expect(settings.ageRangeMin, 17);
       expect(settings.ageRangeMax, 17);
 
-      // DER SUCHRADIUS: hoechstens 25 km.
+      // DER SUCHRADIUS: höchstens 25 km.
       expect(
         container.read(userPreferencesProvider).maxDistanceKm,
         25,
@@ -737,7 +737,7 @@ void main() {
         geburtsdatum: DateTime(DateTime.now().year - 16, 5, 4),
       );
 
-      // DAS MENUE: der Modus "Ganz Deutschland" ist ausgegraut.
+      // DAS MENÜ: der Modus "Ganz Deutschland" ist ausgegraut.
       final auswahl = find.byType(DropdownButtonFormField<DistanceFilterMode>);
       await tester.ensureVisible(auswahl.first);
       await tester.pump();
@@ -773,7 +773,7 @@ void main() {
       );
 
       // DER VORGESTELLTE STAND: ein gepatchter Client hat "Ganz
-      // Deutschland" gesetzt - der Bildschirm muss das zuruecknehmen.
+      // Deutschland" gesetzt - der Bildschirm muss das zurücknehmen.
       await container
           .read(userPreferencesProvider.notifier)
           .setDistanceFilterMode(DistanceFilterMode.germany);
@@ -822,7 +822,7 @@ void main() {
       await weiter(tester); // Geburtstag
       await weiter(tester); // Musik
 
-      // EIN GENRE: die Chips stehen fuer die "mag ich"-Liste.
+      // EIN GENRE: die Chips stehen für die "mag ich"-Liste.
       final chip = find.widgetWithText(FilterChip, kMusicGenres.first.label);
       await tester.ensureVisible(chip);
       await tester.pump();
@@ -876,9 +876,9 @@ void main() {
     testWidgets('das Filter "Bundesland" fragt das Bundesland ab', (
       tester,
     ) async {
-      // DER BREITER BILDSCHIRM: das Feld "Bundesland" misst das laengste
-      // Bundesland ("Nordrhein-Westfalen") - auf einem schmalen Geraet
-      // laeuft der Text dabei aus dem Rahmen. Fuer diesen Weg zaehlt nur,
+      // DER BREITER BILDSCHIRM: das Feld "Bundesland" misst das längste
+      // Bundesland ("Nordrhein-Westfalen") - auf einem schmalen Gerät
+      // läuft der Text dabei aus dem Rahmen. Für diesen Weg zählt nur,
       // dass die Auswahl da ist und der Wert ankommt.
       await zeigeEinrichtung(tester, breite: 520);
 
@@ -910,7 +910,7 @@ void main() {
       // DER SCHMALE BILDSCHIRM: 390 Pixel (der Normalfall).
       //
       // BEFUND (24.11.2026): Ohne "isExpanded" lief das Feld um 41 Pixel
-      // aus dem Rahmen (der Text des laengsten Bundeslands). Die beiden
+      // aus dem Rahmen (der Text des längsten Bundeslands). Die beiden
       // anderen Dropdowns derselben Seite hatten es - dieses nicht.
       await zeigeEinrichtung(tester);
 

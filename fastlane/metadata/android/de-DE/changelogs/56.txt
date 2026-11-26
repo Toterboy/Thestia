@@ -42,13 +42,13 @@ Kommt die direkte Verbindung zwischen zwei Handys nicht zustande, läuft der Cha
 
 Und: Im Vorstellungs-Editor reicht jetzt der Text (die Aufnahme ist optional), und der Dialog für das Backup deines Schlüssels bleibt offen, wenn das Passwort noch nicht passt.
 
-Kein Bildschirm bleibt mehr haengen
+Kein Bildschirm bleibt mehr hängen
 
 Wenn der Server nicht antwortet, wartet die App nicht mehr endlos: Jede Server-Anfrage bricht nach 20 Sekunden ab, und du bekommst eine Meldung statt eines eingefrorenen Bildschirms.
 
 Und im Dating Hour siehst du jetzt, wenn eine Nachricht nicht angekommen ist
 
-Bisher konnte deine Nachricht einfach verschwinden, ohne dass du etwas gemerkt haettest. Jetzt sagt die App dir, wenn sie nicht rausgegang ist.
+Bisher konnte deine Nachricht einfach verschwinden, ohne dass du etwas gemerkt hättest. Jetzt sagt die App dir, wenn sie nicht rausgegang ist.
 
 Und: Der Alters-Hinweis im Dating Hour erscheint jetzt
 

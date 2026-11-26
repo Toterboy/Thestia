@@ -1,24 +1,24 @@
 ﻿// Der Startbildschirm: die Wege, die der Nutzer geht.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/home/home_screen.dart 65 offene Zeilen - genau die Wege,
 // die beim Tippen passieren (QR, Einstellungen, Verifikation, Likes,
-// Funken) und das Nachladen (Ziehen, Zurueck, App-Wechsel).
+// Funken) und das Nachladen (Ziehen, Zurück, App-Wechsel).
 //
 // DER WEG: Der Router im Test zeigt die Ziele als einfache
 // Bildschirme (mit einem Text). So sieht der Test, WOHIN der Nutzer
-// gefuehrt wurde - und die Reiter-Wahl laesst sich ueber den Provider
-// pruefen.
+// geführt wurde - und die Reiter-Wahl lässt sich über den Provider
+// prüfen.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * das QR-Symbol und das Zahnrad fuehren zum richtigen Ort,
-//   * der Verifikations-Hinweis fuehrt zur Verifizierung,
-//   * der Pausiert-Hinweis fuehrt zu den Einstellungen,
-//   * "Neue Likes" und "Neue Funken" oeffnen den passenden Reiter,
-//   * ein bereits gesehenes Like und ein gesehener Funke zaehlen nicht
+// WAS HIER GEPRÜFT WIRD:
+//   * das QR-Symbol und das Zahnrad führen zum richtigen Ort,
+//   * der Verifikations-Hinweis fährt zur Verifizierung,
+//   * der Pausiert-Hinweis fährt zu den Einstellungen,
+//   * "Neue Likes" und "Neue Funken" öffnen den passenden Reiter,
+//   * ein bereits gesehenes Like und ein gesehener Funke zählen nicht
 //     mehr (sonst bleibt das Badge ewig stehen),
-//   * Ziehen, Zurueck und der Wechsel aus dem Hintergrund laden die
-//     Zaehler neu.
+//   * Ziehen, Zurück und der Wechsel aus dem Hintergrund laden die
+//     Zähler neu.
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -44,7 +44,7 @@ import 'package:thestia/utils/common/constants.dart';
 
 import '../support/plugin_mocks.dart';
 
-/// Der Speicher im RAM - kann mit einem Anfangswert gefuellt werden.
+/// Der Speicher im RAM - kann mit einem Anfangswert gefüllt werden.
 class _Speicher implements LocalStorage {
   _Speicher([Map<String, String>? start]) {
     if (start != null) _daten.addAll(start);
@@ -173,8 +173,8 @@ void main() {
     );
     addTearDown(router.dispose);
 
-    // DER SPEICHER: Er traegt den pausierten Zustand UND die bereits
-    // gesehenen Eintraege (der Bildschirm soll sie nicht mehr zaehlen).
+    // DER SPEICHER: Er trägt den pausierten Zustand UND die bereits
+    // gesehenen Einträge (der Bildschirm soll sie nicht mehr zählen).
     final start = <String, String>{};
     if (paused) start.addAll(speicherMitPause());
     if (gesehenLikes != null) {
@@ -203,7 +203,7 @@ void main() {
           );
           return notifier;
         }),
-        // DIE SERVERZAEHLER: Der Test gibt sie vor - so sieht der
+        // DIE SERVERZÄHLER: Der Test gibt sie vor - so sieht der
         // Bildschirm den Stand, den er auch in der App sieht.
         receivedLikesProvider.overrideWith((ref) async => likes),
         serverMatchesProvider.overrideWith((ref) async => serverMatches),
@@ -466,7 +466,7 @@ void main() {
     ) async {
       await zeigeScreen(tester);
 
-      // DER APP-WECHSEL: Das Geraet kommt in den Vordergrund.
+      // DER APP-WECHSEL: Das Gerät kommt in den Vordergrund.
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await pumpFrames(tester);
 
@@ -478,15 +478,15 @@ void main() {
       (tester) async {
         await zeigeScreen(tester);
 
-        // PUSH: Der Nutzer geht in die Einstellungen und kommt zurueck.
+        // PUSH: Der Nutzer geht in die Einstellungen und kommt zurück.
         await tester.tap(
           find.byTooltip(L10n.tWithoutContext('home.settingsTooltip')),
         );
         await pumpFrames(tester);
         expect(find.text('Einstellungen'), findsOneWidget);
 
-        // DAS ZURUECK: Die Test-Route hat keine AppBar - deshalb geht es
-        // ueber den Navigator.
+        // DAS ZURÜCK: Die Test-Route hat keine AppBar - deshalb geht es
+        // über den Navigator.
         Navigator.of(tester.element(find.text('Einstellungen'))).pop();
         await pumpFrames(tester);
 

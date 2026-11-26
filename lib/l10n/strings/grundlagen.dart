@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsGrundlagen = {
@@ -54,7 +54,7 @@ const Map<String, Map<String, String>> stringsGrundlagen = {
     'error.captchaRejected':
         'Der Sicherheitscheck wurde vom Server '
         'abgelehnt. Bitte versuche es erneut.',
-    // eigener Fall fuer den 20-Sekunden-Timeout aus login_screen.dart:
+    // eigener Fall für den 20-Sekunden-Timeout aus login_screen.dart:
     // er sagt "der Server ist nicht erreichbar", nicht "irgendetwas ist
     // schiefgelaufen". Ohne diesen Zweig landet der Timeout in
     // error.generic und ist von einem CAPTCHA-Fehler nicht zu unterscheiden.

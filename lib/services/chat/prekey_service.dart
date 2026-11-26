@@ -104,7 +104,7 @@ class PreKeyService {
         }
       } on TimeoutException {
         // Keine Antwort in 20 Sekunden: transient - wie "keine
-        // Verbindung" behandelt (der naechste Versuch kommt).
+        // Verbindung" behandelt (der nächste Versuch kommt).
         if (kDebugMode) {
           debugPrint('[PreKey] Bundle-Abruf: Zeitueberschreitung.');
         }
@@ -138,19 +138,19 @@ class PreKeyService {
         return;
       }
 
-      // Der 404 heisst: das Bundle ist (noch) nicht da.
+      // Der 404 heißt: das Bundle ist (noch) nicht da.
       //
-      // WICHTIG (06.11.2026): Der Partner veroeffentlicht sein Bundle
+      // WICHTIG (06.11.2026): Der Partner veröffentlicht sein Bundle
       // beim Login - gedrosselt auf 1x/Minute. Ein 404 kurz nach
-      // seinem Login ist deshalb ERWARTET und voruebergehend. Vorher
+      // seinem Login ist deshalb ERWARTET und vorübergehend. Vorher
       // wurde hier sofort abgebrochen: der komplette P2P-Aufbau fiel
       // aus und der Chat zeigte einen Fehler, obwohl gleich alles
       // ginge. Deshalb wird der 404 jetzt MITPROBIERT (der Backoff
-      // unten laeuft weiter) und erst nach dem letzten Versuch geworfen.
+      // unten läuft weiter) und erst nach dem letzten Versuch geworfen.
       //
       // Der 404 kommt aus der Edge Function auch dann, wenn es gar
-      // keine Beziehung gibt (kein Match, kein QR-Chat). Fuer den
-      // Nutzer ist die Meldung "Bundle fehlt" dann irrefuehrend -
+      // keine Beziehung gibt (kein Match, kein QR-Chat). Für den
+      // Nutzer ist die Meldung "Bundle fehlt" dann irreführend -
       // deshalb steht jetzt "oder es gibt keine Freigabe" dabei.
       if (status == 404) {
         lastError = 404;

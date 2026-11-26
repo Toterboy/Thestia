@@ -1,12 +1,12 @@
 // Die Profil-Bausteine (bisher ungetestet - 0 %).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/profile/profile_widgets.dart 0 %.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Interessen stehen als Chips da,
 //   * gemeinsame Interessen sind hervorgehoben (mit Herz) - daran sieht
-//     der Nutzer, was beide moegen,
+//     der Nutzer, was beide mögen,
 //   * der Blind-Mode-Platzhalter sagt, warum kein Foto zu sehen ist.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

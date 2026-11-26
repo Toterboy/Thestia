@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -13,11 +13,11 @@ part of '../dating_hour_chat_screen.dart';
 extension _DatingHourDialoge on _DatingHourChatScreenState {
   Widget _buildOutcomeBanner(DatingHourSession session) {
     // DER UMBRUCH (18.11.2026, gefunden von einem Test): Der Text stand
-    // in einer festen Reihe - bei grosser Schrift (oder einer
-    // System-Schriftgroesse ueber 100 %) lief er ueber den Rand.
+    // in einer festen Reihe - bei großer Schrift (oder einer
+    // System-Schriftgrösse über 100 %) lief er über den Rand.
     //
-    // DER WEG: "Flexible" laesst den Text umbrechen, statt zu
-    // ueberlaufen. Und der Text kommt aus den Uebersetzungen (vorher
+    // DER WEG: "Flexible" lässt den Text umbrechen, statt zu
+    // überlaufen. Und der Text kommt aus den Übersetzungen (vorher
     // stand er fest in Deutsch da - in der englischen Fassung stand
     // trotzdem Deutsch).
     if (session.isMutualMatch) {
@@ -123,12 +123,12 @@ extension _DatingHourDialoge on _DatingHourChatScreenState {
             ),
             const SizedBox(width: 8),
             // DER UMBRUCH (18.11.2026, gefunden von einem Test): Die
-            // Ueberschrift stand neben dem Symbol in einer festen Reihe -
-            // bei grosser Schrift (oder der breiten Test-Schrift im Test)
-            // lief sie ueber den Rand.
+            // Überschrift stand neben dem Symbol in einer festen Reihe -
+            // bei großer Schrift (oder der breiten Test-Schrift im Test)
+            // lief sie über den Rand.
             //
-            // DER WEG: "Flexible" laesst die Ueberschrift umbrechen,
-            // statt zu ueberlaufen.
+            // DER WEG: "Flexible" lässt die Überschrift umbrechen,
+            // statt zu überlaufen.
             Flexible(child: Text(L10n.t(context, 'dh.chat.noSpark'))),
           ],
         ),
@@ -150,16 +150,16 @@ extension _DatingHourDialoge on _DatingHourChatScreenState {
   ///
   /// Er ist ein Hinweis der App und keine Nachricht einer Person -
   /// er wird deshalb nicht gesendet und steht nur in diesem
-  /// Verlauf. Beide Seiten sehen ihn zur selben Zeit (die Fuenf
-  /// Minuten gelten fuer dieselbe Session).
+  /// Verlauf. Beide Seiten sehen ihn zur selben Zeit (die Fünf
+  /// Minuten gelten für dieselbe Session).
   void _zeigeFuenfMinutenHinweis(DatingHourSession session) {
     final myId = _currentUserId;
     final peerId = _peerId;
     if (myId == null || peerId == null) return;
 
     // Nicht doppelt: steht der Hinweis schon im Verlauf (der Screen
-    // wurde neu geoeffnet), bleibt er dort - es wird kein zweiter
-    // eingefuegt.
+    // wurde neu geöffnet), bleibt er dort - es wird kein zweiter
+    // eingefügt.
     final vorhanden = ref
         .read(chatProvider.notifier)
         .messagesFor(widget.sessionId)

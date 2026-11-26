@@ -1,9 +1,9 @@
-"""Statische SQL-Validierung fuer die neuen Migrationen (098/099).
+"""Statische SQL-Validierung für die neuen Migrationen (098/099).
 
-sqlglot unterstuetzt kein Dollar-Quoting und keine Postgres-"adjacent
+sqlglot unterstützt kein Dollar-Quoting und keine Postgres-"adjacent
 string literal"-Verkettung - beides wird hier vor dem Parse abstrahiert.
-Geprueft wird: Dollar-Quote-Balance, Klammer-Balance und Parsebarkeit
-aller Statements AUSSERHALB der Funktionskoerper.
+Geprüft wird: Dollar-Quote-Balance, Klammer-Balance und Parsebarkeit
+aller Statements AUSSERHALB der Funktionskörper.
 """
 import pathlib
 import re
@@ -12,16 +12,16 @@ import sys
 import sqlglot
 
 # Pfade mit Forward-Slashes und verankert am Repo-Root. Vorher standen hier
-# Windows-Rawstrings (r"supabase\migrations\...") - damit liess sich die Datei
-# unter Linux nicht oeffnen, der Check lief also ausschliesslich auf
+# Windows-Rawstrings (r"supabase\migrations\...") - damit ließ sich die Datei
+# unter Linux nicht öffnen, der Check lief also ausschließlich auf
 # Windows. Er ist jetzt zum ersten Mal in der CI gelandet und dort
-# gescheitert. Zusaetzlich loest der Pfad unabhaengig vom aktuellen
-# Arbeitsverzeichnis auf, damit der Check auch aus tool/ heraus laeuft.
+# gescheitert. Zusätzlich löst der Pfad unabhängig vom aktuellen
+# Arbeitsverzeichnis auf, damit der Check auch aus tool/ heraus läuft.
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -37,18 +37,18 @@ def _projektwurzel() -> pathlib.Path:
 ROOT = _projektwurzel()
 
 
-# Der Check laeuft ueber ALLE Migrationen, nicht ueber eine feste Liste.
+# Der Check läuft über ALLE Migrationen, nicht über eine feste Liste.
 #
-# BISHER stand hier eine Liste von fuenf Dateien (098/099/106/107/108) mit
-# der Begruendung, der Check solle nicht stillschweigend alle 128 mitwachsen.
-# Das hat den Zweck verfehlt: die Migrationen 109-155 wurden nie geprueft -
+# BISHER stand hier eine Liste von fünf Dateien (098/099/106/107/108) mit
+# der Begründung, der Check solle nicht stillschweigend alle 128 mitwachsen.
+# Das hat den Zweck verfehlt: die Migrationen 109-155 wurden nie geprüft -
 # auch nicht die sicherheitskritischen 144, 149, 151 und 155.
 #
-# Der Grund fuer die feste Liste war die Sorge vor Fehlalarmen, nicht die
+# Der Grund für die feste Liste war die Sorge vor Fehlalarmen, nicht die
 # Sorge vor Aufwand. Die Abstraktionen in diesem Skript (Dollar-Quoting,
-# zusammenhaengende String-Literale, der sqlglot-Sonderfall bei
+# zusammenhängende String-Literale, der sqlglot-Sonderfall bei
 # "LANGUAGE sql SECURITY DEFINER") sind inzwischen stabil - sie stammen
-# aus den deployten Migrationen 062 und 108. Deshalb: Glob ueber alle.
+# aus den deployten Migrationen 062 und 108. Deshalb: Glob über alle.
 #
 # Es gibt bewusst keine Ausnahme: Wenn eine Migration nicht parst, ist das
 # ein Befund und kein Fehlalarm.
@@ -62,7 +62,7 @@ def _pruefe_doppelte_nummern() -> bool:
     """Keine zwei Migrationsdateien mit derselben Nummer.
 
     Der Runner bucht jede angewandte Migration in schema_migrations. Eine
-    zweite Datei mit derselben Nummer laeuft durch (der Body ist
+    zweite Datei mit derselben Nummer läuft durch (der Body ist
     idempotent), scheitert aber bei der Verbuchung ("duplicate key value
     violates unique constraint") - und remote und lokal laufen
     auseinander. Im "migration list" stand danach zweimal dieselbe
@@ -97,8 +97,8 @@ def check(rel: str) -> bool:
         return False
     sql = path.read_text(encoding="utf-8")
 
-    # 1) Dollar-Quoting: $$-Marker zaehlen (muss gerade sein; 1 Funktion
-    #    = 2 Marker = 1 Block) und fuer den Parse durch Platzhalter
+    # 1) Dollar-Quoting: $$-Marker zählen (muss gerade sein; 1 Funktion
+    #    = 2 Marker = 1 Block) und für den Parse durch Platzhalter
     #    ersetzen.
     marker_count = sql.count("$$")
     if marker_count % 2 != 0:
@@ -115,12 +115,12 @@ def check(rel: str) -> bool:
     #    benutzt und anschliessend global entfernt. Damit wurde auch der
     #    echte Postgres-Operator "&&" (Array-Overlap, z. B.
     #    "WHERE tags && ARRAY['a','b']") aus der Anweisung entfernt -
-    #    die Pruefung lief danach gegen ein veraendertes SQL. Der
+    #    die Prüfung lief danach gegen ein verändertes SQL. Der
     #    Platzhalter ist jetzt ein Zeichen, das im SQL nicht vorkommt.
     #    Der Platzhalter wird ersatzlos entfernt - dadurch werden die
     #    beiden Literale zu einem ('a''b'), das sqlglot als ein Literal
     #    liest. Genau das war das Verhalten des alten "&&"-Platzhalters,
-    #    ohne echte "&&"-Operatoren zu zerstoeren.
+    #    ohne echte "&&"-Operatoren zu zerstören.
     _JOIN = "\x00JOIN\x00"
     merged = stripped
     prev = None
@@ -137,14 +137,14 @@ def check(rel: str) -> bool:
     #     dazwischenliegendes SET search_path wirft in sqlglot 30.x
     #     ParseError ("Required keyword: 'this' missing for
     #     LanguageProperty"). Das ist ein Parser-Mangel, kein SQL-Fehler -
-    #     die Konstruktion ist regulaeres Postgres und in Migration 108
+    #     die Konstruktion ist reguläres Postgres und in Migration 108
     #     live deployt. Nachgewiesen: dieselbe Anweisung parst, sobald
     #     SET search_path zwischen LANGUAGE und SECURITY steht.
-    #     Eingefuegt wird NUR fuer den Parse, nie fuer die Ausfuehrung.
+    #     Eingefügt wird NUR für den Parse, nie für die Ausführung.
     #
-    #     Das gilt fuer JEDE LANGUAGE, nicht nur fuer sql: Migration 002
+    #     Das gilt für JEDE LANGUAGE, nicht nur für sql: Migration 002
     #     benutzt "LANGUAGE plpgsql SECURITY DEFINER" und fiel deshalb
-    #     durch, sobald der Check ueber alle Migrationen lief.
+    #     durch, sobald der Check über alle Migrationen lief.
     merged = re.sub(
         r"(LANGUAGE\s+(?:sql|plpgsql))\s+(SECURITY\s+DEFINER)",
         r"\1 SET search_path = pg_temp \2",
@@ -154,9 +154,9 @@ def check(rel: str) -> bool:
 
     #     Steht danach noch eine eigene SET-Klausel (z. B.
     #     "SET search_path = ''"), entsteht durch das Einsetzen eine
-    #     doppelte SET-Klausel - die parst der Parser nicht mehr. Fuer den
-    #     Parse wird die zweite entfernt; fuer die Ausfuehrung aendert
-    #     das nichts, weil der Text nur zum Parsen veraendert wird.
+    #     doppelte SET-Klausel - die parst der Parser nicht mehr. Für den
+    #     Parse wird die zweite entfernt; für die Ausführung ändert
+    #     das nichts, weil der Text nur zum Parsen verändert wird.
     merged = re.sub(
         r"(SET\s+search_path\s*=\s*pg_temp\s+SECURITY\s+DEFINER)"
         r"\s+SET\s+search_path\s*=\s*'[^']*'",
@@ -168,12 +168,12 @@ def check(rel: str) -> bool:
     # 2c) sqlglot-Parserlücke: "DROP TRIGGER IF EXISTS ... ON ..." parst
     #     in sqlglot 30.x nicht ("Invalid expression / Unexpected token",
     #     Spalte 83 = der Punkt nach dem Tabellennamen). Das ist ein
-    #     Parser-Mangel: die Anweisung ist regulaeres Postgres und in
+    #     Parser-Mangel: die Anweisung ist reguläres Postgres und in
     #     Dutzenden Migrationen live deployt.
     #
-    #     Fuer den Parse wird die Anweisung durch einen Kommentar ersetzt.
+    #     Für den Parse wird die Anweisung durch einen Kommentar ersetzt.
     #     Die Klammer-Balance und die Dollar-Quote-Balance werden weiter
-    #    hin geprueft - nur die Statement-Aufteilung faellt weg.
+    #    hin geprüft - nur die Statement-Aufteilung fällt weg.
     merged = re.sub(
         r"DROP\s+TRIGGER\s+IF\s+EXISTS\s+[^;]+;",
         "-- (DROP TRIGGER IF EXISTS: vom Parser nicht unterstuetzt)",
@@ -196,8 +196,8 @@ def check(rel: str) -> bool:
     #     Signatur Array-Typen enthalten ("text[]"), die der Parser dort
     #     nicht kennt ("Expecting )"). In CREATE FUNCTION parst dasselbe
     #     problemlos - es ist also die Kombination, nicht der Typ.
-    #     Fuer den Parse werden die Klammern der Array-Typen entfernt;
-    #     der Typ selbst ist fuer die Pruefung ohne Bedeutung.
+    #     Für den Parse werden die Klammern der Array-Typen entfernt;
+    #     der Typ selbst ist für die Prüfung ohne Bedeutung.
     merged = re.sub(
         r"COMMENT\s+ON\s+FUNCTION\s+[^;]+;",
         lambda m: m.group(0).replace("[]", ""),
@@ -205,7 +205,7 @@ def check(rel: str) -> bool:
         flags=re.I | re.S,
     )
 
-    # 3) Klammer-Balance ausserhalb von Strings UND Kommentaren pruefen.
+    # 3) Klammer-Balance außerhalb von Strings UND Kommentaren prüfen.
     no_strings = re.sub(r"'(?:[^']|'')*'", "''", merged)
     no_strings = re.sub(r"--[^\n]*", "", no_strings)
     if no_strings.count("(") != no_strings.count(")"):

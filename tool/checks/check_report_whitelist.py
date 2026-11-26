@@ -1,11 +1,11 @@
-"""Prueft live, ob der Meldeweg alle Meldetypen annimmt (v0.10.0).
+"""Prüft live, ob der Meldeweg alle Meldetypen annimmt (v0.10.0).
 
 Hintergrund (Security-Audit 22.10.2026): der Client sendet
 `ReportType.name` (camelCase), die Server-Whitelist in `submit_report`
 kannte nur snake_case. Vier von sieben Meldetypen wurden serverseitig
 abgewiesen - darunter `childSafety` (Hinweis auf Kindesmissbrauch) und
 `inappropriateContent` (NSFW-Bilder). Die App zeigte dem Nutzer trotzdem
-die gruene Bestaetigung, weil der Fehler nur geloggt wurde.
+die grüne Bestätigung, weil der Fehler nur geloggt wurde.
 
 Ein reiner Blick auf die SQL-Zeile reicht nicht: der Fehler ist zur
 Laufzeit entstanden und nur mit einem echten JWT sichtbar. Dieses
@@ -17,13 +17,13 @@ Zwei Wege, wie der Test endet - und beide sind ein Befund:
   * Der Aufruf wird mit "Invalid report type" abgewiesen: die Whitelist
     kennt den Typ nicht. Genau der alte Zustand.
   * Der Aufruf scheitert an "invalid_reported_user": die Whitelist hat
-    den Typ ANGENOMMEN, erst die Zielpruefung hat danach gestoppt. Das
-    ist der gewuenschte Zustand. (Es wird dabei nichts geschrieben -
-    die Pruefung laeuft bewusst VOR dem INSERT.)
+    den Typ ANGENOMMEN, erst die Zielprüfung hat danach gestoppt. Das
+    ist der gewünschte Zustand. (Es wird dabei nichts geschrieben -
+    die Prüfung läuft bewusst VOR dem INSERT.)
 
-Das Skript prueft beide Wege fuer jeden Typ: "wird angenommen" und
+Das Skript prüft beide Wege für jeden Typ: "wird angenommen" und
 "wird abgelehnt". Ein unbekannter Typ muss abgelehnt werden - sonst
-wuerde die Whitelist nichts taugen.
+würde die Whitelist nichts taugen.
 
 AUFRUF
 ------
@@ -32,7 +32,7 @@ AUFRUF
 Der service_role-Key wird NICHT gespeichert. Er kommt aus der
 Umgebungsvariable SUPABASE_SERVICE_ROLE_KEY oder - falls die
 Supabase-CLI angemeldet ist - aus deren Projekt-API. Der Wegwerf-Nutzer
-wird am Ende wieder geloescht.
+wird am Ende wieder gelöscht.
 """
 from __future__ import annotations
 
@@ -58,8 +58,8 @@ ERLAUBT = [
     'childSafety',
 ]
 
-# Diese Ziel-UUID existiert nicht. Damit stoppt die Pruefung an der
-# Zielpruefung - NACH der Whitelist, aber VOR dem INSERT. Es wird also
+# Diese Ziel-UUID existiert nicht. Damit stoppt die Prüfung an der
+# Zielprüfung - NACH der Whitelist, aber VOR dem INSERT. Es wird also
 # nichts in die Datenbank geschrieben.
 UNGUELTIGES_ZIEL = '00000000-0000-0000-0000-0000000000ff'
 
@@ -91,7 +91,7 @@ def service_role_key() -> str:
                 continue
             for key in daten.get('keys', []):
                 # Der neue Secret-Key (sb_secret_...) ist der aktuelle
-                # Ersatz fuer die abgeschalteten Legacy-Keys. Er wird
+                # Ersatz für die abgeschalteten Legacy-Keys. Er wird
                 # nur zum Lesen benutzt und nirgends gespeichert.
                 if key.get('type') == 'secret' and key.get('api_key'):
                     neuer_key = key['api_key']
@@ -105,7 +105,7 @@ def service_role_key() -> str:
 
 
 def http(method: str, url: str, *, key: str, body=None, token: str = ''):
-    """Ein HTTP-Aufruf mit JSON-Antwort; gibt (status, text) zurueck."""
+    """Ein HTTP-Aufruf mit JSON-Antwort; gibt (status, text) zurück."""
     headers = {'apikey': key, 'Authorization': f'Bearer {token or key}'}
     daten = None
     if body is not None:
@@ -129,13 +129,13 @@ def main() -> int:
         return 2
 
     email = f'selftest-{uuid.uuid4().hex[:12]}@example.invalid'
-    # Supabase verlangt Grossbuchstaben, Kleinbuchstaben, Ziffern und ein
+    # Supabase verlangt Großbuchstaben, Kleinbuchstaben, Ziffern und ein
     # Sonderzeichen - ein reiner Hex-String reicht nicht.
     passwort = ('Aa1!' + uuid.uuid4().hex + uuid.uuid4().hex)[:40]
     user_id = ''
 
     try:
-        # 1) Wegwerf-Nutzer anlegen (bestaetigt, damit der Login klappt).
+        # 1) Wegwerf-Nutzer anlegen (bestätigt, damit der Login klappt).
         status, text = http(
             'POST', f'{SUPABASE_URL}/auth/v1/admin/users', key=key,
             body={
@@ -143,7 +143,7 @@ def main() -> int:
                 'password': passwort,
                 'email_confirm': True,
                 # Der handle_new_user-Trigger legt das Profil an und
-                # braucht diese Felder - ohne sie schlaegt die Anlage
+                # braucht diese Felder - ohne sie schlägt die Anlage
                 # mit einem Datenbankfehler fehl.
                 'user_metadata': {
                     'name': 'Selbsttest',
@@ -187,7 +187,7 @@ def main() -> int:
                 },
             )
             # Erwartet: der Typ wird von der Whitelist angenommen, und die
-            # Zielpruefung stoppt danach mit "invalid_reported_user".
+            # Zielprüfung stoppt danach mit "invalid_reported_user".
             angenommen = 'invalid_reported_user' in text
             abgelehnt = 'Invalid report type' in text
             if angenommen:

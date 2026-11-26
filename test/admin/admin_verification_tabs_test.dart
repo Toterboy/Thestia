@@ -1,19 +1,19 @@
 // Die Verwaltungs-Reiter des Admin-Bereichs (Verifizierung, Bugs,
 // Sperren, Standort) - bisher ungetestet.
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/admin/admin_screen.dart 617 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * eine offene Verifizierung steht da - mit der KI-Altersschaetzung
+// WAS HIER GEPRÜFT WIRD:
+//   * eine offene Verifizierung steht da - mit der KI-Altersschätzung
 //     und der Abweichung zum angegebenen Alter,
-//   * ein Minderjaehrigkeitsfall ist als solcher erkennbar (Kind-Symbol,
-//     eigener Hinweis) - er ist die wichtigste Pruefung in der Queue,
-//   * eine Abweichung von mehr als zwei Jahren faerbt die Karte,
+//   * ein Minderjährigkeitsfall ist als solcher erkennbar (Kind-Symbol,
+//     eigener Hinweis) - er ist die wichtigste Prüfung in der Queue,
+//   * eine Abweichung von mehr als zwei Jahren färbt die Karte,
 //   * die Fehlerberichte stehen da,
 //   * die Sperren stehen da,
-//   * die Standort-Pruefungen stehen da,
-//   * ohne Eintraege steht der Leerzustand da.
+//   * die Standort-Prüfungen stehen da,
+//   * ohne Einträge steht der Leerzustand da.
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
 // test/support/fake_supabase_server.dart.
@@ -83,7 +83,7 @@ void main() {
   ///
   /// Der Bildschirm ist BREIT (wie auf einem Tablet): die Reiter-Leiste
   /// ist horizontal scrollbar - auf einem Telefon liegen die hinteren
-  /// Reiter ausserhalb des Bildschirms.
+  /// Reiter außerhalb des Bildschirms.
   Future<void> zeigeScreen(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -280,8 +280,8 @@ void main() {
 
   // ANMERKUNG: Die Freigabe/Ablehnung einer Verifizierung (die Edge
   // Function "verify-account") wird hier NICHT getestet. Der Aufruf
-  // geht ueber den Auth-Weg: vor dem Senden holt der Client das
-  // Access-Token, und ohne gueltige Session wartet er auf eine
+  // geht über den Auth-Weg: vor dem Senden holt der Client das
+  // Access-Token, und ohne gültige Session wartet er auf eine
   // Token-Aktualisierung - der Aufruf bleibt dann stehen (der Test
   // lief in den Zehn-Minuten-Timeout). Der Pfad ist in der App
   // aktiv und wird vom Betreiber benutzt; im Test ist er nicht
@@ -290,6 +290,6 @@ void main() {
   // BEFUND (15.11.2026): Der Aufruf im Admin-Bereich hat KEIN
   // Zeitlimit - bleibt die Edge Function ohne Antwort, bleibt der
   // Admin-Screen mit dem Ladeindikator stehen (bis er ihn
-  // verlaesst). Das ist als naechste Haertung notiert (kein
+  // verlässt). Das ist als nächste Härtung notiert (kein
   // Produktivfehler, aber unangenehm).
 }

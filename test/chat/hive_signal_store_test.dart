@@ -1,19 +1,19 @@
 // Der persistente Signal-Speicher - ungetestet (8,2 %).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/hive_signal_store.dart 78 offene Zeilen bei 85 Zeilen
-// gesamt. Hier liegt die Persistenz der Ende-zu-Ende-Verschluesselung:
+// gesamt. Hier liegt die Persistenz der Ende-zu-Ende-Verschlüsselung:
 // die Sessions, der Identity-Trust und die PreKeys.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * eine Identity wird gespeichert und wiedergefunden,
-//   * ein GEAENDERTER Identity-Key wird NICHT mehr als vertraut
+//   * ein GEÄNDERTER Identity-Key wird NICHT mehr als vertraut
 //     akzeptiert (das ist der Schutz gegen einen untergeschobenen
 //     Server - Audit H-7/E-4),
-//   * eine Session ueberlebt das Neustart (sonst waeren die Nachrichten
+//   * eine Session überlebt das Neustart (sonst wären die Nachrichten
 //     nach einem Neustart nicht mehr lesbar),
-//   * eine Session laesst sich loeschen (fuer alle Geraete des Peers),
-//   * ein verbrauchter PreKey verschwindet aus der Box (sonst waere er
+//   * eine Session lässt sich löschen (für alle Geräte des Peers),
+//   * ein verbrauchter PreKey verschwindet aus der Box (sonst wäre er
 //     mehrfach benutzbar - gebrochene Einmal-Nutzung).
 import 'dart:convert';
 import 'dart:io';
@@ -27,7 +27,7 @@ import 'package:thestia/services/chat/hive_signal_store.dart';
 
 import '../support/plugin_mocks.dart';
 
-/// Ein Identity-Schluesselpaar (der eigene).
+/// Ein Identity-Schlüsselpaar (der eigene).
 IdentityKeyPair schluesselPaar() {
   final paar = Curve.generateKeyPair();
   return IdentityKeyPair(
@@ -68,7 +68,7 @@ void main() {
     }
   });
 
-  /// Oeffnet die Boxen und den Store.
+  /// Öffnet die Boxen und den Store.
   Future<HiveSignalProtocolStore> oeffneStore() async {
     final sessionBox = await Hive.openBox<SignalSessionRecordAdapter>(
       'signal_sessions',
@@ -160,7 +160,7 @@ void main() {
       await store.storeSession(adresse(), SessionRecord());
       expect(await store.containsSession(adresse()), isTrue);
 
-      // Das Neustart: ein neuer Store laedt die Sessions aus der Box.
+      // Das Neustart: ein neuer Store lädt die Sessions aus der Box.
       final neu = await HiveSignalProtocolStore.open(
         identityKeyPair: schluesselPaar(),
         localRegistrationId: 42,
@@ -206,7 +206,7 @@ void main() {
       );
 
       // Einen PreKey ablegen (wie die App es beim Erzeugen tut - der
-      // Eintrag ist der serialisierte Schluessel als JSON).
+      // Eintrag ist der serialisierte Schlüssel als JSON).
       final record = PreKeyRecord(7, Curve.generateKeyPair());
       await preKeyBox.put(
         '7',

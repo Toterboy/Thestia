@@ -16,7 +16,7 @@ import 'package:thestia/utils/common/best_effort.dart';
 /// Einstellungen (Matches, Likes, Chatnachrichten, Dating Hour).
 ///
 /// [verification] hat keinen eigenen Schalter: die Freigabe der
-/// Alterspruefung betrifft den Vollzugang - dafuer reicht der
+/// Altersprüfung betrifft den Vollzugang - dafür reicht der
 /// Master-Schalter ("Benachrichtigungen").
 enum NotificationType { matches, likes, messages, datingHour, verification }
 
@@ -39,7 +39,7 @@ class NotificationService {
 
   /// Initialisiert den Dienst, legt die Standard-Kanäle an und holt die
   /// Benachrichtigungs-Berechtigung (Android 13+).
-  /// Der Tap-Handler fuer lokale Benachrichtigungen (BEFUND 09.11.2026).
+  /// Der Tap-Handler für lokale Benachrichtigungen (BEFUND 09.11.2026).
   ///
   /// Statisch, weil `initialize` eine statische Funktion braucht.
   static void onNotificationTap(NotificationResponse response) {
@@ -75,12 +75,12 @@ class NotificationService {
     );
 
     // DER TAP (BEFUND 09.11.2026, Betreiber): "Wenn man auf die
-    // Benachrichtigung drueckt, dass man eine neue Nachricht erhalten
+    // Benachrichtigung drückt, dass man eine neue Nachricht erhalten
     // hat, soll man zum Interessen Screen kommen."
     //
-    // DER GRUND (live geprueft): Der Payload wurde gesetzt
-    // (payload: '/interessen'), aber es gab KEINEN Handler dafuer - der
-    // Tap oeffnete die App und sonst nichts.
+    // DER GRUND (live geprüft): Der Payload wurde gesetzt
+    // (payload: '/interessen'), aber es gab KEINEN Handler dafür - der
+    // Tap öffnete die App und sonst nichts.
     //
     // `onDidReceiveNotificationResponse` feuert bei einem Tap auf eine
     // LOKALE Benachrichtigung (im Vordergrund oder aus dem Hintergrund).
@@ -97,7 +97,7 @@ class NotificationService {
     if (startDetails?.didNotificationLaunchApp == true) {
       final payload = startDetails?.notificationResponse?.payload;
       if (payload != null && payload.isNotEmpty) {
-        // Der Hook wird evtl. erst spaeter verdrahtet (App-Root) - dann
+        // Der Hook wird evtl. erst später verdrahtet (App-Root) - dann
         // wartet die Navigation kurz.
         await _deliverTapPayload(payload);
       }
@@ -158,7 +158,7 @@ class NotificationService {
               importance: Importance.defaultImportance,
             ),
           );
-      // Der Kanal fuer die Freigabe der Alterspruefung. Wichtig, damit
+      // Der Kanal für die Freigabe der Altersprüfung. Wichtig, damit
       // die Meldung nicht stumm bleibt (Importance.defaultImportance
       // reicht, aber sie soll als eigener Kanal einstellbar sein).
       await _plugin
@@ -217,7 +217,7 @@ class NotificationService {
         return settings.notifyDatingHour;
       case NotificationType.verification:
         // Kein eigener Schalter - der Master-Schalter reicht (die
-        // Freigabe der Alterspruefung ist keine "Sonderwunsch"-Meldung,
+        // Freigabe der Altersprüfung ist keine "Sonderwunsch"-Meldung,
         // sondern betrifft den Vollzugang).
         return true;
     }
@@ -326,16 +326,16 @@ class NotificationService {
   /// Eine systemeigene Meldung ohne Kategorie-Schalter und ohne
   /// WidgetRef.
   ///
-  /// Wofuer: Meldungen ueber den eigenen Zustand, die der Nutzer
-  /// ausloest und die deshalb niemandem abgeschaltet werden sollen -
+  /// Wofür: Meldungen über den eigenen Zustand, die der Nutzer
+  /// auslöst und die deshalb niemandem abgeschaltet werden sollen -
   /// z.B. die Freigabe der Altersverifizierung. Die Freigabe entsteht
   /// serverseitig durch einen Admin, und der Nutzer sieht sonst nichts
   /// davon, bis die App neu startet.
   ///
   /// Bewusst ohne die Kategorie-Schalter der [show]-Methode: ein
-  /// Schalter "Likes" darf die Meldung "Dein Alter ist bestaetigt"
-  /// nicht unterdruecken. Und ohne WidgetRef, weil der Ausloeser ein
-  /// StateNotifier ist und dort kein WidgetRef zur Verfuegung steht.
+  /// Schalter "Likes" darf die Meldung "Dein Alter ist bestätigt"
+  /// nicht unterdrücken. Und ohne WidgetRef, weil der Auslöser ein
+  /// StateNotifier ist und dort kein WidgetRef zur Verfügung steht.
   Future<void> showSystemNotice({
     required int id,
     required String title,
@@ -379,14 +379,14 @@ class NotificationService {
       body: body,
       channelId: 'messages',
       // BEFUND (09.11.2026, Betreiber): "Wenn man auf die Benachrichtigung
-      // drueckt, dass man eine neue Nachricht erhalten hat, soll man zum
+      // drückt, dass man eine neue Nachricht erhalten hat, soll man zum
       // Interessen Screen kommen."
       //
       // DER GRUND: Der Chat braucht den Eintrag in der Partnerliste
-      // (der Relay-Abruf laeuft ueber `getMatchById`). Oeffnet man den
+      // (der Relay-Abruf läuft über `getMatchById`). Öffnet man den
       // Chat direkt aus der Benachrichtigung, ist der Partner dort
       // manchmal noch nicht geladen - der Chat bleibt dann leer, obwohl
-      // die Nachricht zugestellt wurde. Ueber den Interessen-Screen ist
+      // die Nachricht zugestellt wurde. Über den Interessen-Screen ist
       // der Partner sicher bekannt.
       payload: '/interessen',
       ref: ref,

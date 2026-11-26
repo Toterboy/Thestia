@@ -1,16 +1,16 @@
 // Der Vorstellungs-Editor (Text + Audio) - bisher ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/profile/intro_editor.dart 260 offene Zeilen bei 333 Zeilen gesamt -
 // der Editor, in dem die Person sich selbst vorstellt, war ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Text wird gemeldet (der Text ist die Pflichtangabe),
-//   * die Aufnahme startet und die Uhr laeuft,
-//   * eine zu kurze Aufnahme wird abgelehnt (Mindestlaenge),
+//   * die Aufnahme startet und die Uhr läuft,
+//   * eine zu kurze Aufnahme wird abgelehnt (Mindestlänge),
 //   * das Verwerfen der Aufnahme fragt erst nach (die Aufnahme ist sonst
 //     weg),
-//   * das Loeschen der gespeicherten Aufnahme fragt erst nach,
+//   * das Löschen der gespeicherten Aufnahme fragt erst nach,
 //   * die Pflichtangabe: der Text allein reicht (die Aufnahme ist
 //     optional).
 //
@@ -32,17 +32,17 @@ import '../support/plugin_mocks.dart';
 ///
 /// DER GRUND: Der echte Dienst braucht eine Anmeldung und den
 /// Supabase-Client. Im Test reicht der Ersatz: er meldet das
-/// Hochladen und das Loeschen zurueck.
+/// Hochladen und das Löschen zurück.
 class _FakeStorage extends SupabaseStorageService {
   _FakeStorage() : super(_dummyClient);
 
-  /// Der Client wird nie benutzt (alle Methoden sind ueberschrieben).
+  /// Der Client wird nie benutzt (alle Methoden sind überschrieben).
   static final _dummyClient = supabase.Supabase.instance.client;
 
   /// Die hochgeladenen Daten (in Byte).
   final List<List<int>> hochgeladen = [];
 
-  /// Wurde geloescht?
+  /// Wurde gelöscht?
   bool geloescht = false;
 
   @override
@@ -77,12 +77,12 @@ void main() {
         detectSessionInUri: false,
       ),
     );
-    // DIE AUFNAHME: Das Mikrofon wird ueber das Plugin bedient - ohne
+    // DIE AUFNAHME: Das Mikrofon wird über das Plugin bedient - ohne
     // den Ersatz wartet der Aufruf endlos.
     mockAufnahme();
   });
 
-  /// Baut den Editor und liefert die gemeldeten Aenderungen.
+  /// Baut den Editor und liefert die gemeldeten Änderungen.
   ///
   /// [audioPath] ist ein vorhandener Pfad (die Aufnahme ist gespeichert).
   Future<List<String?>> baueEditor(
@@ -99,10 +99,10 @@ void main() {
         child: MaterialApp(
           theme: ThemeData(useMaterial3: true),
           home: Scaffold(
-            // DER GRUND FUER DIE SCROLL-ANSICHT: In der App sitzt der
+            // DER GRUND FÜR DIE SCROLL-ANSICHT: In der App sitzt der
             // Editor in einer langen Liste (die scrollt). Ohne das
-            // laeuft der Editor hier ueber den Rand - nicht weil die App
-            // kaputt waere, sondern weil der Test ihm den Rahmen
+            // läuft der Editor hier über den Rand - nicht weil die App
+            // kaputt wäre, sondern weil der Test ihm den Rahmen
             // wegnimmt.
             body: SingleChildScrollView(
               child: IntroEditor(
@@ -170,7 +170,7 @@ void main() {
         findsOneWidget,
         reason: 'Der Nutzer muss sehen, dass gerade aufgenommen wird.',
       );
-      // Und die Uhr zaehlt.
+      // Und die Uhr zählt.
       expect(find.text('0:00'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
       expect(find.text('0:02'), findsOneWidget);
@@ -185,7 +185,7 @@ void main() {
       await knopfTippen(tester, L10n.tWithoutContext('intro.record'));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Nach zwei Sekunden stoppen - die Mindestlaenge ist zehn Sekunden.
+      // Nach zwei Sekunden stoppen - die Mindestlänge ist zehn Sekunden.
       await knopfTippen(tester, L10n.tWithoutContext('intro.stopListen'));
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -209,7 +209,7 @@ void main() {
       await knopfTippen(tester, L10n.tWithoutContext('intro.record'));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Der Muell-Eimer verwirft die laufende Aufnahme. Er liegt unten
+      // Der Müll-Eimer verwirft die laufende Aufnahme. Er liegt unten
       // in der Aufnahme-Ansicht - erst dorthin scrollen, sonst trifft der
       // Tipp ins Leere.
       final muell = find.byTooltip(L10n.tWithoutContext('intro.discard'));
@@ -220,7 +220,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(tester.takeException(), isNull);
-      // Ohne Rueckfrage waere die Aufnahme weg - und der Nutzer haette sie
+      // Ohne Rückfrage wäre die Aufnahme weg - und der Nutzer hätte sie
       // nicht behalten wollen.
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(
@@ -228,7 +228,7 @@ void main() {
         findsOneWidget,
       );
 
-      // "Behalten" - die Aufnahme laeuft weiter.
+      // "Behalten" - die Aufnahme läuft weiter.
       await tester.tap(
         find.widgetWithText(
           TextButton,
@@ -252,7 +252,7 @@ void main() {
         audioPath: 'hochgeladen/intro.m4a',
       );
 
-      // Der Muelleimer (nur da, wenn eine Aufnahme gespeichert ist).
+      // Der Mülleimer (nur da, wenn eine Aufnahme gespeichert ist).
       final knopf = find.byTooltip(L10n.tWithoutContext('intro.deleteTooltip'));
       expect(knopf, findsOneWidget);
       await tester.ensureVisible(knopf);
@@ -268,7 +268,7 @@ void main() {
         findsOneWidget,
       );
 
-      // Bestaetigen - dann wird die Aufnahme gemeldet als weg.
+      // Bestätigen - dann wird die Aufnahme gemeldet als weg.
       await tester.tap(
         find.widgetWithText(FilledButton, L10n.tWithoutContext('intro.delete')),
       );
@@ -288,7 +288,7 @@ void main() {
     test('der Text allein reicht als Pflichtangabe', () {
       // BEFUND (09.11.2026): "Es kann jedoch, wenn man sich vorstellt nur
       // eine textliche Vorstellung sein und die Audio kann man dann bei
-      // einem Funken hoeren."
+      // einem Funken hören."
       expect(IntroEditor.isValid(text: 'Hallo, ich bin Lena.'), isTrue);
       expect(IntroEditor.isValid(text: '   '), isFalse);
       expect(IntroEditor.isValid(text: ''), isFalse);

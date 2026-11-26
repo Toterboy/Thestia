@@ -1,6 +1,6 @@
 // Der Weg vom Video zum Speicher (die Video-Verifizierung).
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/verification/parts/verificationvideoscreenstate.dart 111
 // offene Zeilen - der Weg, der nach der Aufnahme das Video sichert.
 //
@@ -8,13 +8,13 @@
 // eine echte Datei. Standort, Thumbnails und Alters-Dienst bekommen
 // ihre Ersatzteile.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * nach der Aufnahme wird das Video gesichert (der Pfad, auf dem die
-//     Alterspruefung die Frames entnimmt),
+//     Altersprüfung die Frames entnimmt),
 //   * der Standort wird geholt - er hilft bei der Altersschätzung,
-//   * die Frames werden entnommen (fuenf Zeitpunkte im Video),
-//   * schlaegt das Stoppen fehl, wird dem Nutzer der Grund gesagt (nicht
-//     verschwiegen - der Nutzer haelt die App sonst fuer kaputt).
+//   * die Frames werden entnommen (fünf Zeitpunkte im Video),
+//   * schlägt das Stoppen fehl, wird dem Nutzer der Grund gesagt (nicht
+//     verschwiegen - der Nutzer hält die App sonst für kaputt).
 import 'dart:io';
 
 import 'package:camera_platform_interface/camera_platform_interface.dart';
@@ -43,9 +43,9 @@ const MethodChannel thumbnailKanal = MethodChannel(
 
 /// Wie oft wurden die Thumbnails angefragt?
 ///
-/// DER GRUND: Die App entnimmt fuenf Frames aus dem Video (fuer die
-/// Altersschaetzung). Ohne den Ersatz wartet der Aufruf im Test endlos
-/// (sein Zeitlimit laeuft in der Test-Uhr nicht).
+/// DER GRUND: Die App entnimmt fünf Frames aus dem Video (für die
+/// Altersschätzung). Ohne den Ersatz wartet der Aufruf im Test endlos
+/// (sein Zeitlimit läuft in der Test-Uhr nicht).
 int thumbnailAnfragen = 0;
 
 /// Der Speicher im RAM.
@@ -130,7 +130,7 @@ class _Standort extends LocationVerificationService {
   }
 }
 
-/// Die Kamera, deren Stoppen fehlschlaegt.
+/// Die Kamera, deren Stoppen fehlschlägt.
 class _KameraMitFehler extends FakeCameraPlatform {
   @override
   Future<XFile> stopVideoRecording(int cameraId) async {
@@ -164,7 +164,7 @@ void main() {
     await mockHive();
 
     // DIE THUMBNAILS: Ohne den Ersatz wartet der Aufruf im Test endlos
-    // (sein Zeitlimit laeuft in der Test-Uhr nicht).
+    // (sein Zeitlimit läuft in der Test-Uhr nicht).
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(thumbnailKanal, (anfrage) async {
           thumbnailAnfragen++;
@@ -179,7 +179,7 @@ void main() {
     standort = _Standort();
     thumbnailAnfragen = 0;
 
-    // DER DIENST: Er wird hier bereit gemacht - das Oeffnen der
+    // DER DIENST: Er wird hier bereit gemacht - das Öffnen der
     // Hive-Box ist echte Datei-Arbeit, die im Widget-Test (mit der
     // Test-Uhr) nie zu Ende kommt.
     dienst = VerificationService();
@@ -195,10 +195,10 @@ void main() {
   /// DER GRUND: Das Kamera-Plugin liefert im Test keine echte Datei.
   /// Der Verifikations-Dienst meldet das dem Nutzer ("bitte erneut
   /// aufnehmen") - und der Weg davor (Standort, Frames, Speichern)
-  /// laeuft trotzdem vollstaendig.
+  /// läuft trotzdem vollständig.
   ///
-  /// DER HINWEIS: Nach dem Speichern laedt der Alters-Dienst die
-  /// ONNX-Modelle (82 MB). Die native Bibliothek haengt im Widget-Test
+  /// DER HINWEIS: Nach dem Speichern lädt der Alters-Dienst die
+  /// ONNX-Modelle (82 MB). Die native Bibliothek hängt im Widget-Test
   /// den ganzen Test-Prozess - deshalb endet der Weg hier.
   String fehlendeAufnahmeDatei() {
     final ordner = Directory.systemTemp.createTempSync('thesia_video');
@@ -209,7 +209,7 @@ void main() {
           ordner.deleteSync(recursive: true);
         }
       } catch (e) {
-        // Der Temp-Ordner wird ohnehin irgendwann vom System geraeumt.
+        // Der Temp-Ordner wird ohnehin irgendwann vom System geräumt.
         debugPrint('Der Temp-Ordner blieb liegen: $e');
       }
     });
@@ -247,7 +247,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Bestaetigt die Kamera-Offenlegung und wartet auf die Kamera.
+  /// Bestätigt die Kamera-Offenlegung und wartet auf die Kamera.
   Future<void> kameraFreigeben(WidgetTester tester) async {
     await tester.tap(
       find.widgetWithText(
@@ -264,7 +264,7 @@ void main() {
     }
   }
 
-  /// Tippt auf die Aufnahme (der grosse runde Knopf).
+  /// Tippt auf die Aufnahme (der große runde Knopf).
   Future<void> tippeAufnahme(WidgetTester tester) async {
     final symbol = find.byIcon(Icons.videocam);
     expect(symbol, findsOneWidget);
@@ -277,12 +277,12 @@ void main() {
       tester,
     ) async {
       // DIE AUFNAHME: Die Datei fehlt (das Kamera-Plugin liefert sie im
-      // Test nicht). Der Weg laeuft trotzdem bis zum Speichern - und der
+      // Test nicht). Der Weg läuft trotzdem bis zum Speichern - und der
       // Dienst meldet, dass die Datei fehlt.
       //
-      // DER GRUND fuer diese Wahl: Nach dem Speichern laedt der
+      // DER GRUND für diese Wahl: Nach dem Speichern lädt der
       // Alters-Dienst die ONNX-Modelle (82 MB). Die native Bibliothek
-      // haengt im Widget-Test den ganzen Test-Prozess - das ist kein
+      // hängt im Widget-Test den ganzen Test-Prozess - das ist kein
       // Fehler der App, sondern einer des Testrahmens.
       kamera.aufnahmeDatei = fehlendeAufnahmeDatei();
       await zeige(tester);
@@ -329,8 +329,8 @@ void main() {
     testWidgets('schlaegt das Stoppen fehl, wird der Grund gesagt', (
       tester,
     ) async {
-      // DIE KAMERA: Der Stoppen bricht ab (das kam auf echten Geraeten
-      // vor - der Nutzer haelt die App sonst fuer kaputt).
+      // DIE KAMERA: Der Stoppen bricht ab (das kam auf echten Geräten
+      // vor - der Nutzer hält die App sonst für kaputt).
       CameraPlatform.instance = _KameraMitFehler();
       await zeige(tester);
       await kameraFreigeben(tester);
@@ -364,7 +364,7 @@ void main() {
       tester,
     ) async {
       // DIE KAMERA: Die Aufnahme startet nicht (das kam auf echten
-      // Geraeten vor - dann steht der Screen ohne Rueckmeldung).
+      // Geräten vor - dann steht der Screen ohne Rückmeldung).
       CameraPlatform.instance = _KameraMitStartFehler();
       await zeige(tester);
       await kameraFreigeben(tester);
@@ -394,7 +394,7 @@ void main() {
       await kameraFreigeben(tester);
       final nachDemOeffnen = kamera.anfragen;
 
-      // DER APP-WECHSEL: Das Geraet geht in den Hintergrund - die Kamera
+      // DER APP-WECHSEL: Das Gerät geht in den Hintergrund - die Kamera
       // muss frei werden (der Sensor darf nicht belegt bleiben).
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       await tester.pump();
@@ -405,8 +405,8 @@ void main() {
         await tester.pump(const Duration(milliseconds: 150));
       }
 
-      // UND ZURUECK: Die Kamera kommt wieder - ohne sie bleibt der
-      // Screen fuer den Nutzer leer.
+      // UND ZURÜCK: Die Kamera kommt wieder - ohne sie bleibt der
+      // Screen für den Nutzer leer.
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump();
       for (var i = 0; i < 8; i++) {

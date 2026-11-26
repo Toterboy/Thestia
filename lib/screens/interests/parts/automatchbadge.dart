@@ -1,16 +1,16 @@
 // Der Teil '_AutoMatchBadge'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
 
 part of '../interessen_screen.dart';
 
-/// Dezentes Kennzeichen fuer einen automatisch entstandenen Funke
+/// Dezentes Kennzeichen für einen automatisch entstandenen Funke
 /// (Migration 177).
 ///
 /// Der Funke kam nach 10 Minuten Dating Hour zustande, nicht durch ein

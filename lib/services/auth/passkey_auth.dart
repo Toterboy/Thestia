@@ -136,9 +136,9 @@ class PasskeyAuth {
         '${AppConstants.supabaseUrlBase}/auth/v1/passkeys/registration/options';
     // SICHERHEIT (08.11.2026): Der globale `http` nutzt den System-
     // Root-Store; Dart ruft den Pin-Callback nur auf, wenn die
-    // System-Validierung fehlschlaegt. Ein Zertifikat, das das System
+    // System-Validierung fehlschlägt. Ein Zertifikat, das das System
     // akzeptiert, umging das Pinning also. Der strikte Client (leerer
-    // Root-Store) laesst den Callback IMMER laufen und lehnt ohne
+    // Root-Store) lässt den Callback IMMER laufen und lehnt ohne
     // passenden Pin ab (fail-closed).
     // Advisory: GHSA-frr6-h895-5pxp (eMudhra, High).
     final client = IOClient(CertPinning.pinnedHttpClient());
@@ -180,10 +180,10 @@ class PasskeyAuth {
   /// Wandelt die Server-Optionen in das Format des Passkey-Plugins.
   ///
   /// Gleiche Aufgabe wie `passkeyRegisterRequestFromOptions` im Paket -
-  /// dieses ist aber nicht oeffentlich exportiert, deshalb hier die
+  /// dieses ist aber nicht öffentlich exportiert, deshalb hier die
   /// (kurze) eigene Umsetzung:
-  ///   * die Challenge kommt base64url MIT Fuellzeichen; das Plugin
-  ///     lehnt gefuellte Werte ab,
+  ///   * die Challenge kommt base64url MIT Füllzeichen; das Plugin
+  ///     lehnt gefüllte Werte ab,
   ///   * jedes excluded Credential braucht eine (leere) Transport-Liste.
   static RegisterRequestType _requestAusOptionen(
     Map<String, dynamic> optionen,
@@ -217,7 +217,7 @@ class PasskeyAuth {
     return RegisterRequestType.fromJson(json);
   }
 
-  /// Entfernt die base64url-Fuellzeichen ('=') am Ende.
+  /// Entfernt die base64url-Füllzeichen ('=') am Ende.
   static String _ohneFuellzeichen(String wert) {
     var ende = wert.length;
     while (ende > 0 && wert[ende - 1] == '=') {
@@ -250,17 +250,17 @@ class PasskeyAuth {
   ///
   ///  * Die Liste zu lesen verlangt auf manchen Plattformen AAL2. Fehlt
   ///    die biometrische Anmeldung, wirft der Aufruf - und die
-  ///    Einrichtung wuerde dann einen Passkey ablehnen, nur weil das
+  ///    Einrichtung würde dann einen Passkey ablehnen, nur weil das
   ///    Lesen fehlschlug. Ein false lautet hier "unbekannt", nicht
   ///    "nicht vorhanden".
-  ///  * Die Liste kann aus anderen Gruenden fehlschlagen (Netz, alte
+  ///  * Die Liste kann aus anderen Gründen fehlschlagen (Netz, alte
   ///    Supabase-Version). Auch dann darf die Registrierung laufen.
   ///
   /// Deshalb wird jeder Fehler als "kein Passkey bekannt" behandelt, und
-  /// der Aufrufer bekommt `true` fuer den Fehlerfall nur ueber
-  /// [register] zurueckgemeldet.
+  /// der Aufrufer bekommt `true` für den Fehlerfall nur über
+  /// [register] zurückgemeldet.
   ///
-  /// Rueckgabe: true = mindestens ein Passkey vorhanden (Fehlerfall: false).
+  /// Rückgabe: true = mindestens ein Passkey vorhanden (Fehlerfall: false).
   static Future<bool> hasRegisteredPasskey() async {
     if (!SupabaseService.isInitialized) return false;
     try {
@@ -268,7 +268,7 @@ class PasskeyAuth {
       return list.isNotEmpty;
     } catch (_) {
       // Unbekannt ist nicht "nein" - der Aufrufer soll trotzdem
-      // registrieren duerfen.
+      // registrieren dürfen.
       return false;
     }
   }
@@ -310,15 +310,15 @@ class PasskeyAuth {
     }
   }
 
-  /// Test-Hook: Fehler-Mapping isoliert pruefbar machen.
+  /// Test-Hook: Fehler-Mapping isoliert prüfbar machen.
   @visibleForTesting
   static AppException explainError(Object e, {required bool login}) =>
       _explain(e, login: login);
 
-  /// Verlangt der Server fuer diese Anfrage ein CAPTCHA-Token?
+  /// Verlangt der Server für diese Anfrage ein CAPTCHA-Token?
   ///
   /// NUTZERWUNSCH (31.10.2026): "Passkey ... hat jetzt aber eine extra
-  /// Captcha Abfrage." Die Abfrage ist nur noetig, wenn der Server sie
+  /// Captcha Abfrage." Die Abfrage ist nur nötig, wenn der Server sie
   /// wirklich verlangt - sonst fragt die App nach einem Sicherheitscheck,
   /// den niemand gebraucht hat.
   ///
@@ -332,10 +332,10 @@ class PasskeyAuth {
   static bool requiresCaptcha(Object e) =>
       e is AppException && e.messageKey == 'passkey.err.captcha';
 
-  /// Der Text, den die Oberflaeche zu einem Passkey-Fehler zeigen soll.
+  /// Der Text, den die Oberfläche zu einem Passkey-Fehler zeigen soll.
   ///
   /// Der Aufrufer bekommt hier IMMER eine [AppException] mit
-  /// Uebersetzungsschluessel - auch bei Fehlern, die nicht aus dem
+  /// Übersetzungsschlüssel - auch bei Fehlern, die nicht aus dem
   /// Passkey-Pfad kommen. Vorher landete jeder solche Fehler in der
   /// generischen Meldung "Passkey-Einrichtung fehlgeschlagen", ohne
   /// jeden Hinweis auf die Ursache (NUTZERWUNSCH 31.10.2026: "Es gibt
@@ -361,7 +361,7 @@ class PasskeyAuth {
     // FlutterError - daher String-basiert auf den Fehlertyp prüfen.
     final text = e.toString();
 
-    // Der ROHE Fehlertext gehoert ins Log, und zwar VOR jeder Zuordnung.
+    // Der ROHE Fehlertext gehört ins Log, und zwar VOR jeder Zuordnung.
     //
     // Grund: die Zuordnung unten ist eine Whitelist. Was nicht auf eines
     // ihrer Muster passt, landet in der generischen Meldung
@@ -371,15 +371,15 @@ class PasskeyAuth {
     // Fehlerklasse liefert (SecurityError, NotAllowedError,
     // android-sync-account-not-available, GetCredentialProvider-
     // ConfigurationException ...). Ohne dieses Log ist nicht
-    // unterscheidbar, ob die Domain-Verknuepfung, der Sperrbildschirm,
+    // unterscheidbar, ob die Domain-Verknüpfung, der Sperrbildschirm,
     // die Play Services oder der Server die Ursache ist - und jede
-    // dieser vier Klassen sieht in der Oberflaeche gleich aus.
+    // dieser vier Klassen sieht in der Oberfläche gleich aus.
     //
     // `developer.log` statt `debugPrint`: debugPrint steht in
     // Release-Builds in einem `if (kDebugMode)`-Zweig, und der Compiler
-    // wirft den Zweig samt Aufruf weg. Die Diagnose waere damit genau
-    // in den Builds weg, die der Nutzer tatsaechlich testet. log() aus
-    // dart:developer ueberlebt und landet im Logcat.
+    // wirft den Zweig samt Aufruf weg. Die Diagnose wäre damit genau
+    // in den Builds weg, die der Nutzer tatsächlich testet. log() aus
+    // dart:developer überlebt und landet im Logcat.
     developer.log(
       'Passkey $action ROHER Fehler (${e.runtimeType}): $text',
       name: 'PasskeyAuth',
@@ -528,13 +528,13 @@ class PasskeyAuth {
       );
     }
 
-    // Digital Asset Links: Androids eigene Fehlerklasse fuer genau den
+    // Digital Asset Links: Androids eigene Fehlerklasse für genau den
     // Fall, in dem die Zeremonie gar nicht erst beginnt.
     //
     // WICHTIG - das ist NICHT dasselbe wie "SecurityError" weiter oben.
     // "SecurityError" ist die WebAuthn-Fehlermeldung, wenn der Browser
-    // eine nicht verknuepfte Domain sieht. Android Credential Manager
-    // laesst die Zeremonie aber schon vorher scheitern und wirft dann
+    // eine nicht verknüpfte Domain sieht. Android Credential Manager
+    // lässt die Zeremonie aber schon vorher scheitern und wirft dann
     // aus dem StatementService:
     //
     //     Unable to verify package. Digital Asset Links verification failed.
@@ -545,8 +545,8 @@ class PasskeyAuth {
     // deshalb im "unbekannt"-Zweig mit der Meldung "Passkey-Einrichtung
     // fehlgeschlagen" - ohne jeden Hinweis darauf, dass die Ursache an
     // der assetlinks.json liegt. Genau das war der Fall: die Datei war
-    // erreichbar und korrekt, aber die Verknuepfung schlug fehl, und
-    // die Meldung sagte nichts darueber.
+    // erreichbar und korrekt, aber die Verknüpfung schlug fehl, und
+    // die Meldung sagte nichts darüber.
     final dalText = text.toLowerCase();
     if (dalText.contains('asset link') ||
         dalText.contains('assetlink') ||
@@ -566,8 +566,8 @@ class PasskeyAuth {
     }
 
     // Unbekannter Fehler: Details NIE durchreichen (auch nicht im Debug -
-    // Profile-Builds haben kReleaseMode == false und wuerden sonst leaken).
-    // Die vollstaendige Meldung landet nur im Log.
+    // Profile-Builds haben kReleaseMode == false und würden sonst leaken).
+    // Die vollständige Meldung landet nur im Log.
     debugPrint('[PasskeyAuth] $action fehlgeschlagen: $e');
     return AppException(
       'Passkey-$action fehlgeschlagen. Bitte versuche es später erneut.',

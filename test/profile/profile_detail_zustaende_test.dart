@@ -1,20 +1,20 @@
-// Die Zustaende der Profildetail-Seite und das Blockieren.
+// Die Zustände der Profildetail-Seite und das Blockieren.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/profile/profile_detail_screen.dart 76 offene Zeilen. Der
 // bestehende Test ("profile_detail_screen_test.dart") deckt die
 // gemeinsamen Interessen und den Musik-Geschmack ab - offen waren die
 // Karten, die nur bei bestimmten Profilangaben erscheinen, und der Weg
 // "Nutzer blockieren".
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * das Geschlecht, die Entfernung und der Persoenlichkeitstyp stehen
+// WAS HIER GEPRÜFT WIRD:
+//   * das Geschlecht, die Entfernung und der Persönlichkeitstyp stehen
 //     da (die Karten, die nur mit diesen Angaben erscheinen),
 //   * die Vorstellung steht da (Text und der Abspiel-Knopf),
 //   * der Lieblingssong steht da,
 //   * das Blockieren fragt nach (und der Abbruch blockiert nichts),
 //   * das Blockieren geht zum Server und meldet den Erfolg,
-//   * schlaegt das Blockieren fehl, wird das dem Nutzer gesagt.
+//   * schlägt das Blockieren fehl, wird das dem Nutzer gesagt.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -109,7 +109,7 @@ void main() {
     server.antwortetMitFehler = false;
   });
 
-  /// Baut die Profildetail-Seite mit dem oeffentlichen Profil [daten].
+  /// Baut die Profildetail-Seite mit dem öffentlichen Profil [daten].
   Future<void> zeigeProfil(
     WidgetTester tester, {
     required Map<String, dynamic> daten,
@@ -192,7 +192,7 @@ void main() {
 
     testWidgets('die Entfernung steht da', (tester) async {
       // DIE DISTANZ kommt aus einem eigenen Aufruf (der Server
-      // berechnet sie - sie steht nicht im oeffentlichen Profil).
+      // berechnet sie - sie steht nicht im öffentlichen Profil).
       server.rpcAntworten['profile_distance_km'] = 12;
 
       await zeigeProfil(tester, daten: <String, dynamic>{});
@@ -263,7 +263,7 @@ void main() {
   });
 
   group('Das Blockieren', () {
-    /// Oeffnet das Menue und waehlt "Blockieren".
+    /// Öffnet das Menü und wählt "Blockieren".
     Future<void> oeffneBlockMenu(WidgetTester tester) async {
       final knopf = find.byTooltip(
         L10n.tWithoutContext('profile.detail.reportUser'),

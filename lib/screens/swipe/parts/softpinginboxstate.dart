@@ -1,9 +1,9 @@
 // Der Teil '_SoftPingInboxState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -33,7 +33,7 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
     _scheduleRefresh();
   }
 
-  /// Eine Benachrichtigung ueber einen neuen Funke holt den Nutzer aus der
+  /// Eine Benachrichtigung über einen neuen Funke holt den Nutzer aus der
   /// App heraus. Ohne diesen Haken wartete die Liste im ungünstigsten Fall
   /// bis zu zwei Minuten - der Timer streckt im Leerlauf bewusst ab, und
   /// im Hintergrund liefert er ohnehin nichts Verlässliches. Beim
@@ -112,7 +112,7 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
         //
         // Deshalb sagt die App jetzt, was passiert ist, und bietet den
         // Weg zum Chat an - als Knopf, nicht als Zwang (der Betreiber
-        // wollte ausdruecklich kein Chat-Erzwang).
+        // wollte ausdrücklich kein Chat-Erzwang).
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(L10n.t(context, 'transit.acceptDone')),
@@ -124,7 +124,7 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
                 if (!mounted) return;
                 // Die Annahme liefert die match_id (Migration 194) - damit
                 // geht es direkt in den Chat des neuen Funkens. Ohne sie
-                // (aelterer Server) geht es zu den Funken, wo er steht.
+                // (älterer Server) geht es zu den Funken, wo er steht.
                 final matchId = res['match_id'];
                 if (matchId is num && matchId > 0) {
                   // BEFUND (07.11.2026, Betreiber): "Wenn man von
@@ -133,7 +133,7 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
                   // an bleiben soll."
                   //
                   // Dieselbe Frage wie beim Verlassen des Radar-
-                  // Bildschirms: laeuft der Radar weiter, oder soll
+                  // Bildschirms: läuft der Radar weiter, oder soll
                   // er gestoppt werden? Ohne diese Frage bleibt der
                   // Radar im Hintergrund senden - der Nutzer hat das
                   // aber nicht entschieden.
@@ -197,7 +197,7 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
     // BEFUND (07.11.2026, Betreiber): "Funke wurde angezeigt, ist dann
     // aber wieder verschwunden."
     //
-    // Das Ausblenden LOESCHT die Zeile - unwiderruflich. Und der Knopf
+    // Das Ausblenden LÖSCHT die Zeile - unwiderruflich. Und der Knopf
     // sitzt genau dort, wo der Finger schon liegt, wenn die Liste
     // gerade gewachsen ist: ein unbedachter Tippen vernichtet den
     // Funken. Deshalb fragt die App jetzt vorher nach.
@@ -220,7 +220,7 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
     );
     if (bestaetigt != true || !mounted) return;
 
-    // Still ausblenden: Zeile loeschen (Absender sieht nichts).
+    // Still ausblenden: Zeile löschen (Absender sieht nichts).
     await bestEffort('from.delete', () async {
       await SupabaseService.client
           .from('transit_soft_pings')
@@ -257,7 +257,7 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
                   // Name, bleibt die Meldung anonym.
                   _pingHeadline(context, ping),
                   // BEFUND (11.11.2026): Der Ort des Absenders steht bei
-                  // der Meldung - er weiss sonst nicht, wo er suchen
+                  // der Meldung - er weiß sonst nicht, wo er suchen
                   // soll ("Wagen 3").
                   if ((ping['placeText'] as String?)?.trim().isNotEmpty == true)
                     Padding(
@@ -286,12 +286,12 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
                   const SizedBox(height: 8),
                   // DER UMBRUCH (18.11.2026, gefunden von einem Test): Die
                   // beiden Knopfe standen in einer festen Reihe - bei
-                  // grosser Schrift (oder einer System-Schriftgroesse
-                  // ueber 100 %) lief die Reihe ueber den Rand
+                  // großer Schrift (oder einer System-Schriftgrösse
+                  // über 100 %) lief die Reihe über den Rand
                   // ("RenderFlex overflowed").
                   //
                   // DER WEG: Ein "Wrap" bricht die Reihe um, statt zu
-                  // ueberlaufen. Bei normaler Schrift steht alles
+                  // überlaufen. Bei normaler Schrift steht alles
                   // weiterhin nebeneinander.
                   Wrap(
                     alignment: WrapAlignment.end,

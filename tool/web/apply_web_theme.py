@@ -8,7 +8,7 @@ App zu passen."
 
 Warum ein Skript und nicht vier Kopien: die vier Seiten teilen sich
 dieselben Regeln. Von Hand gepflegt driftet die eine Seite irgendwann ab
-- und die Seite mit dem Drift faellt genau dann auf, wenn niemand
+- und die Seite mit dem Drift fällt genau dann auf, wenn niemand
 hinsieht.
 
 Das Skript ist WIEDERHOLBAR: apply_theme() erkennt an einem Marker, ob
@@ -16,10 +16,10 @@ eine Seite schon bearbeitet wurde, und tut sie sonst nur einmal an.
 
     python tool/web/apply_web_theme.py
 
-Geaenderte Seiten: kinderschutz.html, konto-loeschen.html, impressum.html,
+Geänderte Seiten: kinderschutz.html, konto-loeschen.html, impressum.html,
 dating-sicherheit.html.
-Die Datenschutzerklaerung wird NICHT hier bearbeitet - sie entsteht aus
-docs/recht/DATENSCHUTZ.md ueber tool/web/make_privacy_policy.py, das dieselben
+Die Datenschutzerklärung wird NICHT hier bearbeitet - sie entsteht aus
+docs/recht/DATENSCHUTZ.md über tool/web/make_privacy_policy.py, das dieselben
 Regeln aus tool/helpers/web_theme.py zieht.
 """
 import pathlib
@@ -28,8 +28,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -68,14 +68,14 @@ SEITEN = [
 # datenschutz.html und en/datenschutz.html werden GENERIERT
 # (tool/web/make_privacy_policy.py) und bringen das Design schon mit -
 # inklusive des Sprachknopfes, den der Generator selbst setzt. Sie
-# duerfen hier NICHT laufen: strip_theme() wuerde die Kopfzeile
+# dürfen hier NICHT laufen: strip_theme() würde die Kopfzeile
 # entfernen und apply_theme() eine ohne Sprachknopf einsetzen.
 
 # Die englischen Fassungen liegen unter en/ und tragen dieselben
-# Dateinamen. "en/eltern-einstellungen.html" gehoert zu
+# Dateinamen. "en/eltern-einstellungen.html" gehört zu
 # "eltern-einstellungen.html" - die Adresse "/en/eltern/einstellungen"
 # entsteht aus der Rewrite-Regel (BEFUND 23.11.2026: die Datei liegt
-# FLACH, weil ein Ordner "en/eltern/" auf dem Server am Schraegstrich
+# FLACH, weil ein Ordner "en/eltern/" auf dem Server am Schrägstrich
 # dreht).
 EN_SEITEN = [
     'en/impressum.html',
@@ -90,7 +90,7 @@ EN_SEITEN = [
 
 # Seite -> (deutsche Adresse, englische Adresse).
 #
-# Die Adressen ohne ".html" entstehen ueber die Rewrite-Regeln in
+# Die Adressen ohne ".html" entstehen über die Rewrite-Regeln in
 # _redirects. Sie stehen hier, damit der Sprachknopf nicht raten muss
 # und weil beide Werkzeuge (Theme und _redirects) dieselbe Liste
 # brauchen.
@@ -111,12 +111,12 @@ SEITEN_URL = {
 
 
 def sprachziel(rel: str) -> tuple[str, str]:
-    """(Adresse der anderen Fassung, Kuerzel des Ziels) fuer eine Seite.
+    """(Adresse der anderen Fassung, Kürzel des Ziels) für eine Seite.
 
     [rel] ist der Pfad relativ zu passkey-assets/ - z. B.
     'impressum.html' oder 'en/impressum.html'.
 
-    Fuer die englischen Seiten ist der Name die Datei OHNE den Ordner
+    Für die englischen Seiten ist der Name die Datei OHNE den Ordner
     'en/' (z. B. 'en/eltern-einstellungen.html' -> 'eltern-einstellungen
     .html'); die Adresse "/en/eltern/einstellungen" kommt aus der
     Rewrite-Regel.
@@ -134,9 +134,9 @@ def sprachziel(rel: str) -> tuple[str, str]:
     return eintrag[1], 'EN'
 
 # index.html: die Captcha-Seite. Sie hat ZWEI Ansichten (Sicherheitscheck
-# fuer auth.thestia.de, Landing-Seite fuer die Wurzel-Domain) und bringt
+# für auth.thestia.de, Landing-Seite für die Wurzel-Domain) und bringt
 # ihre eigene Kopfzeile mit. Deshalb bekommt sie nur das gemeinsame CSS,
-# keine Kopfzeile und keine Inhalts-Huelle - die wuerde den
+# keine Kopfzeile und keine Inhalts-Hülle - die würde den
 # Sicherheitscheck in eine Karte packen.
 NUR_CSS = ['index.html', 'bestaetigt.html', 'en/index.html',
            'en/bestaetigt.html']
@@ -145,17 +145,17 @@ NUR_CSS = ['index.html', 'bestaetigt.html', 'en/index.html',
 def main() -> int:
     # --force: Das Theme wird VORHER entfernt und neu eingespielt.
     #
-    # Warum das noetig ist (31.10.2026): Das Design bekam eine neue
+    # Warum das nötig ist (31.10.2026): Das Design bekam eine neue
     # Regel - die Seite folgt jetzt der Systemeinstellung (Dark Mode)
-    # und der Schalter dreht nur um. Wer das Design nachaendert,
-    # schreibt die Aenderung in web_theme.py und spielt sie mit
+    # und der Schalter dreht nur um. Wer das Design nachändert,
+    # schreibt die Änderung in web_theme.py und spielt sie mit
     # --force auf alle Seiten ein.
     #
     # apply_theme() entfernt ein vorhandenes Theme zwar ohnehin zuerst -
     # der Schritt ist aber unsichtbar, wenn jemand die Seite
-    # zwischendurch von Hand angefasst hat (zusaetzliches
-    # Inline-CSS, eine eigene Kopfzeile). --force raeumt restlos auf:
-    # jede Ausfuehrung ergibt dieselbe Seite.
+    # zwischendurch von Hand angefasst hat (zusätzliches
+    # Inline-CSS, eine eigene Kopfzeile). --force räumt restlos auf:
+    # jede Ausführung ergibt dieselbe Seite.
     force = '--force' in sys.argv[1:]
     geaendert = 0
     for name in SEITEN + EN_SEITEN:
@@ -168,7 +168,7 @@ def main() -> int:
         ziel, sprache = sprachziel(name)
         # Die Suchmaschinen-Beschreibung kommt aus der gemeinsamen
         # Tabelle in web_theme.py. Die transienten Seiten (Token-URL)
-        # stehen auf noindex - fuer sie gibt es keine.
+        # stehen auf noindex - für sie gibt es keine.
         text = beschreibung(name, 'en' if name.startswith('en/') else 'de')
         nachher = apply_theme(quelle, sprach_ziel=ziel, sprache=sprache,
                               beschreibung=text)

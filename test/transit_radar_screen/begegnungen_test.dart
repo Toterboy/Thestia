@@ -6,30 +6,30 @@
 
 // Der Transit-Radar (Transit Spark) - bisher ungetestet.
 //
-// ANLASS (13.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (13.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/transit_radar_screen.dart 936 offene Zeilen. Der
 // Bildschirm ist der Kern von Transit Spark ("Blicke getauscht, dich
 // nicht getraut?") - und er wurde nie gerendert.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * die Alterssperre ist fail-closed (ohne Geburtsdatum gesperrt),
-//   * beim ersten Oeffnen fragt die App, ob der Name sichtbar sein soll,
+//   * beim ersten Öffnen fragt die App, ob der Name sichtbar sein soll,
 //   * der Start fragt zuerst nach der eigenen Beschreibung,
-//   * "Blicke getauscht" oeffnet die Merkmalsauswahl und sendet die Tags,
+//   * "Blicke getauscht" öffnet die Merkmalsauswahl und sendet die Tags,
 //   * die Kandidatenliste erscheint und der Zuwink meldet Erfolg/Fehlschlag,
-//   * der Ort wird uebernommen (frei gewaehlt - KEIN Standort),
+//   * der Ort wird übernommen (frei gewählt - KEIN Standort),
 //   * der Name-Schalter speichert die Entscheidung.
 //
 // OHNE FUNK, OHNE SERVER: Das BLE-Starten und der Server werden durch
 // einen Fake-Notifier ersetzt (kein Bluetooth, kein Netz). Die
 // Merkmalsauswahl selbst ist das ECHTE Widget der App - sie wird nicht
-// nachgebaut, sonst wuerde der Test nur Flutter pruefen und nicht die
+// nachgebaut, sonst würde der Test nur Flutter prüfen und nicht die
 // App.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/chat/funke_overlay.dart';
@@ -45,9 +45,9 @@ void main() {
     // CI-Runner das echte und findet nichts.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
-    // DER SERVER: Der Posteingang der Grueesse laeuft ueber die Datenbank
+    // DER SERVER: Der Posteingang der Grüesse läuft über die Datenbank
     // (list_my_soft_pings). Ohne Server bleibt der Posteingang leer -
-    // und genau den Bereich prueft kein Test.
+    // und genau den Bereich prüft kein Test.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -64,12 +64,12 @@ void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    // Der Server beginnt ohne Gruesse - jeder Test stellt seine eigenen.
+    // Der Server beginnt ohne Grüße - jeder Test stellt seine eigenen.
     server.rpcAntworten['list_my_soft_pings'] = <dynamic>[];
     server.rpcAntworten.remove('accept_soft_ping');
     server.schreibvorgaenge.clear();
     // DER KEYSTORE: Der Bildschirm liest die Einstellungen (Altersspanne
-    // und Suchradius) aus dem verschluesselten Speicher. Ohne diesen
+    // und Suchradius) aus dem verschlüsselten Speicher. Ohne diesen
     // Mock ruft der Test auf dem CI-Runner das echte Plugin - und das
     // findet dort keine libsecret-Sitzung.
     mockKeystore();
@@ -79,12 +79,12 @@ void main() {
       testWidgets('ein frischer Funke wird angezeigt', (tester) async {
         // Der Server meldet einen FRISCHEN Funken - das ist der Fall, den
         // der Lauscher fangen soll: der Partner hat (fast gleichzeitig)
-        // auch gedrueckt, der Funke entstand aber erst danach.
+        // auch gedrückt, der Funke entstand aber erst danach.
         server.rpcAntworten['list_my_matches_with_state'] = <dynamic>[
           <String, dynamic>{
             'matchId': 99,
             'status': 'active',
-            // DER WEG: Ein DEUTLICH spaeterer Zeitstempel. Der Lauscher
+            // DER WEG: Ein DEUTLICH späterer Zeitstempel. Der Lauscher
             // vergleicht mit `now - 2s` - unter Parallel last vergehen
             // zwischen diesem Setzen und dem Start des Lauschers mehr als
             // zwei Sekunden, dann gilt der Funke als "alt" und das Overlay
@@ -105,7 +105,7 @@ void main() {
         await aufbauen(tester, container, router);
 
         // Den Radar starten und das Signal senden - danach lauscht die
-        // App auf einen spaeter entstehenden Funken.
+        // App auf einen später entstehenden Funken.
         await startTippen(tester);
         await merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
         await sendenTippen(tester);
@@ -123,7 +123,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(tester.takeException(), isNull);
-        // Die Funke-Animation steht da - sonst haette der Nutzer den
+        // Die Funke-Animation steht da - sonst hätte der Nutzer den
         // Funke nicht mitbekommen.
         expect(
           find.byType(FunkeOverlay),
@@ -133,7 +133,7 @@ void main() {
               'angezeigt werden.',
         );
 
-        // Die Animation schliesst sich nach 1,2 s von selbst - der Timer
+        // Die Animation schließt sich nach 1,2 s von selbst - der Timer
         // darf am Testende nicht mehr laufen.
         await tester.pump(const Duration(milliseconds: 1300));
         await tester.pumpWidget(const SizedBox());
@@ -150,7 +150,7 @@ void main() {
         await aufbauen(tester, container, router);
         await radarStarten(tester);
 
-        // Der Radar laeuft - jetzt stoppen. Danach fragt die App, ob
+        // Der Radar läuft - jetzt stoppen. Danach fragt die App, ob
         // Bluetooth/Standort ausgeschaltet werden sollen.
         await knopfTippen(tester, L10n.tWithoutContext('transit.stop'));
         await tester.pump();
@@ -168,7 +168,7 @@ void main() {
       });
     });
     group('Der Posteingang der Grueesse', () {
-      /// Stellt einen Gruss in den Posteingang.
+      /// Stellt einen Gruß in den Posteingang.
       void stelleGruess({String? name = 'Mira'}) {
         server.rpcAntworten['list_my_soft_pings'] = <dynamic>[
           <String, dynamic>{
@@ -202,8 +202,8 @@ void main() {
         await serverAntwortAbwarten(tester);
 
         expect(tester.takeException(), isNull);
-        // Der Gruss steht da - mit dem Namen des Absenders (er hat ihn
-        // freigegeben) und mit dem Ort, damit der Nutzer weiss, wo er
+        // Der Gruß steht da - mit dem Namen des Absenders (er hat ihn
+        // freigegeben) und mit dem Ort, damit der Nutzer weiß, wo er
         // suchen soll.
         expect(find.textContaining('Mira'), findsWidgets);
         expect(find.text('Wagen 3'), findsOneWidget);
@@ -287,7 +287,7 @@ void main() {
               'Ohne die Annahme beim Server entsteht kein Funke - der '
               'Nutzer bleibt ohne Antwort.',
         );
-        // Und der Nutzer erfaehrt, was passiert ist.
+        // Und der Nutzer erfährt, was passiert ist.
         expect(
           find.textContaining(L10n.tWithoutContext('transit.acceptDone')),
           findsWidgets,
@@ -314,7 +314,7 @@ void main() {
         await serverAntwortAbwarten(tester);
 
         // BEFUND (07.11.2026, Betreiber): "Funke wurde angezeigt, ist dann
-        // aber wieder verschwunden." Das Ausblenden LOESCHT die Zeile -
+        // aber wieder verschwunden." Das Ausblenden LÖSCHT die Zeile -
         // und der Knopf sitzt genau dort, wo der Finger schon liegt.
         // Deshalb fragt die App vorher nach.
         await knopfTippen(tester, L10n.tWithoutContext('transit.ignore'));
@@ -331,7 +331,7 @@ void main() {
           findsOneWidget,
         );
 
-        // Bestaetigen: dann loescht die App wirklich.
+        // Bestätigen: dann löscht die App wirklich.
         await tester.tap(
           find.widgetWithText(
             FilledButton,
@@ -369,7 +369,7 @@ void main() {
         await serverAntwortAbwarten(tester);
 
         await knopfTippen(tester, L10n.tWithoutContext('transit.ignore'));
-        // "Abbrechen" - der Gruss bleibt.
+        // "Abbrechen" - der Gruß bleibt.
         await tester.tap(
           find.widgetWithText(
             TextButton,
@@ -387,7 +387,7 @@ void main() {
           isFalse,
           reason: 'Ohne Bestaetigung wird nichts geloescht.',
         );
-        // Und der Gruss steht noch da.
+        // Und der Gruß steht noch da.
         expect(find.textContaining('Mira'), findsWidgets);
 
         await tester.pumpWidget(const SizedBox());

@@ -117,14 +117,14 @@ void main() {
     });
 
     // Regression: keysFor nahm sublist(out.length - 6), also die LETZTEN
-    // sechs. Build 30 hatte zehn Satzbausteine fuer vier Aussagen, das
-    // Cap zerschnitt mitten im Satz - die Anzeige begann mit "fuer
+    // sechs. Build 30 hatte zehn Satzbausteine für vier Aussagen, das
+    // Cap zerschnitt mitten im Satz - die Anzeige begann mit "für
     // Funken, Daumen und Nachrichten." und der Punkt "Vorstellungen
-    // rotieren" fehlte vollstaendig.
+    // rotieren" fehlte vollständig.
     test('Cap zerstört keinen Punkt: gekürzt wird nur am Listenende', () {
       final keys = WhatsNewService.keysFor(currentBuild: 30, shownBuild: 29);
       expect(keys, isNotEmpty);
-      // Erster Eintrag muss ein vollstaendiger Punkt aus contentByBuild
+      // Erster Eintrag muss ein vollständiger Punkt aus contentByBuild
       // sein - kein Satzbaustein, kein deutscher Klartext.
       final known = WhatsNewService.contentByBuild[30]!;
       for (final k in keys) {
@@ -161,8 +161,8 @@ void main() {
       },
     );
 
-    // Regression: bei einem Sprung ueber mehrere Versionen verdraengte
-    // die alte Logik den Inhalt der JUENGSTEN Version, weil sie die
+    // Regression: bei einem Sprung über mehrere Versionen verdrängte
+    // die alte Logik den Inhalt der JÜNGSTEN Version, weil sie die
     // letzten sechs einer aufsteigend gebauten Liste nahm.
     test('Sprung ueber mehrere Versionen zeigt zuerst die juengste', () {
       final keys = WhatsNewService.keysFor(currentBuild: 30, shownBuild: 21);

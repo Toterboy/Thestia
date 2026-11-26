@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -114,9 +114,9 @@ extension _AuthServerSync on AuthNotifier {
         );
         if (profile == null) {
           // Nur die SESSION verwerfen - lokale Daten (Profil, Einstellungen,
-          // Praeferenzen) bleiben als Cache erhalten. Vorher wurden sie hier
-          // komplett geloescht, was bei einem falsch-negativ (z. B. RLS-
-          // Strohfeuer) den Nutzer alles neu eingeben liess. Nach erneutem
+          // Präferenzen) bleiben als Cache erhalten. Vorher wurden sie hier
+          // komplett gelöscht, was bei einem falsch-negativ (z. B. RLS-
+          // Strohfeuer) den Nutzer alles neu eingeben ließ. Nach erneutem
           // Login liefert der Server das Profil ohnehin wieder.
           debugPrint(
             '[AuthNotifier] Profil fehlt trotz Session - Session wird '
@@ -209,13 +209,13 @@ extension _AuthServerSync on AuthNotifier {
               .applyServerUiPrefs(uiPrefs);
         }
         // Schalter in eigenen Spalten: show_distance (Entfernungsanzeige)
-        // und die fuenf Push-Spalten (v0.10.0).
+        // und die fünf Push-Spalten (v0.10.0).
         //
         // BUG (still, seit langem): show_distance wurde NUR geschrieben,
         // nie gelesen. Nach einer Neuinstallation zeigte der Schalter
-        // "aus", waehrend der Server weiter true hatte - der Nutzer
+        // "aus", während der Server weiter true hatte - der Nutzer
         // glaubte, die Entfernung sei verborgen, und sie wurde
-        // angezeigt. Die Push-Schalter waren ueber ui_prefs gespiegelt,
+        // angezeigt. Die Push-Schalter waren über ui_prefs gespiegelt,
         // aber notify-user wertet die Einzelspalten aus, die dauerhaft
         // auf true standen: die Schalter hatten keine Wirkung.
         await _ref.read(settingsProvider.notifier).refreshServerSwitches();
@@ -234,8 +234,8 @@ extension _AuthServerSync on AuthNotifier {
         // "erledigt"-Flags, die dem Server fehlen (z. B. weil das Speichern
         // bei der Einrichtung still fehlschlug), werden hier nachgezogen.
         // NUR nach dem ersten Sync – so werden lokale Restwerte (z. B. von
-        // einem frueheren Test/Install) nicht zum Server gepusht und die
-        // Einrichtung bei der allerersten Registrierung nicht uebersprungen.
+        // einem früheren Test/Install) nicht zum Server gepusht und die
+        // Einrichtung bei der allerersten Registrierung nicht übersprungen.
         if (_initialServerSyncDone) {
           final s = _ref.read(settingsProvider);
           if ((s.oneTimeSettingsCompleted &&

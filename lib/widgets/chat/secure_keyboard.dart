@@ -6,37 +6,37 @@ import 'package:thestia/l10n/app_strings.dart';
 ///
 /// **Der Wunsch des Betreibers (13.11.2026):** "dass die Handytastatur
 /// nicht tracken kann was man schreibt. Das soll ja irgendwie gehen
-/// koennen anscheinend".
+/// können anscheinend".
 ///
-/// **Was das Problem ueberhaupt ist:** Die Systemtastatur (Gboard,
-/// SwiftKey, ...) ist ein eigenes Programm auf dem Geraet. Sie sieht
+/// **Was das Problem überhaupt ist:** Die Systemtastatur (Gboard,
+/// SwiftKey, ...) ist ein eigenes Programm auf dem Gerät. Sie sieht
 /// jeden Buchstaben, den man tippt, und darf daraus lernen - das
-/// Wörterbuch, die Autokorrektur, die personalisierten Vorschlaege. Auf
-/// einem Geraet, das man nicht besitzt (Fremdgeraet, Secondhand,
+/// Wörterbuch, die Autokorrektur, die personalisierten Vorschlüge. Auf
+/// einem Gerät, das man nicht besitzt (Fremdgerät, Secondhand,
 /// manipulierte ROM) ist das nicht aufhaltbar - und "es ist nur die
 /// Tastatur" ist keine Antwort, wenn man der anderen Person nicht
 /// vertraut.
 ///
 /// **Was hier dagegen steht:** Die Zeichen laufen vom Tasten-Widget
 /// direkt in den Textcontroller. Die Systemtastatur wird gar nicht erst
-/// geoeffnet: Das Textfeld steht auf `readOnly`, und auf Android und iOS
-/// entsteht bei einem `readOnly`-Feld ueberhaupt keine Eingabeverbindung
+/// geöffnet: Das Textfeld steht auf `readOnly`, und auf Android und iOS
+/// entsteht bei einem `readOnly`-Feld überhaupt keine Eingabeverbindung
 /// (`_shouldCreateInputConnection` ist dort `false`). Es gibt damit
-/// nichts, was die Systemtastatur sehen koennte - nicht den getippten
+/// nichts, was die Systemtastatur sehen kännte - nicht den getippten
 /// Text, nicht einzelne Zeichen, nicht den Cursor.
 ///
 /// **Was das NICHT ist - ehrlich gesagt:**
-/// * Das gilt fuer die **Zeichen**. Alles, was sichtbar auf dem
+/// * Das gilt für die **Zeichen**. Alles, was sichtbar auf dem
 ///   Bildschirm steht, kann auch ein Zugriff auf das Display abgreifen.
 ///   Dagegen steht die Screenshot-Sperre (`FLAG_SECURE`), die die App
 ///   bereits auf allen Bildschirmen setzt.
-/// * Es schuetzt nicht davor, dass jemand **ueber die Schulter** liest.
-/// * Ein **gerootetes** Geraet ist pauschal nicht mehr zu retten.
+/// * Es schützt nicht davor, dass jemand **über die Schulter** liest.
+/// * Ein **gerootetes** Gerät ist pauschal nicht mehr zu retten.
 ///
 /// **Ehrliche Grenze der Plattform:** Auf iOS gibt es zu
 /// `enableIMEPersonalizedLearning` (Android) keine Entsprechung - dort
 /// wirkt nur `autocorrect: false` + `enableSuggestions: false`. Der Weg
-/// ueber die eigene Tastatur ist deshalb der einzige, der auf BEIDEN
+/// über die eigene Tastatur ist deshalb der einzige, der auf BEIDEN
 /// Plattformen dasselbe verspricht - und deshalb der, den die App geht.
 class SecureKeyboard extends StatefulWidget {
   const SecureKeyboard({
@@ -50,13 +50,13 @@ class SecureKeyboard extends StatefulWidget {
 
   /// Die Belegung, die zur Sprache der App passt.
   ///
-  /// Deutsch hat **QWERTZ** (das "y" und das "z" sind gegenueber der
+  /// Deutsch hat **QWERTZ** (das "y" und das "z" sind gegenüber der
   /// englischen Belegung vertauscht) und vier Umlaut-Tasten. Englisch
   /// hat **QWERTY**. Wer die App auf Englisch stellt, bekommt also die
   /// englische Tastatur - und umgekehrt.
   ///
   /// Alles ausser Deutsch bekommt QWERTY: das ist die weltweit
-  /// uebliche Belegung, und die App spricht ohnehin nur Deutsch und
+  /// übliche Belegung, und die App spricht ohnehin nur Deutsch und
   /// Englisch.
   static SecureKeyboardLayout layoutFuerSprache(String sprache) =>
       sprache == 'de'
@@ -72,13 +72,13 @@ class SecureKeyboard extends StatefulWidget {
   /// Enter. Ohne Callback wird die Taste als inaktiv gezeigt.
   final VoidCallback? onEnter;
 
-  /// Tastatur ausblenden (der Nutzer will zurueck in den Chat).
+  /// Tastatur ausblenden (der Nutzer will zurück in den Chat).
   final VoidCallback? onHide;
 
-  /// Einfuegen aus der Zwischenablage.
+  /// Einfügen aus der Zwischenablage.
   ///
-  /// Der Umweg ueber die Systemtastatur ist hier nicht moeglich: mit
-  /// `readOnly` ist das Einfuegen deaktiviert. Der Text kommt deshalb
+  /// Der Umweg über die Systemtastatur ist hier nicht möglich: mit
+  /// `readOnly` ist das Einfügen deaktiviert. Der Text kommt deshalb
   /// direkt aus der Zwischenablage der App - die Systemtastatur sieht
   /// dabei nichts.
   final VoidCallback? onPaste;
@@ -94,7 +94,7 @@ class SecureKeyboard extends StatefulWidget {
 /// der App - wer die App auf Englisch stellt, bekommt die englische
 /// Tastatur.
 enum SecureKeyboardLayout {
-  /// Deutsch: QWERTZ mit ae, oe, ue, ss auf eigenen Tasten.
+  /// Deutsch: QWERTZ mit ä, oe, ü, ss auf eigenen Tasten.
   qwertz,
 
   /// Englisch: QWERTY.
@@ -121,7 +121,7 @@ class _Belegung {
 }
 
 class _SecureKeyboardState extends State<SecureKeyboard> {
-  /// Gross-/Kleinschreibung (nur in der Buchstabenebene).
+  /// Groß-/Kleinschreibung (nur in der Buchstabenebene).
   bool _upperCase = false;
 
   /// Zahlen- und Zeichenebene.
@@ -134,7 +134,7 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
   ///
   /// Die Umlaute liegen bei der deutschen Tastatur auf eigenen Tasten -
   /// deshalb sind sie hier auch eigene Tasten und nicht irgendein
-  /// Sonderzeichen-Menue.
+  /// Sonderzeichen-Menü.
   static const _Belegung _qwertz = _Belegung(
     buchstaben: <List<String>>[
       <String>['q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p'],
@@ -164,8 +164,8 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
     ],
   );
 
-  /// Das grosse Eszett gibt es nicht - "SS" waere zwei Zeichen und
-  /// wuerde den Text unlesbar machen. Der Buchstabe bleibt "ß".
+  /// Das große Eszett gibt es nicht - "SS" wäre zwei Zeichen und
+  /// würde den Text unlesbar machen. Der Buchstabe bleibt "ß".
   static String _gross(String zeichen) =>
       zeichen == 'ß' ? 'ß' : zeichen.toUpperCase();
 
@@ -174,9 +174,9 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
 
   List<String> _grossKeys(List<String> tasten) => tasten.map(_gross).toList();
 
-  /// Die haeufigsten Emoji fuer den Chat.
+  /// Die häufigsten Emoji für den Chat.
   ///
-  /// Ohne Emoji waere der Chat um einiges steifer - sie gehoeren fuer
+  /// Ohne Emoji wäre der Chat um einiges steifer - sie gehören für
   /// eine Dating-App zum Schreiben dazu. Sie kommen aus dieser Liste
   /// und laufen wie alle anderen Zeichen direkt in den Text.
   static const List<String> _emojiListe = <String>[
@@ -262,7 +262,7 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
     child: Icon(icon, size: 20),
   );
 
-  /// Die Emoji-Auswahl (feste Hoehe, damit die Tastatur nicht wächst).
+  /// Die Emoji-Auswahl (feste Höhe, damit die Tastatur nicht wächst).
   Widget _emojiPanel(BuildContext context) => SizedBox(
     height: 168,
     child: GridView.builder(
@@ -270,9 +270,9 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
       physics: const ClampingScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 6,
-        // Feste Zeilenhoehe statt Seitenverhaeltnis: sonst waere eine
+        // Feste Zeilenhöhe statt Seitenverhältnis: sonst wäre eine
         // Zelle so breit wie das Gitter (132 Pixel) und die Auswahl
-        // waere unbrauchbar.
+        // wäre unbrauchbar.
         mainAxisExtent: 40,
         mainAxisSpacing: 2,
         crossAxisSpacing: 2,
@@ -443,7 +443,7 @@ class _KeyCap extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
 
-  /// Vorlesetext fuer den Screenreader (Barrierefreiheit).
+  /// Vorlesetext für den Screenreader (Barrierefreiheit).
   final String label;
 
   final int flex;

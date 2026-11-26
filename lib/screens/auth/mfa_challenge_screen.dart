@@ -79,7 +79,7 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
       await ref.read(authProvider.notifier).logout();
     } catch (e) {
       if (kDebugMode) debugPrint('[MfaChallenge] logout fehlgeschlagen: $e');
-      // Sonst bleibt der Spinner fuer immer stehen.
+      // Sonst bleibt der Spinner für immer stehen.
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -118,17 +118,17 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
                 decoration: InputDecoration(
                   hintText: '000000',
                   counterText: '',
-                  // Einfuegen-Button (v0.9.0): Code aus der
-                  // Authenticator-App kopiert? Ein Tap fuegt ihn ein -
-                  // kein muhsames Ablesen/Eintippen noetig.
+                  // Einfügen-Button (v0.9.0): Code aus der
+                  // Authenticator-App kopiert? Ein Tap fügt ihn ein -
+                  // kein muhsames Ablesen/Eintippen nötig.
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.content_paste),
                     tooltip: L10n.t(context, 'mfa.paste'),
                     onPressed: () async {
                       final data = await Clipboard.getData('text/plain');
                       // Dieser Screen wird per GoRouter-Redirect verlassen,
-                      // sobald sich der Auth-State aendert - genau dann kann
-                      // Clipboard.getData zurueckkommen.
+                      // sobald sich der Auth-State ändert - genau dann kann
+                      // Clipboard.getData zurückkommen.
                       if (!mounted) return;
                       final text = (data?.text ?? '').replaceAll(
                         RegExp(r'\D'),

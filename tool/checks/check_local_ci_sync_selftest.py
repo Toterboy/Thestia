@@ -1,27 +1,27 @@
-"""Selbsttest fuer tool/checks/check_local_ci_sync.py.
+"""Selbsttest für tool/checks/check_local_ci_sync.py.
 
 Warum es den gibt
 -----------------
-Ein Pruefer, der nur gruen melden kann, ist wertlos. Dieser Selbsttest
-baut die negativen Faelle nach - also Faelle, in denen der Pruefer
+Ein Prüfer, der nur grün melden kann, ist wertlos. Dieser Selbsttest
+baut die negativen Fülle nach - also Fülle, in denen der Prüfer
 einen Befund MUSS liefern:
 
-  1) Ein Skript der CI fehlt im Spiegel  -> der Spiegel laeuft der CI
+  1) Ein Skript der CI fehlt im Spiegel  -> der Spiegel läuft der CI
      hinterher, die CI kann rot werden, ohne dass man es lokal sieht.
-  2) Der Spiegel enthaelt ein Skript, das die CI nicht kennt -> lokal
-     wird etwas geprueft, das in der CI nicht gilt.
-  3) continue-on-error-Schritte sind keine Gates -> sie duerfen den
+  2) Der Spiegel enthält ein Skript, das die CI nicht kennt -> lokal
+     wird etwas geprüft, das in der CI nicht gilt.
+  3) continue-on-error-Schritte sind keine Gates -> sie dürfen den
      Spiegel nicht verlangen.
-  4) Ein vollstaendiger Spiegel meldet nichts.
+  4) Ein vollständiger Spiegel meldet nichts.
   5) Beide Schreibweisen des Python-Aufrufs (python3, python).
 
-Der Test arbeitet mit Dateien im TEMP-Ordner und veraendert nichts im
+Der Test arbeitet mit Dateien im TEMP-Ordner und verändert nichts im
 Repository.
 
 HINWEIS ZUR NAMENSFORM: Beide Seiten werden auf den reinen Skriptnamen
-gebracht ("check_x.py", ohne "tool/"). Deshalb heissen die Erwartungen
+gebracht ("check_x.py", ohne "tool/"). Deshalb heißen die Erwartungen
 unten "check_a.py" und nicht "tool/check_a.py". Beide Seiten benutzen
-dieselbe Form - sonst vergleicht man Aepfel mit Birnen.
+dieselbe Form - sonst vergleicht man Äpfel mit Birnen.
 """
 import pathlib
 import sys
@@ -119,7 +119,7 @@ jobs:
         pruefe("continue-on-error wird als informativ gezaehlt",
                "check_informativ.py" in weich)
 
-        # Der Zustand "weich" gilt nur fuer den einen Schritt.
+        # Der Zustand "weich" gilt nur für den einen Schritt.
         schreibe(ci, """
 jobs:
   j:
@@ -134,7 +134,7 @@ jobs:
         pruefe("nach dem weichen Schritt ist der naechste wieder hart",
                "check_a.py" in hart)
 
-        # --- Fall 4: vollstaendiger Spiegel ------------------------
+        # --- Fall 4: vollständiger Spiegel ------------------------
         schreibe(spiegel, """
           Gate 'a' @($py, 'tool/check_a.py')
           Gate 'informativ' @($py, 'tool/check_informativ.py')
@@ -157,8 +157,8 @@ jobs:
         hart, weich = sync._skripte_aus_ci()
         pruefe("python3 UND python werden erkannt", len(hart) == 2)
 
-        # --- Fall 6: ein Skript ohne tool/-Praefix wird NICHT gezaehlt
-        # (es gehoert nicht zu den Pruefern dieses Projekts)
+        # --- Fall 6: ein Skript ohne tool/-Präfix wird NICHT gezählt
+        # (es gehört nicht zu den Prüfern dieses Projekts)
         schreibe(ci, """
 jobs:
   j:

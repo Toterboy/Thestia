@@ -1,17 +1,17 @@
-// Regressionstest fuer den Start ohne Netz-Wartezeit
+// Regressionstest für den Start ohne Netz-Wartezeit
 // (31.10.2026).
 //
 // BEFUND: Das Mindest-Build-Gate (app_config.min_app_version_build)
 // stand auf dem kritischen Pfad des Starts. Der erste Frame der App
 // wartete auf einen Server-Roundtrip (bis zu 6 s Timeout) - und die
 // App war damit langsamer, obwohl der Wert in den allermeisten
-// Faellen schon bekannt war.
+// Fällen schon bekannt war.
 //
 // Jetzt:
 //   * der Wert wird lokal gecacht (SharedPreferences),
 //   * der Cache wird beim Start sofort ausgewertet (lokaler Zugriff),
 //   * nur ohne Cache wird der Server mit kurzem Timeout gefragt,
-//   * der frische Serverwert laeuft im Hintergrund nach.
+//   * der frische Serverwert läuft im Hintergrund nach.
 //
 // Der Cache darf aber nicht zum Umgehen des Gates werden: ein
 // gecachter Wert, der den installierten Build sperrt, sperrt auch -
@@ -50,9 +50,9 @@ void main() {
     // veraltet. Ich habe aber keinen update erforderlich screen beim admin
     // apk."
     //
-    // DER GRUND: Der Admin-Build traegt die Build-Nummer der BASIS + 9000
+    // DER GRUND: Der Admin-Build trägt die Build-Nummer der BASIS + 9000
     // (9048 = 48 + 9000). Das Gate verglich aber die rohe Nummer - und
-    // 9048 ist immer groesser als jedes Mindest-Build. Der Admin-Build
+    // 9048 ist immer größer als jedes Mindest-Build. Der Admin-Build
     // war damit VOM GATE AUSGENOMMEN.
     //
     // Jetzt wird die BASIS verglichen: 9048 -> 48, also wird der
@@ -70,8 +70,8 @@ void main() {
     });
 
     test('ohne Admin-Kennzeichen bleibt die Nummer unangetastet', () {
-      // Ein normaler Build, dessen Nummer zufaellig ueber 9000 liegt,
-      // wird NICHT zurueckgerechnet - dafuer gibt es den Admin-Build
+      // Ein normaler Build, dessen Nummer zufällig über 9000 liegt,
+      // wird NICHT zurückgerechnet - dafür gibt es den Admin-Build
       // gar nicht.
       expect(AppConfigService.baseBuildNumber(9048, isAdminBuild: false), 9048);
     });
@@ -109,7 +109,7 @@ void main() {
 
     test('der Cache wird in einer neuen Instanz wieder gefunden', () async {
       // Das ist der Punkt des Caches: der Wert muss den Prozess
-      // ueberleben - sonst waere der Startpfad wieder ein Netzruf.
+      // überleben - sonst wäre der Startpfad wieder ein Netzruf.
       final prefs = await SharedPreferences.getInstance();
       await AppConfigService.cacheMinAppVersionBuild(prefs, 31);
 

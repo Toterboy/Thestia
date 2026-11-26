@@ -191,7 +191,7 @@ supabase functions deploy ice-config
 
 ```powershell
 # Ohne JWT antwortet die Function mit 401 - das beweist nur, dass sie
-# laeuft. Die ICE-Liste selbst ist nur mit Sitzung abrufbar.
+# läuft. Die ICE-Liste selbst ist nur mit Sitzung abrufbar.
 curl.exe -X POST "https://jftuigjbmmuvrckbchqo.supabase.co/functions/v1/ice-config" `
   -H "Authorization: Bearer <JWT>" -H "Content-Type: application/json" -d "{}"
 ```

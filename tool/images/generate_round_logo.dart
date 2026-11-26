@@ -37,9 +37,9 @@ void main(List<String> args) {
   final bboxSide = math.max(bw, bh);
 
   // Auf Quadrat bringen: transparente Ränder/Ecken werden mit den
-  // NAECHSTEN opaken Randpixeln gefuellt (Kanten-Extension). Der Farb-
-  // verlauf laeuft damit nahtlos weiter -> kein transparentes Eckblitzen,
-  // und der Schriftzug bleibt vollstaendig im Kreis sichtbar (Zoom 1.0).
+  // NÄCHSTEN opaken Randpixeln gefüllt (Kanten-Extension). Der Farb-
+  // verlauf läuft damit nahtlos weiter -> kein transparentes Eckblitzen,
+  // und der Schriftzug bleibt vollständig im Kreis sichtbar (Zoom 1.0).
   final square = img.Image(width: bboxSide, height: bboxSide);
   final padX = (bboxSide - bw) ~/ 2;
   final padY = (bboxSide - bh) ~/ 2;
@@ -51,9 +51,9 @@ void main(List<String> args) {
   }
 
   // Zweiter Durchlauf: verbliebene transparente Pixel (die abgerundeten
-  // Ecken) aus der naechsten opaken Pixel derselben Zeile fuellen. Der
+  // Ecken) aus der nächsten opaken Pixel derselben Zeile füllen. Der
   // horizontale Farbverlauf bleibt so erhalten und es gibt keine
-  // transparenten Ecken mehr -> Zoom 1.0, Schriftzug vollstaendig.
+  // transparenten Ecken mehr -> Zoom 1.0, Schriftzug vollständig.
   for (var y = 0; y < bboxSide; y++) {
     for (var x = 0; x < bboxSide; x++) {
       if (square.getPixel(x, y).a.toInt() >= 200) continue;
@@ -102,9 +102,9 @@ void main(List<String> args) {
     }
     if (d < minInscribed) minInscribed = d;
   }
-  // Zoom 1.0: Der quadratische Kachel ist kantenverlaengert (opak), der
+  // Zoom 1.0: Der quadratische Kachel ist kantenverlängert (opak), der
   // Ausgabe-Kreis samplet am Rand einfach die fortgesetzten Kantenfarben.
-  // Damit ist der Schriftzug vollstaendig sichtbar und es gibt keinerlei
+  // Damit ist der Schriftzug vollständig sichtbar und es gibt keinerlei
   // transparente Ecken.
   const zoom = 1.0;
 

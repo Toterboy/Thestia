@@ -133,9 +133,9 @@ class DeviceSessionService {
   /// von hier, sondern aus dem Datenbank-Trigger auf auth_devices
   /// (Migration 169). Das war Absicht: Ein Aufruf aus der App war der
   /// Flaschenhals - fiel er aus (nicht deployed, Timeout, kalter
-  /// Start), ging die Mail nie raus. Der Trigger haengt an der Tabelle
-  /// und feuert bei jedem INSERT - unabhaengig davon, wer geschrieben
-  /// hat. Die Entscheidung "neu" faellt damit die Datenbank, nicht der
+  /// Start), ging die Mail nie raus. Der Trigger hängt an der Tabelle
+  /// und feuert bei jedem INSERT - unabhängig davon, wer geschrieben
+  /// hat. Die Entscheidung "neu" fällt damit die Datenbank, nicht der
   /// Client.
   Future<void> enrollCurrentDevice() async {
     if (!SupabaseService.isInitialized) return;

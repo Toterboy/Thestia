@@ -1,30 +1,30 @@
 // Die Antwort, die ICE-Kandidaten und die Kontroll-Nachrichten.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/webrtc_service.dart 136 offene Zeilen. Der
 // Datenkanal und das Signaling sind getestet - offen war der Weg von
-// der Antwort des Partners ueber die gepufferten ICE-Kandidaten bis zu
+// der Antwort des Partners über die gepufferten ICE-Kandidaten bis zu
 // den Kontroll-Nachrichten des Anrufs.
 //
 // DIE NAHTEN: `WebRTCService.peerConnectionFactory` liefert die
 // Peer-Connection-Attrappe (test/support/fake_webrtc.dart) - die
 // Verbindung braucht keine echte WebRTC-Bibliothek.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * eine Antwort ohne Verbindung wird verworfen (statt zu crashen),
 //   * eine Antwort setzt die Remote-Description,
-//   * ein ICE-Kandidat, der zu frueh kommt, geht nicht verloren: er
+//   * ein ICE-Kandidat, der zu früh kommt, geht nicht verloren: er
 //     wird gepuffert und nach der Remote-Description nachgereicht,
 //
 // NICHT DABEI: Die Kontroll-Nachrichten des Anrufs (CALL:) - sie
-// brauchen eine aufgebaute Signal-Sitzung (der Verschluesselungs-
+// brauchen eine aufgebaute Signal-Sitzung (der Verschlüsselungs-
 // Dienst muss die Sitzung mit dem Partner kennen). Das ist ein
-// eigener Weg und wird im Signal-Test geprueft.
+// eigener Weg und wird im Signal-Test geprüft.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-// Die WebRTC-Schnittstelle kommt als Transitivum ueber
+// Die WebRTC-Schnittstelle kommt als Transitivum über
 // flutter_webrtc - der Test braucht nur ihre Typen.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -89,7 +89,7 @@ void main() {
     WebRTCService.peerConnectionFactory = null;
   });
 
-  /// Baut die Verbindung (wie der Empfaenger eines Angebots).
+  /// Baut die Verbindung (wie der Empfänger eines Angebots).
   Future<void> baueVerbindung() async {
     await dienst.handleOffer('partner-1', 'v=0');
     peer.onDataChannel?.call(kanal);
@@ -132,7 +132,7 @@ void main() {
   group('Die ICE-Kandidaten', () {
     test('ein zu frueher Kandidat geht nicht verloren', () async {
       // DER FRUEHE KANDIDAT: Er kommt, bevor die Remote-Description
-      // gesetzt ist - verworfen wuerde er die Verbindung verlangsamen
+      // gesetzt ist - verworfen würde er die Verbindung verlangsamen
       // oder ganz verhindern.
       await dienst.handleIceCandidate(
         'partner-1',

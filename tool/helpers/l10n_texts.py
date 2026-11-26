@@ -1,10 +1,10 @@
 """Zugriff auf die App-Texte (L10n).
 
 DIE TEXTE LIEGEN NACH THEMEN GETRENNT: `lib/l10n/app_strings.dart` ist nur
-noch die Zusammenfuehrung - die Texte selbst stehen je Thema in einer
+noch die Zusammenführung - die Texte selbst stehen je Thema in einer
 Datei unter `lib/l10n/strings/`. Das ist der Grund, warum es diesen
-Helfer gibt: die Werkzeuge, die die Texte pruefen, sollen nicht wissen
-muessen, wie sie verteilt sind.
+Helfer gibt: die Werkzeuge, die die Texte prüfen, sollen nicht wissen
+müssen, wie sie verteilt sind.
 
 Aufruf:
     python tool/helpers/l10n_texts.py          # nur zeigen, was da ist
@@ -28,9 +28,9 @@ def text_dateien() -> list[pathlib.Path]:
 
 
 def lies_sprachen() -> tuple[str, str]:
-    """Die deutschen und die englischen Texte (jeweils zusammengefuegt).
+    """Die deutschen und die englischen Texte (jeweils zusammengefügt).
 
-    DER GRUND FUER DAS ZUSAMMENFUEHREN: Die Werkzeuge vergleichen DE und
+    DER GRUND FÜR DAS ZUSAMMENFÜHREN: Die Werkzeuge vergleichen DE und
     EN keyweise. In den Dateien stehen beide Sprachen nebeneinander -
     hier kommen sie getrennt heraus.
     """
@@ -46,7 +46,7 @@ def lies_sprachen() -> tuple[str, str]:
 
 
 def lies_alle() -> str:
-    """Alle Texte zusammen (fuer Werkzeuge, die nur nach Schluesseln suchen)."""
+    """Alle Texte zusammen (für Werkzeuge, die nur nach Schlüsseln suchen)."""
     return "\n".join(d.read_text(encoding="utf-8") for d in text_dateien())
 
 

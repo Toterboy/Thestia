@@ -21,7 +21,7 @@ class SecureLocationStorage {
       SecureLocationStorage._internal();
 
   // Eigener Namespace (secure_storage_namespaces.dart): verhindert, dass ein
-  // Dekrypt-Fehler hier auch Tokens/Profil loescht.
+  // Dekrypt-Fehler hier auch Tokens/Profil löscht.
   static const _iosOptions = IOSOptions(
     accessibility: KeychainAccessibility.first_unlock_this_device,
     accountName: SecureNamespaces.location,

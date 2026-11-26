@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Meldet unsichere Casts auf fremde JSON-Werte.
 
-WARUM (22.11.2026, Betreiber: "Mit fuzzing koenntest du in der App nach
-Sicherheitsluecken suchen."):
+WARUM (22.11.2026, Betreiber: "Mit fuzzing könntest du in der App nach
+Sicherheitslücken suchen."):
 
 Das Fuzzing hat eine Fehlerklasse gefunden, die sich immer wieder
-zeigt: ein Cast auf einen Wert, der von aussen kommt.
+zeigt: ein Cast auf einen Wert, der von außen kommt.
 
     photos: (json['photos'] as List<dynamic>).map((e) => e as String)
 
 Der Server (oder die Gegenseite) liefert eine Zahl statt eines Textes -
-und die App ist weg. Das ist ein Denial of Service ueber die
+und die App ist weg. Das ist ein Denial of Service über die
 Schnittstelle: der Angreifer schickt EIN falsches Feld.
 
 DAS GATE: Es sucht in den Modellen (und in den Diensten, die fremde
@@ -22,7 +22,7 @@ werfen NIE.
 DIE AUSNAHME: `lib/models/settings/app_settings.dart` liest den
 lokalen Cache (den die App selbst geschrieben hat). Ein Cast dort ist
 eine interne Zusicherung, kein Angriffsfenster - der Wert kommt nicht
-von aussen. Der Cache wird trotzdem robust gelesen (der Leser
+von außen. Der Cache wird trotzdem robust gelesen (der Leser
 `boolOf` versteht auch "true" als Text).
 
 Aufruf::
@@ -60,10 +60,10 @@ MUSTER = [
     re.compile(r"\)\.map\(\(e\)\s*=>\s*e\s+as\s+String\)"),
 ]
 
-#: Die Muster fuer eine ABSICHTLICHE Typpruefung.
+#: Die Muster für eine ABSICHTLICHE Typprüfung.
 #:
 #: DER WEG: `json['page'] is int ? json['page'] as int : 0` ist sicher -
-#: der Cast wird nur ausgefuehrt, wenn der Wert wirklich eine Zahl ist.
+#: der Cast wird nur ausgeführt, wenn der Wert wirklich eine Zahl ist.
 #: Solche Zeilen sind kein Befund.
 GEPRUEFT_MUSTER = re.compile(r"\bis\s+(int|String|bool|num|double|Map|List)\b")
 
@@ -84,9 +84,9 @@ def main() -> int:
         for nummer, zeile in enumerate(zeilen, 1):
             if zeile.strip().startswith("//"):
                 continue
-            # Eine absichtliche Typpruefung macht den Cast sicher. Sie
-            # kann auch in der Zeile DARUEBER stehen (der Wert wird in
-            # der naechsten Zeile gecastet).
+            # Eine absichtliche Typprüfung macht den Cast sicher. Sie
+            # kann auch in der Zeile DARÜBER stehen (der Wert wird in
+            # der nächsten Zeile gecastet).
             if GEPRUEFT_MUSTER.search(zeile):
                 continue
             if nummer > 1 and GEPRUEFT_MUSTER.search(zeilen[nummer - 2]):

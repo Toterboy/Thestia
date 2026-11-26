@@ -1,17 +1,17 @@
 // Der Foto-Einspruch im Profil-Editor (bisher ungetestet).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/profile/profile_edit_screen.dart 399 offene Zeilen.
 //
 // WARUM DAS WICHTIG IST: Wird ein Profilbild von der Moderation
 // gesperrt, kann der Nutzer dagegen Einspruch einlegen. Das Team
-// entscheidet - und die Entscheidung kommt ueber die Edge Function
-// `get_my_photo_appeal` zurueck:
+// entscheidet - und die Entscheidung kommt über die Edge Function
+// `get_my_photo_appeal` zurück:
 //   * approved = das Bild darf wieder als Profilbild dienen,
 //   * rejected = die Sperre bleibt, und der Nutzer bekommt das gesagt.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ein genehmigter Einspruch fragt nach, bevor das Bild uebernommen
+// WAS HIER GEPRÜFT WIRD:
+//   * ein genehmigter Einspruch fragt nach, bevor das Bild übernommen
 //     wird,
 //   * ein abgelehnter Einspruch wird dem Nutzer gemeldet,
 //   * die Entscheidung wird dem Server quittiert.

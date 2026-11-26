@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/settings/guardian_section.dart';
 
-/// Der eigene Screen fuer die Elterneinstellungen.
+/// Der eigene Screen für die Elterneinstellungen.
 ///
 /// WARUM EIN EIGENER SCREEN (04.11.2026): Im Einstellungs-Screen lag
-/// der ganze Bereich "Kinderschutz & Elternzugriff" als eine grosse
+/// der ganze Bereich "Kinderschutz & Elternzugriff" als eine große
 /// Karte zwischen Datenschutz und Community-Regeln - mit PIN-Dialog,
 /// Benachrichtigungs-Rhythmus und Nutzungszeit. Das hat den
 /// Einstellungs-Screen zugeballert und den Bereich schlecht auffindbar
@@ -15,7 +15,7 @@ import 'package:thestia/widgets/settings/guardian_section.dart';
 ///
 /// Jetzt: In den Einstellungen steht ein Eintrag mit dem aktuellen
 /// Status, und die eigentlichen Einstellungen liegen hier - weiterhin
-/// durch die PIN des Elternteils geschuetzt. Wer die Freigabe
+/// durch die PIN des Elternteils geschützt. Wer die Freigabe
 /// beendet (mit 18), findet den Weg weiterhin ohne PIN, denn das ist
 /// eine Entscheidung des Jugendlichen selbst.
 ///

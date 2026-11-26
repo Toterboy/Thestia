@@ -2,19 +2,19 @@
 
 BEHOBEN
 • Automatischer Logout beim App-Neustart (Daten bleiben erhalten)
-• CI-Pipeline wieder gruen
-• KGP-Warnung fuer UnifiedPush behoben
+• CI-Pipeline wieder grün
+• KGP-Warnung für UnifiedPush behoben
 • Doppelkodierte Umlaute repariert
 
 NEU
 • "Angemeldet bleiben"-Schalter im Login
 • Sprache Deutsch/Englisch umschaltbar (Login + Einstellungen)
 • Passkey-Diagnose: zeigt die genaue Ursache bei Problemen
-• Dating Hour mit Gewohnheiten (Praeferenz + Anzeige im Chat)
+• Dating Hour mit Gewohnheiten (Präferenz + Anzeige im Chat)
 • "Funke"-Animation beim Entstehen eines Funkens
-• Funke-Streak: Tage-Zaehler seit dem Funke (ohne Schreibpflicht)
+• Funke-Streak: Tage-Zähler seit dem Funke (ohne Schreibpflicht)
 • Gemeinsame Interessen im Profil hervorgehoben
 • Sichtbarer E2E-Status im Chat-Header
-• Neues rundes WispDating-Logo ueberall (inkl. Dark-Variante)
+• Neues rundes WispDating-Logo überall (inkl. Dark-Variante)
 • Einrichtung: Gewohnheiten Schritt 5, Grundangaben Pflicht,
   Passkey/2FA dringend empfohlen

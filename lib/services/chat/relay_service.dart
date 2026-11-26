@@ -31,7 +31,7 @@ class RelayMessage {
 
   factory RelayMessage.fromJson(Map<String, dynamic> json) {
     return RelayMessage(
-      // BEFUND (22.11.2026, Fuzzing): Die Zeile kommt ueber den Server -
+      // BEFUND (22.11.2026, Fuzzing): Die Zeile kommt über den Server -
       // ihr Inhalt stammt von der GEGENSEITE. Die Casts hier warfen bei
       // jedem falschen Typ.
       id: intOf(json, ['id']) ?? 0,

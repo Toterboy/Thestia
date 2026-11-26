@@ -1,6 +1,6 @@
-// Tests fuer die Leer- und Fehlerzustaende.
+// Tests für die Leer- und Fehlerzustände.
 //
-// ANLASS: [EmptyState] und [ErrorState] stehen ueberall dort, wo nichts
+// ANLASS: [EmptyState] und [ErrorState] stehen überall dort, wo nichts
 // zu sehen ist. Zwei Dinge sind dort leicht falsch:
 //
 //   1. Der Leerzustand ohne Aktion: dann steht der Nutzer vor einer
@@ -10,8 +10,8 @@
 //      Nutzer auf eine neue App-Start angewiesen, weil der Bildschirm
 //      sich selbst nicht erholen kann.
 //
-// Geprueft wird deshalb beides: dass die Inhalte da sind UND dass die
-// Knopfe genau dann auftauchen, wenn sie etwas tun koennen.
+// Geprüft wird deshalb beides: dass die Inhalte da sind UND dass die
+// Knopfe genau dann auftauchen, wenn sie etwas tun können.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -53,7 +53,7 @@ void main() {
     });
 
     testWidgets('ohne Aktion gibt es keinen Knopf', (tester) async {
-      // Ein Knopf ohne Funktion waere eine Sackgasse.
+      // Ein Knopf ohne Funktion wäre eine Sackgasse.
       await tester.pumpWidget(
         _huelle(
           const EmptyState(
@@ -94,8 +94,8 @@ void main() {
     });
 
     testWidgets('ueberlebt grosse Schrift ohne Overflow', (tester) async {
-      // 1,5-fache Schrift ist die grosste Android-Einstellung, die
-      // viele Nutzer tatsaechlich benutzen.
+      // 1,5-fache Schrift ist die großte Android-Einstellung, die
+      // viele Nutzer tatsächlich benutzen.
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -119,7 +119,7 @@ void main() {
       tester,
     ) async {
       // BEFUND (13.11.2026, gefunden von diesem Test und BEHOBEN): Bei
-      // 3,2x lief der Leerzustand ueber - er hatte keinen eigenen
+      // 3,2x lief der Leerzustand über - er hatte keinen eigenen
       // Scrollbereich. Die App verspricht aber, bis 3,2x benutzbar zu
       // bleiben (ROADMAP, Accessibility-Durchlauf).
       await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -188,8 +188,8 @@ void main() {
     });
 
     testWidgets('ueberlebt grosse Schrift ohne Overflow', (tester) async {
-      // 1,5-fache Schrift ist die grosste Android-Einstellung, die
-      // viele Nutzer tatsaechlich benutzen.
+      // 1,5-fache Schrift ist die großte Android-Einstellung, die
+      // viele Nutzer tatsächlich benutzen.
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -212,7 +212,7 @@ void main() {
       tester,
     ) async {
       // BEFUND (13.11.2026, gefunden von diesem Test und BEHOBEN): Bei
-      // 3,2x lief der Fehlerzustand ebenfalls ueber - er hat zwar
+      // 3,2x lief der Fehlerzustand ebenfalls über - er hat zwar
       // weniger Inhalt, passt dann aber auch nicht mehr in den
       // Bildschirm.
       await tester.binding.setSurfaceSize(const Size(390, 844));

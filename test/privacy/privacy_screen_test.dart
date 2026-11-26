@@ -1,18 +1,18 @@
 // Der Datenschutz-Screen (bisher kaum getestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/privacy/privacy_screen.dart 221 offene Zeilen - und der
-// Bildschirm traegt die Aussagen, die der Betreiber nachgefuehrt hat:
-// die Auftragsverarbeiter (kein Apple, Google nur fuer die
+// Bildschirm trägt die Aussagen, die der Betreiber nachgeführt hat:
+// die Auftragsverarbeiter (kein Apple, Google nur für die
 // Play-Store-Fassung) und der Weg zu den Nutzungsbedingungen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * der Datenexport liegt unter "Deine Daten" (und nur dort),
 //   * die Auftragsverarbeiter: Supabase, Google (Firebase), Brevo,
 //     Cloudflare, Netlify - und KEIN Apple (es gibt keine
 //     App-Store-Verteilung),
-//   * der Eintrag zu den Nutzungsbedingungen ist da und oeffnet den
+//   * der Eintrag zu den Nutzungsbedingungen ist da und öffnet den
 //     Volltext in der App.
 import 'dart:convert';
 import 'dart:io';
@@ -75,7 +75,7 @@ File? _exportDatei() {
       if (treffer.isNotEmpty) return treffer.last;
     } catch (e) {
       // Der Ordner ist nicht lesbar - dann gibt es hier nichts.
-      // Die Spur bleibt: sonst waere ein Fehler still.
+      // Die Spur bleibt: sonst wäre ein Fehler still.
       debugPrint('[Test] Der Temp-Ordner ist nicht lesbar: $e');
     }
   }
@@ -93,9 +93,9 @@ void main() {
 
     // DER CLIENT: Wird nur EINMAL initialisiert. EIN ZWEITER Aufruf von
     // `Supabase.initialize` wird vom Paket ignoriert ("Skipping
-    // reinitialization") - der Client wuerde dann weiter den Server des
-    // ERSTEN Tests benutzen, und die FehlerAntworten eines spaeteren
-    // Tests kaemen nie an.
+    // reinitialization") - der Client würde dann weiter den Server des
+    // ERSTEN Tests benutzen, und die FehlerAntworten eines späteren
+    // Tests kämen nie an.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -112,13 +112,13 @@ void main() {
 
   setUp(() async {
     // DER KEYSTORE: Der Bildschirm liest die Einstellungen aus dem
-    // verschluesselten Speicher - ohne den Mock ruft der Test auf dem
+    // verschlüsselten Speicher - ohne den Mock ruft der Test auf dem
     // CI-Runner das echte Plugin (das findet dort keine libsecret-
     // Sitzung).
     mockKeystore();
     mockZeitzone();
     // DER PFAD-KANAL: der Export schreibt seine Datei in den
-    // Temp-Ordner des Geraets - ohne den Mock sucht der Test auf dem
+    // Temp-Ordner des Geräts - ohne den Mock sucht der Test auf dem
     // Rechner statt im Testordner.
     await mockPfadProvider();
 
@@ -139,7 +139,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          // Der Datenexport liest Profil, Einstellungen und Praeferenzen -
+          // Der Datenexport liest Profil, Einstellungen und Präferenzen -
           // ohne den Speicher kann er gar nicht laufen.
           localStorageProvider.overrideWithValue(_FakeLocalStorage()),
         ],
@@ -164,7 +164,7 @@ void main() {
   }
 
   // Der Datenexport: Das ist das Recht des Nutzers auf seine Daten
-  // (DSGVO Art. 20). Der Test prueft die DATEI - sie wird geschrieben,
+  // (DSGVO Art. 20). Der Test prüft die DATEI - sie wird geschrieben,
   // BEVOR das Teilen (share_plus) kommt; im Test scheitert das Teilen
   // (kein Plugin), die Datei muss trotzdem da sein.
 
@@ -173,11 +173,11 @@ void main() {
   /// Das Schreiben der Datei braucht echte Zeit - und die Datei kann
   /// noch leer sein, wenn sie gerade geschrieben wird.
   Future<Map<String, dynamic>> holeExport(WidgetTester tester) async {
-    // DER ORDNER BLEIBT UEBER DIE TESTS HINWEG: Der Pfad-Mock legt bei
+    // DER ORDNER BLEIBT ÜBER DIE TESTS HINWEG: Der Pfad-Mock legt bei
     // jedem Testlauf einen neuen Temp-Ordner an, aber der Export sucht
     // in ALLEN nach der Datei. Eine alte Datei (mit dem Inhalt des
-    // vorherigen Laufs) wuerde sonst gelesen - der Test pruefte dann
-    // uralte Daten. Deshalb wird sie vorher geloescht.
+    // vorherigen Laufs) würde sonst gelesen - der Test prüfte dann
+    // uralte Daten. Deshalb wird sie vorher gelöscht.
     for (final ordner
         in Directory.systemTemp.listSync().whereType<Directory>()) {
       if (!ordner.path.contains('thesia_test_pfad')) continue;
@@ -244,10 +244,10 @@ void main() {
     });
 
     // BEFUND (16.11.2026, Audit): Die Liste nannte weder die
-    // STUN-Server noch den fehlenden TURN-Relay. Die vier oeffentlichen
-    // STUN-Server sehen beim Verbindungsaufbau die oeffentliche
+    // STUN-Server noch den fehlenden TURN-Relay. Die vier öffentlichen
+    // STUN-Server sehen beim Verbindungsaufbau die öffentliche
     // IP-Adresse des Nutzers - das ist eine Verarbeitung im Auftrag und
-    // gehoert in die Liste.
+    // gehört in die Liste.
     testWidgets('der Export nennt die STUN-Server und das fehlende TURN', (
       tester,
     ) async {
@@ -321,7 +321,7 @@ void main() {
     );
 
     // Beim Google-Eintrag steht, dass Firebase nur in der
-    // Play-Store-Fassung laeuft (im F-Droid-Build laeuft UnifiedPush).
+    // Play-Store-Fassung läuft (im F-Droid-Build läuft UnifiedPush).
     final googleZeile = find.text('Google LLC (Firebase)');
     expect(googleZeile, findsOneWidget);
     expect(
@@ -345,11 +345,11 @@ void main() {
   });
 
   // Der Wechsel der E-Mail-Adresse: Das ist der sicherheitskritischste
-  // Weg auf dem Bildschirm - er aendert, wer der Nutzer ist. Deshalb
-  // verlangt er das AKTUELLE Passwort und prueft die Eingaben, BEVOR
+  // Weg auf dem Bildschirm - er ändert, wer der Nutzer ist. Deshalb
+  // verlangt er das AKTUELLE Passwort und prüft die Eingaben, BEVOR
   // er den Server anruft.
   group('Der Wechsel der E-Mail-Adresse', () {
-    /// Oeffnet den Dialog zum Wechseln.
+    /// Öffnet den Dialog zum Wechseln.
     Future<void> oeffneDialog(WidgetTester tester) async {
       await zeigeScreen(tester);
       await scrolleZu(tester, L10n.tWithoutContext('privacy.changeEmail'));
@@ -362,7 +362,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
     }
 
-    /// Fuellt die beiden Felder und bestaetigt den Dialog.
+    /// Füllt die beiden Felder und bestätigt den Dialog.
     Future<void> fuelleUndBestaetige(
       WidgetTester tester,
       String email,
@@ -480,10 +480,10 @@ void main() {
   });
 
   // Der Wechsel des Passworts: Auch hier gilt - bevor etwas passiert,
-  // muss das aktuelle Passwort geprueft werden, und die beiden neuen
-  // Passwoerter muessen uebereinstimmen.
+  // muss das aktuelle Passwort geprüft werden, und die beiden neuen
+  // Passwörter müssen übereinstimmen.
   group('Der Wechsel des Passworts', () {
-    /// Oeffnet den Dialog zum Wechseln.
+    /// Öffnet den Dialog zum Wechseln.
     Future<void> oeffneDialog(WidgetTester tester) async {
       await zeigeScreen(tester);
       await scrolleZu(tester, L10n.tWithoutContext('privacy.changePassword'));
@@ -496,7 +496,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
     }
 
-    /// Fuellt die drei Felder und bestaetigt den Dialog.
+    /// Füllt die drei Felder und bestätigt den Dialog.
     Future<void> fuelleUndBestaetige(
       WidgetTester tester,
       String aktuell,

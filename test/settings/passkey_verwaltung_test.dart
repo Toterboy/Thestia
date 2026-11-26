@@ -1,17 +1,17 @@
 // Die Passkey-Verwaltung in den Einstellungen.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/settings/parts/passkeymanagercardstate.dart 85 offene Zeilen
-// bei 28 % Abdeckung und fuer passkeytilestate.dart 45. Die Karte listet
-// die Passkeys des Kontos auf, laesst sie umbenennen und loeschen - und
+// bei 28 % Abdeckung und für passkeytilestate.dart 45. Die Karte listet
+// die Passkeys des Kontos auf, lässt sie umbenennen und löschen - und
 // genau diese Wege kannte niemand.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Karte zeigt die Passkeys des Kontos (mit Erstell- und letztem
 //     Nutzungsdatum),
-//   * ein Passkey laesst sich umbenennen (der Server bekommt den neuen
+//   * ein Passkey lässt sich umbenennen (der Server bekommt den neuen
 //     Namen),
-//   * ein Passkey laesst sich loeschen - aber erst nach der Rueckfrage,
+//   * ein Passkey lässt sich löschen - aber erst nach der Rückfrage,
 //   * ein Serverfehler wird dem Nutzer gesagt (nicht verschluckt).
 import 'dart:io';
 
@@ -97,7 +97,7 @@ Future<void> scrolleZuText(WidgetTester tester, String text) async {
 ///
 /// DER GRUND: Der echte Dienst fragt den Server - im Test antwortet er
 /// nicht, und der Provider legt dann einen Timer auf, der immer wieder
-/// neu versucht. Der Timer laeuft am Testende noch und der Test wartet
+/// neu versucht. Der Timer läuft am Testende noch und der Test wartet
 /// Minuten auf ihn.
 class _GuardianDienst extends GuardianService {
   _GuardianDienst(super.client);
@@ -138,10 +138,10 @@ void main() {
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
 
-  // KEIN Hive.close(): Die verschluesselten Boxen des Signal-Protokolls
-  // (der Einstellungs-Screen oeffnet sie ueber den Keystore) haengen
-  // beim Schliessen - der Ordner liegt im Temp und wird vom System
-  // aufgeraeumt.
+  // KEIN Hive.close(): Die verschlüsselten Boxen des Signal-Protokolls
+  // (der Einstellungs-Screen öffnet sie über den Keystore) hängen
+  // beim Schließen - der Ordner liegt im Temp und wird vom System
+  // aufgeräumt.
   tearDownAll(() async {
     // ignore: avoid_print
     print('Ende.');
@@ -149,7 +149,7 @@ void main() {
 
   setUp(() {
     // DER CLIENT: Supabase wird nur EINMAL initialisiert (ein Singleton) -
-    // der Server bleibt darum derselbe, sonst wuerde der Client weiter auf
+    // der Server bleibt darum derselbe, sonst würde der Client weiter auf
     // den ersten Server zeigen.
     server.passkeys.clear();
     server.pfade.clear();
@@ -180,7 +180,7 @@ void main() {
       ProviderScope(
         overrides: [
           // DER ELTERN-DIENST: Ohne ihn legt der Provider einen Timer
-          // auf, der nach dem Test noch weiterlaeuft.
+          // auf, der nach dem Test noch weiterläuft.
           guardianServiceProvider.overrideWithValue(
             _GuardianDienst(supabase.Supabase.instance.client),
           ),
@@ -212,7 +212,7 @@ void main() {
     );
   }
 
-  /// Laesst die echte Ereignisschleife laufen (die Serverantworten
+  /// Lässt die echte Ereignisschleife laufen (die Serverantworten
   /// kommen nur dort an).
   Future<void> lassServerArbeiten(WidgetTester tester) async {
     for (var i = 0; i < 10; i++) {

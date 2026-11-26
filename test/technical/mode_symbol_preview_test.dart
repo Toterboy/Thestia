@@ -11,16 +11,16 @@ import 'package:thestia/widgets/common/mode_icons.dart';
 ///
 /// ACHTUNG: Dieser Test ist ein WERKZEUG, kein Guard. Er schreibt PNGs
 /// nach C:/Users/.../AppData/Local/Temp/opencode/m133/, damit die Symbole
-/// angesehen werden koennen, ohne die App auf einem Geraet zu oeffnen.
+/// angesehen werden können, ohne die App auf einem Gerät zu öffnen.
 /// Ohne diese Datei kann niemand die Symbole begutachten, und ein
 /// CustomPainter, den niemand gesehen hat, ist geraten statt gezeichnet.
 void main() {
   testWidgets('Symbol-Preview schreiben', (tester) async {
-    // Nur wenn der Ablageort benutzbar ist. Ein fester Windows-Pfad wuerde
+    // Nur wenn der Ablageort benutzbar ist. Ein fester Windows-Pfad würde
     // auf einer Linux-Pipeline (F-Droid-CI) das ganze Testlauf abbrechen -
-    // und ein Preview istoptional, ein gruener Lauf ist es nicht.
+    // und ein Preview istoptional, ein grüner Lauf ist es nicht.
     // SystemTemp statt eines festen Windows-Pfads: auf einer
-    // Linux-Pipeline wuerde ein fester Pfad ein Verzeichnis mit
+    // Linux-Pipeline würde ein fester Pfad ein Verzeichnis mit
     // Backslashes im Arbeitsverzeichnis anlegen.
     final out = Directory('${Directory.systemTemp.path}/opencode/m133/symbole');
     try {

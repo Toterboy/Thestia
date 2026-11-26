@@ -19,7 +19,7 @@ enum MessageType {
   icebreaker,
 
   /// System-Hinweis in der Mitte des Chats (v0.10.0): kein Text einer
-  /// Person, sondern ein Hinweis der App - z. B. die Fuenf-Minuten-Marke
+  /// Person, sondern ein Hinweis der App - z. B. die Fünf-Minuten-Marke
   /// in der Dating Hour. Wird mittig dargestellt, wie die
   /// Eisbrecher-Fragen.
   notice,
@@ -86,10 +86,10 @@ class Message {
 
   /// Erzeugt eine Nachricht aus einem JSON-Map.
   ///
-  /// BEFUND (22.11.2026, Fuzzing): Die Casts hier waren ungeschuetzt -
-  /// ein fehlendes oder falsch typisiertes Feld liess die App
-  /// abstuerzen. Die Nachricht kommt aus der lokalen Historie und (ueber
-  /// das Relay) vom Server: ein fremder Wert darf nicht abstuerzen.
+  /// BEFUND (22.11.2026, Fuzzing): Die Casts hier waren ungeschützt -
+  /// ein fehlendes oder falsch typisiertes Feld ließ die App
+  /// abstürzen. Die Nachricht kommt aus der lokalen Historie und (über
+  /// das Relay) vom Server: ein fremder Wert darf nicht abstürzen.
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
       id: textOf(json, ['id']) ?? '',
@@ -103,8 +103,8 @@ class Message {
       mediaUrl: textOf(json, ['mediaUrl']),
       durationSeconds: intOf(json, ['durationSeconds']) ?? 0,
       // Der Zeitstempel kommt aus dem lokalen Verlauf. Ein Zeitstempel
-      // ausserhalb des darstellbaren Bereichs wird verworfen (der Leser
-      // prueft das) - `fromMillisecondsSinceEpoch` wuerde sonst werfen.
+      // außerhalb des darstellbaren Bereichs wird verworfen (der Leser
+      // prüft das) - `fromMillisecondsSinceEpoch` würde sonst werfen.
       timestamp:
           dateOf(json, ['timestamp']) ?? DateTime.fromMillisecondsSinceEpoch(0),
       viewOnce: boolOf(json, ['viewOnce']) ?? false,

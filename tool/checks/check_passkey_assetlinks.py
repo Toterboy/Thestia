@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Prueft die Passkey-Asset-Dateien gegen die Realitaet.
+"""Prüft die Passkey-Asset-Dateien gegen die Realität.
 
-Fehler, die dieser Pruefer fangen soll - alle drei sind in diesem Repo
-tatsaechlich aufgetreten:
+Fehler, die dieser Prüfer fangen soll - alle drei sind in diesem Repo
+tatsächlich aufgetreten:
 
 1) assetlinks.json enthielt dasselbe Zertifikat zweimal (zweimal
    colon-getrennt, zweimal als kompakter Hex). Funktioniert, ist aber
    Ballast und macht Diff-Vergleiche unlesbar.
-2) apple-app-site-association enthielt die unausgefuellte Vorlage
-   "REPLACE_WITH_APPLE_TEAM_ID". Das meldet der Pruefer als WARNUNG, nicht
+2) apple-app-site-association enthielt die unausgefüllte Vorlage
+   "REPLACE_WITH_APPLE_TEAM_ID". Das meldet der Prüfer als WARNUNG, nicht
    als Fehler - die Vorlage ist nicht mit vertretbarem Aufwand aus dem
-   Repo heraus fuellbar, und eine dauerhaft rote CI wird abgelesen und
+   Repo heraus füllbar, und eine dauerhaft rote CI wird abgelesen und
    dann ignoriert. Die Warnung bleibt sichtbar, bis die Team-ID steht.
 3) Der Fingerprint des Play-App-Signing-Keys fehlt. Der ist erst nach
    dem ERSTEN Upload vorhanden; bis dahin ist er nicht erzeugbar und
-   darf nicht geraten werden. Der Pruefer sagt das explizit, statt es
+   darf nicht geraten werden. Der Prüfer sagt das explizit, statt es
    stillschweigend durchzuwinken.
 
 Aufruf:
@@ -42,8 +42,8 @@ import keystore_secrets  # noqa: E402
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -81,7 +81,7 @@ def norm(fp: str) -> str:
 def keytool_executable() -> str:
     """Wo liegt keytool?
 
-    `keytool` gehoert zum JDK und ist nicht immer im PATH - auf einem
+    `keytool` gehört zum JDK und ist nicht immer im PATH - auf einem
     Windows-Arbeitsplatz mit Android Studio liegt es in der
     mitgelieferten JBR. Ohne diese Suche fand der Fingerabdruck-Vergleich
     lokal nicht statt ("Keystore nicht lesbar"), obwohl alles da war.
@@ -123,13 +123,13 @@ def keytool_sha256(alias: str, keystore: str, password: str) -> str | None:
 
 
 def read_props() -> dict[str, str]:
-    """Die Signier-Angaben - aufgeloest ueber tool/helpers/keystore_secrets.py.
+    """Die Signier-Angaben - aufgelöst über tool/helpers/keystore_secrets.py.
 
-    FRUEHER standen hier die Passwoerter aus android/key.properties.
-    Seit dem 04.11.2026 liegen sie in einer Secret-Datei ausserhalb des
+    FRÜHER standen hier die Passwörter aus android/key.properties.
+    Seit dem 04.11.2026 liegen sie in einer Secret-Datei außerhalb des
     Projekts (siehe tool/helpers/keystore_secrets.py) - der Fingerabdruck des
     Release-Keystores muss aber weiterhin berechnet werden, sonst
-    waere die Pruefung sinnlos.
+    wäre die Prüfung sinnlos.
     """
     return keystore_secrets.read_props()
 
@@ -186,7 +186,7 @@ def check_assetlinks(expected: dict[str, str | None]) -> set[str]:
         else:
             seen[n] = i
 
-    # Beide echten Keystores muessen vertreten sein
+    # Beide echten Keystores müssen vertreten sein
     for label, fp in expected.items():
         if fp is None:
             warn.append(f'{label}-Keystore nicht lesbar, nicht verglichen')
@@ -206,28 +206,28 @@ def check_aasa() -> None:
     """iOS-Passkeys.
 
     Die Vorlage ist eine WARNUNG, kein Fehler: der Platzhalter
-    REPLACE_WITH_APPLE_TEAM_ID laesst sich nur mit der Team-ID aus dem
-    Apple-Developer-Konto des Kontoinhabers fuellen. Solange der Weg
+    REPLACE_WITH_APPLE_TEAM_ID lässt sich nur mit der Team-ID aus dem
+    Apple-Developer-Konto des Kontoinhabers füllen. Solange der Weg
     "irgendwann" ist, darf die CI deswegen nicht dauerhaft rot sein -
-    eine staendig rote Ampel wird abgelesen und dann ignoriert, und dann
-    faellt sie auch nicht mehr auf, wenn sie einmal wichtig wird.
+    eine ständig rote Ampel wird abgelesen und dann ignoriert, und dann
+    fällt sie auch nicht mehr auf, wenn sie einmal wichtig wird.
 
     Sobald die Team-ID eingetragen ist, greift die Warnung nicht mehr und
     derselbe Code meldet einen Fehler, falls die Datei kaputt ist. Es
-    braucht keine zweite Regel dafuer.
+    braucht keine zweite Regel dafür.
     """
     print('--- apple-app-site-association ---')
     if not AASA.exists():
         # OPTIONAL (04.11.2026): Es gibt kein iOS-Release - der
         # Betrieb ist zu teuer. Ohne Apple-Team-ID kann die Datei
-        # ohnehin nichts bewirken: Apple prueft die Team-ID streng,
-        # eine Vorlage laesst sich nur mit dem Developer-Konto des
-        # Kontoinhabers fuellen.
+        # ohnehin nichts bewirken: Apple prüft die Team-ID streng,
+        # eine Vorlage lässt sich nur mit dem Developer-Konto des
+        # Kontoinhabers füllen.
         #
         # Deshalb wird die Datei nicht mehr verlangt. Eine veraltete
-        # Vorlage im Publish-Ordner waere schlimmer als gar keine:
-        # Sie antwortet mit HTTP 200 und laesst jeden Healthcheck
-        # gruen aussehen, obwohl die Funktion nicht existiert.
+        # Vorlage im Publish-Ordner wäre schlimmer als gar keine:
+        # Sie antwortet mit HTTP 200 und lässt jeden Healthcheck
+        # grün aussehen, obwohl die Funktion nicht existiert.
         print('  nicht vorhanden - iOS-Passkeys sind fuer dieses Projekt '
               'nicht relevant (kein iOS-Release).')
         return
@@ -286,21 +286,21 @@ def check_live(local_android: set[str]) -> None:
                 fail.append(f'{host} fehlen lokal vorhandene Zertifikate: '
                             f'{len(only_local)} - Live-Datei ist veraltet')
 
-        # BEFUND (08.11.2026): Der Vergleich oben prueft die LIVE-DATEI
+        # BEFUND (08.11.2026): Der Vergleich oben prüft die LIVE-DATEI
         # gegen die LOKALE DATEI - nicht gegen die echte
-        # TLS-Zertifikatskette. Eine veraltete Datei faellt damit NICHT
+        # TLS-Zertifikatskette. Eine veraltete Datei fällt damit NICHT
         # auf: Am 08.11.2026 standen in assetlinks.json drei
-        # Fingerabdruecke, von denen KEINER in der live ausgelieferten
-        # Kette stand - die Passkey-Anmeldung auf Android waere gescheitert
-        # (oder haette zumindest nicht mehr verifiziert werden koennen).
+        # Fingerabdrücke, von denen KEINER in der live ausgelieferten
+        # Kette stand - die Passkey-Anmeldung auf Android wäre gescheitert
+        # (oder hätte zumindest nicht mehr verifiziert werden können).
         #
-        # Android prueft die Kette des Servers gegen die Liste. Deshalb
-        # wird hier die Kette gelesen und geprueft, ob die eingetragenen
-        # Fingerabdruecke IN ihr stehen.
+        # Android prüft die Kette des Servers gegen die Liste. Deshalb
+        # wird hier die Kette gelesen und geprüft, ob die eingetragenen
+        # Fingerabdrücke IN ihr stehen.
         #
         # Das Leaf wird bewusst NICHT verlangt: es wird alle 90 Tage
-        # erneuert (Let's Encrypt) und waere dann ungueltig. Die stabilen
-        # Glieder (Root und Zwischenzertifikate) muessen drin sein.
+        # erneuert (Let's Encrypt) und wäre dann ungültig. Die stabilen
+        # Glieder (Root und Zwischenzertifikate) müssen drin sein.
         try:
             import socket
             with socket.create_connection((host, 443), timeout=25) as s:
@@ -313,15 +313,15 @@ def check_live(local_android: set[str]) -> None:
             kette_set = set(kette)
             # Die Datei muss alle STABILEN Glieder der Kette enthalten.
             # Das Leaf (Index 0) ist ausgenommen: es wird alle 90 Tage
-            # erneuert (Let's Encrypt) und waere dann ungueltig.
+            # erneuert (Let's Encrypt) und wäre dann ungültig.
             #
-            # ZUSAETZLICHE Eintraege sind erlaubt: der Fingerabdruck des
-            # Debug-Keystores gehoert zur APP, nicht zum Webserver - er
-            # steht nie in der TLS-Kette, ist aber fuer den Debug-Build
-            # noetig (sonst verifiziert der Debug-Build die Passkeys
-            # nicht). Deshalb wird hier nur die Gegenrichtung geprueft:
+            # ZUSÄTZLICHE Einträge sind erlaubt: der Fingerabdruck des
+            # Debug-Keystores gehört zur APP, nicht zum Webserver - er
+            # steht nie in der TLS-Kette, ist aber für den Debug-Build
+            # nötig (sonst verifiziert der Debug-Build die Passkeys
+            # nicht). Deshalb wird hier nur die Gegenrichtung geprüft:
             # fehlt ein stabiles Kettenglied in der Datei, ist die
-            # Verknuepfung kaputt.
+            # Verknüpfung kaputt.
             fehlend = [f for f in kette[1:] if f not in local_android]
             print(f'  {host:22s} Kette: {len(glieder)} Zertifikate  '
                   f'{"alle stabilen dabei" if not fehlend else "FEHLT: %d" % len(fehlend)}')
@@ -336,7 +336,7 @@ def check_live(local_android: set[str]) -> None:
                         f'({e}) - der Ketten-Abgleich ist damit nicht gelaufen')
     if not AASA.exists():
         # Kein iOS-Release -> die Datei wird nicht mehr erwartet und
-        # nicht mehr geprueft (siehe check_aasa oben).
+        # nicht mehr geprüft (siehe check_aasa oben).
         return
     try:
         with urllib.request.urlopen(AASA_URL, timeout=30, context=ctx) as r:

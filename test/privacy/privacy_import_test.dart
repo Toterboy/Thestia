@@ -2,13 +2,13 @@
 //
 // ANLASS (19.11.2026): Der Export war getestet, der IMPORT nicht -
 // `lib/screens/privacy/privacy_screen.dart` war nur zu 36 % abgedeckt.
-// Der Import ist das Gegenstueck zum Export (DSGVO Art. 20): wer seine
-// Daten mitgenommen hat, muss sie auch wiederherstellen koennen.
+// Der Import ist das Gegenstück zum Export (DSGVO Art. 20): wer seine
+// Daten mitgenommen hat, muss sie auch wiederherstellen können.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Dialog fragt nach dem JSON und bricht ab, wenn man abbricht,
 //   * kaputtes JSON wird abgewiesen (kein Absturz, kein halber Import),
-//   * ein gueltiges JSON stellt Profil, Einstellungen und Praeferenzen
+//   * ein gültiges JSON stellt Profil, Einstellungen und Präferenzen
 //     wieder her.
 import 'dart:convert';
 
@@ -120,7 +120,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Fuellt den Dialog mit JSON und bestaetigt (oder verwirft).
+  /// Füllt den Dialog mit JSON und bestätigt (oder verwirft).
   Future<void> fuelleDialog(
     WidgetTester tester,
     String inhalt, {
@@ -136,9 +136,9 @@ void main() {
     await tester.tap(knopf);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    // DER IMPORT STARTET TIMER: Das Speichern der Praeferenzen ist
-    // verzoegert (Server-Abgleich). Ohne das Wenden laeuft der Timer
-    // noch, wenn der Test endet - der Test waere rot.
+    // DER IMPORT STARTET TIMER: Das Speichern der Präferenzen ist
+    // verzögert (Server-Abgleich). Ohne das Wenden läuft der Timer
+    // noch, wenn der Test endet - der Test wäre rot.
     await tester.pump(const Duration(seconds: 2));
   }
 

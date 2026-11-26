@@ -1,28 +1,28 @@
-// Der Rauchtest ueber alle Routen.
+// Der Rauchtest über alle Routen.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/routing/app_router.dart 165 offene Zeilen - und die Bilanz
-// ueber ganz lib/: 70 %. Der Router traegt die gesamte Navigation:
-// 52 Routen, und fuer JEDE wird ein Bildschirm gebaut.
+// über ganz lib/: 70 %. Der Router trägt die gesamte Navigation:
+// 52 Routen, und für JEDE wird ein Bildschirm gebaut.
 //
 // DER WEG: Der Test geht jede Route einmal an und schaut, ob der
-// Bildschirm aufgebaut wird. Das ist mehr als eine Messung: faellt ein
+// Bildschirm aufgebaut wird. Das ist mehr als eine Messung: fällt ein
 // Bildschirm beim Aufbau aus, sieht der Nutzer im Ernstfall einen
 // schwarzen Bildschirm - und niemand merkt es, bis es jemandem
 // passiert.
 //
 // EIN TEST JE ROUTE: Jede Route bekommt einen eigenen Test (und damit
-// einen eigenen Widget-Baum). Sonst wuerde ein Absturz den folgenden
+// einen eigenen Widget-Baum). Sonst würde ein Absturz den folgenden
 // Routen die Basis wegziehen (der Baum ist dann kaputt) - und man
-// wuesste nicht, welche Route wirklich defekt ist.
+// wüsste nicht, welche Route wirklich defekt ist.
 //
 // OHNE UMLEITUNG: Der Test benutzt die Routen-Tabelle direkt
-// ([appRoutes]) und NICHT den Router der App. Sonst wuerde die
+// ([appRoutes]) und NICHT den Router der App. Sonst würde die
 // Umleitung jeden Weg umlenken (je nach Zustand zum Login, zur
-// Einrichtung oder zur Verifikation) - und der Test wuerde nur die
+// Einrichtung oder zur Verifikation) - und der Test würde nur die
 // Umleitungsziele sehen, nicht die Bildschirme.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * jede Route baut einen Bildschirm auf (kein Absturz),
 //   * der Bildschirm ist wirklich der erwartete (nicht die Fehlerseite).
 import 'package:flutter/material.dart';
@@ -49,7 +49,7 @@ import '../support/router_harness.dart';
 ///
 /// ANMERKUNG: `/onboarding` fehlt hier bewusst - hinter diesem Pfad
 /// gibt es KEINEN Bildschirm (der Pfad wird nur in der Umleitung
-/// verglichen). Der Rauchtest soll aber nur echte Bildschirme pruefen.
+/// verglichen). Der Rauchtest soll aber nur echte Bildschirme prüfen.
 const Map<String, String> _routen = <String, String>{
   '/loading': '/loading',
   '/welcome': '/welcome',
@@ -205,7 +205,7 @@ void main() {
         );
 
         // DER AUFRUM: Manche Bildschirme fragen im Hintergrund den
-        // Server (mit einem Timeout). In der Test-Zone laeuft die
+        // Server (mit einem Timeout). In der Test-Zone läuft die
         // Zeit nur beim `pump` - ohne das bleibt der Timer offen und
         // der Test meldet "A Timer is still pending".
         //

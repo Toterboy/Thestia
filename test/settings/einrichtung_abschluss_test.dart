@@ -1,26 +1,26 @@
 // Der Abschluss der Ersteinrichtung: die Standort-Erkennung und der
 // Weg zum Ende.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/onboarding/parts/einrichtungabschluss.dart 57 offene
-// Zeilen - der groesste Teil davon war die Standort-Erkennung.
+// Zeilen - der größte Teil davon war die Standort-Erkennung.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Standort landet auf dem 5-km-Raster (sonst speichert die
 //     App genauer, als sie verspricht),
 //   * das erkannte Bundesland steht im Profil und wird dem Server
 //     gemeldet,
 //   * die Koordinaten gehen in profile_locations - die einzige
 //     Tabelle, in der die genauen Werte liegen und die nur der
-//     Eigentuemer lesen darf,
-//   * der Standort wird auch serverseitig geprueft (Massen-Konten),
+//     Eigentümer lesen darf,
+//   * der Standort wird auch serverseitig geprüft (Massen-Konten),
 //   * ohne Geocoder-Treffer ratet die App nicht, sondern sagt dem
-//     Nutzer, dass er das Bundesland selbst waehlt,
+//     Nutzer, dass er das Bundesland selbst wählt,
 //   * ein Serverfehler blockiert die Einrichtung nicht (Best-Effort),
 //   * ein Fehler bei der Ortung wird dem Nutzer gemeldet,
-//   * der Hinweis auf den zweiten Faktor fuehrt auf die 2FA-Seite,
+//   * der Hinweis auf den zweiten Faktor fährt auf die 2FA-Seite,
 //   * der Abschluss sichert den Stand der Einrichtung und die
-//     Praeferenzen beim Server.
+//     Präferenzen beim Server.
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
 // test/support/fake_supabase_server.dart.
@@ -34,7 +34,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 // Das Plattform-Interface wird von permission_handler exportiert, aber
-// nicht weitergereicht - der Test setzt die Attrappe darueber.
+// nicht weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,8 +54,8 @@ import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/services/storage/secure_storage.dart';
 import 'package:thestia/utils/location/location_privacy.dart';
 
-// Die Attrappen des Profil-Editors (mit Praefix, damit hier nichts
-// kollidiert): der Ort-Dienst und die Standort-Pruefung.
+// Die Attrappen des Profil-Editors (mit Präfix, damit hier nichts
+// kollidiert): der Ort-Dienst und die Standort-Prüfung.
 import '../profile_edit_screen/hilfen.dart' as attrappen;
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
@@ -107,7 +107,7 @@ class _Keystore implements SecureProfileStore {
 ///
 /// DER GRUND: Die Standort-Berechtigung ist im Test nicht erteilt. So
 /// erscheint die Offenlegung (die vor der Berechtigung kommen muss -
-/// das verlangt Google Play) und der Weg laesst sich pruefen.
+/// das verlangt Google Play) und der Weg lässt sich prüfen.
 class _Berechtigungen extends PermissionHandlerPlatform {
   @override
   Future<PermissionStatus> checkPermissionStatus(Permission permission) async =>
@@ -121,9 +121,9 @@ class _Berechtigungen extends PermissionHandlerPlatform {
 
 /// Der Geokoder-Ersatz: er liefert das Bundesland zu einer Position.
 ///
-/// DER GRUND: Der echte Geocoder laeuft nur auf Android und iOS. Ohne
-/// den Ersatz liefert er im Test nichts - die App wuerde nie ein
-/// Bundesland finden und der Weg waere ungetestet.
+/// DER GRUND: Der echte Geocoder läuft nur auf Android und iOS. Ohne
+/// den Ersatz liefert er im Test nichts - die App würde nie ein
+/// Bundesland finden und der Weg wäre ungetestet.
 class _Geocoder extends GeocodingPlatform {
   _Geocoder(this.bundesland);
 
@@ -148,7 +148,7 @@ class _Geocoder extends GeocodingPlatform {
   }
 }
 
-/// Der Ort-Dienst, der abstuerzt (der Fehlerfall der Ortung).
+/// Der Ort-Dienst, der abstürzt (der Fehlerfall der Ortung).
 class _FehlerOrtDienst extends attrappen.FakeOrtService {
   _FehlerOrtDienst() : super();
 
@@ -194,13 +194,13 @@ void main() {
       ),
     );
 
-    // HIVE: die verschluesselten Schluessel (Signal-Protokoll) liegen in
-    // Hive-Boxen - ohne initialisierten Hive schlaegt der Aufbau fehl.
+    // HIVE: die verschlüsselten Schlüssel (Signal-Protokoll) liegen in
+    // Hive-Boxen - ohne initialisierten Hive schlägt der Aufbau fehl.
     final tempDir = await Directory.systemTemp.createTemp('thesia_abschluss');
     Hive.init(tempDir.path);
 
     // ANGEMELDET: Ohne Sitzung gibt der Server-Dienst nichts frei
-    // ("Nicht eingeloggt") - es wuerde nichts gespeichert.
+    // ("Nicht eingeloggt") - es würde nichts gespeichert.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
 
@@ -231,8 +231,8 @@ void main() {
   /// Baut die Ersteinrichtung und liefert den Container der Provider.
   ///
   /// [ortDienst] ist der Dienst, der den Standort meldet. [geocoder]
-  /// liefert das Bundesland zu einer Position. [pruefung] merkt sich die
-  /// Aufrufe der Standort-Pruefung. [mitMfa] meldet einen bereits
+  /// liefert das Bundesland zu einer Position. [prüfung] merkt sich die
+  /// Aufrufe der Standort-Prüfung. [mitMfa] meldet einen bereits
   /// eingerichteten zweiten Faktor - dann fragt die App beim Abschluss
   /// nicht mehr nach.
   Future<ProviderContainer> zeigeEinrichtung(
@@ -276,7 +276,7 @@ void main() {
           secureProfileStoreProvider.overrideWithValue(_Keystore()),
           // Der Ort-Dienst: im Test gibt es kein GPS.
           locationVerificationServiceProvider.overrideWithValue(dienst),
-          // Die Standort-Pruefung (Edge Function) - der Ersatz merkt
+          // Die Standort-Prüfung (Edge Function) - der Ersatz merkt
           // sich die Aufrufe.
           locationCheckServiceProvider.overrideWith((ref) => standortPruefung),
           // Der zweite Faktor: mit ihm fragt die App beim Abschluss nicht
@@ -379,7 +379,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  /// Tippt auf "Bundesland erkennen" und bestaetigt die Offenlegung.
+  /// Tippt auf "Bundesland erkennen" und bestätigt die Offenlegung.
   Future<void> tippeOrtErkennung(WidgetTester tester) async {
     final knopf = find.text(L10n.tWithoutContext('setupp.detectState'));
     await tester.scrollUntilVisible(
@@ -406,7 +406,7 @@ void main() {
     await warteAufServer(tester);
   }
 
-  /// Laesst die Timer (die Meldung, die entprellten Syncs) ablaufen -
+  /// Lässt die Timer (die Meldung, die entprellten Syncs) ablaufen -
   /// sonst steht am Testende ein offener Timer.
   Future<void> lassTimerLaufen(WidgetTester tester) async {
     for (var i = 0; i < 10; i++) {
@@ -453,7 +453,7 @@ void main() {
       expect(geocoder.anfragen.last.lat, erwartet.lat);
       expect(geocoder.anfragen.last.lng, erwartet.lng);
 
-      // Das Profil traegt das Bundesland und die gerasterten Koordinaten.
+      // Das Profil trägt das Bundesland und die gerasterten Koordinaten.
       final profil = container.read(profileProvider);
       expect(profil.state, 'Hamburg');
       expect(
@@ -467,7 +467,7 @@ void main() {
 
       // DIE KOORDINATEN: sie gehen in profile_locations - die einzige
       // Tabelle, in der die genauen Werte liegen und die nur der
-      // Eigentuemer lesen darf.
+      // Eigentümer lesen darf.
       final orte = server.schreibvorgaenge
           .where((v) => v['tabelle'] == 'profile_locations')
           .toList();
@@ -482,8 +482,8 @@ void main() {
       expect(orte.last['lng'], erwartet.lng);
       expect(orte.last['user_id'], 'ich');
 
-      // DAS BUNDESLAND: der Server muss es kennen - sonst ueberschreibt
-      // ein spaeterer Profil-Sync den Wert wieder mit leer.
+      // DAS BUNDESLAND: der Server muss es kennen - sonst überschreibt
+      // ein späterer Profil-Sync den Wert wieder mit leer.
       final profilWrites = server.schreibvorgaenge
           .where((v) => v['tabelle'] == 'profiles' && v.containsKey('state'))
           .toList();
@@ -494,7 +494,7 @@ void main() {
       );
       expect(profilWrites.last['state'], 'Hamburg');
 
-      // DIE SERVERSEITIGE PRUEFUNG: sie findet Massen-Konten.
+      // DIE SERVERSEITIGE PRÜFUNG: sie findet Massen-Konten.
       expect(
         pruefung.aufrufe,
         isNotEmpty,
@@ -506,7 +506,7 @@ void main() {
       expect(pruefung.aufrufe.last['newLatitude'], erwartet.lat);
       expect(pruefung.aufrufe.last['newLongitude'], erwartet.lng);
 
-      // UND DER NUTZER BEKOMMT DIE BESTAETIGUNG.
+      // UND DER NUTZER BEKOMMT DIE BESTÄTIGUNG.
       expect(
         find.text(L10n.tWithoutContext('setup.locationDone')),
         findsOneWidget,
@@ -531,8 +531,8 @@ void main() {
 
       expect(tester.takeException(), isNull);
 
-      // NICHTS RATEN: ein erfundenes Bundesland waere schlimmer als
-      // keines - der Nutzer waehlt es selbst.
+      // NICHTS RATEN: ein erfundenes Bundesland wäre schlimmer als
+      // keines - der Nutzer wählt es selbst.
       final profil = container.read(profileProvider);
       expect(
         profil.state,
@@ -554,7 +554,7 @@ void main() {
           .toList();
       expect(orte, isNotEmpty);
 
-      // UND DER NUTZER WEISS ES: er soll das Bundesland selbst waehlen.
+      // UND DER NUTZER WEISS ES: er soll das Bundesland selbst wählen.
       expect(
         find.text(L10n.tWithoutContext('setup.locationStateUnknown')),
         findsOneWidget,
@@ -588,12 +588,12 @@ void main() {
 
       expect(tester.takeException(), isNull);
 
-      // Das Profil traegt den Standort - lokal ist er gesichert.
+      // Das Profil trägt den Standort - lokal ist er gesichert.
       final profil = container.read(profileProvider);
       expect(profil.state, 'Hamburg');
       expect(profil.locationLat, isNotNull);
 
-      // Und der Nutzer bekommt die Bestaetigung: ein Serverfehler darf
+      // Und der Nutzer bekommt die Bestätigung: ein Serverfehler darf
       // den Ablauf nicht stoppen (der Standort-Sync ist Best-Effort).
       expect(
         find.text(L10n.tWithoutContext('setup.locationDone')),
@@ -655,7 +655,7 @@ void main() {
       );
 
       // Der Weg zur 2FA-Seite ist offen - der Nutzer soll sie direkt
-      // erreichen koennen.
+      // erreichen können.
       await tester.tap(
         find.widgetWithText(TextButton, L10n.tWithoutContext('setup.nudgeMfa')),
       );
@@ -685,7 +685,7 @@ void main() {
       await tippeAbschluss(tester);
 
       // MIT EINEM ZWEITEN FAKTOR fragt die App nicht mehr nach - der
-      // Abschluss laeuft direkt.
+      // Abschluss läuft direkt.
       expect(
         find.text(L10n.tWithoutContext('setup.nudgeTitle')),
         findsNothing,
@@ -699,7 +699,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       // DER STAND DER EINRICHTUNG: er muss beim Server stehen - sonst
-      // erscheint die Einrichtung nach der naechsten Anmeldung wieder.
+      // erscheint die Einrichtung nach der nächsten Anmeldung wieder.
       final flagWrites = server.schreibvorgaenge
           .where(
             (v) =>
@@ -715,7 +715,7 @@ void main() {
       expect(flagWrites.last['one_time_settings_completed'], isTrue);
       expect(flagWrites.last['community_guidelines_accepted'], isTrue);
 
-      // DIE PRAEFERENZEN: sie stehen auch am Server - sonst waeren sie
+      // DIE PRÄFERENZEN: sie stehen auch am Server - sonst wären sie
       // nach der Neuinstallation weg.
       final prefWrites = server.schreibvorgaenge
           .where(
@@ -743,9 +743,9 @@ void main() {
     testWidgets('ein Serverfehler beim Sichern der Flags wird gemeldet', (
       tester,
     ) async {
-      // DER SERVER SCHWEIGT: alle Schreibvorgaenge auf "profiles" gehen
-      // ins Leere. Das ist der Fall, der frueher still passierte - der
-      // Nutzer sah nichts und die Einrichtung kam beim naechsten Login
+      // DER SERVER SCHWEIGT: alle Schreibvorgänge auf "profiles" gehen
+      // ins Leere. Das ist der Fall, der früher still passierte - der
+      // Nutzer sah nichts und die Einrichtung kam beim nächsten Login
       // wieder.
       server.fehlerAntworten['/rest/v1/profiles'] = (
         status: 500,
@@ -759,7 +759,7 @@ void main() {
 
       // DER ABSCHLUSS VERSUCHT ES MEHRMALS: zwischen den Versuchen
       // liegen Wartezeiten (1 s, 2 s). Die Meldung erscheint erst
-      // danach - der Test wartet darauf (und faengt sie ab, bevor sie
+      // danach - der Test wartet darauf (und fängt sie ab, bevor sie
       // von selbst wieder verschwindet).
       var gemeldet = false;
       for (var i = 0; i < 40 && !gemeldet; i++) {

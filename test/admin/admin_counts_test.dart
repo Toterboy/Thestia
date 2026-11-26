@@ -1,18 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/screens/admin/admin_counts.dart';
 
-/// Tests fuer die Kennzahlen-Zeile des Admin-Screens (ROADMAP Zeile 807).
+/// Tests für die Kennzahlen-Zeile des Admin-Screens (ROADMAP Zeile 807).
 ///
-/// Die Zaehlfunktionen sind bewusst aus dem Widget herausgezogen: sie
-/// zeigen eine Zahl an, und ein Fehler darin faellt nicht als Absturz auf,
+/// Die Zählfunktionen sind bewusst aus dem Widget herausgezogen: sie
+/// zeigen eine Zahl an, und ein Fehler darin fällt nicht als Absturz auf,
 /// sondern als falsche Zahl im Admin-Screen.
 void main() {
   // Fester Zeitpunkt statt DateTime.now(): die Fenstergrenzen sind der
-  // eigentliche Gegenstand dieser Tests, und mit now() waeren sie flaky,
-  // sobald der Testlauf ueber eine Grenze rutscht.
+  // eigentliche Gegenstand dieser Tests, und mit now() wären sie flaky,
+  // sobald der Testlauf über eine Grenze rutscht.
   Map<String, dynamic> bug(String iso) => {'createdAt': iso};
 
-  // Aus EINEM Zeitpunkt abgeleitet, genau wie im Provider. Sonst prueft
+  // Aus EINEM Zeitpunkt abgeleitet, genau wie im Provider. Sonst prüft
   // der Test eine andere Konstellation als der Produktivcode.
   final w = bugsRecentWindows(DateTime.utc(2026, 3, 14, 12));
   final now = w.now;
@@ -37,7 +37,7 @@ void main() {
     test('Zeile ohne Status zaehlt nicht als offen', () {
       // Defensive: der Status kommt aus JSONB. Fehlt er, ist die Meldung
       // nicht als "offen" ausgewiesen - lieber zu niedrig als eine
-      // Meldung als offen zu zaehlen, die es nicht mehr ist.
+      // Meldung als offen zu zählen, die es nicht mehr ist.
       expect(
         countOpenReports([
           {'id': 'x'},
@@ -70,10 +70,10 @@ void main() {
     });
 
     test('exakte Grenze gehoert nur EINSEM Fenster zu (halboffen)', () {
-      // Genau auf dayAgo, also exakt 24 Stunden alt: zaehlt zu den
+      // Genau auf dayAgo, also exakt 24 Stunden alt: zählt zu den
       // JUNGEN 24 Stunden, nicht zu den vorigen. Beide Fenster sind
-      // halboffen [von, bis) - waeren sie beide geschlossen, wuerde
-      // dieser Zeitstempel doppelt gezaehlt und die Summe waere groesser
+      // halboffen [von, bis) - wären sie beide geschlossen, würde
+      // dieser Zeitstempel doppelt gezählt und die Summe wäre größer
       // als bugsTotal.
       final exact = [bug('2026-03-13T12:00:00Z')];
       expect(countBugsInWindow(exact, dayAgo, now), 1);
@@ -96,8 +96,8 @@ void main() {
 
     test('Zeitstempel mit Zeitversatz landen im richtigen Fenster', () {
       // 2026-03-13T13:00:00+02:00 ist 11:00 UTC, also 25 Stunden her und
-      // damit NICHT in den letzten 24 h. Ohne UTC-Vergleich wuerde es
-      // faelschlich als neu zaehlen.
+      // damit NICHT in den letzten 24 h. Ohne UTC-Vergleich würde es
+      // fälschlich als neu zählen.
       final withOffset = [bug('2026-03-13T13:00:00+02:00')];
       expect(countBugsInWindow(withOffset, dayAgo, now), 0);
       expect(countBugsInWindow(withOffset, twoDaysAgo, dayAgo), 1);
@@ -114,7 +114,7 @@ void main() {
     });
 
     test('Gegenprobe: Fenster umgekehrt ergibt 0', () {
-      // Ohne diese Absicherung wuerde ein vertauschtes from/to im
+      // Ohne diese Absicherung würde ein vertauschtes from/to im
       // Provider jede Zahl als "Anstieg" melden.
       expect(countBugsInWindow(bugs, now, dayAgo), 0);
     });
@@ -122,9 +122,9 @@ void main() {
 
   group('bugsRecentWindows', () {
     test('beide Fenster haengen an DEMSELBEN jetzt', () {
-      // Der Grund fuer diese Funktion: zwei getrennte now()-Aufrufe
+      // Der Grund für diese Funktion: zwei getrennte now()-Aufrufe
       // liegen Mikrosekunden auseinander, und ein Zeitstempel genau in
-      // diesem Spalt gehoerte zu keinem Fenster - oder zu beiden.
+      // diesem Spalt gehörte zu keinem Fenster - oder zu beiden.
       final w = bugsRecentWindows(DateTime.utc(2026, 3, 14, 12));
       expect(w.now.difference(w.dayAgo), const Duration(hours: 24));
       expect(w.dayAgo.difference(w.twoDaysAgo), const Duration(hours: 24));
@@ -161,7 +161,7 @@ void main() {
     });
 
     test('1 -> 2 meldet KEINEN Anstieg', () {
-      // Ohne Mindestmenge waere jede Fehlbedienung ein Alarm.
+      // Ohne Mindestmenge wäre jede Fehlbedienung ein Alarm.
       expect(counts(2, 1).bugsRising, isFalse);
       expect(counts(1, 0).bugsRising, isFalse);
     });
@@ -178,8 +178,8 @@ void main() {
 
   group('AdminCounts.unknown', () {
     test('isLoaded ist false und Werte sind -1', () {
-      // -1 statt 0: eine echte Null heisst "nichts offen", -1 heisst
-      // "noch nicht bekannt". Sonst wuerde die Zeile im Ladezustand
+      // -1 statt 0: eine echte Null heißt "nichts offen", -1 heißt
+      // "noch nicht bekannt". Sonst würde die Zeile im Ladezustand
       // behaupten, es sei nichts zu tun.
       expect(AdminCounts.unknown.isLoaded, isFalse);
       expect(AdminCounts.unknown.openReports, -1);
@@ -229,7 +229,7 @@ void main() {
     });
 
     test('findet ueber die Begruendung', () {
-      // Der Fall, der den Suchbegriff ueberhaupt rechtfertigt: der Admin
+      // Der Fall, der den Suchbegriff überhaupt rechtfertigt: der Admin
       // kennt den Absender nicht, aber das Stichwort aus der Meldung.
       final out = filterBans(bans, 'beleidigung');
       expect(out.length, 1);

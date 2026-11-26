@@ -1,9 +1,9 @@
-"""Prueft jede Tatsachenbehauptung der Nutzungsbedingungen gegen den Code.
+"""Prüft jede Tatsachenbehauptung der Nutzungsbedingungen gegen den Code.
 
 WARUM (05.11.2026): Die Nutzungsbedingungen enthielten drei Fehler,
 die man nur durch den Abgleich mit dem Code findet:
   * "Es ist verboten, Personen zu kontaktieren, die das eindeutig unter
-    18 Jahre alt sind" - 16- und 17-Jaehrige duerfen einander schreiben
+    18 Jahre alt sind" - 16- und 17-Jährige dürfen einander schreiben
     (das ist der Sinn der Aufsicht). Der Server filtert beidseitig.
   * "Wer zwischen 16 und 17 Jahre alt ist, braucht die Zustimmung der
     Sorgeberechtigten, bevor er die App nutzen kann" - die Zustimmung ist
@@ -11,8 +11,8 @@ die man nur durch den Abgleich mit dem Code findet:
     gehindert, weil sie ausbleibt.
 
 Ein Rechtstext, der das Verhalten der App falsch beschreibt, ist schlimmer
-als keiner. Deshalb wird jede Aussage hier gegen den Code geprueft: die
-Aussage muss im Code belegt sein, sonst faellt das Gate.
+als keiner. Deshalb wird jede Aussage hier gegen den Code geprüft: die
+Aussage muss im Code belegt sein, sonst fällt das Gate.
 
 Nutzung:  python tool/checks/check_terms_claims.py
 """
@@ -25,8 +25,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -55,7 +55,7 @@ alle_dart = "\n".join(lies(f) for f in sorted(LIB.rglob("*.dart")))
 de_terms = lies(ASSETS / "nutzungsbedingungen.html")
 en_terms = lies(ASSETS / "en" / "nutzungsbedingungen.html")
 
-# (Behauptung, Beleg im Code, was ohne Beleg falsch waere)
+# (Behauptung, Beleg im Code, was ohne Beleg falsch wäre)
 PRUEFUNGEN = [
     ("Mindestalter 16",
      re.search(r"birth_date\s*<=\s*\(current_date\s*-\s*INTERVAL\s*'16 years'\)",
@@ -123,12 +123,12 @@ def main() -> int:
             print("  FEHLT   %s" % behauptung)
             print("            (waere falsch: %s)" % auswirkung)
 
-    # Zusaetzlich: die verbotenen Formulierungen duerfen im GANZEN
+    # Zusätzlich: die verbotenen Formulierungen dürfen im GANZEN
     # Publish-Ordner nicht wieder auftauchen.
     #
     # BEFUND (05.11.2026): Die falsche Aussage stand nicht nur in den
     # Nutzungsbedingungen, sondern auch im Elternportal. Ein Check, der
-    # nur eine Seite ansieht, haette das nicht gefunden.
+    # nur eine Seite ansieht, hätte das nicht gefunden.
     verboten = [
         ("Es ist verboten, Personen zu kontaktieren, die das "
          "eindeutig unter 18 Jahre alt sind",
@@ -159,12 +159,12 @@ def main() -> int:
 
     # Und: KEINE Seite darf eine PFLICHT behaupten.
     #
-    # WICHTIG: Es geht um Behauptungen, nicht um Erwaehnungen. Die Seite
-    # kinderschutz.html verweist auf die Elternseite, erwaehnt aber
+    # WICHTIG: Es geht um Behauptungen, nicht um Erwähnungen. Die Seite
+    # kinderschutz.html verweist auf die Elternseite, erwähnt aber
     # "Zustimmung der Sorgeberechtigten" - ohne etwas zu behaupten.
     # Das ist in Ordnung.
     #
-    # Geprueft werden daher nur die Formulierungen, die eine Pflicht
+    # Geprüft werden daher nur die Formulierungen, die eine Pflicht
     # behaupten ("verlangt", "braucht", "muss", "requires", "needs").
     pflicht_muster = [
         r'verlangt die (?:App|Thestia)',
@@ -175,7 +175,7 @@ def main() -> int:
     ]
     freiwillig_woerter = ('freiwillig', 'voluntary', 'ablehnen', 'without it')
     def saetze(inhalt: str) -> list:
-        """Der Text in Saetzen - fuer die HTML-Seiten wird der Absatz
+        """Der Text in Sätzen - für die HTML-Seiten wird der Absatz
         genommen, damit ein Absatz nicht als ein Riesensatz gilt."""
         roh = re.split(r'(?<=</p>)|(?<=\n\n)|(?<=\n)', inhalt)
         return [s for s in roh if s.strip()]

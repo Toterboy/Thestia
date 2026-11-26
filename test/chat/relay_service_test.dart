@@ -1,19 +1,19 @@
-// Der Relay-Weg (Nachrichten ueber den Server, wenn der Kanal nicht steht).
+// Der Relay-Weg (Nachrichten über den Server, wenn der Kanal nicht steht).
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/relay_service.dart nur 43 % Abdeckung.
 //
 // DER WEG: Der Server ist der [FakeSupabaseServer] (test/support/
-// fake_supabase_server.dart), der Verschluesselungs-Dienst der echte
-// (ohne Session kann er nichts entschluesseln - so stellt der Test den
-// Fall "die Nachricht laesst sich nicht lesen" her).
+// fake_supabase_server.dart), der Verschlüsselungs-Dienst der echte
+// (ohne Session kann er nichts entschlüsseln - so stellt der Test den
+// Fall "die Nachricht lässt sich nicht lesen" her).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * eine Nachricht von einem ANDEREN Chat wird uebersprungen (und
-//     nicht quittiert - sie gehoert dem anderen Chat),
-//   * eine unlesbare Nachricht bleibt im Relay (sie wird beim naechsten
+// WAS HIER GEPRÜFT WIRD:
+//   * eine Nachricht von einem ANDEREN Chat wird übersprungen (und
+//     nicht quittiert - sie gehört dem anderen Chat),
+//   * eine unlesbare Nachricht bleibt im Relay (sie wird beim nächsten
 //     Poll erneut versucht),
-//   * erst nach fuenf Fehlversuchen wird sie verworfen (sonst waechst
+//   * erst nach fünf Fehlversuchen wird sie verworfen (sonst wächst
 //     das Relay endlos),
 //   * ohne "ack" wird nichts quittiert.
 import 'dart:io';
@@ -58,7 +58,7 @@ void main() {
     );
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
 
-    // DIE ADAPTER: die Boxen des Verschluesselungs-Dienstes halten
+    // DIE ADAPTER: die Boxen des Verschlüsselungs-Dienstes halten
     // Signal-Objekte.
     Hive.registerAdapter(SignalIdentityKeyPairAdapterAdapter());
     Hive.registerAdapter(SignalPreKeyRecordAdapterAdapter());

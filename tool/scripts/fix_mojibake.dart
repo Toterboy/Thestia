@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 
 /// Repariert ANSI-Fehldekodierung: Jeder Char <= 0xFF wird als Byte
-/// interpretiert; gueltige UTF-8-Sequenzen werden zu echten Zeichen
-/// kollabiert. Bereits korrekte Zeichen (>0xFF) bleiben unberuehrt.
-/// CP1252-Sonderzeichen zurueck auf ihr Byte gemappt.
+/// interpretiert; gültige UTF-8-Sequenzen werden zu echten Zeichen
+/// kollabiert. Bereits korrekte Zeichen (>0xFF) bleiben unberührt.
+/// CP1252-Sonderzeichen zurück auf ihr Byte gemappt.
 const Map<int, int> _cp1252High = {
   0x20AC: 0x80,
   0x201A: 0x82,
@@ -47,7 +47,7 @@ String _repair(String input) {
   while (i < input.length) {
     final firstByte = _charToByte(input.codeUnitAt(i));
     if (firstByte != null && firstByte >= 0xC2) {
-      // Moegliche UTF-8-Sequenz einsammeln (max 4 Bytes).
+      // Mögliche UTF-8-Sequenz einsammeln (max 4 Bytes).
       final bytes = <int>[firstByte];
       final len = firstByte >= 0xF0
           ? 4
@@ -105,7 +105,7 @@ const files = [
   'lib/services/server/unified_push_service.dart',
 ];
 
-/// Zusaetzlich: rekursiv alle Dart-Dateien in lib/ und tool/ pruefen.
+/// Zusätzlich: rekursiv alle Dart-Dateien in lib/ und tool/ prüfen.
 List<String> collectAll() {
   final list = <String>[...files];
   for (final dir in ['lib', 'tool']) {

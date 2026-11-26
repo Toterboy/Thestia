@@ -1,20 +1,20 @@
 // Der Bildversand im Chat: der Weg vom Bild zum Partner.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/parts/chatbilder.dart 64 offene Zeilen - der Weg,
 // der ein Bild zum Partner bringt.
 //
 // DER WEG: Der Bildauswahl-Dienst ist ein Hand-Fake. Das Scrubbing
-// (das Entfernen der GPS-Daten) laeuft in einem echten Isolat - der
+// (das Entfernen der GPS-Daten) läuft in einem echten Isolat - der
 // Test muss deshalb mit der echten Uhr warten.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Kamera und die Galerie werden unterschieden,
 //   * ein Bild, das nicht vorbereitet werden kann, wird abgewiesen UND
 //     dem Nutzer gemeldet (nicht stillschweigend verschluckt),
 //   * ein Bild geht raus und wird in der Vorschau angezeigt,
-//   * der Bild-Hash wird serverseitig registriert (sonst koennte eine
-//     spaetere Meldung dieses Bildes nicht nachgewiesen werden).
+//   * der Bild-Hash wird serverseitig registriert (sonst kännte eine
+//     spätere Meldung dieses Bildes nicht nachgewiesen werden).
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -26,7 +26,7 @@ import 'package:hive/hive.dart';
 import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 // Das Plattform-Interface wird von image_picker exportiert, aber nicht
-// weitergereicht - der Test setzt die Attrappe darueber.
+// weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
@@ -43,9 +43,9 @@ import 'hilfen.dart';
 
 /// Der Bildauswahl-Ersatz.
 ///
-/// DER GRUND: Das echte Plugin oeffnet auf dem Testrechner eine Datei-
+/// DER GRUND: Das echte Plugin öffnet auf dem Testrechner eine Datei-
 /// auswahl (oder gar nichts). Der Ersatz liefert eine feste Datei - oder
-/// gar keine (so verhaelt sich ein Geraet, auf dem der Nutzer abbricht).
+/// gar keine (so verhält sich ein Gerät, auf dem der Nutzer abbricht).
 class _FakeImagePicker extends ImagePickerPlatform {
   _FakeImagePicker(this.datei);
 
@@ -68,7 +68,7 @@ class _FakeImagePicker extends ImagePickerPlatform {
 
 void main() {
   // DER STIMMUNGS-DIENST: Der Chat zeigt die Stimmungskarte - ohne den
-  // Client schlaegt der Aufbau fehl.
+  // Client schlägt der Aufbau fehl.
   moodClient = supabase.SupabaseClient(
     'https://example.supabase.co',
     'test-key',
@@ -77,7 +77,7 @@ void main() {
     await moodClient.dispose();
   });
 
-  /// Der Ersatz fuer die Bildauswahl (der echte waere das Plugin).
+  /// Der Ersatz für die Bildauswahl (der echte wäre das Plugin).
   late ImagePickerPlatform original;
 
   setUpAll(() async {
@@ -150,7 +150,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Wartet, bis der Bildversand durch ist (das Scrubbing laeuft in
+  /// Wartet, bis der Bildversand durch ist (das Scrubbing läuft in
   /// einem echten Isolat - da helfen nur echte Wartezeiten).
   Future<void> warteAufVersand(WidgetTester tester) async {
     for (var i = 0; i < 40; i++) {
@@ -162,7 +162,7 @@ void main() {
     }
   }
 
-  /// Wartet kurz - fuer den Fall, in dem die Meldung (SnackBar) nach
+  /// Wartet kurz - für den Fall, in dem die Meldung (SnackBar) nach
   /// vier Sekunden wieder verschwindet.
   Future<void> warteKurz(WidgetTester tester) async {
     for (var i = 0; i < 5; i++) {
@@ -174,7 +174,7 @@ void main() {
     }
   }
 
-  /// Der Aufraeum am Testende.
+  /// Der Aufräum am Testende.
   ///
   /// DER GRUND: Der Chat startet im Hintergrund Timer (der
   /// Schreib-Indikator, die Sicherheitsnummer). Die laufen in der App
@@ -191,8 +191,8 @@ void main() {
 
   /// Legt eine Datei mit den Bytes an und liefert ihren Pfad.
   ///
-  /// DER HINWEIS: Das Schreiben laeuft synchron - eine echte Datei-
-  /// Arbeit wartet im Test (ausserhalb von [WidgetTester.runAsync])
+  /// DER HINWEIS: Das Schreiben läuft synchron - eine echte Datei-
+  /// Arbeit wartet im Test (außerhalb von [WidgetTester.runAsync])
   /// endlos.
   String dateiMit(List<int> bytes) {
     final ordner = Directory.systemTemp.createTempSync('chat_bild');
@@ -204,8 +204,8 @@ void main() {
           ordner.deleteSync(recursive: true);
         }
       } catch (e) {
-        // Der Temp-Ordner wird ohnehin irgendwann vom System geraeumt -
-        // das Loeschen darf den Test aber nicht scheitern lassen.
+        // Der Temp-Ordner wird ohnehin irgendwann vom System geräumt -
+        // das Löschen darf den Test aber nicht scheitern lassen.
         debugPrint('Der Temp-Ordner blieb liegen: $e');
       }
     });
@@ -277,13 +277,13 @@ void main() {
       );
 
       // DER HASH: Der Bild-Hash wird serverseitig registriert (niemals das
-      // Bild) - damit kann eine spaetere Meldung dieses Bildes
+      // Bild) - damit kann eine spätere Meldung dieses Bildes
       // nachgewiesen werden.
       //
       // DER HINWEIS: Der Aufruf ist "fire and forget" (er darf den
       // Versand nicht aufhalten). Im Test kommt er nicht an - die
       // Anfrage braucht die echte Netzschleife, die der Bildschirm im
-      // Test nicht bekommt. Geprueft wird deshalb der Teil, den der
+      // Test nicht bekommt. Geprüft wird deshalb der Teil, den der
       // Nutzer sieht: das Bild ist raus und in der Vorschau.
       await raeumeAuf(tester);
     });

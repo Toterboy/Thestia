@@ -1,12 +1,12 @@
 // Der Abspiel-Knopf der eigenen Vorstellung (im eigenen Profil).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/profile/parts/ownintroaudioplayerstate.dart 35 offene Zeilen
 // bei 18 % Abdeckung. Der Knopf ist der Weg, mit dem der Nutzer seine
-// eigene Vorstellung anhoeren kann - und er ist der einzige Weg, zu
-// sehen, ob die Aufnahme ueberhaupt da ist.
+// eigene Vorstellung anhören kann - und er ist der einzige Weg, zu
+// sehen, ob die Aufnahme überhaupt da ist.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne Aufnahme steht der Hinweis "keine Aufnahme" da,
 //   * mit Aufnahme gibt es den Abspiel-Knopf,
 //   * fehlt die Datei auf dem Server, wird das gemeldet (nicht still
@@ -100,7 +100,7 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
     // DER AUDIO-PLAYER: Der Abspiel-Knopf nutzt ihn - ohne den Ersatz
-    // schlaegt der Aufbau fehl.
+    // schlägt der Aufbau fehl.
     mockAudioPlayer();
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -158,7 +158,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Oeffnet die Vorstellungs-Vorschau (Profil-Menue -> Vorstellung).
+  /// Öffnet die Vorstellungs-Vorschau (Profil-Menü -> Vorstellung).
   Future<void> oeffneVorstellung(WidgetTester tester) async {
     final profilKnopf = find.widgetWithText(
       FilledButton,

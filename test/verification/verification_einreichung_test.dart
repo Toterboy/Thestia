@@ -1,19 +1,19 @@
 // Die Einreichung der Alters-Verifizierung.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/services/verification/verification_service.dart 67 offene Zeilen.
 // Die Aufnahme und die Ablage sind getestet - offen war das
-// EINREICHEN: das Video verschluesselt hochladen, dem Server geben und
+// EINREICHEN: das Video verschlüsselt hochladen, dem Server geben und
 // die Antwort auswerten.
 //
 // DER WEG: Der Supabase-Client bekommt den [FakeSupabaseServer] - der
 // kann den Speicher-Upload und die Edge Function beantworten.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ohne Datei auf dem Geraet wird der Grund genannt (nicht nur
+// WAS HIER GEPRÜFT WIRD:
+//   * ohne Datei auf dem Gerät wird der Grund genannt (nicht nur
 //     "fehlgeschlagen"),
 //   * der Server nimmt die Einreichung an - und das Video wird danach
-//     vom Geraet geloescht (der Speicher des Nutzers soll nicht voller
+//     vom Gerät gelöscht (der Speicher des Nutzers soll nicht voller
 //     Videos bleiben),
 //   * lehnt der Server ab, steht der Grund in der Meldung.
 import 'dart:io';

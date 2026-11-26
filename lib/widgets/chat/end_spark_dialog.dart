@@ -17,9 +17,9 @@ Future<String?> showEndSparkDialog(BuildContext context) {
     context: context,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setDialogState) => AlertDialog(
-        // scrollable: Der Inhalt (Text + fuenf Auswahlzeilen) ist bei
-        // grosser Systemschrift hoeher als der Dialog. Ohne Scrollview
-        // laeuft die Column unten ueber (RenderFlex-Overflow) - der Nutzer
+        // scrollable: Der Inhalt (Text + fünf Auswahlzeilen) ist bei
+        // großer Systemschrift höher als der Dialog. Ohne Scrollview
+        // läuft die Column unten über (RenderFlex-Overflow) - der Nutzer
         // sieht dann die letzten Absage-Texte und die Knöpfe nicht.
         // (Dieselbe Beobachtung im Chat-Hintergrund-Dialog.)
         scrollable: true,

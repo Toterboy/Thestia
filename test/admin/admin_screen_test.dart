@@ -1,21 +1,21 @@
 // Der Admin-Bereich (bisher ungetestet - der Screen war unerreichbar).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/admin/admin_screen.dart 807 offene Zeilen - der Bereich,
-// in dem der Betreiber Meldungen bearbeitet, Verifizierungen prueft und
+// in dem der Betreiber Meldungen bearbeitet, Verifizierungen prüft und
 // Profile sperrt.
 //
 // DER WEG ZUM TEST: Der Screen war im Test unerreichbar, weil
 // `isCurrentUserAdmin()` ohne die per --dart-define gesetzte Admin-UUID
-// immer false ist. Dafuer gibt es jetzt den Provider
-// [adminAccessProvider] - die REGEL bleibt unveraendert (ohne UUID ist
-// NIE jemand Admin), aber ein Test kann den Bereich oeffnen.
+// immer false ist. Dafür gibt es jetzt den Provider
+// [adminAccessProvider] - die REGEL bleibt unverändert (ohne UUID ist
+// NIE jemand Admin), aber ein Test kann den Bereich öffnen.
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
 // test/support/fake_supabase_server.dart. Der Admin-Check wird von ihm
 // beantwortet - genau so, wie es der echte Server tut.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * ALLE Reiter sind da und JEDER ist aufrufbar (der letzte - der
 //     Posteingang - war kaputt: der Tab-Controller stand auf 7, es gibt
@@ -114,7 +114,7 @@ void main() {
 
   /// Baut den Admin-Screen.
   ///
-  /// [admin] steuert, ob der Bereich ueberhaupt offen ist.
+  /// [admin] steuert, ob der Bereich überhaupt offen ist.
   Future<void> zeigeScreen(WidgetTester tester, {bool admin = true}) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -173,7 +173,7 @@ void main() {
     // Die Foto-Moderation: der Reiter zeigt die wartenden Fotos, und
     // die Entscheidung geht an den Server.
     group('Die Einsprueche (Bild-Pruefung)', () {
-      /// Fuellt die Einspruchsliste.
+      /// Füllt die Einspruchsliste.
       void queueVorbereiten() {
         server.rpcAntworten['admin_list_photo_appeals'] = <dynamic>[
           <String, dynamic>{
@@ -188,7 +188,7 @@ void main() {
         ];
       }
 
-      /// Oeffnet den Reiter der Einsprueche.
+      /// Öffnet den Reiter der Einsprüche.
       Future<void> oeffneReiter(WidgetTester tester) async {
         final etikett = L10n.tWithoutContext('admin.tabAppeals');
         await scrolleZuReiter(tester, etikett);
@@ -229,7 +229,7 @@ void main() {
         await zeigeScreen(tester);
         await oeffneReiter(tester);
 
-        // Der Freigabe-Knopf (der gruene Haken).
+        // Der Freigabe-Knopf (der grüne Haken).
         final knopf = find.widgetWithText(
           FilledButton,
           L10n.tWithoutContext('admin.approve'),
@@ -263,7 +263,7 @@ void main() {
     });
 
     group('Die Sperrliste', () {
-      /// Fuellt die Sperrliste mit einem gesperrten Konto.
+      /// Füllt die Sperrliste mit einem gesperrten Konto.
       void queueVorbereiten() {
         server.rpcAntworten['admin_list_banned_emails'] = <dynamic>[
           <String, dynamic>{
@@ -275,7 +275,7 @@ void main() {
         ];
       }
 
-      /// Oeffnet den Reiter der Sperren.
+      /// Öffnet den Reiter der Sperren.
       Future<void> oeffneReiter(WidgetTester tester) async {
         final etikett = L10n.tWithoutContext('admin.tabBans');
         await scrolleZuReiter(tester, etikett);
@@ -307,7 +307,7 @@ void main() {
           findsWidgets,
           reason: 'Eine gesperrte Adresse muss im Reiter stehen.',
         );
-        // Und die Begruendung dazu - der Admin muss sie sehen koennen.
+        // Und die Begründung dazu - der Admin muss sie sehen können.
         expect(find.textContaining('Beleidigung'), findsWidgets);
       });
 
@@ -325,7 +325,7 @@ void main() {
         }
 
         expect(tester.takeException(), isNull);
-        // Ohne Rueckfrage waere die Sperrung aufgehoben - und das ist ein
+        // Ohne Rückfrage wäre die Sperrung aufgehoben - und das ist ein
         // Eingriff, den der Admin nicht versehentlich machen darf.
         expect(find.byType(AlertDialog), findsOneWidget);
         expect(
@@ -339,7 +339,7 @@ void main() {
         await zeigeScreen(tester);
         await oeffneReiter(tester);
 
-        // Das Formular oeffnen.
+        // Das Formular öffnen.
         await tester.tap(find.text(L10n.tWithoutContext('admin.banUser')));
         for (var i = 0; i < 8; i++) {
           await tester.pump(const Duration(milliseconds: 150));
@@ -388,7 +388,7 @@ void main() {
           await tester.pump(const Duration(milliseconds: 150));
         }
 
-        // Ziel und Begruendung eintragen.
+        // Ziel und Begründung eintragen.
         final felder = find.byType(TextFormField);
         await tester.enterText(felder.at(0), 'stoerer@example.de');
         await tester.enterText(felder.at(1), 'Beleidigung im Chat');
@@ -429,7 +429,7 @@ void main() {
           await tester.pump(const Duration(milliseconds: 150));
         }
 
-        // Bestaetigen - dann geht der Auftrag an den Server.
+        // Bestätigen - dann geht der Auftrag an den Server.
         await tester.tap(
           find.widgetWithText(
             FilledButton,
@@ -461,7 +461,7 @@ void main() {
     });
 
     group('Die Foto-Moderation', () {
-      /// Fuellt die Queue mit einer wartenden Meldung.
+      /// Füllt die Queue mit einer wartenden Meldung.
       void queueVorbereiten() {
         server.zeilen['photo_moderation'] = <String, dynamic>{
           'id': 5,
@@ -473,7 +473,7 @@ void main() {
         };
       }
 
-      /// Oeffnet den Reiter der Foto-Moderation.
+      /// Öffnet den Reiter der Foto-Moderation.
       Future<void> oeffneReiter(WidgetTester tester) async {
         final etikett = L10n.tWithoutContext('admin.tabModeration');
         await scrolleZuReiter(tester, etikett);
@@ -495,8 +495,8 @@ void main() {
       }
 
       testWidgets('die wartenden Fotos stehen da', (tester) async {
-        // DIE QUEUE VOR DEM AUFBAU: der Reiter laedt, sobald er
-        // geoeffnet wird - die Daten muessen dann schon da sein.
+        // DIE QUEUE VOR DEM AUFBAU: der Reiter lädt, sobald er
+        // geöffnet wird - die Daten müssen dann schon da sein.
         queueVorbereiten();
         await zeigeScreen(tester);
         await oeffneReiter(tester);
@@ -514,7 +514,7 @@ void main() {
         await zeigeScreen(tester);
         await oeffneReiter(tester);
 
-        // Der Freigabe-Knopf (der gruene Haken).
+        // Der Freigabe-Knopf (der grüne Haken).
         final knopf = find.byIcon(Icons.check);
         expect(knopf, findsWidgets);
         await tester.tap(knopf.first);
@@ -539,7 +539,7 @@ void main() {
       await zeigeScreen(tester);
 
       // Der letzte Reiter (Posteingang) war der kaputte: der Klick rief
-      // animateTo(7) auf einem Controller mit 7 Eintraegen auf.
+      // animateTo(7) auf einem Controller mit 7 Eintrügen auf.
       final etikett = L10n.tWithoutContext('admin.tabMail');
       await scrolleZuReiter(tester, etikett);
       final pille = find.byKey(ValueKey('pill_tab_$etikett'));
@@ -555,7 +555,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       // Fail-closed: der Bereich wird nicht gezeigt, es geht zur
-      // Startseite zurueck.
+      // Startseite zurück.
       expect(find.text('Startseite'), findsOneWidget);
       expect(
         find.text(L10n.tWithoutContext('admin.title')),

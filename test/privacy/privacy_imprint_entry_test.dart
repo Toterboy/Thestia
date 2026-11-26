@@ -9,13 +9,13 @@ import 'package:thestia/screens/privacy/privacy_screen.dart';
 ///
 /// WARUM (Recherche 05.11.2026): Die App ist selbst ein digitaler
 /// Dienst im Sinne des Par. 5 DDG. Die Informationspflichten gelten
-/// also fuer sie, nicht nur fuer die Website. Bisher gab es in der App
-/// nur die Datenschutzerklaerung (die verlangt Play ohnehin) - das
+/// also für sie, nicht nur für die Website. Bisher gab es in der App
+/// nur die Datenschutzerklärung (die verlangt Play ohnehin) - das
 /// Impressum fehlte ganz.
 ///
 /// HINWEIS: Die Kachel steht nicht ganz oben. Ein ListView baut nur
 /// die sichtbaren Kinder - der Test muss also scrollen. Ohne das
-/// wuerde der Test "gruen" sein, obwohl die Kachel fehlt.
+/// würde der Test "grün" sein, obwohl die Kachel fehlt.
 void main() {
   Future<void> zeigeScreen(WidgetTester tester) async {
     await tester.pumpWidget(

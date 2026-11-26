@@ -1,18 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import '../support/quelltext.dart';
 
-/// Test fuer die Reihenfolge der Loesch-Punkte.
+/// Test für die Reihenfolge der Lösch-Punkte.
 ///
-/// BETREIBER (06.11.2026): "Konto loeschen und Daten loeschen sollen
+/// BETREIBER (06.11.2026): "Konto löschen und Daten löschen sollen
 /// die untersten Punkte sein."
 ///
-/// Ein zerstoererischer Eintrag mitten in der Liste wird leicht
-/// versehentlich angefasst - die Loesch-Wege gehoeren ans Ende.
+/// Ein zerstörerischer Eintrag mitten in der Liste wird leicht
+/// versehentlich angefasst - die Lösch-Wege gehören ans Ende.
 ///
 /// Der Test liest den Quelltext (bewusst so, wie die anderen
-/// Reihenfolge-Pruefer in diesem Projekt): Die Reihenfolge ergibt sich
+/// Reihenfolge-Prüfer in diesem Projekt): Die Reihenfolge ergibt sich
 /// aus dem Aufbau des Widgets, nicht aus einer Liste, die man
-/// umsortieren koennte.
+/// umsortieren kännte.
 void main() {
   group('Die Reihenfolge der Loesch-Punkte', () {
     late String settings;

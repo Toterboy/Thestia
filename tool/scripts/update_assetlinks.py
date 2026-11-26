@@ -2,24 +2,24 @@
 
 WARUM ES DAS GIBT (08.11.2026, Hosterwechsel-Vorbereitung): Die Datei
 `assetlinks.json` nennt die Zertifikats-Fingerabdricke, gegen die Android
-die TLS-Kette des Servers prueft. Beim Wechsel des Hosters aendert sich
+die TLS-Kette des Servers prüft. Beim Wechsel des Hosters ändert sich
 das Zertifikat - die Datei muss mit. Und: Das Leaf-Zertifikat wird
 alle 90 Tage erneuert (Let's Encrypt). Steht nur das Leaf in der Datei,
-ist die Liste nach 90 Tagen tot und die **Passkey-Anmeldung schlaegt auf
-Android fehl** (die App verweist die Verknuepfung dann zurueck).
+ist die Liste nach 90 Tagen tot und die **Passkey-Anmeldung schlägt auf
+Android fehl** (die App verweist die Verknüpfung dann zurück).
 
 DESHALB: Die Liste bekommt die **stabilen** Glieder der Kette - das
 Root und die Zwischenzertifikate. Das Leaf wird bewusst NICHT
-eingetragen: es waere nach der naechsten Erneuerung ungueltig. Das
+eingetragen: es wäre nach der nächsten Erneuerung ungültig. Das
 Root dagegen gilt jahrelang.
 
 Das alte Gate (`check_passkey_assetlinks.py`) verglich die Datei nur mit
-ihr selbst - es pruefte NICHT, ob die Fingerabdruecke in der echten
+ihr selbst - es prüfte NICHT, ob die Fingerabdrücke in der echten
 Kette stehen. Ein Veralten der Datei fiel damit nicht auf.
 
 Aufruf:
     python tool/scripts/update_assetlinks.py            # schreibt die Datei
-    python tool/scripts/update_assetlinks.py --live     # + gegen die Kette pruefen
+    python tool/scripts/update_assetlinks.py --live     # + gegen die Kette prüfen
 """
 import hashlib
 import json
@@ -35,8 +35,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -99,7 +99,7 @@ def debug_fingerprint():
 def release_fingerprint():
     """Der Fingerabdruck des Release-Keystores.
 
-    Die Signier-Angaben liegen ausserhalb des Projekts (siehe
+    Die Signier-Angaben liegen außerhalb des Projekts (siehe
     tool/helpers/keystore_secrets.py). Ohne sie gibt es keinen Fingerabdruck -
     das Gate meldet das dann selbst ("Keystore nicht lesbar").
     """
@@ -147,10 +147,10 @@ def main() -> int:
             # EIN HOST OHNE LESBARE KETTE DARF DEN LAUF NICHT STOPPEN
             # (23.11.2026, beim Umzug auf Infomaniak): Zwischen dem
             # Umschalten des DNS und der Zertifikatsausstellung war der
-            # oeffentliche Host kurz nicht erreichbar. Der Auth-Host
-            # (der den RP-ID traegt) war da - und der ist der Wichtigere.
+            # öffentliche Host kurz nicht erreichbar. Der Auth-Host
+            # (der den RP-ID trägt) war da - und der ist der Wichtigere.
             # Die Liste nimmt die Kette jedes erreichbaren Hosts auf; die
-            # Gegenprobe unten prueft nur die gelesenen.
+            # Gegenprobe unten prüft nur die gelesenen.
             print("  !  %s: die Kette liess sich nicht lesen: %s" % (host, e))
             print("     (der Host wird uebersprungen - sein Zertifikat muss")
             print("      aber angelegt sein, bevor die Passkeys dort laufen)")
@@ -175,11 +175,11 @@ def main() -> int:
             if f not in ziel:
                 ziel.append(f)
 
-    # ZUSAETZLICH: der Fingerabdruck des Debug-Keystores. Der Debug-Build
+    # ZUSÄTZLICH: der Fingerabdruck des Debug-Keystores. Der Debug-Build
     # wird mit dem Standard-Key signiert, und genau der stand vorher (z.
-    # B. 08.11.2026) in der Datei - ohne ihn koennte der Debug-Build die
+    # B. 08.11.2026) in der Datei - ohne ihn kännte der Debug-Build die
     # Passkeys nicht verifizieren. Der Key ist in jedem Android-SDK
-    # derselbe (oeffentlich bekannt), das ist also kein Geheimnis.
+    # derselbe (öffentlich bekannt), das ist also kein Geheimnis.
     #
     # Der RELEASE-Key (CN=Thestia) wird bewusst NICHT eingetragen: Play
     # ersetzt den Upload-Key durch den App-Signing-Key, und der ist erst
@@ -191,14 +191,14 @@ def main() -> int:
         print()
         print("  Der Debug-Key-Fingerabdruck kommt dazu: %s" % debug_fp)
 
-    # Der RELEASE-Key (CN=Thestia) gehoert ebenfalls zur App und steht
+    # Der RELEASE-Key (CN=Thestia) gehört ebenfalls zur App und steht
     # nie in der TLS-Kette. Er MUSS aber in der Datei stehen: das
     # Passkey-Gate verlangt ihn (tool/checks/check_passkey_assetlinks.py).
     #
     # ACHTUNG: Nach dem ersten Upload ersetzt Play den Upload-Key durch
     # den App-Signing-Key. Dann muss der Fingerabdruck des
     # App-Signing-Keys hier und als android:apk-key-hash-Origin in den
-    # Supabase-Daten stehen (das Gate sagt das ausdruecklich).
+    # Supabase-Daten stehen (das Gate sagt das ausdrücklich).
     release_fp = release_fingerprint()
     if release_fp and release_fp not in ziel:
         ziel.append(release_fp)
@@ -224,13 +224,13 @@ def main() -> int:
             encoding="utf-8", newline="\n")
         print("  Die Datei ist aktualisiert.")
 
-    # Gegenprobe: die STABILEN Glieder der Kette muessen in der Datei
-    # stehen (sonst ist die Passkey-Verknuepfung kaputt).
+    # Gegenprobe: die STABILEN Glieder der Kette müssen in der Datei
+    # stehen (sonst ist die Passkey-Verknüpfung kaputt).
     #
-    # Die App-Signatur-Fingerabdruecke (Debug- und Release-Key) stehen
-    # NIE in der TLS-Kette - sie gehoeren zur App, nicht zum
-    # Webserver. Sie werden deshalb hier nicht geprueft (das
-    # Passkey-Gate prueft sie getrennt).
+    # Die App-Signatur-Fingerabdrücke (Debug- und Release-Key) stehen
+    # NIE in der TLS-Kette - sie gehören zur App, nicht zum
+    # Webserver. Sie werden deshalb hier nicht geprüft (das
+    # Passkey-Gate prüft sie getrennt).
     print()
     print("  Gegenprobe:")
     ok = True

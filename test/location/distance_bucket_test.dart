@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/utils/location/distance_bucket.dart';
 
-/// Tests fuer die Entfernungs-Grobung.
+/// Tests für die Entfernungs-Grobung.
 ///
 /// Grundsatz: andere sehen OB nah oder weit weg - keinen Ort, keinen
 /// exakten Standort, keine Meter. Deshalb 10-km-Stufen und keine
@@ -9,7 +9,7 @@ import 'package:thestia/utils/location/distance_bucket.dart';
 void main() {
   group('bucketFor', () {
     test('unterhalb der Sichtbarkeitsgrenze gibt es keine Stufe', () {
-      // 2 km sind zwar nah, koennten in dicht bewohnten Gegenden aber
+      // 2 km sind zwar nah, könnten in dicht bewohnten Gegenden aber
       // den Nachbarn verraten.
       expect(DistanceBucket.bucketFor(0), isNull);
       expect(DistanceBucket.bucketFor(2.4), isNull);
@@ -31,7 +31,7 @@ void main() {
     });
 
     test('genau auf einer Grenze rueckt eine Stufe nach oben', () {
-      // Die Grenzen sind halb offen [untere, untere+10): 10,0 gehoert
+      // Die Grenzen sind halb offen [untere, untere+10): 10,0 gehört
       // zu "10 bis 20", 19,9 auch, 20,0 zu "20 bis 30". Jede Grenze
       // ist genau einmal besetzt.
       expect(DistanceBucket.bucketFor(10), (km: 10, kmUpper: 20));
@@ -40,9 +40,9 @@ void main() {
     });
 
     test('jede Grenze wird genau einmal besetzt', () {
-      // Jeder Wert kurz UNTER einer Grenze gehoert noch zur unteren
-      // Stufe, die Grenze selbst zur oberen. Keine Luecke, keine
-      // Ueberschneidung.
+      // Jeder Wert kurz UNTER einer Grenze gehört noch zur unteren
+      // Stufe, die Grenze selbst zur oberen. Keine Lücke, keine
+      // Überschneidung.
       for (
         var g = 10;
         g < DistanceBucket.lastThresholdKm;
@@ -57,7 +57,7 @@ void main() {
 
     test('ab 100 km wird nicht mehr verraten', () {
       // 180 km und 1900 km bekommen denselben Text: die genaue Zahl
-      // waere ein Standortdetail.
+      // wäre ein Standortdetail.
       final b180 = DistanceBucket.bucketFor(180);
       final b1900 = DistanceBucket.bucketFor(1900);
       expect(b180, (km: 100, kmUpper: null));
@@ -76,7 +76,7 @@ void main() {
 
     test('die Grenzen liegen dort, wo die Beschriftung sagt', () {
       // Jede beschriftete Stufe muss genau 10 km breit sein - sonst
-      // waere die Anzeige nicht die zugesagte Grobung.
+      // wäre die Anzeige nicht die zugesagte Grobung.
       for (
         var lower = 0;
         lower < DistanceBucket.lastThresholdKm;
@@ -98,10 +98,10 @@ void main() {
   });
 
   group('label', () {
-    /// Ersatz-L10n mit realistischen Textbausteinen. Fuer die Vergleiche
+    /// Ersatz-L10n mit realistischen Textbausteinen. Für die Vergleiche
     /// unten MUSS er die Zahlen einsetzen: mit einem konstanten
-    /// Rueckgabewert waeren alle Stufen derselbe String und die Tests
-    /// waeren aussagelos.
+    /// Rückgabewert wären alle Stufen derselbe String und die Tests
+    /// wären aussagelos.
     String t(String key) {
       switch (key) {
         case 'distance.bucketUnder':
@@ -154,7 +154,7 @@ void main() {
 
   group('Gegenproben zur Absicht', () {
     test('zwei Personen 8 km auseinander bekommen denselben Text', () {
-      // Das ist der Zweck: 8 und 9 km sind fuer "koennen wir uns
+      // Das ist der Zweck: 8 und 9 km sind für "können wir uns
       // treffen" dieselbe Aussage.
       final a = DistanceBucket.labelForKm(8, (k) => 'X');
       final b = DistanceBucket.labelForKm(9.5, (k) => 'X');
@@ -175,9 +175,9 @@ void main() {
     });
 
     test('die Genauigkeit waechst mit der Naehe', () {
-      // Wer nah wohnt, erfaehrt mehr - aber nur in ganzen Stufen.
-      // Geprueft an den Stufen-Daten, nicht am Text: mit einem
-      // konstanten Text-Mock waeren alle Stufen gleich.
+      // Wer nah wohnt, erfährt mehr - aber nur in ganzen Stufen.
+      // Geprüft an den Stufen-Daten, nicht am Text: mit einem
+      // konstanten Text-Mock wären alle Stufen gleich.
       final nah = DistanceBucket.bucketFor(12)!;
       final weit = DistanceBucket.bucketFor(42)!;
       expect(nah.km, 10);

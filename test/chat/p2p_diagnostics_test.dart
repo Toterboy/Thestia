@@ -2,18 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/services/chat/encryption_service.dart';
 import 'package:thestia/services/chat/webrtc_service.dart';
 
-/// Tests fuer die P2P-Diagnose im Release-Build.
+/// Tests für die P2P-Diagnose im Release-Build.
 ///
 /// WARUM (06.11.2026): Die internen Meldungen des WebRTC-Service gingen
 /// nur in den Debug-Log (debugPrint). Der Betreiber testet aber den
 /// Store-Build - dort war nicht zu sehen, WORAN der P2P-Aufbau
-/// scheiterte. Die Probleme gehen jetzt ueber einen Stream und stehen
+/// scheiterte. Die Probleme gehen jetzt über einen Stream und stehen
 /// in der Diagnosezeile des Chats.
 ///
-/// ZWEI DINGE MUESSEN STIMMEN:
+/// ZWEI DINGE MÜSSEN STIMMEN:
 ///   1) Ein internes Problem kommt beim Aufrufer an.
-///   2) Der Text enthaelt KEINE personenbezogenen Daten - er landet
-///      in der Oberflaeche.
+///   2) Der Text enthält KEINE personenbezogenen Daten - er landet
+///      in der Oberfläche.
 void main() {
   group('Die P2P-Probleme', () {
     test('ein internes Problem kommt beim Aufrufer an', () async {
@@ -56,7 +56,7 @@ void main() {
     });
 
     test('die Meldung nennt den Fehlertyp, nicht den Fehlertext', () async {
-      // Der Fehlertext koennte eine User-ID enthalten (z. B. "user
+      // Der Fehlertext kännte eine User-ID enthalten (z. B. "user
       // 11111111-... not found"). Deshalb wird er weggelassen.
       final service = WebRTCService(EncryptionService());
       final probleme = <String>[];

@@ -1,22 +1,22 @@
-"""Der Website-Qualitaetspruefer: prueft ALLE Seiten des Publish-Ordners.
+"""Der Website-Qualitätsprüfer: prüft ALLE Seiten des Publish-Ordners.
 
 WARUM (05.11.2026): Der Nutzer liest alle 22 Seiten gegen. Bisher
-prueften die Gates nur punktuell (Dashes, Mojibake, Publish-Ordner,
-Rechtstexte). Was fehlte, war eine PRUEFUNG DER SEITEN SELBST:
-Struktur, Ueberschriften-Hierarchie, doppelte IDs, alt-Texte, Labels
+prüften die Gates nur punktuell (Dashes, Mojibake, Publish-Ordner,
+Rechtstexte). Was fehlte, war eine PRÜFUNG DER SEITEN SELBST:
+Struktur, Überschriften-Hierarchie, doppelte IDs, alt-Texte, Labels
 an Formularfeldern, Theme-Marker, Platzhalter, Sprache/canonical,
 Sprachknopf, tote Links, JS-Syntax.
 
-Diese Pruefung hat bei ihrer ersten Fassung selbst zwei Fehler
+Diese Prüfung hat bei ihrer ersten Fassung selbst zwei Fehler
 gemacht (canonical stand in einem <link>, nicht in einem <a>; die
 Platzhalter-Suche traf legitimen JavaScript-Code wie isNaN(x) und
 typeof x === 'undefined'). Beides ist hier behoben: die Seite wird
 mit einem echten HTML-Parser gelesen, und die Platzhalter-Suche
-laeuft ueber den SICHTBAREN Text (ohne script und style) - dort
-faellt ein "undefined" wirklich auf.
+läuft über den SICHTBAREN Text (ohne script und style) - dort
+fällt ein "undefined" wirklich auf.
 
-Jede Pruefung, die anschlaegt, wird gegen eine echte Manipulation
-nachgewiesen (Negativprobe), sonst waere sie nutzlos.
+Jede Prüfung, die anschlägt, wird gegen eine echte Manipulation
+nachgewiesen (Negativprobe), sonst wäre sie nutzlos.
 
 Nutzung:  python tool/checks/check_web_pages.py
 """
@@ -33,8 +33,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -53,7 +53,7 @@ ASSETS = ROOT / "passkey-assets"
 
 
 class Seite(HTMLParser):
-    """Sammelt die fuer die Qualitaetspruefung noetigen Angaben."""
+    """Sammelt die für die Qualitätsprüfung nötigen Angaben."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -171,8 +171,8 @@ def lies(p: pathlib.Path) -> str:
 def rewrite_quellen() -> dict:
     """Die Rewrite-Regeln aus _redirects: Adresse -> Ziel.
 
-    OHNE diese Regeln waere zum Beispiel "/eltern/einstellungen" ein
-    toter Link - die Datei heisst eltern-einstellungen.html. Die
+    OHNE diese Regeln wäre zum Beispiel "/eltern/einstellungen" ein
+    toter Link - die Datei heißt eltern-einstellungen.html. Die
     Adresse entsteht erst durch die Rewrite-Regel.
     """
     regeln = {}
@@ -191,7 +191,7 @@ def rewrite_quellen() -> dict:
 
 def main() -> int:
     # Der Ordner ist ein Parameter, damit die Negativproben auf Kopien
-    # laufen koennen (ohne die echten Seiten anzufassen).
+    # laufen können (ohne die echten Seiten anzufassen).
     global ASSETS
     if len(sys.argv) > 1:
         ASSETS = pathlib.Path(sys.argv[1]).resolve()
@@ -208,7 +208,7 @@ def main() -> int:
 
     for pfad in seiten:
         # Die Anzeige ist relativ zu ASSETS - nicht zu ROOT: der Ordner
-        # kann (in den Negativproben) ausserhalb des Repositorys liegen.
+        # kann (in den Negativproben) außerhalb des Repositorys liegen.
         kurz = str(pfad.relative_to(ASSETS)).replace("\\", "/")
         rel = kurz
         roh = lies(pfad)
@@ -226,7 +226,7 @@ def main() -> int:
         if len(h1) != 1:
             fehler.append((rel, "%d h1 (genau eine erwartet)" % len(h1)))
 
-        # --- 2) Ueberschriften-Hierarchie (kein Sprung) ---------------
+        # --- 2) Überschriften-Hierarchie (kein Sprung) ---------------
         vorher = 0
         for ebene, text in s.ueberschriften:
             if vorher and ebene > vorher + 1:
@@ -234,7 +234,7 @@ def main() -> int:
                                % (vorher, ebene, text[:48])))
             vorher = ebene
 
-        # --- 3) Leere Ueberschrift ------------------------------------
+        # --- 3) Leere Überschrift ------------------------------------
         for ebene, text in s.ueberschriften:
             if not text:
                 fehler.append((rel, "leere h%d" % ebene))
@@ -301,10 +301,10 @@ def main() -> int:
         if not s.title.strip():
             fehler.append((rel, "leerer <title>"))
         # canonical und meta description sind nur auf den Seiten sinnvoll,
-        # die ueberhaupt indexiert werden. Die transienten Seiten
+        # die überhaupt indexiert werden. Die transienten Seiten
         # (bestaetigt.html, eltern-einstellungen.html) stehen auf noindex
-        # - dort waere beides sinnlos. Der Gate "Publish-Ordner"
-        # verlangt fuer sie genau das Gegenteil (noindex statt canonical).
+        # - dort wäre beides sinnlos. Der Gate "Publish-Ordner"
+        # verlangt für sie genau das Gegenteil (noindex statt canonical).
         if s.noindex:
             if s.canonical:
                 fehler.append((rel, "canonical steht drin, obwohl die Seite "
@@ -371,8 +371,8 @@ def main() -> int:
                 continue
             # EIGENER Dateiname je Lauf (BEFUND 07.11.2026): Mit einem
             # FESTEN Namen ("tool/.web_pages_js_check.js") haben sich
-            # zwei parallele Laeufe die Datei ueberschrieben - der eine
-            # pruefte dann die halbe Datei des anderen und meldete
+            # zwei parallele Läufe die Datei überschrieben - der eine
+            # prüfte dann die halbe Datei des anderen und meldete
             # "JS-Syntaxfehler". Das Gate wurde dadurch rot, ohne dass
             # etwas kaputt war: der Selbsttest lief zweimal nebeneinander
             # (lokaler Spiegel plus Handlauf).

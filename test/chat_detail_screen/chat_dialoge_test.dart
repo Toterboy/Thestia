@@ -1,19 +1,19 @@
 // Die Dialoge und Aktionen im Chat: der Anruf, das Date-Rad, der
 // Hintergrund-Hinweis, die Sicherheitsnummer und die Mikrofon-Offenlegung.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/parts/chatdialoge.dart 86 offene Zeilen (54 %) -
 // das ist der Dialog-Teil des Chats. Der Sicherheitsnummern-Dialog war
-// dabei nie getestet: er wartet auf den Verschluesselungs-Dienst, und
-// dessen Schluesselaufbau haengt im Test (echte Datei-Arbeit). Deshalb
+// dabei nie getestet: er wartet auf den Verschlüsselungs-Dienst, und
+// dessen Schluesselaufbau hängt im Test (echte Datei-Arbeit). Deshalb
 // bekommt er hier einen Ersatz - genau so, wie der Anruf-Screen einen
-// Ersatz fuer die Direktverbindung hat.
+// Ersatz für die Direktverbindung hat.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * der Anruf-Knopf oeffnet den Anruf-Screen (und nur einen),
-//   * das Date-Rad laesst sich ausblenden - und bleibt ausgeblendet,
+// WAS HIER GEPRÜFT WIRD:
+//   * der Anruf-Knopf öffnet den Anruf-Screen (und nur einen),
+//   * das Date-Rad lässt sich ausblenden - und bleibt ausgeblendet,
 //   * der Quiz-Hinweis erscheint, wenn der Server den Chat sperrt,
-//   * der Hinweis auf den Chat-Hintergrund laesst sich bestaetigen,
+//   * der Hinweis auf den Chat-Hintergrund lässt sich bestätigen,
 //   * die Sicherheitsnummer: der Hinweis erscheint, der Dialog zeigt die
 //     Nummer, und die beiden Schalter merken sich ihr Ergebnis,
 //   * die Mikrofon-Offenlegung kommt VOR der Aufnahme (Google Play).
@@ -27,7 +27,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-// webrtc_interface kommt als Transitivum ueber flutter_webrtc - der Test
+// webrtc_interface kommt als Transitivum über flutter_webrtc - der Test
 // braucht nur den DataChannel-Zustand.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -54,12 +54,12 @@ import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 import 'hilfen.dart';
 
-/// Der Verschluesselungs-Dienst als Ersatz.
+/// Der Verschlüsselungs-Dienst als Ersatz.
 ///
-/// DER GRUND: Der echte Dienst holt seine Schluessel aus Hive und
+/// DER GRUND: Der echte Dienst holt seine Schlüssel aus Hive und
 /// rechnet daraus die Sicherheitsnummer - das ist echte Datei-Arbeit
-/// und haengt im Test. Fuer den Dialog reichen die Zahlen: die
-/// Sicherheitsnummer, der Bestaetigungsstand und die Schalter.
+/// und hängt im Test. Für den Dialog reichen die Zahlen: die
+/// Sicherheitsnummer, der Bestätigungsstand und die Schalter.
 ///
 /// Der Test kann die Nummer setzen (null = "noch keine Sitzung") und
 /// am Ende nachsehen, was der Nutzer angeklickt hat.
@@ -74,7 +74,7 @@ class _FakeVerschluesselung extends EncryptionService {
   /// DER GRUND: Der Hinweis ist eine Snackbar mit einem langen Knopf
   /// ("Sicherheitsnummer (E2E-Verifikation)"). Im Test ist jeder Buchstabe
   /// breiter als in der echten Schrift - der Knopf passt dann nicht mehr
-  /// neben dem Text und laeuft ueber. Deshalb ist der Hinweis hier
+  /// neben dem Text und läuft über. Deshalb ist der Hinweis hier
   /// ausgeschaltet (der Test schaltet ihn an, wenn es darum geht) - der
   /// Dialog selbst ist davon nicht betroffen.
   final bool zeigeHinweis;
@@ -82,10 +82,10 @@ class _FakeVerschluesselung extends EncryptionService {
   /// Wurde der Hinweis zu dieser Nummer schon gezeigt?
   final Set<String> hinweiseGezeigt = <String>{};
 
-  /// Die als bestaetigt markierten Partner.
+  /// Die als bestätigt markierten Partner.
   final Set<String> bestaetigt = <String>{};
 
-  /// Die Partner, bei denen die Bestaetigung verlangt wird.
+  /// Die Partner, bei denen die Bestätigung verlangt wird.
   final Set<String> verlangt = <String>{};
 
   @override
@@ -154,7 +154,7 @@ class _FakeP2P extends P2PChatService {
 
   /// DER KANAL-STATUS: Ohne diese Angabe wartet der Anruf-Screen bis
   /// zum Ablauf von zehn Sekunden auf einen offenen Kanal - dieser Timer
-  /// stuende am Ende des Tests noch herum.
+  /// stünde am Ende des Tests noch herum.
   @override
   Stream<RTCDataChannelState> get connectionState =>
       const Stream<RTCDataChannelState>.empty();
@@ -200,7 +200,7 @@ void main() {
       'https://example.supabase.co',
       'test-key',
     );
-    // DER SPEICHER: Er bleibt ueber die Tests hinweg derselbe - so
+    // DER SPEICHER: Er bleibt über die Tests hinweg derselbe - so
     // sieht der Test, was der Bildschirm wirklich gespeichert hat.
     speicher = FakeLocalStorage();
     verschluesselung = _FakeVerschluesselung(nummer: '1234 5678 9012 3456');
@@ -244,10 +244,10 @@ void main() {
     bool breit = false,
     List<Override> overrides = const <Override>[],
   }) async {
-    // DER BILDSCHIRM: Gross genug, damit das komplette "mehr"-Menue
-    // (viele Eintraege) auf einmal passt.
+    // DER BILDSCHIRM: Groß genug, damit das komplette "mehr"-Menü
+    // (viele Einträge) auf einmal passt.
     //
-    // DER BREITE SCHIRM: fuer die Snackbar mit dem langen Knopf (siehe
+    // DER BREITE SCHIRM: für die Snackbar mit dem langen Knopf (siehe
     // [_FakeVerschluesselung]) - im Test ist jeder Buchstabe breiter
     // als in der echten Schrift.
     await tester.binding.setSurfaceSize(
@@ -321,18 +321,18 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     // Das Zeitlimit der Edge-Function-Aufrufe (20 Sekunden) ablaufen
-    // lassen: der Timer wuerde sonst als "pending timer" stehen bleiben.
+    // lassen: der Timer würde sonst als "pending timer" stehen bleiben.
     await tester.pump(const Duration(seconds: 21));
   }
 
-  /// Oeffnet das "mehr"-Menue des Chats.
+  /// Öffnet das "mehr"-Menü des Chats.
   Future<void> menueOeffnen(WidgetTester tester) async {
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Tippt einen Menuepunkt an.
+  /// Tippt einen Menüpunkt an.
   Future<void> menuePunkt(WidgetTester tester, String key) async {
     final eintrag = find.text(L10n.tWithoutContext(key)).last;
     await tester.ensureVisible(eintrag);

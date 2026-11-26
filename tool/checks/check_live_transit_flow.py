@@ -4,27 +4,27 @@
 BEFUND (07.11.2026, Betreiber): "Der Funke entsteht, aber es ist nichts
 sichtbar."
 
-DIE URSACHE (live geprueft, nicht vermutet): Die Paarung
+DIE URSACHE (live geprüft, nicht vermutet): Die Paarung
 public.match_proximity_spark meldete den Treffer nur dem ABSENDER.
-Fuer die GEGENSEITE entstand kein sichtbarer Eintrag: kein Soft-Ping,
+Für die GEGENSEITE entstand kein sichtbarer Eintrag: kein Soft-Ping,
 keine Meldung. Der Match lag zwar in der Datenbank (die Likes), aber
 ohne Realtime blieb ihre Chatliste alt.
 
-Zusaetzlich fehlte der Rolle `authenticated` das Ausfuehrungsrecht fuer
+Zusätzlich fehlte der Rolle `authenticated` das Ausführungsrecht für
 `accept_soft_ping` - das Annehmen schlug mit 403 fehl.
 
 WENN DIESES SKRIPT SCHREIBT: Es legt Testzeilen in der Produktivdatenbank
 an (Signale, einen Soft-Ping, beidseitige Likes und einen Match
-zwischen den beiden Testkonten) und raeumt sie danach wieder weg. Der
-Aufruf braucht deshalb ein ausdrueckliches `--yes`, und das Aufraeumen
-laeuft immer - auch wenn mitten im Lauf etwas schiefgeht.
+zwischen den beiden Testkonten) und räumt sie danach wieder weg. Der
+Aufruf braucht deshalb ein ausdrückliches `--yes`, und das Aufräumen
+läuft immer - auch wenn mitten im Lauf etwas schiefgeht.
 
 Aufruf::
 
     python tool/checks/check_live_transit_flow.py --yes
 
 Nach dem Lauf ist die Datenbank wieder im Ausgangszustand (das Skript
-prueft das am Ende und meldet es).
+prüft das am Ende und meldet es).
 """
 
 import json
@@ -41,8 +41,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -63,11 +63,11 @@ NUTZER_A = "46f3f558-b134-4d25-946b-4e052a8ab3b5"
 NUTZER_B = "d177d5f9-f2d0-420e-981b-4d6ef5b77056"
 
 # Feste Test-Tokens: 20 Hexzeichen, wie die RPC es verlangt. Sie
-# erkennt die Testzeilen wieder und raeumt genau sie weg.
+# erkennt die Testzeilen wieder und räumt genau sie weg.
 TOKEN_A = "1111111111111111aaaa"
 TOKEN_B = "2222222222222222bbbb"
 
-# Zwei gueltige Merkmale (aus dem Server-Katalog).
+# Zwei gültige Merkmale (aus dem Server-Katalog).
 TAGS = ["hair_color", "sneaker"]
 
 
@@ -109,7 +109,7 @@ def http(method, pfad, daten=None, kopf=None, timeout=40):
 
 
 def sitzung(user_id: str) -> str | None:
-    """Holt eine echte Sitzung fuer den Testnutzer (Admin-Magic-Link)."""
+    """Holt eine echte Sitzung für den Testnutzer (Admin-Magic-Link)."""
     st, roh = http(
         "GET",
         "/auth/v1/admin/users?per_page=50",
@@ -174,15 +174,15 @@ def sql(text: str):
 def zustand_sichern() -> dict:
     """Merkt sich, was VOR dem Test da war.
 
-    WARUM: Am 07.11.2026 hat ein Aufraeum-Skript die Testdaten des
-    Betreibers mitgeloescht: es hat pauschal alle Likes und Matches
-    zwischen den beiden Testkonten im Zeitfenster geloescht. Der
+    WARUM: Am 07.11.2026 hat ein Aufräum-Skript die Testdaten des
+    Betreibers mitgelöscht: es hat pauschal alle Likes und Matches
+    zwischen den beiden Testkonten im Zeitfenster gelöscht. Der
     Betreiber sah seinen Funken und dann war er weg - nicht, weil die
-    App etwas falsch gemacht haette, sondern weil das Skript seine
+    App etwas falsch gemacht hätte, sondern weil das Skript seine
     Daten entfernt hatte.
 
     Deshalb wird jetzt der Zustand VORHER gemerkt und danach NUR
-    geloescht, was der Test selbst angelegt hat. Fremde Daten (auch
+    gelöscht, was der Test selbst angelegt hat. Fremde Daten (auch
     solche, die zur selben Zeit entstehen) bleiben unangetastet.
     """
     zeilen = sql(
@@ -236,8 +236,8 @@ DELETE FROM public.transit_soft_pings
         return
 
     # Alles, was mehr ist als vorher, stammt aus dem Test. Die Matches
-    # werden ueber die ID abgegrenzt (die ist fortlaufend), die Likes
-    # und Pings ueber ihre Anzahl UND ueber das Paar.
+    # werden über die ID abgegrenzt (die ist fortlaufend), die Likes
+    # und Pings über ihre Anzahl UND über das Paar.
     sql(
         """
 DELETE FROM public.transit_signals
@@ -292,18 +292,18 @@ def main() -> int:
     fehler = 0
     try:
         # Der Zustand VOR dem Test wird gemerkt: danach wird nur
-        # geloescht, was der Test selbst angelegt hat. Ohne das hat ein
-        # frueherer Aufraeumlauf die Testdaten des Betreibers mit
-        # geloescht - sein Funke war dadurch "weg", ohne dass die App
-        # etwas falsch gemacht haette.
+        # gelöscht, was der Test selbst angelegt hat. Ohne das hat ein
+        # früherer Aufräumlauf die Testdaten des Betreibers mit
+        # gelöscht - sein Funke war dadurch "weg", ohne dass die App
+        # etwas falsch gemacht hätte.
         vorher = zustand_sichern()
         vorher["seit"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%d %H:%M:%S+00"
         )
         if vorher.get("paar_likes") or vorher.get("paar_matches"):
             # Der Betreiber testet GERADE. Das Werkzeug legt sich nicht
-            # dazwischen: es wuerde beim Aufraeumen genau die Daten
-            # loeschen, die er sehen will (das ist am 07.11.2026
+            # dazwischen: es würde beim Aufräumen genau die Daten
+            # löschen, die er sehen will (das ist am 07.11.2026
             # passiert).
             print()
             print("  ! Zwischen den Testkonten liegt bereits ein Like"
@@ -392,7 +392,7 @@ def main() -> int:
                 fehler += 1
 
         # 5) DER EIGENTLICHE NACHWEIS: Es gibt jetzt eine Zeile in
-        #    public.matches. Ohne sie bleibt der Funke fuer beide
+        #    public.matches. Ohne sie bleibt der Funke für beide
         #    unsichtbar - die Chatliste liest aus matches, nicht aus
         #    likes. Genau das war der Befund vom 07.11.2026.
         zeilen = sql(

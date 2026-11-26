@@ -3,10 +3,10 @@
 // Ermittelt die aktuellen DER-SHA256-Hashes (Leaf) der gepinnten Hosts und
 // vergleicht sie mit den in lib/utils/security/cert_pins.dart konfigurierten Pins.
 //
-// DIE EINE QUELLE (Audit 16.11.2026): Frueher hatte dieses Werkzeug eine
+// DIE EINE QUELLE (Audit 16.11.2026): Früher hatte dieses Werkzeug eine
 // eigene Kopie der Pin-Tabelle. Die beiden Tabellen liefen auseinander -
-// das Werkzeug meldete dauerhaft "Rotation noetig", obwohl der Pin in
-// der App voellig in Ordnung war. Und umgekehrt: der in der App
+// das Werkzeug meldete dauerhaft "Rotation nötig", obwohl der Pin in
+// der App völlig in Ordnung war. Und umgekehrt: der in der App
 // gepinnte Leaf-Pin war am 16.11.2026 seit dem 24.10.2026 veraltet,
 // ohne dass jemand es bemerkt hat. Jetzt liest das Werkzeug DIESELBE
 // Tabelle wie die App (lib/utils/security/cert_pins.dart).
@@ -15,14 +15,14 @@
 //   dart run tool/scripts/rotate_cert_pins.dart
 //
 // Vorgehen bei Rotation (z. B. nach Let's-Encrypt-/GTS-Erneuerung ~90 Tage):
-//   1. Script ausfuehren - es zeigt fehlende/abweichende Pins.
+//   1. Script ausführen - es zeigt fehlende/abweichende Pins.
 //   2. Neuen Hash in lib/utils/security/cert_pins.dart eintragen (kPinnedHosts),
-//      die Gueltigkeit (leafNotBeforeEpoch/leafNotAfterEpoch) anpassen.
-//      Alten PIN zunaechst BEHALTEN (Backup-Pin), App releasen,
+//      die Gültigkeit (leafNotBeforeEpoch/leafNotAfterEpoch) anpassen.
+//      Alten PIN zunächst BEHALTEN (Backup-Pin), App releasen,
 //      ~7 Tage warten, dann den alten entfernen.
-//   3. flutter test test/cert_pinning_test.dart zur Kontrolle ausfuehren.
+//   3. flutter test test/cert_pinning_test.dart zur Kontrolle ausführen.
 //
-// Bewusst reines Dart (keine Flutter-Abhaengigkeit): laeuft ueberall.
+// Bewusst reines Dart (keine Flutter-Abhängigkeit): läuft überall.
 
 import 'dart:convert';
 import 'dart:io';
@@ -52,7 +52,7 @@ String _sha256Base64(Uint8List der) {
   return base64Encode(digest);
 }
 
-// Minimaler SHA-256 (keine externen Abhaengigkeiten im Tool).
+// Minimaler SHA-256 (keine externen Abhängigkeiten im Tool).
 const _k = [
   0x428a2f98,
   0x71374491,
@@ -163,7 +163,7 @@ List<int> _sha256(List<int> data) {
       //   W[i] = W[i-16] + s0 + W[i-7] + s1
       // Mit der Lücke lieferte diese eigene SHA-256 FALSCHE Hashes - und
       // damit passte der in der App gepinnte Leaf nie. Die App lief
-      // dadurch nur noch ueber den Aussteller-Fallback. Gefangen durch
+      // dadurch nur noch über den Aussteller-Fallback. Gefangen durch
       // den Selbsttest (--selftest, Testvektor "abc").
       w[i] = (w[i - 16] + s0 + w[i - 7] + s1) & 0xffffffff;
     }
@@ -212,10 +212,10 @@ List<int> _sha256(List<int> data) {
 
 Future<void> main(List<String> args) async {
   // DER SELBSTTEST (Audit 16.11.2026): Das Werkzeug hat seinen eigenen
-  // SHA-256 (ohne Paket-Abhaengigkeit). Genau der lieferte am
+  // SHA-256 (ohne Paket-Abhängigkeit). Genau der lieferte am
   // 16.11.2026 einen ANDEREN Hash als Python und OpenSSL - der Pin
-  // in der App passte also NIE, und die App lief nur noch ueber den
-  // Aussteller-Fallback. Der Selftest faengt genau das ab.
+  // in der App passte also NIE, und die App lief nur noch über den
+  // Aussteller-Fallback. Der Selftest fängt genau das ab.
   if (args.contains('--selftest')) {
     // Testvektor "abc" (SHA-256), base64-kodiert.
     final erwartet = 'ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=';

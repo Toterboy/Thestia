@@ -104,9 +104,9 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
       }
 
       // BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen
-      // fuer das Selbe." Der Push an die gescannte Person kommt vom
+      // für das Selbe." Der Push an die gescannte Person kommt vom
       // DB-Trigger (notify_push_trigger) - der Like-Insert in Zeile 93
-      // loest ihn aus. Ein eigener Aufruf von notify-user hier erzeugte
+      // löst ihn aus. Ein eigener Aufruf von notify-user hier erzeugte
       // die ZWEITE, gleichlautende Meldung.
       // Live gemessen (tool/db/measure_push_duplicates.sql): vorher 2
       // Meldungen pro Like, jetzt 1.

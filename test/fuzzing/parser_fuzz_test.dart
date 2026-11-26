@@ -1,17 +1,17 @@
 // Fuzzing der Eingabeparser der App.
 //
-// WOFUER (22.11.2026, Betreiber: "Mit fuzzing koenntest du in der App
-// nach Sicherheitsluecken suchen"): Die App bekommt Daten von aussen.
-// Wer sie bessaessigt, darf sie nicht zum Absturz bringen - das waere
-// ein Denial of Service ueber die Schnittstelle (und in einer Dating-App
-// ein Angriff auf das Geraet des Opfers).
+// WOFÜR (22.11.2026, Betreiber: "Mit fuzzing könntest du in der App
+// nach Sicherheitslücken suchen"): Die App bekommt Daten von außen.
+// Wer sie bessässigt, darf sie nicht zum Absturz bringen - das wäre
+// ein Denial of Service über die Schnittstelle (und in einer Dating-App
+// ein Angriff auf das Gerät des Opfers).
 //
-// DER ORACLE: Kein Parser darf werfen. Was er zurueckgibt, ist zweitrangig -
-// entscheidend ist, dass die App weiterlaeuft.
+// DER ORACLE: Kein Parser darf werfen. Was er zurückgibt, ist zweitrangig -
+// entscheidend ist, dass die App weiterläuft.
 //
 // DIE ZIELE:
-//   * die oeffentlichen Modelle (der Server liefert sie - und der Server
-//     liefert sie fuer das Profil eines FREMDEN),
+//   * die öffentlichen Modelle (der Server liefert sie - und der Server
+//     liefert sie für das Profil eines FREMDEN),
 //   * die Chat-Nachricht (aus der lokalen Historie),
 //   * die Dating-Hour-Modelle (aus dem Server),
 //   * die Quiz-Modelle (aus dem Server).
@@ -26,7 +26,7 @@ import 'package:thestia/models/profile/user_profile.dart';
 
 import 'fuzz_harness.dart';
 
-/// Die Seeds der Laeufe.
+/// Die Seeds der Läufe.
 ///
 /// WARUM MEHRERE: Der Seed bestimmt, welche Mutationen vorkommen. Mit
 /// einem einzigen Seed findet man oft nur eine der Fehlerklassen - mit
@@ -286,7 +286,7 @@ void main() {
     });
 
     test('die Laeufe sind nicht alle identisch', () {
-      // Ohne das ist der Fuzzer blind (er prueft nur einen Fall).
+      // Ohne das ist der Fuzzer blind (er prüft nur einen Fall).
       final seeds = <int>{};
       for (var s = 0; s < 20; s++) {
         seeds.add(Fuzz(s).korpusVariante(_profilSeed, 2).toString().hashCode);

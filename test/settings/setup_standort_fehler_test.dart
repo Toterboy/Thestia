@@ -1,13 +1,13 @@
 // Die Standort-Erkennung in der Einrichtung.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/onboarding/parts/locationnotice.dart 0 % Abdeckung. Der
 // Kasten sagt dem neuen Nutzer, warum kein Bundesland im Profil steht -
 // ohne ihn bleibt der Screen still und der Nutzer wundert sich.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne GPS kommt der Hinweis "Standort nicht erkannt",
-//   * ein Standort, der vom bisherigen Geraet abweicht, kommt mit dem
+//   * ein Standort, der vom bisherigen Gerät abweicht, kommt mit dem
 //     Verdachts-Hinweis.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 // Das Plattform-Interface wird von permission_handler exportiert, aber
-// nicht weitergereicht - der Test setzt die Attrappe darueber.
+// nicht weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -93,7 +93,7 @@ class _OrtDienst extends LocationVerificationService {
   /// Die Position, die der Dienst meldet (null = kein Standort).
   final Position? position;
 
-  /// Ist der Standort "verdaechtig"?
+  /// Ist der Standort "verdächtig"?
   final bool verdaechtig;
 
   @override
@@ -191,7 +191,7 @@ void main() {
     await pumpFrames(tester);
   }
 
-  /// Tippt auf "Bundesland erkennen" und bestaetigt die Offenlegung.
+  /// Tippt auf "Bundesland erkennen" und bestätigt die Offenlegung.
   Future<void> tippeOrtErkennung(WidgetTester tester) async {
     final knopf = find.text(L10n.tWithoutContext('setupp.detectState'));
     await tester.scrollUntilVisible(

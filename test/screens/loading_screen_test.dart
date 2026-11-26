@@ -1,15 +1,15 @@
-// Tests fuer den Startbildschirm.
+// Tests für den Startbildschirm.
 //
 // ANLASS: Der Bildschirm ist die ERSTE Seite, die jeder Nutzer sieht -
 // und die einzige, die man nicht wegklicken kann. Er wird genau dann
 // gezeigt, wenn die App noch ihre Start-Checks macht (Auth-Status,
 // Einstellungen, Server-Sync).
 //
-// Er muss deshalb zwei Dinge gleichzeitig sein: unscheinbar (weiss wie
-// der Splash, damit der Uebergang nicht auffaellt) und eindeutig
+// Er muss deshalb zwei Dinge gleichzeitig sein: unscheinbar (weiß wie
+// der Splash, damit der Übergang nicht auffällt) und eindeutig
 // ("die App arbeitet gerade"). Der drehende Ring ist das zweite.
 //
-// Geprueft wird: Logo, Ladeindikator, Hintergrund in hell und dunkel
+// Geprüft wird: Logo, Ladeindikator, Hintergrund in hell und dunkel
 // und kein Render-Overflow.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -66,7 +66,7 @@ void main() {
     });
 
     testWidgets('der Ladeindikator ist im dunklen Modus hell', (tester) async {
-      // Im dunklen Modus waere der Standard-Kringel (Farbe "primary")
+      // Im dunklen Modus wäre der Standard-Kringel (Farbe "primary")
       // auf schwarzem Grund schwer zu sehen.
       await tester.pumpWidget(
         _huelle(const LoadingScreen(), helligkeit: Brightness.dark),
@@ -92,8 +92,8 @@ void main() {
 
       expect(logo.width, closeTo(92, 1));
       expect(logo.center.dx, closeTo(bildschirm.center.dx, 1));
-      // Das Logo sitzt UEBER dem Ring, nicht daneben: der Ring ist
-      // darunter (deshalb ist der Mittelpunkt des Logos hoeher als
+      // Das Logo sitzt ÜBER dem Ring, nicht daneben: der Ring ist
+      // darunter (deshalb ist der Mittelpunkt des Logos höher als
       // der Mittelpunkt des Bildschirms).
       expect(logo.center.dy, lessThan(bildschirm.center.dy));
     });

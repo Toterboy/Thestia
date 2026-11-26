@@ -152,10 +152,10 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
           // Safety Center obwohl schon bei Datenschutz und Account."
           //
           // Der Export stand hier ZWEIMAL: im Safety Center und unter
-          // Datenschutz & Account. Zwei Wege fuer dieselben Knopf sind
+          // Datenschutz & Account. Zwei Wege für dieselben Knopf sind
           // einer zu viel - und der hier war der schlechtere (das
-          // Safety Center ist die Seite fuer Sofortmassnahmen bei
-          // Belaestigung, nicht fuer Datenauskunft). Der Weg bleibt:
+          // Safety Center ist die Seite für Sofortmassnahmen bei
+          // Belästigung, nicht für Datenauskunft). Der Weg bleibt:
           // Datenschutz & Account.
           const Divider(height: 32),
           Text(
@@ -177,18 +177,18 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
 /// Ein aufklappbarer Schutz-Punkt als weiche Kachel.
 ///
 /// NUTZERWUNSCH (27.10.2026): beim Aufklappen eines Punktes im Bereich
-/// "Schutz in Thestia" zogen sich Linien UEBER und UNTER den Punkt.
+/// "Schutz in Thestia" zogen sich Linien ÜBER und UNTER den Punkt.
 /// Das ist die Standardzeichnung des Material-3-ExpansionTile im
 /// aufgeklappten Zustand und passte nicht zum weichen Design der App.
 ///
-/// Zwei Aenderungen, beide im Projekt schon bewaehrt (Dating Hour
+/// Zwei Änderungen, beide im Projekt schon bewährt (Dating Hour
 /// "So funktioniert's", Spice-Fragen):
 ///   * die Kachel sitzt in einer Card mit dem Radius der App (24),
 ///   * shape/collapsedShape OHNE BorderSide - dadurch zeichnet das
 ///     ExpansionTile keine Linien.
 ///
 /// Statt der Linien gibt es jetzt eine weiche Card, die sich beim
-/// Aufklappen mit aufflaechen traegt. Das ist dasselbe Muster wie in
+/// Aufklappen mit aufflächen trägt. Das ist dasselbe Muster wie in
 /// den beiden anderen Screens - die App sieht damit an allen drei
 /// Stellen gleich aus.
 class _SchutzKachel extends StatelessWidget {

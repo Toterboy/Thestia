@@ -1,23 +1,23 @@
-// Render-Tests fuer die drei umgebauten Screens (31.10.2026).
+// Render-Tests für die drei umgebauten Screens (31.10.2026).
 //
 // ANLASS: Beim Wischen zwischen den Haupt-Reitern ist die App
-// abgestuerzt - "A SingleTickerProviderStateMixin can only be used as
+// abgestürzt - "A SingleTickerProviderStateMixin can only be used as
 // a TickerProvider once". Gefunden hat das der UI-Vorschau-Test, also
-// zufaellig. Ein Bildschirm, den niemand gerendert hat, ist geraten.
+// zufällig. Ein Bildschirm, den niemand gerendert hat, ist geraten.
 //
 // Diese Tests pumpen die drei Screens WIRKLICH:
 //   * Interessen (eingeklappte Blasen, Funken werden weggeschoben),
-//   * Profil (Geburtstags-Flaeche ueber die ganze Flaeche),
+//   * Profil (Geburtstags-Fläche über die ganze Fläche),
 //   * fremdes Profil (derselbe Geburtstags-Effekt).
 //
-// Geprueft wird: kein Absturz, kein Render-Overflow, die erwarteten
-// Texte stehen da, und das Verhalten stimmt (Blase oeffnet, Funken
-// werden nach unten geschoben, Geburtstags-Flaeche ist an/aus).
+// Geprüft wird: kein Absturz, kein Render-Overflow, die erwarteten
+// Texte stehen da, und das Verhalten stimmt (Blase öffnet, Funken
+// werden nach unten geschoben, Geburtstags-Fläche ist an/aus).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/models/profile/user_profile.dart';
@@ -32,7 +32,7 @@ import 'package:thestia/services/server/mood_service.dart';
 import 'package:thestia/services/storage/secure_storage.dart';
 import 'package:thestia/widgets/common/birthday_style.dart';
 
-/// In-Memory-Implementierung von [LocalStorage] fuer Tests.
+/// In-Memory-Implementierung von [LocalStorage] für Tests.
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _data = {};
 
@@ -63,7 +63,7 @@ class _FakeLocalStorage implements LocalStorage {
 }
 
 /// Keystore ohne Plugin: liefert kein Profil (wie auf einem frischen
-/// Geraet).
+/// Gerät).
 class _FakeSecureProfileStore extends SecureProfileStore {
   @override
   Future<String?> read() async => null;
@@ -180,7 +180,7 @@ void main() {
       final funke = find.byIcon(Icons.auto_awesome).first;
       final vorher = tester.getRect(funke).top;
 
-      // Blase oeffnen.
+      // Blase öffnen.
       await tester.tap(find.text('Erhalten'));
       await tester.pumpAndSettle();
 
@@ -194,7 +194,7 @@ void main() {
             'geschoben werden',
       );
 
-      // Und wieder schliessen - dann stehen sie wieder oben.
+      // Und wieder schließen - dann stehen sie wieder oben.
       await tester.tap(find.text('Erhalten'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
@@ -242,8 +242,8 @@ void main() {
     });
 
     testWidgets('kein Ladekreis auf dem Interessen-Screen', (tester) async {
-      // NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend
-      // fuer die Animation dort". Der Ring ersetzte den Inhalt und
+      // NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist störend
+      // für die Animation dort". Der Ring ersetzte den Inhalt und
       // unterbrach das Aufblenden des Panels.
       //
       // Jetzt steht beim ersten Laden ein ruhiger Platzhalter, und
@@ -335,8 +335,8 @@ void main() {
     });
 
     testWidgets('zeigt das Mood der anderen Person', (tester) async {
-      // NUTZERWUNSCH (31.10.2026): "Fuer Mood gilt das selbe" - die
-      // Stimmung des Tages gehoert auch bei fremden Profilen dazu.
+      // NUTZERWUNSCH (31.10.2026): "Für Mood gilt das selbe" - die
+      // Stimmung des Tages gehört auch bei fremden Profilen dazu.
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -352,7 +352,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       // Das Mood steht als Chip neben dem Typ (NUTZERWUNSCH 31.10.2026:
-      // "Fuer Mood gilt das selbe" - die Stimmung ist auch bei fremden
+      // "Für Mood gilt das selbe" - die Stimmung ist auch bei fremden
       // Personen sichtbar).
       expect(find.textContaining('Glücklich'), findsOneWidget);
       expect(find.byIcon(Icons.sentiment_very_satisfied), findsWidgets);
@@ -362,7 +362,7 @@ void main() {
   group('Settings-Provider', () {
     test('laesst sich ohne Backend ueberschreiben', () {
       // Der Profil-Screen braucht die Einstellungen (Theme, Blind Mode).
-      // Sie kommen aus dem lokalen Speicher - ohne Supabase laeuft das
+      // Sie kommen aus dem lokalen Speicher - ohne Supabase läuft das
       // ohne Fehler.
       final container = ProviderContainer(
         overrides: [
@@ -375,8 +375,8 @@ void main() {
   });
 
   // ---------------------------------------------------------------
-  // Accessibility: dieselben drei Screens bei grosser Systemschrift.
-  // Android erlaubt bis 3,2x - dort darf nichts ueber den Rand laufen.
+  // Accessibility: dieselben drei Screens bei großer Systemschrift.
+  // Android erlaubt bis 3,2x - dort darf nichts über den Rand laufen.
   // ---------------------------------------------------------------
   const scales = <String, double>{
     'normal (1.0x)': 1.0,

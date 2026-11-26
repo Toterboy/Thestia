@@ -1,4 +1,4 @@
-// Test fuer die eigene Tastatur der App (v0.10.1).
+// Test für die eigene Tastatur der App (v0.10.1).
 //
 // WUNSCH DES BETREIBERS (13.11.2026): "dass die Handytastatur nicht
 // tracken kann was man schreibt".
@@ -310,7 +310,7 @@ void main() {
       final z = tester.getTopLeft(find.text('z')).dy;
       expect(y, lessThan(z));
 
-      // Und keine Umlaute - dafuer die Satzzeichen.
+      // Und keine Umlaute - dafür die Satzzeichen.
       expect(find.text('ä'), findsNothing);
       expect(find.text('ß'), findsNothing);
       expect(find.text(','), findsOneWidget);

@@ -1,14 +1,14 @@
 // Die Fehlertexte der Anmeldung - ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/screens/auth/login_screen.dart 190 offene Zeilen. Der groesste
-// Block davon ist die Uebersetzung der Server-Fehler: der Nutzer soll
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
+// lib/screens/auth/login_screen.dart 190 offene Zeilen. Der größte
+// Block davon ist die Übersetzung der Server-Fehler: der Nutzer soll
 // "Email oder Passwort ist falsch" lesen - nicht "Invalid login
 // credentials" und schon gar nicht einen SQL-Fehler.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * falsche Zugangsdaten -> "Email oder Passwort ist falsch",
-//   * unbestaetigte E-Mail -> der Hinweis auf die Bestaetigung,
+//   * unbestätigte E-Mail -> der Hinweis auf die Bestätigung,
 //   * zu viele Versuche -> der Hinweis auf das Warten,
 //   * ein schwaches Passwort -> der Hinweis auf die Passwort-Regeln,
 //   * ein abgelehntes CAPTCHA -> der Hinweis darauf.
@@ -69,7 +69,7 @@ class _Keystore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {
-    // Der Test loescht kein Profil im Keystore.
+    // Der Test löscht kein Profil im Keystore.
   }
 }
 
@@ -84,8 +84,8 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
     mockZeitzone();
-    // DER SPEICHER: der Verschluesselungs-Dienst des Auth-Clients
-    // oeffnet beim Start seine Box.
+    // DER SPEICHER: der Verschlüsselungs-Dienst des Auth-Clients
+    // öffnet beim Start seine Box.
     await mockHive();
 
     server = FakeSupabaseServer(userId: 'ich');
@@ -188,8 +188,8 @@ void main() {
       );
     });
 
-    // DIE UEBERSETZUNGEN: Der Server spricht Englisch, die App zeigt
-    // deutsche Saetze. Jede Uebersetzung wird einzeln geprueft - sonst
+    // DIE ÜBERSETZUNGEN: Der Server spricht Englisch, die App zeigt
+    // deutsche Sätze. Jede Übersetzung wird einzeln geprüft - sonst
     // sieht der Nutzer bei einem seltenen Fehler den rohen Servertext.
     group('die Servertexte werden uebersetzt', () {
       Future<void> pruefe(
@@ -228,7 +228,7 @@ void main() {
       testWidgets('die Mindestlaenge des Passworts kommt durch', (
         tester,
       ) async {
-        // DER GRUND: Die Mindestlaenge steht im Server-Dashboard (nicht
+        // DER GRUND: Die Mindestlänge steht im Server-Dashboard (nicht
         // in der App) - deshalb muss der Servertext durchgereicht werden.
         await meldeAn(tester, 'Password should be at least 12 characters');
 

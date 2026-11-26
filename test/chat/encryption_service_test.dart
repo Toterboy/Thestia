@@ -1,21 +1,21 @@
-// Der Verschluesselungs-Dienst (Signal-Protokoll) - bisher kaum getestet.
+// Der Verschlüsselungs-Dienst (Signal-Protokoll) - bisher kaum getestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/encryption_service.dart 268 offene Zeilen bei 308 Zeilen
-// gesamt - der Dienst, der die privaten Schluessel, die PreKeys und die
-// Session-Ratchet-States haelt, war fast voellig ungetestet.
+// gesamt - der Dienst, der die privaten Schlüssel, die PreKeys und die
+// Session-Ratchet-States hält, war fast völlig ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Dienst wird benutzbar (die Boxen sind offen, es gibt einen
 //     Identity-Key),
 //   * die Safety-Nummer ist auf beiden Seiten GLEICH (sonst stimmen die
-//     Zahlen der beiden Geraete nicht ueber) und hat das erwartete Format,
-//   * das PreKey-Bundle traegt alle Felder, die die Gegenseite braucht,
+//     Zahlen der beiden Geräte nicht über) und hat das erwartete Format,
+//   * das PreKey-Bundle trägt alle Felder, die die Gegenseite braucht,
 //   * die PreKeys werden nicht doppelt vergeben,
 //   * ohne Session gibt es auch keine Safety-Nummer.
 //
-// OHNE SIGNAL-PARTNER: Der Dienst redet mit keinem echten Geraet - es
-// geht um die eigene Seite (die Schluessel, die PreKeys, die Nummern).
+// OHNE SIGNAL-PARTNER: Der Dienst redet mit keinem echten Gerät - es
+// geht um die eigene Seite (die Schlüssel, die PreKeys, die Nummern).
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -31,12 +31,12 @@ import '../support/plugin_mocks.dart';
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // DER KEYSTORE: die Boxen sind AES-256-verschluesselt - der Schluessel
+    // DER KEYSTORE: die Boxen sind AES-256-verschlüsselt - der Schlüssel
     // liegt im Keystore. Ohne den Ersatz sucht der Test auf dem
     // CI-Runner das echte Plugin (das findet dort keine libsecret-Sitzung).
     mockKeystore();
     // HIVE: die Boxen liegen auf der Platte - ohne initialisiertes Hive
-    // schlaegt das Oeffnen fehl.
+    // schlägt das Öffnen fehl.
     final tempDir = await Directory.systemTemp.createTemp('thesia_crypto');
     Hive.init(tempDir.path);
     // DIE ADAPTER: Die Boxen halten Signal-Objekte (Identity-Key-Paare,
@@ -68,16 +68,16 @@ void main() {
       final service = await dienst();
 
       expect(service.bereit, isTrue);
-      // Der oeffentliche Identity-Key ist die Basis fuer jede
-      // Ende-zu-Ende-Verschluesselung - ohne ihn geht nichts.
+      // Der öffentliche Identity-Key ist die Basis für jede
+      // Ende-zu-Ende-Verschlüsselung - ohne ihn geht nichts.
       expect(service.identityKeyPublicBase64, isNotEmpty);
-      // Und er ist gueltiges Base64 (33 Byte = ein Curve25519-Punkt).
+      // Und er ist gültiges Base64 (33 Byte = ein Curve25519-Punkt).
       expect(
         base64Decode(service.identityKeyPublicBase64).length,
         33,
         reason: 'Der oeffentliche Identity-Key muss ein Curve25519-Punkt sein.',
       );
-      // Der Dienst ist der einer Instanz - die Schluessel bleiben stabil.
+      // Der Dienst ist der einer Instanz - die Schlüssel bleiben stabil.
       final nochmal = EncryptionService();
       await nochmal.initialize();
       expect(
@@ -93,13 +93,13 @@ void main() {
       'eine zweite Instanz ohne Wartende laesst keinen Fehler laufen',
       () async {
         // DER FALL (BEFUND 24.11.2026): Ein Provider baut eine EIGENE
-        // Instanz, waehrend die Boxen schon offen sind. Das Oeffnen
-        // schlaegt dann fehl (die Box hat einen anderen Typ) - und der
+        // Instanz, während die Boxen schon offen sind. Das Öffnen
+        // schlägt dann fehl (die Box hat einen anderen Typ) - und der
         // Fehler hatte niemanden, der ihn abwartete. Dart meldet so einen
-        // Fehler als "unhandled error" - der Test waere rot, obwohl die
+        // Fehler als "unhandled error" - der Test wäre rot, obwohl die
         // App richtig arbeitet.
-        // DIE BOXEN ZU: Sie werden mit einem ANDEREN Typ geoeffnet - das
-        // Oeffnen der Instanz schlaegt dann fehl.
+        // DIE BOXEN ZU: Sie werden mit einem ANDEREN Typ geöffnet - das
+        // Öffnen der Instanz schlägt dann fehl.
         await Hive.close();
         await Hive.openBox<String>('signal_identity');
 
@@ -112,7 +112,7 @@ void main() {
           reason: 'Der Aufrufer muss den Fehler sehen.',
         );
 
-        // UND: Er laeuft nicht ungehandelt weiter (der Test wuerde sonst
+        // UND: Er läuft nicht ungehandelt weiter (der Test würde sonst
         // mit einem "unhandled error" abbrechen).
         await Future<void>.delayed(const Duration(milliseconds: 50));
 
@@ -121,7 +121,7 @@ void main() {
     );
 
     test('die Safety-Nummer ist auf beiden Seiten gleich', () async {
-      // Zwei oeffentliche Keys (syntetisch - echte Schluessel braucht der
+      // Zwei öffentliche Keys (syntetisch - echte Schlüssel braucht der
       // Test nicht).
       final a = Uint8List.fromList(List<int>.generate(32, (i) => i));
       final b = Uint8List.fromList(List<int>.generate(32, (i) => 255 - i));
@@ -136,7 +136,7 @@ void main() {
             'Beide Geraete muessen dieselbe Zahl zeigen - sonst haetten die '
             'Nutzer keine Chance, den Kanal zu pruefen.',
       );
-      // Das Format: 30 Ziffern in 6 Bloecken zu 5.
+      // Das Format: 30 Ziffern in 6 Blöcken zu 5.
       expect(beiUns.split(' ').length, 6);
       expect(
         beiUns.replaceAll(' ', '').length,
@@ -175,7 +175,7 @@ void main() {
       expect(bundle['signedPreKeyPublic'], isNotNull);
       expect(bundle['signedPreKeySignature'], isNotNull);
       // Die Signatur des SignedPreKeys ist die Signatur des eigenen
-      // Schluessels - ohne sie akzeptiert die Gegenseite das Bundle nicht.
+      // Schlüssels - ohne sie akzeptiert die Gegenseite das Bundle nicht.
       expect(
         base64Decode(bundle['signedPreKeySignature'] as String).length,
         64,
@@ -219,12 +219,12 @@ void main() {
 
       await service.clearAllData();
 
-      // Der Dienst hat keinen Schluessel mehr - die Daten sind weg.
+      // Der Dienst hat keinen Schlüssel mehr - die Daten sind weg.
       // (Die App baut ihn nach dem Abmelden neu auf - siehe
       // "encryptionServiceProvider" im Auth-Notifier.)
       expect(() => service.identityKeyPublicBase64, throwsA(anything));
 
-      // Und ein neuer Dienst legt einen neuen Schluessel an.
+      // Und ein neuer Dienst legt einen neuen Schlüssel an.
       final neu = await dienst();
       expect(
         neu.identityKeyPublicBase64,

@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:thestia/models/profile/user_profile.dart';
 
-/// Kontoalter fuer den Hinweis "neuer Account".
+/// Kontoalter für den Hinweis "neuer Account".
 ///
 /// Der Hinweis ist die Reaktion auf das Problem, dass man dauerhaft von
 /// Accounts angeschrieben wird, die es gerade erst gibt. Ein Hinweis,
@@ -41,8 +41,8 @@ void main() {
     });
 
     test('ohne Erstellungsdatum gibt es keinen Hinweis', () {
-      // Eine falsche Entwarnung waere schaedlicher als ein fehlender
-      // Hinweis: dann wuerde niemand mehr auf das Kontoalter achten.
+      // Eine falsche Entwarnung wäre schädlicher als ein fehlender
+      // Hinweis: dann würde niemand mehr auf das Kontoalter achten.
       final p = const UserProfile(id: 'u1', name: 'Test', bio: '');
       expect(p.createdAt, isNull);
       expect(p.isRecentlyCreated, isFalse);

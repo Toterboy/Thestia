@@ -37,7 +37,7 @@ import 'package:thestia/utils/common/best_effort.dart';
 bool _fontsLoaded = false;
 
 /// Screenshots nur auf Anforderung generieren: Der normale `flutter test`
-/// Lauf ueberspringt diese Tests (Golden-Vergleiche gehoeren nicht in die
+/// Lauf überspringt diese Tests (Golden-Vergleiche gehören nicht in die
 /// Standardsuite). Generieren mit:
 ///   STORE_SHOTS=1 flutter test --update-goldens test/screenshots/
 final bool _storeShotsEnabled = Platform.environment.containsKey('STORE_SHOTS');
@@ -221,7 +221,7 @@ UserProfile _seedProfile() => const UserProfile(
   bio: '',
 );
 
-/// Registriert einen Screenshot-Test; ohne STORE_SHOTS=1 uebersprungen.
+/// Registriert einen Screenshot-Test; ohne STORE_SHOTS=1 übersprungen.
 void _shot(String description, Future<void> Function(WidgetTester) body) {
   testWidgets(description, body, skip: !_storeShotsEnabled);
 }

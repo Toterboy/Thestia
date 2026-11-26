@@ -1,11 +1,11 @@
 // Der Passkey-Login und die kleinen Schalter im Login-Screen.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/login_screen.dart 68 offene Zeilen. Der Screen selbst
 // (Anmeldung, Registrierung, Sicherheitscheck, Fehlertexte) ist
-// getestet - offen war der Passkey-Weg und das Auge fuer das Passwort.
+// getestet - offen war der Passkey-Weg und das Auge für das Passwort.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Passkey-Login meldet dem Nutzer den Grund (nicht "irgendwas
 //     ging schief"),
 //   * das Auge zeigt das Passwort im Klartext (und wieder nicht),
@@ -142,7 +142,7 @@ void main() {
       await tester.tap(knopf);
       await tester.pump();
       // Der native Dialog (Passkeys-Plugin) gibt es im Test nicht - der
-      // Aufruf braucht deshalb echte Zeit, bis der Fehler zurueckkommt.
+      // Aufruf braucht deshalb echte Zeit, bis der Fehler zurückkommt.
       for (var i = 0; i < 6; i++) {
         await tester.runAsync(() async {
           await Future<void>.delayed(const Duration(milliseconds: 50));

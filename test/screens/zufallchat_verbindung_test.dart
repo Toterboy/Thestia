@@ -1,23 +1,23 @@
 // Die Verbindung des Zufallschats: der Relay-Modus, das Schreiben, der
 // Aufbau und das Beenden.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/parts/zufallchatverbindung.dart 66 offene Zeilen - das
 // sind genau die Wege, die im Mobilfunknetz laufen: der Wechsel auf den
 // Server-Relay, der Wiederholungs-Versuch beim Handshake und das
 // Pausieren im Hintergrund.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * der Relay-Modus uebernimmt, wenn die Direktverbindung scheitert
-//     (und die frueher geschriebene Nachricht geht nicht verloren),
+// WAS HIER GEPRÜFT WIRD:
+//   * der Relay-Modus übernimmt, wenn die Direktverbindung scheitert
+//     (und die früher geschriebene Nachricht geht nicht verloren),
 //   * der Relay-Takt holt die Nachrichten auch ohne Ping ab,
 //   * eine getippte Nachricht erscheint sofort im Verlauf,
 //   * der Verbindungsaufbau wird wiederholt (und gedrosselt),
-//   * das Beenden fragt nach, laesst sich abbrechen und geht danach
+//   * das Beenden fragt nach, lässt sich abbrechen und geht danach
 //     wirklich zur Modus-Auswahl,
 //   * der Wechsel in den Hintergrund pausiert die Suche.
 //
-// OHNE ECHTE GERAETE: Der Zufallschat-Dienst, der P2P-Dienst und der
+// OHNE ECHTE GERÄTE: Der Zufallschat-Dienst, der P2P-Dienst und der
 // Relay-Dienst sind Hand-Attrappen (siehe zufallchat_hilfen.dart). Es
 // geht keine Anfrage ins Netz.
 import 'package:flutter/material.dart';
@@ -39,8 +39,8 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
-    // HIVE: die verschluesselten Schluessel (Signal-Protokoll) liegen in
-    // Hive-Boxen - ohne sie bleibt der Aufbau haengen.
+    // HIVE: die verschlüsselten Schlüssel (Signal-Protokoll) liegen in
+    // Hive-Boxen - ohne sie bleibt der Aufbau hängen.
     await mockHive();
     await initZufallChatServer();
   });
@@ -69,7 +69,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(tester.takeException(), isNull);
-      // Der Nutzer muss erfahren, dass der Chat ueber den Server laeuft.
+      // Der Nutzer muss erfahren, dass der Chat über den Server läuft.
       expect(
         find.text(L10n.tWithoutContext('random.relayNoDirect')),
         findsOneWidget,
@@ -82,8 +82,8 @@ void main() {
         find.text(L10n.tWithoutContext('random.relayStatus')),
         findsOneWidget,
       );
-      // Die frueher geschriebene Nachricht ist nicht verloren gegangen:
-      // sie wurde ueber den Server nachgeliefert.
+      // Die früher geschriebene Nachricht ist nicht verloren gegangen:
+      // sie wurde über den Server nachgeliefert.
       expect(
         aufbau.relay.abgelegt,
         contains('Frueher geschrieben'),
@@ -93,7 +93,7 @@ void main() {
       );
 
       // Und kommt die Direktverbindung doch noch zustande, geht der Chat
-      // wieder auf den direkten Weg zurueck.
+      // wieder auf den direkten Weg zurück.
       aufbau.p2p.kanalOeffnen();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -122,7 +122,7 @@ void main() {
       final abholungenVorher = aufbau.relay.abholungen;
 
       // DER Takt: Auch ohne Wake-up-Ping holt der Timer die Nachrichten
-      // ab - sonst koennte eine verlorene Meldung ewig liegen.
+      // ab - sonst kännte eine verlorene Meldung ewig liegen.
       await tester.pump(const Duration(seconds: 3));
       await tester.pump(const Duration(milliseconds: 400));
 
@@ -144,9 +144,9 @@ void main() {
     testWidgets('eine getippte Nachricht erscheint sofort', (tester) async {
       await baueZufallChat(tester, sitzung: partnerSession);
 
-      // Die eigene Tastatur oeffnen und tippen.
+      // Die eigene Tastatur öffnen und tippen.
       //
-      // KEIN pumpAndSettle: In der Statuszeile laeuft ein Ladekreis -
+      // KEIN pumpAndSettle: In der Statuszeile läuft ein Ladekreis -
       // der dreht sich endlos, also kommt pumpAndSettle nie zur Ruhe.
       await tester.tap(find.byType(TextField));
       await tester.pump();
@@ -170,7 +170,7 @@ void main() {
       );
 
       // Das Zeitlimit des Edge-Funktions-Aufrufs (20 Sekunden) ablaufen
-      // lassen: der Aufruf laeuft im Test weiter, sonst bliebe ein Timer
+      // lassen: der Aufruf läuft im Test weiter, sonst bliebe ein Timer
       // stehen und der Test scheiterte an "A Timer is still pending".
       await tester.pump(const Duration(seconds: 21));
 
@@ -189,7 +189,7 @@ void main() {
       aufbau.dienst.befragt = partnerSession;
       aufbau.p2p.fehler = 'Der Aufbau klappt nicht';
 
-      // Der Status-Poll tickt alle fuenf Sekunden und versucht es
+      // Der Status-Poll tickt alle fünf Sekunden und versucht es
       // erneut - das erste Offer geht leicht ins Leere, wenn der Peer
       // noch nicht mitlauscht.
       await tester.pump(const Duration(seconds: 6));
@@ -204,7 +204,7 @@ void main() {
             'lange ohne Verbindung, wenn das erste Offer ins Leere ging.',
       );
 
-      // Der zweite Versuch ist gedrosselt (hoechstens alle 25 Sekunden).
+      // Der zweite Versuch ist gedrosselt (höchstens alle 25 Sekunden).
       await tester.pump(const Duration(seconds: 6));
       await tester.pump(const Duration(milliseconds: 400));
       expect(
@@ -289,7 +289,7 @@ void main() {
     testWidgets('das System-Zurueck fragt nach dem Beenden', (tester) async {
       await baueZufallChat(tester, sitzung: partnerSession);
 
-      // Das System-Zurueck (der Randwisch oder der Zurueck-Knopf des
+      // Das System-Zurück (der Randwisch oder der Zurück-Knopf des
       // Systems). `maybePop()` ist der Weg, der den PopScope beachtet.
       final navigator = tester.state<NavigatorState>(
         find.byType(Navigator).first,
@@ -320,7 +320,7 @@ void main() {
 
       expect(find.byType(AlertDialog), findsOneWidget);
       // Der Dialog nennt, was passiert - der Nutzer soll wissen, worauf er
-      // sich einlaesst.
+      // sich einlässt.
       expect(
         find.text(L10n.tWithoutContext('random.leaveBody')),
         findsOneWidget,
@@ -375,7 +375,7 @@ void main() {
   group('Der Wechsel in den Hintergrund', () {
     testWidgets('die Suche pausiert und laeuft weiter', (tester) async {
       // Die Sitzung wartet noch auf einen Partner (kein Match) - dann
-      // laeuft die Suche (der Poll-Timer).
+      // läuft die Suche (der Poll-Timer).
       final aufbau = await baueZufallChat(
         tester,
         sitzung: const RandomChatSession(sessionId: 'session-wartend'),
@@ -395,7 +395,7 @@ void main() {
             'das Netz.',
       );
 
-      // Und wieder in den Vordergrund: die Suche laeuft weiter.
+      // Und wieder in den Vordergrund: die Suche läuft weiter.
       setzeLebenszyklus(tester, AppLifecycleState.resumed);
       await tester.pump();
       await tester.pump(const Duration(seconds: 3));
@@ -431,7 +431,7 @@ void main() {
             'das Netz.',
       );
 
-      // Und wieder in den Vordergrund: der Takt laeuft weiter.
+      // Und wieder in den Vordergrund: der Takt läuft weiter.
       setzeLebenszyklus(tester, AppLifecycleState.resumed);
       await tester.pump();
       await tester.pump(const Duration(seconds: 6));
@@ -464,7 +464,7 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
       expect(aufbau.relay.abholungen, abholungenVorher);
 
-      // Und wieder in den Vordergrund: der Takt laeuft weiter.
+      // Und wieder in den Vordergrund: der Takt läuft weiter.
       setzeLebenszyklus(tester, AppLifecycleState.resumed);
       await tester.pump();
       await tester.pump(const Duration(seconds: 3));

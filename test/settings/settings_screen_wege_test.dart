@@ -1,16 +1,16 @@
 // Die Wege aus den Einstellungen.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/settings/settings_screen.dart 91 offene Zeilen. Gerade die
 // WEGE sind ungetestet: der Nutzer tippt auf einen Eintrag und es passiert
 // nichts - das sieht wie ein Fehler aus.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * jeder Eintrag im Abschnitt "Gemeinsam & Sicherheit" und im Abschnitt
-//     "Datenschutz & Konto" oeffnet den passenden Bildschirm,
+//     "Datenschutz & Konto" öffnet den passenden Bildschirm,
 //   * die Zwei-Faktor-Kachel holt den Stand FRISCH vom Server, bevor sie
-//     die Einrichtung oeffnet (sonst zeigt sie hinterher das Falsche),
-//   * der Zurueck-Knopf geht zurueck, und wenn es nichts zurueck gibt,
+//     die Einrichtung öffnet (sonst zeigt sie hinterher das Falsche),
+//   * der Zurück-Knopf geht zurück, und wenn es nichts zurück gibt,
 //     zur Startseite.
 import 'dart:io';
 
@@ -92,8 +92,8 @@ void main() {
         detectSessionInUri: false,
       ),
     );
-    // HIVE: der Abschnitt "Ende-zu-Ende-Verschluesselung" liest die
-    // gesicherten Schluessel aus einer Hive-Box.
+    // HIVE: der Abschnitt "Ende-zu-Ende-Verschlüsselung" liest die
+    // gesicherten Schlüssel aus einer Hive-Box.
     final tempDir = await Directory.systemTemp.createTemp(
       'thesia_settings_wege',
     );
@@ -108,7 +108,7 @@ void main() {
     storage = _Speicher();
   });
 
-  /// Baut die Einstellungen mit einem Router (die Eintraege navigieren).
+  /// Baut die Einstellungen mit einem Router (die Einträge navigieren).
   Future<void> zeige(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -240,7 +240,7 @@ void main() {
       await zeige(tester);
 
       // DER UNTERTITEL: Der Titel "Datenschutz & Konto" steht auch als
-      // Abschnittsueberschrift auf dem Bildschirm - der Untertitel ist
+      // Abschnittsüberschrift auf dem Bildschirm - der Untertitel ist
       // eindeutig.
       await tippe(tester, 'settings.privacyAccountSub');
 

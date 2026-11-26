@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prueft die Geschlechtsregel der Dating Hour am lebenden Server.
+"""Prüft die Geschlechtsregel der Dating Hour am lebenden Server.
 
 WARUM (14.11.2026, Betreiber): "Bei Dating Hour irgendwie umsetzen, dass
 von beiden Geschlechtern welche in dem Event sind, wenn alle Hetero."
@@ -10,25 +10,25 @@ die Wahl NIE beachtet: ein Nutzer, der nur Frauen suchte, konnte mit
 einem Mann gepaart werden.
 
 DAS WERKZEUG fragt die ECHTE Datenbank, wie die Regel auf konkrete
-Faelle antwortet. Es aendert nichts - es rechnet nur.
+Fülle antwortet. Es ändert nichts - es rechnet nur.
 
-Die Faelle:
+Die Fülle:
 
-  1) Mann (nichts gewaehlt) + Frau (nichts gewaehlt)   -> passt
+  1) Mann (nichts gewählt) + Frau (nichts gewählt)   -> passt
      (das hetero Event: Mann und Frau kommen zusammen)
-  2) Mann (nur Frauen) + Frau (nur Maenner)           -> passt
-  3) Mann (nur Maenner) + Frau (nur Frauen)           -> passt NICHT
-     (beide wollen ausdruecklich das eigene Geschlecht)
-  4) Mann (nur Maenner) + Mann (nur Maenner)           -> passt
+  2) Mann (nur Frauen) + Frau (nur Männer)           -> passt
+  3) Mann (nur Männer) + Frau (nur Frauen)           -> passt NICHT
+     (beide wollen ausdrücklich das eigene Geschlecht)
+  4) Mann (nur Männer) + Mann (nur Männer)           -> passt
   5) Mann (nichts) + Mann (nichts)                    -> passt NICHT
      (das hetero Event: kein Same-Sex-Paar)
-  6) Mann (Alle gewaehlt) + Mann (Alle gewaehlt)      -> passt
-     ("Alle" heisst: offen)
+  6) Mann (Alle gewählt) + Mann (Alle gewählt)      -> passt
+     ("Alle" heißt: offen)
   7) Frau (nur Frauen) + Mann (nichts)                -> passt NICHT
-     (SIE will ihn nicht - die Pruefung ist beidseitig)
+     (SIE will ihn nicht - die Prüfung ist beidseitig)
   8) Mann (nichts) + Frau (nur Frauen)                -> passt NICHT
      (ER will sie nicht)
-  9) Trans Mann (nur Frauen) + Frau (nur Maenner)    -> passt
+  9) Trans Mann (nur Frauen) + Frau (nur Männer)    -> passt
  10) Divers (nichts) + Mann (nichts)                  -> passt
 
 Aufruf::
@@ -49,8 +49,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -67,7 +67,7 @@ ROOT = _projektwurzel()
 
 
 # (Beschreibung, SQL-Parameter, erwartetes Ergebnis)
-# Die Praeferenz-Listen sind die Werte aus profiles.gender_preferences.
+# Die Präferenz-Listen sind die Werte aus profiles.gender_preferences.
 FAELLE = [
     (
         "Mann (nichts gewaehlt) + Frau (nichts gewaehlt)",
@@ -125,7 +125,7 @@ FAELLE = [
 
 def sql_bauen() -> str:
     # EIN Query mit UNION ALL: der CLI gibt bei mehreren Abfragen nur die
-    # letzte zurueck - deshalb alles in eins.
+    # letzte zurück - deshalb alles in eins.
     teile = []
     for nummer, (beschreibung, params, erwartet) in enumerate(FAELLE, 1):
         teile.append(

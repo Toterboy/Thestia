@@ -4,10 +4,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:thestia/utils/location/avatar_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// v0.10.0: geocoding und geolocator sind hier nicht mehr noetig.
+// v0.10.0: geocoding und geolocator sind hier nicht mehr nötig.
 // Der Standort kommt aus locationVerificationService (Position) und
 // describeStateFor (Bundesland) - beide ohne eigene Geokodierung im
-// Screen. Vorher stand hier locationFromAddress() fuer die
+// Screen. Vorher stand hier locationFromAddress() für die
 // Ortseingabe per Freitext.
 import 'package:go_router/go_router.dart';
 
@@ -84,7 +84,7 @@ class _SettingsPrivacyOnceScreenState
   // Ohne Eingabefeld gibt es nichts zu entprellen: die Standortangabe
   // kommt jetzt aus der GPS-Position und liefert nur das Bundesland.
   //
-  // Der Freitext fuer den Bundesland-Filter ist einem Dropdown gewichen
+  // Der Freitext für den Bundesland-Filter ist einem Dropdown gewichen
   // - damit kann kein Tippfehler mehr die Filterung stillschweigend
   // aufheben ("bayrn" traf nie auf "Bayern").
 
@@ -101,9 +101,9 @@ class _SettingsPrivacyOnceScreenState
 
   /// Geburtstags-Stil (v0.10.0, eigene Seite in der Einrichtung).
   ///
-  /// Frueher nur beim App-Update nachfragbar (whats_new_screen.dart) und
+  /// Früher nur beim App-Update nachfragbar (whats_new_screen.dart) und
   /// im Profil-Edit. In der Einrichtung stand er nie - wer sich frisch
-  /// registriert hat, hatte den Default, ohne es gewaehlt zu haben.
+  /// registriert hat, hatte den Default, ohne es gewählt zu haben.
   String _birthdayStyle = BirthdayStyle.values.first;
 
   /// Musik-Geschmack (v0.10.0).
@@ -183,7 +183,7 @@ class _SettingsPrivacyOnceScreenState
   ///
   /// DER GRUND: In einer Erweiterung darf `setState` nicht aufgerufen
   /// werden (der Analyser erlaubt es nur in Instanzmitgliedern einer
-  /// State-Klasse). Diese Methode gehoert zur Klasse - die Erweiterung
+  /// State-Klasse). Diese Methode gehört zur Klasse - die Erweiterung
   /// ruft sie auf.
   void _setzeState(VoidCallback fn) => setState(fn);
 }

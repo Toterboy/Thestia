@@ -45,8 +45,8 @@ class SecureHive {
   static const String _metaBoxName = 'secure_hive_meta';
 
   // Eigener Namespace (secure_storage_namespaces.dart): die E2EE-Keys
-  // duerfen nicht im selben Keystore-Alias liegen wie Auth-Tokens - sonst
-  // loescht ein Dekrypt-Fehler hier beides.
+  // dürfen nicht im selben Keystore-Alias liegen wie Auth-Tokens - sonst
+  // löscht ein Dekrypt-Fehler hier beides.
   static const _androidOptions = AndroidOptions(
     storageNamespace: SecureNamespaces.signals,
   );

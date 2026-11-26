@@ -1,8 +1,8 @@
-"""Selbsttest fuer check_push_readiness.py.
+"""Selbsttest für check_push_readiness.py.
 
-Ein Checker, der nie ausloest, ist wertlos. Fuer jede der sechs im
+Ein Checker, der nie auslöst, ist wertlos. Für jede der sechs im
 Remote-Push gefundenen Fehlerklassen wird eine Kopie der Migrationen
-minimal muendlich gebrochen; der Checker MUSS dann anschlagen.
+minimal mündlich gebrochen; der Checker MUSS dann anschlagen.
 
     python tool/checks/check_push_readiness_selftest.py
 """
@@ -16,8 +16,8 @@ import tempfile
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -45,22 +45,22 @@ def m_anon_ohne_public(c):
 # Die Variante, um die es geht: match_proximity_spark mit dem eigenen
 # Token (Migration 185). Sie ist die einzige, die NACH dem Sweep aus
 # Migration 123 angelegt wurde - davor angelegte Varianten hat der Sweep
-# (er arbeitet ueber pg_proc) ohnehin erfasst.
+# (er arbeitet über pg_proc) ohnehin erfasst.
 UEBERLAST_SIG_6 = ('text[], text[], text, text[], text, text')
 
-# Die REVOKE-Formen, die im Repo fuer diese Variante vorkommen (alle
+# Die REVOKE-Formen, die im Repo für diese Variante vorkommen (alle
 # Schreibweisen, die der Checker liest).
 _UEBERLAST_REVOKES = (
     # BEFUND (11.11.2026): Die Signatur von match_proximity_spark hat
-    # sich geaendert - Migration 213 hat die Ortsangabe ergaenzt (8
+    # sich geändert - Migration 213 hat die Ortsangabe ergänzt (8
     # Parameter). Der Selbsttest muss die AKTUELLE Signatur mutieren:
-    # eine alte Signatur zu pruefen waere sinnlos (die gibt es nicht
-    # mehr, und der waere auch weiterhin gesperrt).
+    # eine alte Signatur zu prüfen wäre sinnlos (die gibt es nicht
+    # mehr, und der wäre auch weiterhin gesperrt).
     #
     # Migration 213 (einzeilig, die aktuelle Signatur):
     'revoke all on function public.match_proximity_spark(text[], text[], '
     'text, text[], text, text, text, text) from public, anon;',
-    # Frueher (Migration 185/207) - bleibt als Muster erhalten, damit der
+    # Früher (Migration 185/207) - bleibt als Muster erhalten, damit der
     # Test auch nach einem Rueckbau greift:
     'revoke all on function public.match_proximity_spark(text[], text[], '
     'text, text[], text, text) from public, anon;',
@@ -72,12 +72,12 @@ def m_overload_luecke(c, datei=''):
     # Migration 126 - dort fehlte nach der Mutation der REVOKE der
     # Variante profile_discovery_visible(uuid, uuid). Der Fall ist aber
     # KEIN Fehler mehr: die Variante wurde VOR dem Sweep aus Migration
-    # 123 angelegt, und der Sweep (er arbeitet ueber pg_proc) hat sie
-    # erfasst. Die Datenbank bestaetigt das: fuer "anon" ist sie nicht
+    # 123 angelegt, und der Sweep (er arbeitet über pg_proc) hat sie
+    # erfasst. Die Datenbank bestätigt das: für "anon" ist sie nicht
     # aufrufbar.
     #
-    # Der Fall, der zaehlt, ist der umgekehrte: eine Variante, die
-    # NACH dem Sweep angelegt wird. Dafuer steht Migration 185 - sie legt
+    # Der Fall, der zählt, ist der umgekehrte: eine Variante, die
+    # NACH dem Sweep angelegt wird. Dafür steht Migration 185 - sie legt
     # match_proximity_spark mit dem eigenen Token an. Ohne ihren REVOKE
     # bleibt die Variante aufrufbar, und genau das muss der Checker
     # melden.
@@ -85,9 +85,9 @@ def m_overload_luecke(c, datei=''):
     # BEFUND (09.11.2026): Die Sperren werden im Checker REPO-WEIT
     # gesammelt (siehe dessen Kommentar). Die Variante wird in
     # Migration 185 UND in Migration 207 gesperrt. Entfernt man das
-    # REVOKE nur aus EINER Datei, ist sie ueber die andere weiterhin
+    # REVOKE nur aus EINER Datei, ist sie über die andere weiterhin
     # gesperrt - der Checker meldet zu Recht nichts, und der Selbsttest
-    # waere wirkungslos.
+    # wäre wirkungslos.
     #
     # DESHALB: Die Mutation entfernt das REVOKE aus JEDER Datei, die
     # diese Variante sperrt. Die Datei-Liste wird unten ausgewertet.
@@ -100,14 +100,14 @@ def m_overload_luecke(c, datei=''):
 def m_prosrc_kommentar(c):
     # Muster OHNE Quotes: trifft auch das Wort im Kommentar des Bodies.
     # Das war der Originalfehler in 127 - die "sichere" chr(39)-Form ist
-    # ausdruecklich NICHT die Fehlerklasse.
+    # ausdrücklich NICHT die Fehlerklasse.
     return c.replace(
         "AND p.prosrc LIKE '%' || chr(39) || 'reason' || chr(39) || '%') THEN",
         "AND p.prosrc LIKE '%reason%') THEN", 1)
 
 
 def m_language_sql(c):
-    # LANGUAGE-sql-Funktion, die eine erst spaeter definierte Function ruft
+    # LANGUAGE-sql-Funktion, die eine erst später definierte Function ruft
     probe = ("CREATE OR REPLACE FUNCTION public.zz_selftest_probe()\n"
              "RETURNS boolean\n"
              "LANGUAGE sql\n"
@@ -134,8 +134,8 @@ def m_raise_bare(c):
 #: Eine Migration, die regprocedure benutzt, aber NICHTS sperrt.
 #:
 #: BEFUND (20.11.2026): Der Checker hielt jede Migration mit dem Wort
-#: "regprocedure" fuer einen Sweep. Viele Migrationen benutzen es nur,
-#: um die Definition EINER Funktion zu pruefen (pg_get_functiondef im
+#: "regprocedure" für einen Sweep. Viele Migrationen benutzen es nur,
+#: um die Definition EINER Funktion zu prüfen (pg_get_functiondef im
 #: Fail-Fast) - das ist kein Sweep. Dadurch wurde das Gate blind.
 KEIN_SWEEP_DATEI = '900_selftest_kein_sweep.sql'
 KEIN_SWEEP_INHALT = """-- Testdatei des Selbsttests: benutzt regprocedure und pg_proc,
@@ -173,7 +173,7 @@ MUTATIONS = [
     # BEFUND (20.11.2026): Migration 221 (die VOLATILE-Korrektur) hat
     # das Gate blind gemacht - sie benutzt "regprocedure", sperrt aber
     # nichts. Der Checker hat jede Migration mit dem Wort "regprocedure"
-    # als Sweep gehalten. Damit war die Fehlerklasse "2 Overloads" fuer
+    # als Sweep gehalten. Damit war die Fehlerklasse "2 Overloads" für
     # alles unsichtbar, was VOR der letzten Migration angelegt war.
     #
     # Dieser Fall legt eine Migration an, die regprocedure und pg_proc
@@ -197,11 +197,11 @@ for cls, desc, target, mutate, erwartet_klasse in MUTATIONS:
 
         # BEFUND (09.11.2026): Die Fehlerklasse "2 Overloads" muss ALLE
         # Migrationen treffen, die die Variante sperren - der Checker
-        # sammelt die Sperren repo-weit. Deshalb laeuft diese Mutation
-        # ueber jede Migrationsdatei; die Dateien, die nichts zu tun
-        # haben, bleiben unveraendert.
+        # sammelt die Sperren repo-weit. Deshalb läuft diese Mutation
+        # über jede Migrationsdatei; die Dateien, die nichts zu tun
+        # haben, bleiben unverändert.
         #
-        # Die uebrigen Fehlerklassen beziehen sich auf EINE Datei - fuer
+        # Die übrigen Fehlerklassen beziehen sich auf EINE Datei - für
         # sie bleibt der alte Ablauf (nur die Zieldatei wird mutiert).
         if cls in ('2 Overloads', '7 kein Sweep'):
             ziel_gefunden = False
@@ -217,7 +217,7 @@ for cls, desc, target, mutate, erwartet_klasse in MUTATIONS:
                 print(f'  UNGUELTIG     {cls:16} Mutation hat nichts geaendert')
                 continue
             if cls == '7 kein Sweep':
-                # Die Migration, die den Sweep vortaeuschen wuerde.
+                # Die Migration, die den Sweep vortäuschen würde.
                 (root / 'supabase' / 'migrations' / KEIN_SWEEP_DATEI).write_text(
                     KEIN_SWEEP_INHALT, encoding='utf-8', newline='\n')
         else:
@@ -240,7 +240,7 @@ for cls, desc, target, mutate, erwartet_klasse in MUTATIONS:
             capture_output=True)
         stdout = (r.stdout or b'').decode('utf-8', errors='replace')
         # Die Fehlerklasse in der Ausgabe kann eine andere sein als der
-        # Name des Falls: Fall 7 prueft die Fehlerklasse "2 Overloads".
+        # Name des Falls: Fall 7 prüft die Fehlerklasse "2 Overloads".
         detected = r.returncode != 0 and erwartet_klasse in stdout
         print(f'  {"OK          " if detected else "NICHT ERKANNT"} {cls:16} {desc}')
         if detected:

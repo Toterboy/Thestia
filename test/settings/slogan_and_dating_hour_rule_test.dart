@@ -5,14 +5,14 @@
 //   * "Bei Dating Hour irgendweise umsetzen, dass von beiden
 //      Geschlechtern welche in dem Event sind, wenn alle Hetero."
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * der Slogan steht als Ueberschrift des Willkommens-Screens (der
+// WAS HIER GEPRÜFT WIRD:
+//   * der Slogan steht als Überschrift des Willkommens-Screens (der
 //     erste Bildschirm, den ein Nutzer sieht) - in beiden Sprachen,
-//   * die Regeln der Dating Hour erklaeren, wie gepaart wird,
+//   * die Regeln der Dating Hour erklären, wie gepaart wird,
 //   * der Wartezustand sagt, worauf man wartet.
 //
 // DIE REGEL SELBST (Server) wird von
-// tool/checks/check_dating_hour_gender_mix.py am lebenden Server geprueft -
+// tool/checks/check_dating_hour_gender_mix.py am lebenden Server geprüft -
 // hier geht es um das, was der Nutzer davon sieht.
 import 'dart:io';
 
@@ -34,11 +34,11 @@ void main() {
 
   group('Der Slogan', () {
     test('er steht als Ueberschrift des Willkommens-Screens', () {
-      // DER WEG UEBER DIE TEXTE UND NICHT UEBER DEN BILDSCHIRM: Der
+      // DER WEG ÜBER DIE TEXTE UND NICHT ÜBER DEN BILDSCHIRM: Der
       // Willkommens-Screen zeigt seinen Inhalt erst, wenn das Logo
       // geladen ist (precacheImage) - im Test gibt es das Bild nicht,
       // der Screen bleibt also leer. Der Text wird deshalb hier
-      // geprueft (und der Bildschirm in der Quelle).
+      // geprüft (und der Bildschirm in der Quelle).
       expect(
         L10n.tWithoutContext('welcome.t1'),
         'Dating, das dich ins echte Leben zurückführt.',
@@ -74,7 +74,7 @@ void main() {
 
     test('er steht auch im Store-Eintrag', () {
       // Der Store-Eintrag ist der zweite Ort, an dem der Slogan steht
-      // (die kurze Beschreibung). Ohne das waeren App und Store
+      // (die kurze Beschreibung). Ohne das wären App und Store
       // verschiedene Apps.
       for (final sprache in ['de-DE', 'en-US']) {
         final datei = File(
@@ -105,7 +105,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(tester.takeException(), isNull);
-      // Die neue Regel steht in der Uebersicht (zusammengeklappt -
+      // Die neue Regel steht in der Übersicht (zusammengeklappt -
       // der Titel ist sichtbar, der Text wird beim Aufklappen gezeigt).
       expect(
         find.text('Wer mit wem zusammenkommt'),

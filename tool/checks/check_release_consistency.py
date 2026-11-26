@@ -1,43 +1,43 @@
 #!/usr/bin/env python3
-"""Prueft, ob alle Release-Artefakte aus EINEM Build stammen.
+"""Prüft, ob alle Release-Artefakte aus EINEM Build stammen.
 
 Anlass (2026-10-05): Bei v0.9.2 lagen Universelle APK und AAB aus
 verschiedenen Baustaenden im selben Ordner. Der Grund war ein Werkzeug,
 nicht ein Fehler im Code: `build_release.ps1` baut ohne die Schalter
 `-UniversalApk` / `-SplitPerAbi` gar nichts und meldet am Ende trotzdem
-"Fertig". Ein alter Build wurde daraufhin fuer einen neuen gehalten.
+"Fertig". Ein alter Build wurde daraufhin für einen neuen gehalten.
 
-Diese Pruefung beantwortet die Frage, die ein Zeitstempel-Print im
-Bauskript nicht zuverlaessig beantwortet: sind die Dateien in diesem
-Ordner ueberhaupt ein Release?
+Diese Prüfung beantwortet die Frage, die ein Zeitstempel-Print im
+Bauskript nicht zuverlässig beantwortet: sind die Dateien in diesem
+Ordner überhaupt ein Release?
 
-Geprueft wird:
+Geprüft wird:
 
-1. **Einheitlicher Baustand.** Alle oeffentlichen Artefakte liegen
+1. **Einheitlicher Baustand.** Alle öffentlichen Artefakte liegen
    innerhalb eines Zeitfensters. Sonst existiert der Ordner neben
    sich selbst.
 2. **Berechtigungen im BINÄREN Manifest** jedes APK, nicht in der
    Quelldatei. `ACCESS_FINE_LOCATION` muss weg sein, die
-   Speicherzugriffe muessen begrenzt sein.
-3. **Keine `.env` im Artefakt.** Release-Builds duerfen die Datei nicht
-   enthalten - sie waere sonst ein vollstaendiger Konfigurationsdump im
+   Speicherzugriffe müssen begrenzt sein.
+3. **Keine `.env` im Artefakt.** Release-Builds dürfen die Datei nicht
+   enthalten - sie wäre sonst ein vollständiger Konfigurationsdump im
    Artefakt.
-4. **Stammdaten stimmen ueberein.** versionCode, versionName,
-   minSdk und targetSdk muessen in allen APKs gleich sein. Ein
-   gemischter Ordner faellt hier zuverlaessig durch, auch wenn die
-   Zeitstempel einmal taeuschen.
-5. **Screenshots vorhanden.** Fuenf Screens als Pflicht fuer den
+4. **Stammdaten stimmen überein.** versionCode, versionName,
+   minSdk und targetSdk müssen in allen APKs gleich sein. Ein
+   gemischter Ordner fällt hier zuverlässig durch, auch wenn die
+   Zeitstempel einmal täuschen.
+5. **Screenshots vorhanden.** Fünf Screens als Pflicht für den
    Store-Eintrag.
 
 Das Skript beendet sich mit Status 1, wenn etwas nicht stimmt, und
-nennt jeden einzelnen Fund. Ein Fehlschlag ist hier kein Aerger,
+nennt jeden einzelnen Fund. Ein Fehlschlag ist hier kein Ärger,
 sondern die Information, auf der ein Release beruht.
 
 Aufruf::
 
     python tool/checks/check_release_consistency.py
 
-Zusaetzlich ``--allow-mixed`` fuer den Zwischenstand waehrend eines
+Zusätzlich ``--allow-mixed`` für den Zwischenstand während eines
 Builds, wenn erst ein Teil der Artefakte neu ist.
 """
 
@@ -54,8 +54,8 @@ import zipfile
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -75,10 +75,10 @@ ROOT = _projektwurzel()
 #
 # BEFUND (07.11.2026): Hier stand fest 'releases/v0.9.2'. Der Ordner
 # ist damit auf eine alte Version verklebt: die Abnahme von v0.10.0
-# pruefte die Dateien von v0.9.2 und meldete "9 Artefakte: ein Build,
-# Berechtigungen, Versionen ok" - fuer Dateien, die zwei Versionen alt
+# prüfte die Dateien von v0.9.2 und meldete "9 Artefakte: ein Build,
+# Berechtigungen, Versionen ok" - für Dateien, die zwei Versionen alt
 # waren. Der Ordner folgt jetzt der Version aus pubspec.yaml; wer einen
-# anderen Ordner pruefen will, nennt ihn mit --dir.
+# anderen Ordner prüfen will, nennt ihn mit --dir.
 SHOT_DIR = os.path.join(ROOT, 'fastlane', 'metadata', 'android', 'de-DE',
                         'images', 'phoneScreenshots')
 
@@ -86,27 +86,27 @@ SHOT_DIR = os.path.join(ROOT, 'fastlane', 'metadata', 'android', 'de-DE',
 #
 # BEFUND: Die Screenshot-APK war eine KOPIE des Play-APKs. Damit galt
 # FLAG_SECURE - und Android blockiert mit FLAG_SECURE jeden Screenshot.
-# In der installierten APK war es deshalb unmoeglich, die Store-Bilder
+# In der installierten APK war es deshalb unmöglich, die Store-Bilder
 # aufzunehmen. Die Screenshot-APK wird jetzt mit
 # THESTIA_ALLOW_SCREENSHOTS=true gebaut (build_release.ps1
 # -ScreenshotApk), und der Check stellt das hier sicher.
 TESTAPK_DIR = os.path.join(ROOT, 'releases', 'testapk')
 
-# Fenstergroesse in Sekunden. Ein Release baut alle Artefakte in
+# Fenstergrösse in Sekunden. Ein Release baut alle Artefakte in
 # wenigen Minuten; zwei Stunden ist weit genug, um einen abgebrochenen
-# und neu gestarteten Lauf zu ueberbruecken, und eng genug, um
+# und neu gestarteten Lauf zu überbrücken, und eng genug, um
 # "gestern gebaut" zu erkennen.
 FRESHNESS_WINDOW_S = 2 * 3600
 
-# v0.10.0: 06_datenschutz ist dazugekommen. Ohne diesen Eintrag haette
+# v0.10.0: 06_datenschutz ist dazugekommen. Ohne diesen Eintrag hätte
 # der Check das sechste Bild stillschweigend ignoriert - er meldet nur
-# FEHLENDE Bilder, keine ueberzaehligen, und die Erfolgsmeldung stand
+# FEHLENDE Bilder, keine überzähligen, und die Erfolgsmeldung stand
 # fest auf "5".
 #
 # 31.10.2026: Die Kacheln sind neu nummeriert (die Aktuelles-Kachel
 # kam als zweite dazu, der Hell/Dunkel-Split als sechste). Die Namen
-# hier sind die KACHELNamen - sie muessen mit dem Store-Ordner
-# uebereinstimmen, sonst meldet der Check zu Recht ein fehlendes Bild.
+# hier sind die KACHELNamen - sie müssen mit dem Store-Ordner
+# übereinstimmen, sonst meldet der Check zu Recht ein fehlendes Bild.
 EXPECTED_SHOTS = ['01_willkommen', '02_aktuelles', '03_chat',
                   '04_entdecken', '05_anpassen', '06_hell_dunkel',
                   '07_eisbrecher', '08_datenschutz']
@@ -120,15 +120,15 @@ FORBIDDEN_PERMISSIONS = ['android.permission.ACCESS_BACKGROUND_LOCATION',
 # Berechtigungen, die nur mit einer Obergrenze erlaubt sind.
 #
 # BEFUND (07.11.2026): ACCESS_FINE_LOCATION stand hier auf der
-# Verbotsliste - richtig fuer v0.9.2, aber falsch fuer v0.10.0. Auf
-# Android 11 und aelter verlangt Android fuer den BLE-Scan die genaue
+# Verbotsliste - richtig für v0.9.2, aber falsch für v0.10.0. Auf
+# Android 11 und älter verlangt Android für den BLE-Scan die genaue
 # Standortberechtigung; ohne sie blockiert das System den Scan still
 # (der Befund vom 06.11.2026). Die Berechtigung ist deshalb wieder
-# da, aber begrenzt auf maxSdkVersion=30 - auf aktuellen Geraeten
-# aendert sich nichts.
+# da, aber begrenzt auf maxSdkVersion=30 - auf aktuellen Geräten
+# ändert sich nichts.
 #
 # Die Regel lautet also nicht "darf nicht vorkommen", sondern
-# "wenn, dann nur mit dieser Obergrenze". Genau das prueft der Code.
+# "wenn, dann nur mit dieser Obergrenze". Genau das prüft der Code.
 MAXSDK_PERMISSIONS = {
     'android.permission.READ_EXTERNAL_STORAGE': 32,
     'android.permission.WRITE_EXTERNAL_STORAGE': 28,
@@ -139,7 +139,7 @@ MAXSDK_PERMISSIONS = {
 
 
 class Report:
-    """Sammelt Befunde und haelt sie lesbar."""
+    """Sammelt Befunde und hält sie lesbar."""
 
     def __init__(self):
         self.failures = []
@@ -195,7 +195,7 @@ def dump_permissions(aapt2, apk):
 def manifest_meta(aapt2, apk, name):
     """Liest den Wert eines <meta-data>-Eintrags aus dem Manifest.
 
-    Gibt den Wert als String zurueck, oder None wenn es den Eintrag
+    Gibt den Wert als String zurück, oder None wenn es den Eintrag
     nicht gibt.
 
     ACHTUNG - der Typ ist nicht stabil (31.10.2026): aapt2 kompiliert
@@ -209,7 +209,7 @@ def manifest_meta(aapt2, apk, name):
         A: ...android:value(0x01010024)=(type 0x12)0xffffffff (Raw: "true")
 
     Deshalb werden beide Formen gelesen. Wer nur nach `Raw: "..."`
-    sucht, findet bei einem Boolean-Wert nichts und faelschlich
+    sucht, findet bei einem Boolean-Wert nichts und fälschlich
     "kein Eintrag".
     """
     try:
@@ -222,13 +222,13 @@ def manifest_meta(aapt2, apk, name):
         return None, out.stderr.strip() or 'aapt2-Ausgabe nicht lesbar'
 
     # Der Manifest-Baum ist eine Klammerhierarchie: jeder Block beginnt
-    # mit "E: " (eingerueckt) und endet vor dem naechsten "E: ".
+    # mit "E: " (eingerückt) und endet vor dem nächsten "E: ".
     bloecke = re.split(r'\n(?=\s*E: )', out.stdout)
     for block in bloecke:
         if 'android:name(0x01010003)="%s"' % name not in block:
             continue
-        # Nur das WERT-Attribut lesen - der Block enthaelt auch das
-        # name-Attribut, und dessen "Raw: ..." waere der Name, nicht
+        # Nur das WERT-Attribut lesen - der Block enthält auch das
+        # name-Attribut, und dessen "Raw: ..." wäre der Name, nicht
         # der Wert.
         treffer = re.search(
             r'android:value\(0x01010024\)=([^\n]*)', block)
@@ -331,8 +331,8 @@ def _proto_text(roh):
 def _proto_element(roh):
     """Liefert (name, {attribut: wert}, [kinder]) eines XmlElement.
 
-    Das Manifest eines AAB ist Protobuff, kein Binaer-XML - deshalb
-    laesst sich aapt2 dafuer nicht benutzen. Das Format (AOSP
+    Das Manifest eines AAB ist Protobuff, kein Binär-XML - deshalb
+    lässt sich aapt2 dafür nicht benutzen. Das Format (AOSP
     resources.proto):
 
         XmlElement.name      = 3 (string)
@@ -395,9 +395,9 @@ def _proto_element(roh):
 def dump_aab_manifest(aab):
     """Liest versionCode, versionName und die Berechtigungen aus dem AAB.
 
-    WARUM ueberhaupt: In den Play Store geht das AAB, nicht das APK.
-    Die APK-Pruefung oben sah bisher nur an den APK-Dateien vorbei -
-    die Datei, die tatsaechlich hochgeladen wird, war ungeprueft.
+    WARUM überhaupt: In den Play Store geht das AAB, nicht das APK.
+    Die APK-Prüfung oben sah bisher nur an den APK-Dateien vorbei -
+    die Datei, die tatsächlich hochgeladen wird, war ungeprüft.
     """
     try:
         with zipfile.ZipFile(aab) as z:
@@ -440,7 +440,7 @@ def dump_aab_manifest(aab):
 
 
 def has_env_file(apk):
-    """True, wenn das Artefakt eine .env enthaelt."""
+    """True, wenn das Artefakt eine .env enthält."""
     try:
         with zipfile.ZipFile(apk) as z:
             for n in z.namelist():
@@ -460,26 +460,26 @@ def public_artifacts():
             continue
         if 'ADMIN' in name:
             # Admin-Builds sind bewusst quarantanisieriert, werden
-            # getrennt geprueft und nicht mitvermischt.
+            # getrennt geprüft und nicht mitvermischt.
             continue
         out.append(os.path.join(RELEASE_DIR, name))
     return out
 
 
 def berechtigungs_probleme(perms):
-    """Prueft eine Berechtigungsliste gegen die Regeln.
+    """Prüft eine Berechtigungsliste gegen die Regeln.
 
-    Gibt eine Liste von Fehlertexten zurueck (leer = alles in Ordnung).
+    Gibt eine Liste von Fehlertexten zurück (leer = alles in Ordnung).
 
     Die Regeln:
-      * `FORBIDDEN_PERMISSIONS` duerfen gar nicht vorkommen.
-      * `MAXSDK_PERMISSIONS` duerfen vorkommen, aber nur mit genau der
-        angegebenen Obergrenze. Ohne Obergrenze waere die Berechtigung
-        auf ALLEN Geraeten aktiv - das ist beim Standort genau das,
+      * `FORBIDDEN_PERMISSIONS` dürfen gar nicht vorkommen.
+      * `MAXSDK_PERMISSIONS` dürfen vorkommen, aber nur mit genau der
+        angegebenen Obergrenze. Ohne Obergrenze wäre die Berechtigung
+        auf ALLEN Geräten aktiv - das ist beim Standort genau das,
         was Google Play moniert.
 
     Getrennt in eine eigene Funktion, damit der Selbsttest sie ohne
-    eine fertige APK pruefen kann.
+    eine fertige APK prüfen kann.
     """
     probleme = []
     for verboten in FORBIDDEN_PERMISSIONS:
@@ -620,14 +620,14 @@ def main():
         if not rep.failures:
             rep.ok('Berechtigungen, .env-Freiheit und Stammdaten aller APKs ok')
 
-    # --- 4c) Das AAB - die Datei, die tatsaechlich hochgeladen wird ---
+    # --- 4c) Das AAB - die Datei, die tatsächlich hochgeladen wird ---
     #
-    # BEFUND (07.11.2026): Das AAB wurde ueberhaupt nicht geprueft. Es
+    # BEFUND (07.11.2026): Das AAB wurde überhaupt nicht geprüft. Es
     # ist aber genau die Datei, die in den Play Store geht. Ein AAB
     # aus einem anderen Build (etwa versionCode 37, weil der Ordner
-    # noch eine alte Datei enthaelt) waere beim Upload eine
-    # Katastrophe - der Store nimmt die hoehere versionCode nicht
-    # an, und der Fehler faellt erst nach dem Upload auf.
+    # noch eine alte Datei enthält) wäre beim Upload eine
+    # Katastrophe - der Store nimmt die höhere versionCode nicht
+    # an, und der Fehler fällt erst nach dem Upload auf.
     aabs = [a for a in arts if a.endswith('.aab')]
     for aab in aabs:
         name = os.path.basename(aab)
@@ -646,7 +646,7 @@ def main():
 
         # Die Split-APKs tragen per Konvention einen ABI-Zusatz
         # (armv7=1030, arm64=2030, x86_64=4030 bei Basis 30). Das AAB
-        # traegt den nackten Basis-Wert.
+        # trägt den nackten Basis-Wert.
         if (daten['versionCode'] % 1000) != (stammdaten['versionCode'] % 1000):
             rep.fail('%s: versionCode=%s, aber die APKs haben %s '
                      '(gemischter Ordner)'
@@ -657,7 +657,7 @@ def main():
                      '(gemischter Ordner)'
                      % (name, daten['versionName'], stammdaten['versionName']))
 
-        # Die Berechtigungen des AAB gegen dieselben Regeln pruefen
+        # Die Berechtigungen des AAB gegen dieselben Regeln prüfen
         # wie die der APKs - im Manifest des AAB ist alles enthalten,
         # auch das, was aus den Paketen hineingemerged wurde.
         for problem in berechtigungs_probleme(daten['permissions']):
@@ -671,23 +671,23 @@ def main():
 
     # --- 4b) Screenshot-Freigabe ---------------------------------------
     #
-    # Zwei gegenlaeufige Anforderungen, beide geprueft:
+    # Zwei gegenläufige Anforderungen, beide geprüft:
     #
-    # 1) Die oeffentlichen APKs duerfen KEINE Screenshots erlauben.
-    #    FLAG_SECURE (MainActivity) ist ein Privatsphaerenschutz: ohne
+    # 1) Die öffentlichen APKs dürfen KEINE Screenshots erlauben.
+    #    FLAG_SECURE (MainActivity) ist ein Privatsphärenschutz: ohne
     #    ihn kann jeder ein Foto eines Chats oder eines Profils einer
-    #    fremden Person machen. Ein oeffentlicher Build mit
-    #    "allowScreenshots=true" waere eine stille Abschaltung genau
-    #    dieses Schutzes - und die waere im Store nicht sichtbar.
+    #    fremden Person machen. Ein öffentlicher Build mit
+    #    "allowScreenshots=true" wäre eine stille Abschaltung genau
+    #    dieses Schutzes - und die wäre im Store nicht sichtbar.
     #
     # 2) Die Screenshot-APK MUSS Screenshots erlauben. Sie ist genau
-    #    dafuer da - sonst laesst sich damit kein Store-Bild
+    #    dafür da - sonst lässt sich damit kein Store-Bild
     #    aufnehmen. Bis 31.10.2026 war sie eine Kopie des Play-APKs
     #    (also "false"), und genau deshalb war es in der installierten
-    #    APK unmoeglich, Screenshots zu machen.
+    #    APK unmöglich, Screenshots zu machen.
     #
     # Beide Werte werden aus dem BINAREN Manifest gelesen, nicht aus
-    # dem Quelltext - nur so zaehlt, was tatsaechlich im Artefakt ist.
+    # dem Quelltext - nur so zählt, was tatsächlich im Artefakt ist.
     if aapt2:
         for apk in apks:
             name = os.path.basename(apk)

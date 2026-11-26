@@ -173,12 +173,12 @@ class ReportService {
   }) async {
     // DER BOX-VERSUCH (BEFUND 18.11.2026, gefunden von einem Test): Der
     // Dienst wird erst beim ersten Melden erzeugt - sein "initialize"
-    // laeuft als Microtask. Die erste Meldung kam deshalb IMMER mit einem
+    // läuft als Microtask. Die erste Meldung kam deshalb IMMER mit einem
     // "LateInitializationError" heraus: sie wurde weder lokal gespeichert
-    // noch an den Support uebermittelt - und der Nutzer sah keine
-    // Bestaetigung. Eine Meldung, die nicht ankommt, ist keine Meldung.
+    // noch an den Support übermittelt - und der Nutzer sah keine
+    // Bestätigung. Eine Meldung, die nicht ankommt, ist keine Meldung.
     //
-    // DER WEG: Vor dem ersten Zugriff wird der Speicher geoeffnet.
+    // DER WEG: Vor dem ersten Zugriff wird der Speicher geöffnet.
     if (!_initialized) await initialize();
     final report = UserReport(
       // Nicht-deterministischer Hive-Key OHNE PII (X-M-07): Die User-IDs
@@ -302,7 +302,7 @@ class ReportService {
 
   void dispose() {
     // DER STORE IST VIELLEICHT NIE GEÖFFNET WORDEN (der Dienst wurde
-    // nie benutzt) - dann gibt es nichts zu schliessen.
+    // nie benutzt) - dann gibt es nichts zu schließen.
     if (!_initialized) return;
     _box.close();
   }
@@ -394,7 +394,7 @@ Future<void> showReportUserDialog({
                   const SizedBox(height: 12),
                 ],
                 Text(
-                  'Waehle den Grund fuer die Meldung:',
+                  'Wähle den Grund für die Meldung:',
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),

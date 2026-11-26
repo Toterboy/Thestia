@@ -1,18 +1,18 @@
 // Das Setzen eines neuen Passworts (Recovery) - ungetestet (1,1 %).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/reset_password_screen.dart 91 offene Zeilen bei 92
 // Zeilen gesamt - der Bildschirm, den der Nutzer nach dem Klick auf den
 // Reset-Link in der E-Mail sieht, war komplett ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne ausstehenden Reset wird gar nichts angezeigt (der Router
 //     leitet ohnehin um),
 //   * ein zu kurzes Passwort wird abgewiesen,
-//   * zwei verschiedene Passwoerter werden abgewiesen,
+//   * zwei verschiedene Passwörter werden abgewiesen,
 //   * ein gutes Passwort wird gesetzt - und danach sind ALLE Sessions
-//     ungueltig (der alte Refresh-Token darf nicht weiterleben),
-//   * der Abbruch raeumt die halbe Reset-Session auf.
+//     ungültig (der alte Refresh-Token darf nicht weiterleben),
+//   * der Abbruch räumt die halbe Reset-Session auf.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -73,7 +73,7 @@ class _Keystore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {
-    // Der Test loescht kein Profil im Keystore.
+    // Der Test löscht kein Profil im Keystore.
   }
 }
 
@@ -87,7 +87,7 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
-    // DER SPEICHER: der Chat-Dienst oeffnet beim Abmelden seine Box.
+    // DER SPEICHER: der Chat-Dienst öffnet beim Abmelden seine Box.
     await mockHive();
 
     server = FakeSupabaseServer(userId: 'ich');
@@ -108,7 +108,7 @@ void main() {
     // DIE SESSION: Der Recovery-Link bringt eine Session mit - ohne sie
     // kann der Client das neue Passwort gar nicht setzen.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
-    // Die Anmeldung selbst zaehlt nicht - erst danach zaehlen die
+    // Die Anmeldung selbst zählt nicht - erst danach zählen die
     // Aufrufe des Tests.
     server.pfade.clear();
   });
@@ -116,7 +116,7 @@ void main() {
   /// Baut den Bildschirm.
   ///
   /// [resetStehtAus] entscheidet, ob der Router den Reset-Screen
-  /// ueberhaupt showing darf.
+  /// überhaupt showing darf.
   Future<ProviderContainer> zeigeScreen(
     WidgetTester tester, {
     bool resetStehtAus = true,
@@ -141,8 +141,8 @@ void main() {
     addTearDown(router.dispose);
 
     // DER CONTAINER: Der Reset-Status wird wirklich gesetzt (nicht
-    // ueberschrieben) - so kann der Test zusehen, dass er nach dem
-    // Abschluss zurueckgesetzt wird.
+    // überschrieben) - so kann der Test zusehen, dass er nach dem
+    // Abschluss zurückgesetzt wird.
     final container = ProviderContainer(
       overrides: <Override>[
         localStorageProvider.overrideWithValue(_Speicher()),
@@ -254,7 +254,7 @@ void main() {
         isNotEmpty,
         reason: 'Das neue Passwort muss beim Server gesetzt werden.',
       );
-      // Und der Reset-Status ist zurueckgesetzt - der Router kann
+      // Und der Reset-Status ist zurückgesetzt - der Router kann
       // wieder normal laufen.
       expect(
         container.read(passwordRecoveryPendingProvider),
@@ -263,10 +263,10 @@ void main() {
             'Nach dem Reset darf der Router den Reset-Screen nicht mehr '
             'erzwingen.',
       );
-      // BEFUND (18.11.2026): Die Bestaetigung war nur einen Frame lang
+      // BEFUND (18.11.2026): Die Bestätigung war nur einen Frame lang
       // sichtbar - der Bildschirm hat sich selbst zur Anmeldung
       // umgeleitet. Der Nutzer wusste nicht, ob sein Passwort wirklich
-      // geaendert wurde.
+      // geändert wurde.
       expect(
         find.text(L10n.tWithoutContext('reset.doneTitle')),
         findsOneWidget,

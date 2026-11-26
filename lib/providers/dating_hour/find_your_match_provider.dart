@@ -46,7 +46,7 @@ class FindYourMatchNotifier extends StateNotifier<List<UserProfile>> {
   ///
   /// Das Ergebnis des Servers wird durchgereicht (Migration 197):
   /// `isMatch` (es ist ein Funke entstanden) und `alreadyMatched`
-  /// (es gab schon einen Funke - der Like waere sonst still
+  /// (es gab schon einen Funke - der Like wäre sonst still
   /// verschwunden).
   Future<({bool ok, bool isMatch, bool alreadyMatched})> like() async {
     final candidate = current;

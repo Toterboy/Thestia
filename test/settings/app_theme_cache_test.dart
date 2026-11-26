@@ -5,9 +5,9 @@ import 'package:thestia/theme/app_theme.dart';
 void main() {
   group('AppTheme-Cache', () {
     test('of() liefert fuer gleiche (Schema, Helligkeit) dieselbe Instanz', () {
-      // Stabile Identitaet ist der Kern des Fixes: nur so ersetzt ein
-      // Settings-Change das Theme nicht durch eine neue Objekt-Identitaet
-      // (was previously eine erneute Theme-Animation ausloeste).
+      // Stabile Identität ist der Kern des Fixes: nur so ersetzt ein
+      // Settings-Change das Theme nicht durch eine neue Objekt-Identität
+      // (was previously eine erneute Theme-Animation auslöste).
       final a = AppTheme.of(ThestiaTheme.classic, Brightness.light);
       final b = AppTheme.of(ThestiaTheme.classic, Brightness.light);
       expect(identical(a, b), isTrue);

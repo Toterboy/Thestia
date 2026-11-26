@@ -1,21 +1,21 @@
-// Die Hive-Adapter der Signal-Schluessel.
+// Die Hive-Adapter der Signal-Schlüssel.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/models/signal/signal_key_models.g.dart 113 offene Zeilen bei
 // nur 22 % Deckung - der gesamte Speichervertrag der Ende-zu-Ende-
-// Verschluesselung war ungetestet.
+// Verschlüsselung war ungetestet.
 //
-// DER GRUND: In diesen Adaptern steckt die Schluessel-Verwaltung der
+// DER GRUND: In diesen Adaptern steckt die Schlüssel-Verwaltung der
 // App. Schreibt ein Adapter ein Feld falsch (oder in der falschen
-// Reihenfolge), kommt danach ein fremdes Schluessel-Paar aus der Box -
-// und die Nachrichten wuerden nicht mehr lesbar sein. Ein Fehler
-// faellt hier niemandem auf: die App schweigt einfach.
+// Reihenfolge), kommt danach ein fremdes Schlüssel-Paar aus der Box -
+// und die Nachrichten würden nicht mehr lesbar sein. Ein Fehler
+// fällt hier niemandem auf: die App schweigt einfach.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * jedes Objekt uebersteht den Weg durch die Box (hin und zurueck),
-//   * alle Felder kommen unveraendert an,
-//   * die Typ-IDs sind eindeutig (zwei gleiche IDs wuerden die Box
-//     zerstoeren),
+// WAS HIER GEPRÜFT WIRD:
+//   * jedes Objekt übersteht den Weg durch die Box (hin und zurück),
+//   * alle Felder kommen unverändert an,
+//   * die Typ-IDs sind eindeutig (zwei gleiche IDs würden die Box
+//     zerstören),
 //   * die Adapter sind gleich, wenn sie gleich sind.
 import 'dart:io';
 
@@ -52,12 +52,12 @@ void main() {
     }
   });
 
-  /// Schreibt ein Objekt in die Box und liest es zurueck.
+  /// Schreibt ein Objekt in die Box und liest es zurück.
   ///
   /// DER WEG: Hive liefert ein gespeichertes Objekt aus dem Speicher
-  /// zurueck - der Adapter wuerde gar nicht benutzt. Erst nach dem
-  /// Schliessen und Wiederoeffnen der Box wird wirklich von der Platte
-  /// gelesen (und damit der `read` des Adapters ausgefuehrt).
+  /// zurück - der Adapter würde gar nicht benutzt. Erst nach dem
+  /// Schließen und Wiederöffnen der Box wird wirklich von der Platte
+  /// gelesen (und damit der `read` des Adapters ausgeführt).
   Future<T> hinUndZurueck<T>(String schluessel, T objekt) async {
     final box = await Hive.openBox<Object>('adapter_test');
     await box.put(schluessel, objekt as Object);
@@ -177,7 +177,7 @@ void main() {
 
     test('die Typ-IDs sind eindeutig', () async {
       // DER GRUND: Zwei Adapter mit derselben ID machen die Box
-      // unbrauchbar - beim Lesen wuerde der falsche Adapter benutzt.
+      // unbrauchbar - beim Lesen würde der falsche Adapter benutzt.
       final ids = <int>[
         SignalIdentityKeyPairAdapterAdapter().typeId,
         SignalPreKeyRecordAdapterAdapter().typeId,
@@ -200,9 +200,9 @@ void main() {
       // DER GRUND: Der Hive vergleicht die Adapter, um zu entscheiden,
       // ob ein Wert neu geschrieben werden muss.
       //
-      // DER WEG: Fuer jeden Adapter gibt es zwei Wege - "identisch"
+      // DER WEG: Für jeden Adapter gibt es zwei Wege - "identisch"
       // (dieselbe Instanz) und "gleich" (zwei Instanzen desselben
-      // Typs). Beide muessen geprueft werden, sonst bleibt der zweite
+      // Typs). Beide müssen geprüft werden, sonst bleibt der zweite
       // Zweig des Vergleichs ungetestet.
       final baue = <TypeAdapter<dynamic> Function()>[
         SignalIdentityKeyPairAdapterAdapter.new,

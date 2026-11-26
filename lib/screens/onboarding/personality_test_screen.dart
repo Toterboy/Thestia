@@ -137,7 +137,7 @@ class _PersonalityTestScreenState extends ConsumerState<PersonalityTestScreen> {
 
   /// Schreibt den Test-Flag verifiziert in die profiles-Tabelle
   /// (siehe [SupabaseDatabaseService.updateSetupFlagsAndVerify]).
-  /// Sichert die Setup-Flags und - falls vorhanden - den Persoenlichkeitstyp.
+  /// Sichert die Setup-Flags und - falls vorhanden - den Persönlichkeitstyp.
   ///
   /// Der TYP wird mitgeschrieben (v0.10.0, Security-Audit).
   ///
@@ -146,11 +146,11 @@ class _PersonalityTestScreenState extends ConsumerState<PersonalityTestScreen> {
   /// behielt damit dauerhaft den Default 'INTJ'. Das ist schlimmer als
   /// es aussieht: `profile_to_jsonb` und `get_match_partner_profile`
   /// liefern `personality_type` an ALLE anderen weiter. Der letzte
-  /// Schritt der Einrichtung war damit fuer niemanden sichtbar, und das
+  /// Schritt der Einrichtung war damit für niemanden sichtbar, und das
   /// Matching lief gegen den Default.
   ///
-  /// Ohne Typ (Ueberspringen) wird nichts geschrieben - es gibt dann
-  /// keinen, und 'INTJ' als Platzhalter zu erfinden waere eine
+  /// Ohne Typ (Überspringen) wird nichts geschrieben - es gibt dann
+  /// keinen, und 'INTJ' als Platzhalter zu erfinden wäre eine
   /// erfundene Tatsache.
   Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
     if (!SupabaseService.isInitialized) return true;
@@ -282,18 +282,18 @@ class _PersonalityTestScreenState extends ConsumerState<PersonalityTestScreen> {
                       await ref
                           .read(settingsProvider.notifier)
                           .completePersonalityTest();
-                      // Flags auch beim Ueberspringen serverseitig sichern
+                      // Flags auch beim Überspringen serverseitig sichern
                       // (v0.10.0, Security-Audit).
                       //
                       // BUG: der Skip-Pfad speicherte nur lokal. Nach
                       // Neuinstallation oder Login auf einem zweiten
-                      // Geraet lieferte der Server
+                      // Gerät lieferte der Server
                       // personality_test_completed=false, und der
                       // Router zeigte den Test erneut - obwohl die
                       // Kommentare das als behoben beschrieben.
                       //
                       // Der Typ wird hier bewusst NICHT geschrieben:
-                      // beim Ueberspringen gibt es keinen.
+                      // beim Überspringen gibt es keinen.
                       final flagsSaved = await _persistSetupFlagsToServer();
                       if (!flagsSaved) {
                         messenger?.showSnackBar(

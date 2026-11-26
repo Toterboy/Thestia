@@ -1,19 +1,19 @@
-// Die Kamera-Attrappe fuer die Tests.
+// Die Kamera-Attrappe für die Tests.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/verification/parts/verificationvideoscreenstate.dart 263
 // offene Zeilen bei 334 gesamt - der ganze Screen mit der
 // Kamera-Aufnahme war ungetestet.
 //
-// DER WEG: Die Kamera spricht ueber die Plattform-Schnittstelle
-// (`CameraPlatform.instance`) - nicht ueber einen MethodChannel. Der
-// Test kann sie also durch einen Ersatz ziehen, ganz ohne Aenderung
+// DER WEG: Die Kamera spricht über die Plattform-Schnittstelle
+// (`CameraPlatform.instance`) - nicht über einen MethodChannel. Der
+// Test kann sie also durch einen Ersatz ziehen, ganz ohne Änderung
 // am Produktionscode.
 //
 // WAS DIE ATTRAPPE KANN:
 //   * eine Kamera melden (die App fragt sie ab),
 //   * die Aufnahme starten und stoppen (mit echter Datei),
-//   * zaehlen, wie oft gefragt wurde (das prueft die Offenlegung).
+//   * zählen, wie oft gefragt wurde (das prüft die Offenlegung).
 import 'dart:async';
 import 'dart:io';
 
@@ -23,8 +23,8 @@ import 'package:flutter/widgets.dart';
 /// Die Kamera-Attrappe.
 ///
 /// DER WEG: Die Basisklasse wirft bei jedem Aufruf "nicht
-/// implementiert" - die Attrappe ueberschreibt nur, was die App
-/// wirklich benutzt. Ruft die App etwas anderes auf, faellt das im
+/// implementiert" - die Attrappe überschreibt nur, was die App
+/// wirklich benutzt. Ruft die App etwas anderes auf, fällt das im
 /// Test sofort auf (statt still zu scheitern).
 class FakeCameraPlatform extends CameraPlatform {
   /// Wie oft wurde die Kamera angefragt?
@@ -39,17 +39,17 @@ class FakeCameraPlatform extends CameraPlatform {
   /// eigenen Namen - der Test braucht also eine echte Datei.
   String? aufnahmeDatei;
 
-  /// Meldet die Attrappe ueberhaupt eine Kamera?
+  /// Meldet die Attrappe überhaupt eine Kamera?
   final bool hatKamera;
 
-  /// Scheitert das Oeffnen der Kamera (der Fehlerfall)?
+  /// Scheitert das Öffnen der Kamera (der Fehlerfall)?
   final bool fehlerBeimOeffnen;
 
-  /// Der Kanal fuer Kamerafehler (bleibt offen).
+  /// Der Kanal für Kamerafehler (bleibt offen).
   final StreamController<CameraErrorEvent> _fehler =
       StreamController<CameraErrorEvent>();
 
-  /// Der Kanal fuer die Geraetedrehung (bleibt offen).
+  /// Der Kanal für die Gerätedrehung (bleibt offen).
   final StreamController<DeviceOrientationChangedEvent> _drehung =
       StreamController<DeviceOrientationChangedEvent>();
 
@@ -106,19 +106,19 @@ class FakeCameraPlatform extends CameraPlatform {
   @override
   Stream<CameraErrorEvent> onCameraError(int cameraId) {
     // DER EREIGNIS-KANAL: Er bleibt offen (wie beim echten Plugin).
-    // Ein leerer Stream wuerde beim `.first` "No element" werfen - der
-    // Controller stuende dann mit einem Fehler statt mit einem Bild
+    // Ein leerer Stream würde beim `.first` "No element" werfen - der
+    // Controller stünde dann mit einem Fehler statt mit einem Bild
     // da.
     return _fehler.stream;
   }
 
   @override
   Stream<DeviceOrientationChangedEvent> onDeviceOrientationChanged() {
-    // Das Geraet meldet keine Drehung.
+    // Das Gerät meldet keine Drehung.
     return _drehung.stream;
   }
 
-  /// Schliesst die offenen Kanaele (am Ende des Tests).
+  /// Schließt die offenen Kanäle (am Ende des Tests).
   void schliessen() {
     _fehler.close();
     _drehung.close();
@@ -126,7 +126,7 @@ class FakeCameraPlatform extends CameraPlatform {
 
   @override
   Widget buildPreview(int cameraId) {
-    // DER VORSCHAU: Ein leeres Feld - der Test prueft den Ablauf, nicht
+    // DER VORSCHAU: Ein leeres Feld - der Test prüft den Ablauf, nicht
     // das Bild.
     return const SizedBox.shrink();
   }
@@ -151,7 +151,7 @@ class FakeCameraPlatform extends CameraPlatform {
 
   @override
   Future<void> prepareForVideoRecording() async {
-    // Auf iOS noetig - unter Windows nicht.
+    // Auf iOS nötig - unter Windows nicht.
   }
 
   @override

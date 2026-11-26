@@ -1,9 +1,9 @@
 // Der Teil '_OwnLikesTabState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -17,10 +17,10 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
 
   /// Wurde die Liste mindestens einmal geladen?
   ///
-  /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend fuer
+  /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist störend für
   /// die Animation dort". Der Kreis ersetzte beim Nachladen den GANZEN
-  /// Inhalt - die Liste verschwand fuer einen Moment und kam als
-  /// Kreis zurueck. Das ist kein Warten, das ist ein Schnitt.
+  /// Inhalt - die Liste verschwand für einen Moment und kam als
+  /// Kreis zurück. Das ist kein Warten, das ist ein Schnitt.
   ///
   /// Deshalb gilt: der Platzhalter steht nur beim ERSTEN Laden, wenn
   /// es noch nichts zu zeigen gibt. Ab dann bleibt der Inhalt
@@ -49,7 +49,7 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
   @override
   Future<void> reloadTab() => _load();
 
-  /// Laedt neu - vom Pull-to-Refresh der Seite aufgerufen.
+  /// Lädt neu - vom Pull-to-Refresh der Seite aufgerufen.
   Future<void> refresh() => _load();
 
   Future<void> _load() async {
@@ -106,8 +106,8 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
       // besonders auf).
       //
       // Eingebettet scrollt die SEITE - der Leerzustand braucht dann
-      // keine eigene RefreshIndicator und keine 60 %-Bildschirmhoehe
-      // (das waere ein riesiger Leerraum in der Mitte).
+      // keine eigene RefreshIndicator und keine 60 %-Bildschirmhöhe
+      // (das wäre ein riesiger Leerraum in der Mitte).
       if (widget.embedded) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
@@ -135,7 +135,7 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
     }
     final liste = ListView.separated(
       // Eingebettet scrollt die SEITE - der Abschnitt selbst darf nicht
-      // scrollen, sonst haette man zwei Scrollbereiche ineinander.
+      // scrollen, sonst hätte man zwei Scrollbereiche ineinander.
       shrinkWrap: widget.embedded,
       physics: widget.embedded
           ? const NeverScrollableScrollPhysics()
@@ -162,7 +162,7 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
                     child: const Icon(Icons.person, color: Colors.white),
                   ),
                   // NUTZERWUNSCH (31.10.2026): "Verifizierung soll
-                  // fuer alle Personen sichtbar sein" - auch in der
+                  // für alle Personen sichtbar sein" - auch in der
                   // Liste, nicht nur im Profil.
                   title: Row(
                     children: [
@@ -194,13 +194,13 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
                         _likeDatum(context, like.createdAt!),
                     ].join(' · '),
                   ),
-                  // Die Werkzeuge fuer die Person (NUTZERWUNSCH
+                  // Die Werkzeuge für die Person (NUTZERWUNSCH
                   // 01.11.2026): "Die Bearbeitungstools auf der
                   // Interessen Seite sehe ich auch nicht ... entfernen,
                   // blockieren, melden ... usw."
                   //
-                  // Vorher stand hier nur ein X (Like zuruecknehmen).
-                  // Blockieren und Melden waren ausschliesslich bei
+                  // Vorher stand hier nur ein X (Like zurücknehmen).
+                  // Blockieren und Melden waren ausschließlich bei
                   // den FUNKEN erreichbar - wer nur geliked hatte,
                   // konnte nichts machen.
                   trailing: _PersonenMenue(
@@ -231,7 +231,7 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
     );
 
     // Eingebettet zieht die Seite den RefreshIndicator - ein zweiter
-    // darin waere wirkungslos (und wuerde beim Ziehen kämpfen).
+    // darin wäre wirkungslos (und würde beim Ziehen kämpfen).
     if (widget.embedded) return liste;
     return RefreshIndicator(onRefresh: _load, child: liste);
   }

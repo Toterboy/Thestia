@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:thestia/services/auth/mfa_service.dart';
 
-/// Tests fuer den Standard-otpauth-URI, den die 2FA-Einrichtung der
-/// Authenticator-App uebergibt (QR-Inhalt + manuelle Eingabe).
+/// Tests für den Standard-otpauth-URI, den die 2FA-Einrichtung der
+/// Authenticator-App übergibt (QR-Inhalt + manuelle Eingabe).
 void main() {
   group('MfaService.buildOtpAuthUri', () {
     test('enthaelt Secret, Issuer und Standard-Parameter', () {
@@ -42,7 +42,7 @@ void main() {
     });
 
     test('ist KEIN SVG-Daten-URI mehr (Regression: Supabase qrCode)', () {
-      // Urspruenglich wurde totp.qrCode (data:image/svg+xml;base64,...)
+      // Ursprünglich wurde totp.qrCode (data:image/svg+xml;base64,...)
       // an QrImageView durchgereicht - das konnte nicht als QR gerendert
       // werden. Der URI muss immer ein echter otpauth-URI sein.
       final uri = MfaService.buildOtpAuthUri('ABC', email: 'a@b.de');

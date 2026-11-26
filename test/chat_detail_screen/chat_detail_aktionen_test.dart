@@ -1,18 +1,18 @@
 // Die Aktionen im Chat: Kontext-Eisbrecher, Ideen-Rad, Funke beenden.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/parts/chateisbrecher.dart 93 offene Zeilen (43 %) und
-// fuer die Teile meetideawheeldialog.dart und chatdetailaufbau.dart noch
+// für die Teile meetideawheeldialog.dart und chatdetailaufbau.dart noch
 // mehr. Das sind genau die drei Wege, mit denen man in einem leeren Chat
-// ins Gespraech kommt - sie gehoeren getestet.
+// ins Gespräch kommt - sie gehören getestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Kontext-Eisbrecher erscheint nur bei gemeinsamen Interessen und
 //     schickt dann auch wirklich eine Nachricht,
 //   * das Ideen-Rad erscheint erst nach vielen Nachrichten, dreht und
-//     laesst sich als Vorschlag senden,
+//     lässt sich als Vorschlag senden,
 //   * die Eisbrecher-Sammlung und die Erinnerungsliste melden klar, wenn
-//     sie im lokalen Kontakt (QR) nicht zur Verfuegung stehen,
+//     sie im lokalen Kontakt (QR) nicht zur Verfügung stehen,
 //   * das Beenden des Funkens fragt nach und sendet den Absage-Text.
 import 'dart:convert';
 
@@ -53,9 +53,9 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
     await mockHive();
-    // DIE ADAPTER: Der Verschluesselungs-Dienst (Sicherheitsnummer) liest
+    // DIE ADAPTER: Der Verschlüsselungs-Dienst (Sicherheitsnummer) liest
     // seine Boxen aus Hive - ohne die angemeldeten Adapter kann er sie
-    // nicht oeffnen.
+    // nicht öffnen.
     Hive.registerAdapter(SignalIdentityKeyPairAdapterAdapter());
     Hive.registerAdapter(SignalPreKeyRecordAdapterAdapter());
     Hive.registerAdapter(SignalSignedPreKeyRecordAdapterAdapter());
@@ -83,7 +83,7 @@ void main() {
     server.rpcAntworten.clear();
     server.zeilen.clear();
     // DER STIMMUNGS-DIENST: Der Chat zeigt die Stimmungskarte - ohne den
-    // Client schlaegt der Aufbau fehl.
+    // Client schlägt der Aufbau fehl.
     moodClient = supabase.SupabaseClient(
       'https://example.supabase.co',
       'test-key',
@@ -96,7 +96,7 @@ void main() {
 
   /// Ein Chat mit [anzahl] Nachrichten.
   ///
-  /// DER GRUND FUER DIE ANZAHL: Das Ideen-Rad erscheint erst nach 50-70
+  /// DER GRUND FÜR DIE ANZAHL: Das Ideen-Rad erscheint erst nach 50-70
   /// Nachrichten (die Schwelle ist je Chat gestaffelt) - ohne viele
   /// Nachrichten gibt es den Knopf gar nicht.
   ({ChatNotifier notifier, Match match}) chatMitNachrichten({
@@ -133,7 +133,7 @@ void main() {
     return (notifier: ChatNotifier(service), match: match);
   }
 
-  /// Das eigene Profil (mit Interessen fuer den Kontext-Eisbrecher).
+  /// Das eigene Profil (mit Interessen für den Kontext-Eisbrecher).
   ///
   /// [alter] setzt das eigene Alter - der Altersdifferenz-Hinweis
   /// braucht beide Alter.
@@ -155,15 +155,15 @@ void main() {
     required UserProfile profil,
     bool hinweisGesehen = true,
   }) async {
-    // DER BILDSCHIRM: Gross genug, damit das komplette "mehr"-Menue
-    // (viele Eintraege) auf einmal passt - sonst liegt der letzte
-    // Eintrag ausserhalb des Bildschirms.
+    // DER BILDSCHIRM: Groß genug, damit das komplette "mehr"-Menü
+    // (viele Einträge) auf einmal passt - sonst liegt der letzte
+    // Eintrag außerhalb des Bildschirms.
     await tester.binding.setSurfaceSize(const Size(430, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final storage = FakeLocalStorage();
     // Der Hinweis auf den Chat-Hintergrund kommt beim ersten Chat - im
-    // Test stoert er nur, also ist er als "gesehen" markiert.
+    // Test stört er nur, also ist er als "gesehen" markiert.
     if (hinweisGesehen) {
       storage.saveString(
         AppConstants.prefsSettingsKey,
@@ -233,18 +233,18 @@ void main() {
     await tester.pump(const Duration(seconds: 21));
   }
 
-  /// Oeffnet das "mehr"-Menue des Chats.
+  /// Öffnet das "mehr"-Menü des Chats.
   Future<void> menueOeffnen(WidgetTester tester) async {
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Tippt einen Menuepunkt an.
+  /// Tippt einen Menüpunkt an.
   Future<void> menuePunkt(WidgetTester tester, String key) async {
     final eintrag = find.text(L10n.tWithoutContext(key)).last;
-    // DER MENUEPUNKT IST LANG: Das Menue hat viele Eintraege - bei
-    // kleiner Bildschirmhoehe liegt der letzte Punkt ausserhalb. Ohne
+    // DER MENÜPUNKT IST LANG: Das Menü hat viele Einträge - bei
+    // kleiner Bildschirmhöhe liegt der letzte Punkt außerhalb. Ohne
     // Heranschieben tappt der Test ins Leere.
     await tester.ensureVisible(eintrag);
     await tester.pump();
@@ -513,7 +513,7 @@ void main() {
       await menueOeffnen(tester);
       await menuePunkt(tester, 'chat.end');
 
-      // EINE ABSAGE WAEHLEN: Der erste vorbereitete Text.
+      // EINE ABSAGE WÄHLEN: Der erste vorbereitete Text.
       await tester.tap(find.text(L10n.tWithoutContext('chat.goodbye.1')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -566,10 +566,10 @@ void main() {
   });
 
   group('Die Sicherheitsnummer', () {
-    // ANMERKUNG: Der Dialog selbst laesst sich im Widget-Test nicht
-    // oeffnen: Er wartet auf den Verschluesselungs-Dienst, dessen
-    // Schluesselaufbau in der Test-Zone haengt (echte Datei-Arbeit).
-    // Der Weg dorthin (der Menuepunkt) ist getestet - siehe
+    // ANMERKUNG: Der Dialog selbst lässt sich im Widget-Test nicht
+    // öffnen: Er wartet auf den Verschlüsselungs-Dienst, dessen
+    // Schluesselaufbau in der Test-Zone hängt (echte Datei-Arbeit).
+    // Der Weg dorthin (der Menüpunkt) ist getestet - siehe
     // test/chat_detail_screen/relay_hinweis_test.dart.
     testWidgets('der Menuepunkt steht da', (tester) async {
       final chat = chatMitNachrichten(anzahl: 2);
@@ -631,7 +631,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // "Spaeter": Der Hinweis ist damit abgehakt.
+      // "Später": Der Hinweis ist damit abgehakt.
       await tester.tap(find.text(L10n.tWithoutContext('common.later')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));

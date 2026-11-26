@@ -1,22 +1,22 @@
 // Der Dienst des Verifizierungs-Standorts.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/services/profile/location_verification_service.dart 41 offene Zeilen
 // bei 27 % Abdeckung. Der Dienst entscheidet, OB ein Standort gespeichert
-// wird und ob ein neuer Standort "verdaechtig" ist.
+// wird und ob ein neuer Standort "verdächtig" ist.
 //
 // WAS HIER GEPRÜFT WIRD:
 //   * der Standort landet im sicheren Speicher - und nur der gerasterte,
-//   * er laesst sich wieder loeschen (der Weg muss frei bleiben),
+//   * er lässt sich wieder löschen (der Weg muss frei bleiben),
 //   * die Entfernungsrechnung stimmt,
 //   * die Berechtigung wird gelesen und angefragt,
 //   * die Verdachts-Regel gilt genau so, wie sie dokumentiert ist: EIN
-//     neuer Standort, der VERDAECHTIG NAH am gespeicherten liegt, ist
-//     verdaechtig (derselbe Ort laesst sich nicht ein zweites Mal
+//     neuer Standort, der VERDÄCHTIG NAH am gespeicherten liegt, ist
+//     verdächtig (derselbe Ort lässt sich nicht ein zweites Mal
 //     verifizieren).
 
-// Die Plattform-Interfaces kommen als Transitivum ueber geolocator und
-// permission_handler - der Test setzt die Attrappen darueber.
+// Die Plattform-Interfaces kommen als Transitivum über geolocator und
+// permission_handler - der Test setzt die Attrappen darüber.
 // ignore_for_file: depend_on_referenced_packages
 
 import 'package:flutter_test/flutter_test.dart';
@@ -28,7 +28,7 @@ import 'package:thestia/services/profile/location_verification_service.dart';
 
 import '../support/plugin_mocks.dart';
 
-/// Die Position fuer den Test.
+/// Die Position für den Test.
 Position _position(double lat, double lng) => Position(
   latitude: lat,
   longitude: lng,
@@ -190,7 +190,7 @@ void main() {
     test('ein weit entfernter Standort ist nicht verdaechtig', () async {
       final dienst = LocationVerificationService();
 
-      // GESPEICHERT: Hamburg. NEU: Muenchen - 500 km weiter.
+      // GESPEICHERT: Hamburg. NEU: München - 500 km weiter.
       await dienst.saveVerificationLocation(_position(53.5511, 9.9937));
 
       final verdaechtig = await dienst.isLocationSuspicious(

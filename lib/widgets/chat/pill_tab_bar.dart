@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Pillen-foermiger Tab-Indikator.
+/// Pillen-förmiger Tab-Indikator.
 ///
 /// Material `TabBar` mit `indicator` ist ein Unterstrich mit festem
 /// Abstand zum Tab-Label - bei sechs Tabs mit Icon und Text steht der
 /// Strich zwischen den Labels, nicht hinter dem aktiven. Das war im
-/// Admin-Screen die Ursache fuer "ich weiss nicht, wo ich bin": der
+/// Admin-Screen die Ursache für "ich weiß nicht, wo ich bin": der
 /// Indikator war breiter als sein Tab.
 ///
-/// Hier wandert eine gefuellte Pille HINTER den aktiven Tab. Sie ist an
+/// Hier wandert eine gefüllte Pille HINTER den aktiven Tab. Sie ist an
 /// Breite und Position des Labels gebunden ([AnimatedPositioned] +
 /// [_PillIndicator]) und damit bei jedem Tabwechsel korrekt.
 ///
-/// Warum kein `TabBar`: die Pille muss waehrend der Animation die
+/// Warum kein `TabBar`: die Pille muss während der Animation die
 /// Breite des Ziellabels annehmen, und ein `TabBar`-Painter kennt die
 /// Label-Geometrie nicht. Stattdessen ein eigener Controller-Wrapper,
 /// der `TabController` weiter bedient (inkl. `TabBarView`-Synchronisation).
@@ -30,30 +30,30 @@ class PillTabBar extends StatelessWidget {
   /// Ein Eintrag je Tab: Label, Symbol und optionale Kennzahl-Badges.
   final List<PillTab> tabs;
 
-  /// Die Pillen mittig statt linksbuendig anordnen.
+  /// Die Pillen mittig statt linksbündig anordnen.
   ///
   /// NUTZERWUNSCH (28.10.2026): "Gesendet und Erhalten die beiden
   /// buttons zentriert oben in der reihe sein". Bei zwei Reitern
-  /// sieht eine linksbuendige Leiste nach Rest aus - sie haengt links
-  /// und laesst die rechte Haelfte leer. Mittig sitzt sie ruhig.
+  /// sieht eine linksbündige Leiste nach Rest aus - sie hängt links
+  /// und lässt die rechte Hälfte leer. Mittig sitzt sie ruhig.
   ///
-  /// Fuer Reiter, die nicht passen (mehrere, lange Labels), bleibt die
-  /// Leiste scrollbar und linksbuendig - dort waere eine Zentrierung
+  /// Für Reiter, die nicht passen (mehrere, lange Labels), bleibt die
+  /// Leiste scrollbar und linksbündig - dort wäre eine Zentrierung
   /// nicht sinnvoll.
   final bool centered;
 
   /// Eckenradius der Pille. 999 macht aus jedem Rechteck eine Pille
-  /// unabhaengig von der Hoehe.
+  /// unabhängig von der Höhe.
   static const double _pillRadius = 999;
 
   @override
   Widget build(BuildContext context) {
     // AnimatedBuilder liegt HIER, nicht beim Aufrufer: die Auswahl ist
-    // Teilzustand dieses Widgets. Haette der Aufrufer sie zu bauen,
-    // zeigte die Leiste nach einem Wischen erst beim naechsten
-    // Fremd-Rebuild die neue Auswahl - die Pille stuende am falschen Tab.
+    // Teilzustand dieses Widgets. Hätte der Aufrufer sie zu bauen,
+    // zeigte die Leiste nach einem Wischen erst beim nächsten
+    // Fremd-Rebuild die neue Auswahl - die Pille stünde am falschen Tab.
     return SizedBox(
-      // 52 statt 48: Icon + Label brauchen bei 1,3-facher Schriftgroesse
+      // 52 statt 48: Icon + Label brauchen bei 1,3-facher Schriftgrösse
       // mehr, sonst schneidet der Text ab (Barrierefreiheitstest).
       height: 52,
       child: AnimatedBuilder(
@@ -126,8 +126,8 @@ class _PillTabItem extends StatelessWidget {
     final fg = selected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant;
     final showCount = (tab.count ?? 0) > 0;
 
-    // Schluessel fuer den Test. Die Pillen tragen alle denselben Aufbau,
-    // ohne Schluessel kaeme der Test nicht an die dritte Pille heran
+    // Schlüssel für den Test. Die Pillen tragen alle denselben Aufbau,
+    // ohne Schlüssel käme der Test nicht an die dritte Pille heran
     // (ListView baut nur die sichtbaren Kinder auf).
     final pillKey = ValueKey('pill_tab_${tab.label}');
     final countKey = ValueKey('pill_tab_count_${tab.label}');
@@ -142,9 +142,9 @@ class _PillTabItem extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.only(right: 8),
           child: Material(
-            // Die Pille ist der Hintergrund dieses Containers: fuellig bei
+            // Die Pille ist der Hintergrund dieses Containers: füllig bei
             // Auswahl, transparent sonst. AnimatedContainer weiter unten
-            // faehrt die Farbe weich.
+            // fährt die Farbe weich.
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(PillTabBar._pillRadius),
             child: InkWell(
@@ -180,7 +180,7 @@ class _PillTabItem extends StatelessWidget {
                     if (showCount) ...[
                       const SizedBox(width: 6),
                       // Kennzahl als eigene Kachel, nicht im Text: so
-                      // bleibt sie auch bei grosser Schrift lesbar.
+                      // bleibt sie auch bei großer Schrift lesbar.
                       Container(
                         key: countKey,
                         constraints: const BoxConstraints(minWidth: 20),

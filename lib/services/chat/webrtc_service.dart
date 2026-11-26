@@ -56,9 +56,9 @@ class WebRTCService {
   ///
   /// DER WEG (16.11.2026): Die Liste kommt aus dem **Build**
   /// (`ICE_FALLBACK_URLS`). Ist der Wert leer, werden **keine**
-  /// oeffentlichen STUN-Server angefragt - das ist der Zustand, wenn
+  /// öffentlichen STUN-Server angefragt - das ist der Zustand, wenn
   /// Thestia einen eigenen TURN-Server betreibt: dann soll die
-  /// oeffentliche IP-Adresse niemand fremdes sehen. Anleitung:
+  /// öffentliche IP-Adresse niemand fremdes sehen. Anleitung:
   /// `docs/technik/TURN-SERVER.md`.
   static final List<Map<String, dynamic>> _fallbackIceServers =
       parseIceFallbackUrls(
@@ -73,7 +73,7 @@ class WebRTCService {
   /// Zerlegt die Build-Liste der ICE-Ersatzserver.
   ///
   /// Leer (oder nur Leerzeichen) -> **keine** Ersatzserver: der Aufbau
-  /// nutzt dann ausschliesslich die Konfiguration der Edge Function.
+  /// nutzt dann ausschließlich die Konfiguration der Edge Function.
   @visibleForTesting
   static List<Map<String, dynamic>> parseIceFallbackUrls(String raw) {
     return raw
@@ -272,17 +272,17 @@ class WebRTCService {
     }
   }
 
-  /// Die tatsaechliche Cache-Frist: die kuerzere aus der Antwort-TTL und
+  /// Die tatsächliche Cache-Frist: die kürzere aus der Antwort-TTL und
   /// der Restlaufzeit der TURN-Credentials.
   ///
   /// DER GRUND (Audit 16.11.2026): TURN-Credentials sind kurzlebig
   /// (coturn-REST: "Ablaufzeit:Id" als Benutzername). Liegt die
-  /// Cache-Frist darueber, haelt der Client abgelaufene Credentials -
-  /// der Relay-Server weist sie zurueck und der Anruf scheitert
-  /// (obwohl eine neue Konfiguration abrufbar waere). Deshalb wird die
-  /// Frist auf die kuerzere der beiden gesetzt (mit 60 s Reserve).
+  /// Cache-Frist darüber, hält der Client abgelaufene Credentials -
+  /// der Relay-Server weist sie zurück und der Anruf scheitert
+  /// (obwohl eine neue Konfiguration abrufbar wäre). Deshalb wird die
+  /// Frist auf die kürzere der beiden gesetzt (mit 60 s Reserve).
   ///
-  /// Oeffentlich, damit der Test sie pruefen kann (reine Funktion).
+  /// Öffentlich, damit der Test sie prüfen kann (reine Funktion).
   static int effectiveTtl(
     String body,
     List<Map<String, dynamic>> servers, {
@@ -351,17 +351,17 @@ class WebRTCService {
   ///
   /// Die Texte enthalten keine personenbezogenen Daten (keine
   /// User-IDs, keine SDPs). Ausnahmen stehen deshalb nicht im Text,
-  /// sondern nur ihr Typ - der Text landet in der Oberflaeche.
+  /// sondern nur ihr Typ - der Text landet in der Oberfläche.
   final StreamController<String> _problemController =
       StreamController<String>.broadcast();
 
   Stream<String> get problems => _problemController.stream;
 
-  /// Meldet ein Problem: in den Debug-Log UND fuer die Diagnosezeile.
+  /// Meldet ein Problem: in den Debug-Log UND für die Diagnosezeile.
   ///
-  /// [text] ist fuer Menschen lesbar und darf KEINE
+  /// [text] ist für Menschen lesbar und darf KEINE
   /// personenbezogenen Daten enthalten. [fehler] wird nur als Typ
-  /// genannt (der Text koennte eine User-ID enthalten).
+  /// genannt (der Text kännte eine User-ID enthalten).
   void _melde(String text, [Object? fehler]) {
     final typ = fehler == null ? '' : ' (${fehler.runtimeType})';
     debugPrint('[WebRTC] $text$typ');
@@ -370,11 +370,11 @@ class WebRTCService {
     }
   }
 
-  /// Der LETZTE ICE-Zustand - auch fuer einen Aufrufer, der erst nach
+  /// Der LETZTE ICE-Zustand - auch für einen Aufrufer, der erst nach
   /// dem Zustandswechsel zuhört.
   ///
-  /// WARUM (06.11.2026): Der ICE-Zustand lief ueber einen Broadcast-
-  /// Stream. Ein Broadcast-Stream wiederholt nichts: wer sich spaeter
+  /// WARUM (06.11.2026): Der ICE-Zustand lief über einen Broadcast-
+  /// Stream. Ein Broadcast-Stream wiederholt nichts: wer sich später
   /// anmeldet, bekommt den letzten Zustand nicht mehr zu sehen. Die
   /// Diagnosezeile im Chat zeigte deshalb dauerhaft "-", obwohl der
   /// Zustand "checking" war - der Betreiber hatte keine Anhalts-
@@ -435,9 +435,9 @@ class WebRTCService {
     // AKTUELLE User-JWT im Join-Payload. supabase_flutter setzt es zwar
     // bei Auth-Events - bleibt dabei aber ein Zeitfenster/Fehlerpfad
     // (z. B. abgelaufenes Token beim App-Start: FormatException wird
-    // verschluckt), in dem der Socket den ANON-Key behaelt. Der Join
+    // verschluckt), in dem der Socket den ANON-Key behält. Der Join
     // wird dann mit der anon-Rolle gegen die 'to authenticated'-Policy
-    // geprueft und verweigert -> "Signaling-Kanal nicht verfügbar".
+    // geprüft und verweigert -> "Signaling-Kanal nicht verfügbar".
     // Fix (Supabase-Doku): setAuth mit dem aktuellen Session-Token
     // unmittelbar vor dem Subscribe erzwingen.
     final accessToken =
@@ -474,9 +474,9 @@ class WebRTCService {
       opts: const RealtimeChannelConfig(
         private: true,
         // self: true (06.11.2026): Der Absender bekommt seine eigene
-        // Broadcast-Nachricht zurueck. Die Vorgabe ist 'self: false' -
+        // Broadcast-Nachricht zurück. Die Vorgabe ist 'self: false' -
         // damit konnte die Gegenseite NIE das Offer empfangen, wenn
-        // beide Konten auf DEMSELBEN Geraet laufen (der haeufigste
+        // beide Konten auf DEMSELBEN Gerät laufen (der häufigste
         // Testfall: ein Telefon, zwei Konten). Das Offer blieb im
         // eigenen Socket stecken, der Handshake kam nie zu Ende.
         //
@@ -494,7 +494,7 @@ class WebRTCService {
         try {
           // Die Nutzlast kommt flach an - aber das Feld 'type' hat
           // der Realtime-Client auf 'broadcast' gesetzt. Deshalb
-          // benutzt die App 'kind' fuer ihre Nachrichtenart (siehe
+          // benutzt die App 'kind' für ihre Nachrichtenart (siehe
           // _handleSignal).
           final msg = Map<String, dynamic>.from(payload as Map);
           unawaited(_routeSignaling(msg));
@@ -590,15 +590,15 @@ class WebRTCService {
 
   /// Verarbeitet EINE Signaling-Nachricht (nur im seriellen Drain rufen).
   Future<void> _handleSignal(Map<String, dynamic> msg) async {
-    // WICHTIG (06.11.2026): Das Feld heisst 'kind', NICHT 'type'.
+    // WICHTIG (06.11.2026): Das Feld heißt 'kind', NICHT 'type'.
     //
     // Das realtime_client setzt in send() (realtime_channel.dart:792)
     //   payload['type'] = 'broadcast';
-    // und ueberschreibt damit das eigene Feld der App. Der Empfaenger
+    // und überschreibt damit das eigene Feld der App. Der Empfänger
     // sah darum IMMER type == 'broadcast' statt 'offer'/'answer'/'ice'
     // - und der Schalter hier fiel bei jedem Fall in 'default'.
     // Jede Signaling-Nachricht wurde stillschweigend verworfen und der
-    // DataChannel oeffnete nie.
+    // DataChannel öffnete nie.
     //
     // 'kind' fasst der Client nicht an.
     final type = msg['kind'] as String?;
@@ -618,9 +618,9 @@ class WebRTCService {
       case 'answer':
         final sdp = msg['sdp'] as String?;
         if (sdp == null || _isConnected || _remoteDescriptionSet) break;
-        // Eine Answer zu einem ALTEN Offer gehoert zu einer
+        // Eine Answer zu einem ALTEN Offer gehört zu einer
         // hinweggelegten PeerConnection. Sie darf die aktuelle nicht
-        // setzen - sonst wuerde die echte Answer verworfen.
+        // setzen - sonst würde die echte Answer verworfen.
         if (isStaleAnswer(msg, _offerGeneration)) {
           if (kDebugMode) {
             debugPrint(
@@ -701,7 +701,7 @@ class WebRTCService {
 
   /// Generations-Nummer des aktuellen Offers.
   ///
-  /// WARUM (06.11.2026): Nach einem Retry schliesst [retryHandshake]
+  /// WARUM (06.11.2026): Nach einem Retry schließt [retryHandshake]
   /// die alte PeerConnection und erzeugt ein neues Offer. Eine noch
   /// fliegende ALTE Answer traf danach auf die NEUE PeerConnection,
   /// setzte dort die Remote-Description - und die ECHTE neue Answer
@@ -710,11 +710,11 @@ class WebRTCService {
   /// nicht mehr").
   ///
   /// Die Nummer reist mit dem Offer und wird von der Gegenseite in
-  /// der Answer wiederholt. Eine Answer mit falscher Nummer gehoert zu
+  /// der Answer wiederholt. Eine Answer mit falscher Nummer gehört zu
   /// einem alten Offer und wird verworfen.
   ///
-  /// TOLERANZ: Eine Answer OHNE Nummer kommt von einer aelteren
-  /// App-Version und wird angenommen (sonst waeren Alt- und Neu-
+  /// TOLERANZ: Eine Answer OHNE Nummer kommt von einer älteren
+  /// App-Version und wird angenommen (sonst wären Alt- und Neu-
   /// Version nicht miteinander sprechbar).
   int _offerGeneration = 0;
 
@@ -805,7 +805,7 @@ class WebRTCService {
       'from': _myUserId ?? _currentPeerId,
       'sdp': answer.sdp,
       // Die Generation des Offers durchreichen: so erkennt der
-      // Initiator, dass die Answer zu seinem aktuellen Offer gehoert.
+      // Initiator, dass die Answer zu seinem aktuellen Offer gehört.
       'gen': ?generation,
     });
   }
@@ -1010,10 +1010,10 @@ class WebRTCService {
       }
       final envelope = SignalEnvelope.parse(message.text);
       if (envelope == null) {
-        // BEFUND (22.11.2026, Fuzzing): Die Huelle kommt von der
+        // BEFUND (22.11.2026, Fuzzing): Die Hülle kommt von der
         // GEGENSEITE. Vorher standen hier Casts (`as Map`, `as String`,
         // `as int`) und ein `base64Decode` - jeder davon wirft bei
-        // einer falschen Eingabe. Eine boesartige Nachricht hat damit
+        // einer falschen Eingabe. Eine bösartige Nachricht hat damit
         // den Kanal abbrechen lassen. Jetzt: weg damit, weiter gehts.
         _melde('Eine Nachricht war nicht lesbar und wurde verworfen.');
         return;

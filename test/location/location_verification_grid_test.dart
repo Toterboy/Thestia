@@ -4,19 +4,19 @@ import 'package:geolocator/geolocator.dart';
 import 'package:thestia/services/profile/location_verification_service.dart';
 import 'package:thestia/utils/location/location_privacy.dart';
 
-/// Test fuer das Raster des Verifizierungs-Standorts.
+/// Test für das Raster des Verifizierungs-Standorts.
 ///
 /// WARUM (06.11.2026, Betreiber): "Also muss der Standort jetzt doch
-/// genau statt nur ungefaehr ermittelt werden?"
+/// genau statt nur ungefähr ermittelt werden?"
 ///
-/// Die genaue Standort-Berechtigung ist auf Android 11 und aelter
-/// Pflicht (fuer den BLE-Scan), und dort gibt es keine Wahl zwischen
-/// "ungefaehr" und "genau" - die Wahl kam erst mit Android 12. Damit
-/// koennte die App auf aelteren Geraeten einen EXAKTEN Standort
+/// Die genaue Standort-Berechtigung ist auf Android 11 und älter
+/// Pflicht (für den BLE-Scan), und dort gibt es keine Wahl zwischen
+/// "ungefähr" und "genau" - die Wahl kam erst mit Android 12. Damit
+/// kännte die App auf älteren Geräten einen EXAKTEN Standort
 /// bekommen und lokal speichern - obwohl sie verspricht, den genauen
 /// Standort nicht zu speichern.
 ///
-/// Die Loesung: der Standort geht durch dasselbe 5-km-Raster wie das
+/// Die Lösung: der Standort geht durch dasselbe 5-km-Raster wie das
 /// Profil. Damit gilt das Versprechen auf ALLEN Systemversionen.
 Position _position(double lat, double lng) => Position(
   latitude: lat,
@@ -61,7 +61,7 @@ void main() {
 
       final gerastert = LocationVerificationService.aufRaster(exakt);
 
-      // 5-km-Raster: die Entfernung darf nie groesser als das Raster sein.
+      // 5-km-Raster: die Entfernung darf nie größer als das Raster sein.
       const gradProKm = 1 / LocationPrivacy.kmPerDegreeLat;
       const kmPerGradLng = LocationPrivacy.kmPerDegreeLat * 0.67;
       final dLat = (gerastert.latitude - exakt.latitude).abs() * gradProKm;

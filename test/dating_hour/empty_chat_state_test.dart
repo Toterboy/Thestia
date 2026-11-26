@@ -1,12 +1,12 @@
-// Der Leer-Chat-Zustand darf nie ueberlaufen.
+// Der Leer-Chat-Zustand darf nie überlaufen.
 //
 // BEFUND (22.11.2026, Fuzzing): Der Leer-Zustand ist 228 Pixel hoch.
 // Ist der Chatbereich kleiner - im Entscheidungsfenster des Dating
 // Hours stehen unten die Frage-Chips, das Eingabefeld UND die
-// Entscheidungs-Knoepfe -, lief der Inhalt aus dem Bild:
+// Entscheidungs-Knöpfe -, lief der Inhalt aus dem Bild:
 // "A RenderFlex overflowed by 48 pixels".
 //
-// DER TEST: Ein kleiner Bildschirm muss scrollen, nicht ueberlaufen.
+// DER TEST: Ein kleiner Bildschirm muss scrollen, nicht überlaufen.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -50,7 +50,7 @@ void main() {
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
 
-  /// Baut den Bildschirm auf einer kleinen Flaeche.
+  /// Baut den Bildschirm auf einer kleinen Fläche.
   Future<void> zeige(WidgetTester tester, Size flaeche) async {
     await tester.binding.setSurfaceSize(flaeche);
     addTearDown(() => tester.binding.setSurfaceSize(null));

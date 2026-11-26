@@ -4,16 +4,16 @@
 // sind nach Themen aufgeteilt; die Helfer liegen in
 // test/support/interessen_screen_hilfen.dart.
 
-// Widget-Tests fuer den Screen "Interessen" (Reiter der Startseite).
+// Widget-Tests für den Screen "Interessen" (Reiter der Startseite).
 //
-// ANLASS: Die Coverage-Messung (13.11.2026) zeigte fuer
+// ANLASS: Die Coverage-Messung (13.11.2026) zeigte für
 // lib/screens/interests/interessen_screen.dart 835 offene Zeilen - der
-// Screen war die groesste Luecke der App. Er ist die Antwort auf die
+// Screen war die größte Lücke der App. Er ist die Antwort auf die
 // Frage "was ist mit meinem Like passiert?" - und genau dort hat der
 // Betreiber im November 2026 mehrere Befunde gemeldet (Funke
 // verschwunden, Reiter springt, Leerzustand sah wie ein Fehler aus).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Screen baut sich (kein Absturz, kein Render-Overflow),
 //   * der Leerzustand steht da (nicht "nichts gefunden", sondern der
 //     ausgeschriebene Leerzustand),
@@ -22,17 +22,17 @@
 //   * ein fehlgeschlagener Abruf zeigt den Fehler MIT Wiederholen -
 //     nicht die leere Liste (BEFUND 13.11.2026: "Außerdem ist mein
 //     Funke verschwunden"),
-//   * der Mehrfach-Auswahl-Modus blendet die gewaehlten Funken aus.
+//   * der Mehrfach-Auswahl-Modus blendet die gewählten Funken aus.
 //
 // OHNE SERVER: Der Find-your-Match-Service wird durch einen Hand-Fake
 // ersetzt (siehe [_FakeFindYourMatchService]). Der Supabase-Client wird
-// nur initialisiert, damit der Screen seinen Serverstand ueberhaupt
+// nur initialisiert, damit der Screen seinen Serverstand überhaupt
 // abfragt - es geht KEINE Anfrage raus (alle Aufrufe landen im Fake).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/models/chat/find_match_models.dart';
 import 'package:thestia/providers/chat/chat_provider.dart';
@@ -51,11 +51,11 @@ void main() {
     await SharedPreferences.getInstance();
     // Der Client wird nur initialisiert, damit
     // [SupabaseService.isInitialized] true ist und der Screen den
-    // Serverstand ueberhaupt abfragt. Es geht keine Anfrage raus - der
+    // Serverstand überhaupt abfragt. Es geht keine Anfrage raus - der
     // Service ist ein Fake.
     //
-    // autoRefreshToken: false - sonst laeuft ein periodischer Timer,
-    // an dem der Test am Ende scheitern wuerde.
+    // autoRefreshToken: false - sonst läuft ein periodischer Timer,
+    // an dem der Test am Ende scheitern würde.
     // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
     // das echte Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
@@ -66,9 +66,9 @@ void main() {
     // Hive-Box - ohne initialisiertes Hive wirft der Chat-Dienst
     // ("You need to initialize Hive").
     await mockHive();
-    // DER SERVER: das Zuruecknehmen eines Likes geht ueber die
+    // DER SERVER: das Zurücknehmen eines Likes geht über die
     // REST-Schnittstelle (DELETE auf 'likes') - ohne den Ersatz-Server
-    // gaengt der Aufruf ins Leere.
+    // gängt der Aufruf ins Leere.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -78,15 +78,15 @@ void main() {
         detectSessionInUri: false,
       ),
     );
-    // ANGEMELDET: ohne Sitzung weiss der Bildschirm nicht, wessen Like
-    // das ist - das Zuruecknehmen ginge dann gar nicht.
+    // ANGEMELDET: ohne Sitzung weiß der Bildschirm nicht, wessen Like
+    // das ist - das Zurücknehmen ginge dann gar nicht.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // Der Server merkt sich die Anfragen - fuer jeden Test beginnt er
-    // neu. Sonst wuerde ein Test den Aufruf eines anderen sehen (und
-    // der "schweigt"-Test wuerde alle folgenden stoeren).
+    // Der Server merkt sich die Anfragen - für jeden Test beginnt er
+    // neu. Sonst würde ein Test den Aufruf eines anderen sehen (und
+    // der "schweigt"-Test würde alle folgenden stören).
     server.pfade.clear();
     server.rpcAufrufe.clear();
     server.rpcFehler.clear();
@@ -104,7 +104,7 @@ void main() {
       service.funken = [funke()];
       await interessenScreenPump(tester, service: service);
 
-      // Das Menue der Kachel oeffnen.
+      // Das Menü der Kachel öffnen.
       await tester.tap(find.byIcon(Icons.more_vert).first);
       await pumpFrames(tester);
       await tester.tap(find.text('Fixieren'));
@@ -120,7 +120,7 @@ void main() {
       expect(find.text('Fixiert'), findsOneWidget);
       // ... die Nadel ist zu sehen ...
       expect(find.byIcon(Icons.push_pin), findsWidgets);
-      // ... und der Nutzer bekommt die Bestaetigung.
+      // ... und der Nutzer bekommt die Bestätigung.
       expect(find.text('Funke fixiert'), findsOneWidget);
     });
 
@@ -217,7 +217,7 @@ void main() {
       expect(find.text('Mira, 30'), findsOneWidget);
 
       // Der Mülleimer fragt erst nach (der Chat-Verlauf geht mit).
-      // Der Knoepfchen liegt weit unten (unter den Reitern) - erst
+      // Der Knöpfchen liegt weit unten (unter den Reitern) - erst
       // dorthin scrollen, sonst trifft der Tap ins Leere.
       final loeschen = find.byTooltip('Gespeichertes Profil entfernen');
       await tester.ensureVisible(loeschen);
@@ -227,7 +227,7 @@ void main() {
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Gespeichertes Profil entfernen?'), findsOneWidget);
 
-      // "Behalten" loescht nichts.
+      // "Behalten" löscht nichts.
       await tester.tap(find.widgetWithText(TextButton, 'Behalten'));
       await pumpFrames(tester);
       expect(find.text('Mira, 30'), findsOneWidget);
@@ -245,7 +245,7 @@ void main() {
       // Der Kontakt ist weg ...
       expect(find.text('Mira, 30'), findsNothing);
       expect(find.text('Gespeicherte Profile'), findsNothing);
-      // ... und der Nutzer bekommt die Bestaetigung.
+      // ... und der Nutzer bekommt die Bestätigung.
       expect(find.text('Mira wurde entfernt.'), findsOneWidget);
     });
   });
@@ -285,7 +285,7 @@ void main() {
       final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      // Der Server meldet "bereits gekuehlt" (z. B. beim Doppel-Tap).
+      // Der Server meldet "bereits gekühlt" (z. B. beim Doppel-Tap).
       service.coolFehler = Exception(
         'Funke nicht gefunden oder bereits gekuehlt/endet.',
       );

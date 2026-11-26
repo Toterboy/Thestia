@@ -1,19 +1,19 @@
-// Die Helfer fuer die Tests des Bildschirms 'profile_edit_screen'.
+// Die Helfer für die Tests des Bildschirms 'profile_edit_screen'.
 //
 // DER WEG: Die Testdatei war zu lang (> 1000 Zeilen). Die Helfer
 // (Ersatz-Speicher, Aufbau, Bildschirm-Helfer) liegen hier -
 // die Tests selbst sind nach Themen auf eigene Dateien verteilt.
 
-// Widget-Tests fuer den Profil-Editor ("Profil bearbeiten").
+// Widget-Tests für den Profil-Editor ("Profil bearbeiten").
 //
-// ANLASS: Die Coverage-Messung (13.11.2026) zeigte fuer
+// ANLASS: Die Coverage-Messung (13.11.2026) zeigte für
 // lib/screens/profile/profile_edit_screen.dart 583 offene Zeilen. Der
 // Screen ist die einzige Stelle, an der der Nutzer sein Profil
-// aendert - und der Betreiber hat dort im November 2026 gemeldet:
+// ändert - und der Betreiber hat dort im November 2026 gemeldet:
 // "Wenn man Buttons auswählt, z. B. in den Profileinstellungen, sollen
 // sie sich nicht in die nächste Zeile durch auswählen verschieben."
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Screen zeigt die Werte des Profils,
 //   * der Zurück-Knopf fragt nach ungespeicherten Änderungen
 //     ("Speichern?"-Nachfrage) und bietet Speichern/Verwerfen/Abbrechen,
@@ -35,11 +35,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 // Das Plattform-Interface wird von permission_handler exportiert, aber
-// nicht weitergereicht - der Test setzt die Attrappe darueber.
+// nicht weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:thestia/models/profile/user_profile.dart';
 import 'package:thestia/providers/profile/profile_provider.dart';
 import 'package:thestia/providers/settings/user_preferences_provider.dart';
@@ -137,7 +137,7 @@ class FakeOrtService extends LocationVerificationService {
 class FakeStandortPruefung extends LocationCheckService {
   FakeStandortPruefung(super.client);
 
-  /// Die Koordinaten, die zur Pruefung gemeldet wurden.
+  /// Die Koordinaten, die zur Prüfung gemeldet wurden.
   final List<Map<String, dynamic>> aufrufe = <Map<String, dynamic>>[];
   @override
   Future<Map<String, dynamic>?> processLocationCheck({
@@ -232,8 +232,8 @@ Future<ProviderContainer> profileEditScreenPump(
   );
   final storage = FakeLocalStorage();
   // DIE GESPEICHERTEN EINSTELLUNGEN: Der Screen korrigiert Werte, die der
-  // Altersregel widersprechen (z. B. ein zu grosser Suchradius bei
-  // Minderjaehrigen).
+  // Altersregel widersprechen (z. B. ein zu großer Suchradius bei
+  // Minderjährigen).
   if (gespeicherteEinstellungen.isNotEmpty) {
     await storage.saveString(
       'user_preferences',
@@ -246,13 +246,13 @@ Future<ProviderContainer> profileEditScreenPump(
       localStorageProvider.overrideWithValue(storage),
       secureProfileStoreProvider.overrideWithValue(secure),
       // Der sichere Speicher der Einstellungen (Audit M-16) - ohne ihn
-      // haengt jedes Schreiben in den Keystore (siehe FakeSecurePrefs).
+      // hängt jedes Schreiben in den Keystore (siehe FakeSecurePrefs).
       securePrefsProvider.overrideWithValue(FakeSecurePrefs()),
       sharedPrefsProvider.overrideWithValue(prefs),
       // Der Ort-Dienst: im Test gibt es kein GPS.
       if (ortService != null)
         locationVerificationServiceProvider.overrideWithValue(ortService),
-      // Die Standort-Pruefung (Edge Function) - der Ersatz merkt sich
+      // Die Standort-Prüfung (Edge Function) - der Ersatz merkt sich
       // die Aufrufe (siehe FakeStandortPruefung).
       locationCheckServiceProvider.overrideWith(
         (ref) => FakeStandortPruefung(SupabaseService.client),
@@ -303,8 +303,8 @@ Future<void> aufraeumen(WidgetTester tester) async {
   // Zehn Sekunden (in Sekunden-Schritten, damit die Timer dazwischen
   // feuern): der entprellte Sync der Einstellungen (1,5 s) UND die
   // Wiederholungsversuche des Server-Syncs (1 s + 2 s Wartezeit je
-  // Versuch) muessen alle abgelaufen sein, sonst steht am Ende ein
-  // Timer uebrig und der Test scheitert an "A Timer is still pending".
+  // Versuch) müssen alle abgelaufen sein, sonst steht am Ende ein
+  // Timer übrig und der Test scheitert an "A Timer is still pending".
   for (var i = 0; i < 10; i++) {
     await tester.pump(const Duration(seconds: 1));
   }

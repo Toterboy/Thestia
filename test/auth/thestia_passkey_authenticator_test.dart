@@ -1,18 +1,18 @@
 // Der eigene Passkey-Authenticator.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/services/auth/thestia_passkey_authenticator.dart 0 % Abdeckung.
 //
 // WARUM DIESE DATEI EIGENS EXISTIERT (siehe den Kommentar dort): Der
 // eigene Authenticator ruft VOR der Zeremonie NICHT
 // `cancelCurrentAuthenticatorOperation()` auf. Das vorzeitige Abbrechen
-// wuerde auf manchen Geraeten die FOLGENDE eigene Anfrage mitabwuergen
-// ("Anfrage abgebrochen von Thestia") - der Nutzer haette nichts abgebrochen,
+// würde auf manchen Geräten die FOLGENDE eigene Anfrage mitabwürgen
+// ("Anfrage abgebrochen von Thestia") - der Nutzer hätte nichts abgebrochen,
 // und trotzdem schlug die Registrierung fehl.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Registrierung und die Anmeldung gehen an die Plattform und
-//     kommen unveraendert zurueck,
+//     kommen unverändert zurück,
 //   * die Signale (unbekannter Passkey / akzeptierte Passkeys) werden
 //     weitergereicht,
 //   * die Diagnose liest Typ und URSPRUNG aus der clientDataJSON - der
@@ -28,7 +28,7 @@ import 'package:passkeys_platform_interface/types/types.dart';
 
 import 'package:thestia/services/auth/thestia_passkey_authenticator.dart';
 
-/// Die Plattform als Ersatz: sie zaehlt die Aufrufe und liefert die
+/// Die Plattform als Ersatz: sie zählt die Aufrufe und liefert die
 /// Antworten, die der Test vorgibt.
 class _Plattform extends PasskeysPlatform {
   /// Die Antwort auf eine Registrierung.
@@ -100,7 +100,7 @@ String _clientData({
   utf8.encode('{"type":"$typ","origin":"$ursprung","challenge":"abc"}'),
 );
 
-/// Eine Registrierungs-Anfrage fuer den Test.
+/// Eine Registrierungs-Anfrage für den Test.
 RegisterRequestType _anfrage() => RegisterRequestType(
   challenge: 'Y2hhbGxlbmdl',
   relyingParty: RelyingPartyType(name: 'Thestia', id: 'auth.thestia.de'),
@@ -112,7 +112,7 @@ RegisterRequestType _anfrage() => RegisterRequestType(
   excludeCredentials: const [],
 );
 
-/// Eine Anmelde-Anfrage fuer den Test.
+/// Eine Anmelde-Anfrage für den Test.
 AuthenticateRequestType _anmeldeAnfrage() => const AuthenticateRequestType(
   relyingPartyId: 'auth.thestia.de',
   challenge: 'Y2hhbGxlbmdl',
@@ -126,8 +126,8 @@ void main() {
   late PasskeysPlatform urspruenglich;
 
   setUpAll(() {
-    // DER STANDARD: Die Attrappe wird nach dem Test zurueckgesetzt -
-    // sonst erbt der naechste Test sie.
+    // DER STANDARD: Die Attrappe wird nach dem Test zurückgesetzt -
+    // sonst erbt der nächste Test sie.
     urspruenglich = PasskeysPlatform.instance;
   });
 
@@ -138,7 +138,7 @@ void main() {
   });
 
   tearDown(() {
-    // Der Standard zuruecksetzen - sonst erbt der naechste Test die
+    // Der Standard zurücksetzen - sonst erbt der nächste Test die
     // Attrappe.
     PasskeysPlatform.instance = urspruenglich;
   });
@@ -237,7 +237,7 @@ void main() {
 
     test('eine kaputte clientDataJSON bringt nichts zum Absturz', () async {
       // DER GRUND: Die Diagnose ist nur ein Log. Sie darf die Zeremonie
-      // niemals umwerfen - sonst waere ein harmloser Logfehler ein
+      // niemals umwerfen - sonst wäre ein harmloser Logfehler ein
       // Anmeldefehler.
       plattform.registrierungsAntwort = const RegisterResponseType(
         id: 'cred-1',

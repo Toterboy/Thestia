@@ -1,9 +1,9 @@
 // Der Teil '_PublicProfileAvatarState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -16,8 +16,8 @@ class _PublicProfileAvatarState extends ConsumerState<_PublicProfileAvatar> {
   /// Thumbnail-Futures nach Pfad cachen.
   ///
   /// Vorher wurde das Future der Thumbnails direkt in `build` erzeugt - jeder
-  /// Rebuild (Scrollen, Provider-Update) startete fuer jedes Bild erneut
-  /// einen match-media-Aufruf + HTTP-GET + compute-Entschluesselung. Bei
+  /// Rebuild (Scrollen, Provider-Update) startete für jedes Bild erneut
+  /// einen match-media-Aufruf + HTTP-GET + compute-Entschlüsselung. Bei
   /// Fehlern wird nichts gecacht -> Endlos-Netz bei jedem Rebuild.
   final Map<String, Future<Uint8List?>> _thumbFutures = {};
 

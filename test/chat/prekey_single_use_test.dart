@@ -7,20 +7,20 @@ import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 import 'package:thestia/models/signal/signal_key_models.dart';
 import 'package:thestia/services/chat/hive_signal_store.dart';
 
-/// Tests fuer die Einmal-Nutzung der PreKeys.
+/// Tests für die Einmal-Nutzung der PreKeys.
 ///
 /// WARUM (06.11.2026, aus der P2P-Analyse): Ein PreKey ist ein
-/// EINMAL-Schluessel. Wird er fuer eine Session verbraucht, nimmt
+/// EINMAL-Schlüssel. Wird er für eine Session verbraucht, nimmt
 /// libsignal ihn aus dem Store. Die App persistiert die PreKeys aber
-/// zusaetzlich in einer Hive-Box, und diese Box wurde beim naechsten
-/// [_loadOrEnsurePreKeys] wieder gefuellt - samt der verbrauchten
+/// zusätzlich in einer Hive-Box, und diese Box wurde beim nächsten
+/// [_loadOrEnsurePreKeys] wieder gefüllt - samt der verbrauchten
 /// Keys. Ein PreKey konnte so an zwei verschiedene Peers gehen.
 ///
 /// Das bricht die Annahme von X3DH: dieselbe Sitzung, dasselbe
-/// Schluesselpaar, zwei Partner - die Forward-Secrecy-Eigenschaft des
+/// Schlüsselpaar, zwei Partner - die Forward-Secrecy-Eigenschaft des
 /// PreKeys geht verloren.
 ///
-/// Der Test prueft die Kette: PreKey ablegen -> verbrauchen ->
+/// Der Test prüft die Kette: PreKey ablegen -> verbrauchen ->
 /// er darf weder im Store noch in der persistenten Box auftauchen.
 void main() {
   late Directory tempDir;

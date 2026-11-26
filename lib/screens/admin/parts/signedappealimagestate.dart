@@ -1,9 +1,9 @@
 // Der Teil '_SignedAppealImageState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -53,8 +53,8 @@ class _SignedAppealImageState extends ConsumerState<_SignedAppealImage> {
       builder: (context, snap) {
         final url = snap.data;
         if (url != null) {
-          // SICHERHEIT (Audit 16.11.2026): Das Moderationsbild laedt ueber
-          // den gepinnten Client - `Image.network` haengt am
+          // SICHERHEIT (Audit 16.11.2026): Das Moderationsbild lädt über
+          // den gepinnten Client - `Image.network` hängt am
           // System-Trust-Store.
           return PinnedNetworkImage(
             url: url,

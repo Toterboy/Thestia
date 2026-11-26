@@ -13,7 +13,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  // Die Schreibvorgaenge des Wächters sind absichtlich fire-and-forget
+  // Die Schreibvorgänge des Wächters sind absichtlich fire-and-forget
   // (der Start darf nie warten). Im Test muss man ihnen trotzdem
   // nachlaufen - SharedPreferences geht über einen Plattformkanal, das
   // braucht mehr als einen Tick.
@@ -35,7 +35,7 @@ void main() {
     });
 
     test('ein alter Fehler wird beim naechsten Start aufgeraeumt', () async {
-      // Ein Fehler, danach ein sauberer Start. Ohne Aufraeumen wuerde
+      // Ein Fehler, danach ein sauberer Start. Ohne Aufräumen würde
       // der alte Befund beim Start danach wieder erscheinen und der
       // Nutzer glaubt, es sei noch nicht behoben.
       StartupWatchdog.reached(4, error: Exception('alter Fehler'));
@@ -128,7 +128,7 @@ void main() {
 
   test('Schrittgrenzen werden nicht ueberschritten', () async {
     // Ein Tippfehler in einem Aufruf darf nicht still zu einem
-    // unauffaelligen "Schritt 0" fuehren.
+    // unauffälligen "Schritt 0" führen.
     StartupWatchdog.reached(99);
     StartupWatchdog.reached(-1);
     await settle();

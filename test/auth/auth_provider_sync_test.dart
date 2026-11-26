@@ -1,14 +1,14 @@
 // Der Abgleich nach dem Login (der Auth-Anbieter) - ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/providers/auth/auth_provider.dart 189 offene Zeilen. Der Abgleich nach
-// dem Login traegt eine Zusage: "Die Einrichtung erscheint nach einer
+// dem Login trägt eine Zusage: "Die Einrichtung erscheint nach einer
 // Neuinstallation NICHT noch einmal" (Migration 065, `onboarding_done`).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Setup-Flags des Servers werden uebernommen (die Einrichtung
+// WAS HIER GEPRÜFT WIRD:
+//   * die Setup-Flags des Servers werden übernommen (die Einrichtung
 //     erscheint nicht wieder),
-//   * die UI-Einstellungen des Servers werden uebernommen,
+//   * die UI-Einstellungen des Servers werden übernommen,
 //   * der Router wird freigegeben (der Lade-Screen verschwindet),
 //   * ohne Serverstand bleibt der lokale Stand unangetastet.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,7 +67,7 @@ class _Keystore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {
-    // Der Test loescht kein Profil im Keystore.
+    // Der Test löscht kein Profil im Keystore.
   }
 }
 
@@ -82,7 +82,7 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
     mockZeitzone();
-    // DER SPEICHER: der Chat-Dienst oeffnet beim Abgleich seine Box.
+    // DER SPEICHER: der Chat-Dienst öffnet beim Abgleich seine Box.
     await mockHive();
 
     server = FakeSupabaseServer(userId: 'ich');
@@ -114,7 +114,7 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    // Der Auth-Anbieter wird beim Lesen erzeugt - dabei laeuft die
+    // Der Auth-Anbieter wird beim Lesen erzeugt - dabei läuft die
     // Wiederherstellung (und mit der Session der Abgleich).
     container.read(authProvider);
 
@@ -167,7 +167,7 @@ void main() {
     });
 
     test('ohne Serverstand bleibt der lokale Stand', () async {
-      // Der Server weiss nichts (leere Zeile).
+      // Der Server weiß nichts (leere Zeile).
       server.zeilen['profiles'] = <String, dynamic>{'user_id': 'ich'};
       await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
 
@@ -208,10 +208,10 @@ void main() {
       }
     }
 
-    /// Wartet, BIS eine Bedingung eintritt (hoechstens [sekunden]).
+    /// Wartet, BIS eine Bedingung eintritt (höchstens [sekunden]).
     ///
     /// DER GRUND: Ein Schreibvorgang kann nach dem Abgleich noch
-    /// eintrudeln. Ohne Warten landet er im NAECHSTEN Test - und der
+    /// eintrudeln. Ohne Warten landet er im NÄCHSTEN Test - und der
     /// glaubt dann, sein eigener Weg habe geschrieben.
     Future<bool> warteBis(bool Function() bedingung, {int sekunden = 8}) async {
       for (var i = 0; i < sekunden * 10; i++) {
@@ -250,13 +250,13 @@ void main() {
           isTrue,
         );
 
-        // Der naechste Abgleich schiebt das Flag zum Server.
+        // Der nächste Abgleich schiebt das Flag zum Server.
         await container
             .read(authProvider.notifier)
             .silentLogin(email: 'lena@example.de', password: 'geheim123');
 
         // Auf den Schreibvorgang WARTEN - sonst eilt der Test davon und
-        // der Vorgang landet im naechsten Test.
+        // der Vorgang landet im nächsten Test.
         await warteBis(() => flagGeschrieben('one_time_settings_completed'));
         await warteAufAbgleich();
 
@@ -271,10 +271,10 @@ void main() {
     );
 
     test('beim ERSTEN Abgleich wird nichts hochgeschoben', () async {
-      // DER GRUND fuer die Sperre: Wer sich gerade registriert hat, hat
+      // DER GRUND für die Sperre: Wer sich gerade registriert hat, hat
       // lokal noch nichts erledigt. Ein lokaler Restwert (aus einem
-      // frueheren Test oder einer alten Installation) darf die
-      // Einrichtung nicht ueberspringen.
+      // früheren Test oder einer alten Installation) darf die
+      // Einrichtung nicht überspringen.
       server.zeilen['profiles'] = <String, dynamic>{
         'user_id': 'ich',
         'name': 'Lena',
@@ -286,8 +286,8 @@ void main() {
       final container = await baueContainerOhneAbgleich();
       await container.read(settingsProvider.notifier).completeOneTimeSettings();
 
-      // Jetzt der erste Abgleich. Vorher die Schreibvorgaenge leeren:
-      // ein spaeter eintrudelnder Vorgang des Vorherigen Tests darf
+      // Jetzt der erste Abgleich. Vorher die Schreibvorgänge leeren:
+      // ein später eintrudelnder Vorgang des Vorherigen Tests darf
       // diesen Test nicht beeinflussen.
       await Future<void>.delayed(const Duration(milliseconds: 300));
       server.schreibvorgaenge.clear();

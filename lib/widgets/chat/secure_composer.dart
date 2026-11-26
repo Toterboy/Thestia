@@ -4,23 +4,23 @@ import 'package:flutter/services.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 import 'package:thestia/widgets/chat/secure_keyboard.dart';
 
-/// Eingabeleiste fuer private Nachrichten - mit der eigenen Tastatur der
+/// Eingabeleiste für private Nachrichten - mit der eigenen Tastatur der
 /// App (v0.10.1).
 ///
 /// **Der Kern:** Das Textfeld steht auf `readOnly`. Auf Android und iOS
 /// entsteht bei einem `readOnly`-Feld keine Eingabeverbindung zur
-/// Systemtastatur - es gibt also nichts, was sie sehen koennte. Die
+/// Systemtastatur - es gibt also nichts, was sie sehen kännte. Die
 /// Zeichen kommen stattdessen aus der eigenen Tastatur
 /// ([SecureKeyboard]) und gehen direkt in den Controller.
 ///
 /// **Was sonst noch passiert:**
-/// * Die eigene Tastatur oeffnet sich, wenn man das Feld antippt (und
-///   sie ist ueber eine Taste auch wieder zuklappbar).
-/// * Eine **Hardwaretastatur** (Tablet mit Tastaturhuelle) funktioniert
+/// * Die eigene Tastatur öffnet sich, wenn man das Feld antippt (und
+///   sie ist über eine Taste auch wieder zuklappbar).
+/// * Eine **Hardwaretastatur** (Tablet mit Tastaturhülle) funktioniert
 ///   weiterhin: die Tastenereignisse werden hier abgefangen und
-///   eingefuegt. Auch dabei laeuft nichts ueber die Systemtastatur.
-/// * **Einfuegen** aus der Zwischenablage gibt es als eigene Taste -
-///   mit `readOnly` waere es sonst deaktiviert.
+///   eingefügt. Auch dabei läuft nichts über die Systemtastatur.
+/// * **Einfügen** aus der Zwischenablage gibt es als eigene Taste -
+///   mit `readOnly` wäre es sonst deaktiviert.
 class SecureComposer extends StatefulWidget {
   const SecureComposer({
     required this.controller,
@@ -56,7 +56,7 @@ class SecureComposer extends StatefulWidget {
   /// Ist die Senden-Taste aktiv?
   final bool sendEnabled;
 
-  /// Ladekreis statt der Senden-Taste (während ein Bild hochlaedt).
+  /// Ladekreis statt der Senden-Taste (während ein Bild hochlädt).
   final bool showSendSpinner;
 
   /// Mehrzeilig wachsend (wie WhatsApp/Telegram).
@@ -65,7 +65,7 @@ class SecureComposer extends StatefulWidget {
   /// Mindestzahl der Zeilen.
   final int minLines;
 
-  /// Enter sendet (statt einen Umbruch einzufuegen).
+  /// Enter sendet (statt einen Umbruch einzufügen).
   final bool enterSends;
 
   /// Innenabstand der Leiste.
@@ -85,13 +85,13 @@ class _SecureComposerState extends State<SecureComposer> {
     super.dispose();
   }
 
-  /// Zeichen an der Cursor-Position einfuegen (ersetzt eine Auswahl).
+  /// Zeichen an der Cursor-Position einfügen (ersetzt eine Auswahl).
   void _insert(String text) {
     final value = widget.controller.value;
     var start = value.selection.start;
     var end = value.selection.end;
     if (!value.selection.isValid || start < 0 || end < 0) {
-      // Kein Cursor (z. B. direkt nach `clear()`) - dann wird angehaengt.
+      // Kein Cursor (z. B. direkt nach `clear()`) - dann wird angehängt.
       start = value.text.length;
       end = value.text.length;
     }
@@ -107,7 +107,7 @@ class _SecureComposerState extends State<SecureComposer> {
     );
   }
 
-  /// Das Zeichen vor dem Cursor loeschen.
+  /// Das Zeichen vor dem Cursor löschen.
   void _backspace() {
     final value = widget.controller.value;
     if (value.text.isEmpty) return;
@@ -128,7 +128,7 @@ class _SecureComposerState extends State<SecureComposer> {
     );
   }
 
-  /// Text aus der Zwischenablage einfuegen.
+  /// Text aus der Zwischenablage einfügen.
   ///
   /// Die Zwischenablage wird direkt gelesen - die Systemtastatur ist
   /// daran nicht beteiligt und sieht nichts.
@@ -153,7 +153,7 @@ class _SecureComposerState extends State<SecureComposer> {
   }
 
   /// Hardwaretastatur: die Zeichen kommen als Tastenereignis an, nicht
-  /// ueber die Systemtastatur. Deshalb werden sie hier eingefuegt.
+  /// über die Systemtastatur. Deshalb werden sie hier eingefügt.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
@@ -224,7 +224,7 @@ class _SecureComposerState extends State<SecureComposer> {
                       // erzeugt auf Android und iOS keine
                       // Eingabeverbindung - die Systemtastatur sieht
                       // damit nichts. `TextInputType.none` ist die
-                      // zweite Sicherung fuer die Plattformen, auf
+                      // zweite Sicherung für die Plattformen, auf
                       // denen es eine Verbindung gibt.
                       readOnly: true,
                       keyboardType: TextInputType.none,

@@ -18,12 +18,12 @@ de_keys = set(re.findall(r"'([a-zA-Z0-9_.]+)'\s*:", de_block))
 en_keys = set(re.findall(r"'([a-zA-Z0-9_.]+)'\s*:", en_block))
 
 # BUG (gefunden am 22.10.2026): dieses Skript hat nie einen Exit-Code
-# gesetzt. Fehlende Uebersetzungen, Gedankenstriche und undefinierte Keys
+# gesetzt. Fehlende Übersetzungen, Gedankenstriche und undefinierte Keys
 # haben die CI deshalb nicht rot werden lassen.
 #
 # Ausnahmen mit Begründung:
 #   'de' - Sprachcode, kein UI-Text.
-#   'km' - Einheitenabkuerzung, in beiden Sprachen gleich.
+#   'km' - Einheitenabkürzung, in beiden Sprachen gleich.
 ALLOWED_DE_ONLY = {"de", "km"}
 
 findings = []
@@ -40,7 +40,7 @@ if en_only:
 
 # Gedankenstriche in Nutzer-Texten
 # DIE TEXTE LIEGEN NACH THEMEN GETRENNT (lib/l10n/strings/) - der
-# Gedankenstrich wird je Datei geprueft.
+# Gedankenstrich wird je Datei geprüft.
 for datei in l10n_texts.text_dateien():
     relativer = str(datei).replace("\\", "/")
     for i, line in enumerate(datei.read_text(encoding="utf-8").splitlines(), 1):

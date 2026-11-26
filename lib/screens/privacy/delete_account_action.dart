@@ -16,19 +16,19 @@ import 'package:thestia/services/auth/supabase_service.dart';
 /// Screen; als eigene Funktion ist er jetzt von beiden Stellen nutzbar,
 /// ohne den Code zu verdoppeln.
 ///
-/// Der Ablauf ist unveraendert:
-///  1) MFA-Step-up (ASVS 7.5.3): bei aktivem 2FA wird vor der Loeschung
-///     eine zusaetzliche TOTP-Verifikation verlangt.
-///  2) Bestaetigungsdialog
-///  3) Loeschung ueber den Auth-Provider, danach zur Startseite.
+/// Der Ablauf ist unverändert:
+///  1) MFA-Step-up (ASVS 7.5.3): bei aktivem 2FA wird vor der Löschung
+///     eine zusätzliche TOTP-Verifikation verlangt.
+///  2) Bestätigungsdialog
+///  3) Löschung über den Auth-Provider, danach zur Startseite.
 Future<void> deleteAccountWithConfirmation(
   BuildContext context,
   WidgetRef ref,
 ) async {
-  // Step-up (ASVS 7.5.3): Bei aktivem MFA ist vor der Konto-Loeschung
-  // eine zusaetzliche TOTP-Verifikation noetig - eine reine Passwort-
+  // Step-up (ASVS 7.5.3): Bei aktivem MFA ist vor der Konto-Löschung
+  // eine zusätzliche TOTP-Verifikation nötig - eine reine Passwort-
   // Session (AAL1) reicht nicht (die Edge Function erzwingt AAL2
-  // serverseitig; der Pre-Check hier liefert die verstaendliche
+  // serverseitig; der Pre-Check hier liefert die verständliche
   // Fehlermeldung statt eines kryptischen Server-Fehlers).
   final mfa = ref.read(mfaStatusProvider);
   if (mfa.hasVerifiedFactors && mfa.currentAal != 'aal2') {

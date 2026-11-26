@@ -28,7 +28,7 @@ class TransitSparkResult {
   ///
   /// Der Server legt bei jedem Transit-Treffer Likes in beide
   /// Richtungen an; ein bestehender Match bleibt dabei bestehen
-  /// (ON CONFLICT DO NOTHING). Ohne dieses Flag wuerde der Nutzer
+  /// (ON CONFLICT DO NOTHING). Ohne dieses Flag würde der Nutzer
   /// jedes Mal den Erfolgs-Dialog sehen - auch wenn es der gleiche
   /// Funke wie vorher war.
   final bool alreadySpark;
@@ -48,7 +48,7 @@ class TransitSparkResult {
 /// Beschreibung zu meiner passt.
 ///
 /// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
-/// der selben Beschreibung geben sollte, dass man dann alle dafuer
+/// der selben Beschreibung geben sollte, dass man dann alle dafür
 /// vorgeschlagen bekommt".
 ///
 /// **Der Name ist optional:** Er erscheint nur, wenn die Person ihn
@@ -149,15 +149,15 @@ class TransitEncounter {
 /// "Hoodie" und "Oberteil" standen gleichrangig nebeneinander, ohne
 /// erkennbar zu sein, dass drei davon Oberteile sind und eines gar
 /// nichts mit Kleidung zu tun hat. Wer "Hemd" suchte, musste alle
-/// Eintraege durchsehen.
+/// Einträge durchsehen.
 ///
 /// JETZT: sieben Kategorien. Jede Kategorie hat eigene Werte, und
-/// hoechstens EIN Wert je Kategorie ist waehlbar - "Hemd" und "Bluse"
-/// gleichzeitig waere keine Angabe mehr, sondern Unsinn.
+/// höchstens EIN Wert je Kategorie ist wählbar - "Hemd" und "Bluse"
+/// gleichzeitig wäre keine Angabe mehr, sondern Unsinn.
 ///
 /// Die Kategorien kommen aus dem Server (public.transit_tag_catalog),
 /// die Werte sind im Katalog hier hinterlegt. Der Server ist die
-/// Quelle der Wahrheit fuer WAS erlaubt ist, der Client die fuer WIE
+/// Quelle der Wahrheit für WAS erlaubt ist, der Client die für WIE
 /// es aussieht.
 class TransitTagCategory {
   const TransitTagCategory(this.slug, this.icon);
@@ -167,7 +167,7 @@ class TransitTagCategory {
 
   final IconData icon;
 
-  /// L10n-Schluessel des Kategorienamens.
+  /// L10n-Schlüssel des Kategorienamens.
   String get labelKey => 'transit.cat.$slug';
 
   /// Reihenfolge der Anzeige.
@@ -177,14 +177,14 @@ class TransitTagCategory {
   ///
   /// Die Reihenfolge ist deshalb nach der Bedeutung sortiert, nicht nach
   /// dem Alphabet: Was man im Gesicht sieht, steht oben. Die Haare sind
-  /// das Erste, was andere wahrnehmen - und der Bildschirm heisst
+  /// das Erste, was andere wahrnehmen - und der Bildschirm heißt
   /// "Wie siehst du gerade aus?". Vorher standen die Haare ganz hinten
   /// (nach Ober- und Unterteil), also genau dort, wo niemand hinschaut.
   ///
-  /// "Haarlaenge" und "Frisur" sind eigene Kategorien (Migration 188):
+  /// "Haarlänge" und "Frisur" sind eigene Kategorien (Migration 188):
   /// je Kategorie ist nur EIN Merkmal erlaubt, und "lockig" UND "lang"
-  /// ist keine Alternative, sondern eine vollstaendige Beschreibung. In
-  /// derselben Kategorie haetten sie sich ausgeschlossen.
+  /// ist keine Alternative, sondern eine vollständige Beschreibung. In
+  /// derselben Kategorie hütten sie sich ausgeschlossen.
   static const List<TransitTagCategory> values = [
     TransitTagCategory('hair', Icons.face_retouching_natural),
     TransitTagCategory('hair_length', Icons.straighten),
@@ -207,22 +207,22 @@ class TransitTagCategory {
 
 /// Merkmal-Tags (v0.9.0, Kategoriesystem v0.10.0).
 ///
-/// Es gibt ZWEI getrennte Merkmals-Stroeme, die denselben Katalog
+/// Es gibt ZWEI getrennte Merkmals-Ströme, die denselben Katalog
 /// benutzen:
 ///
 ///  * [TransitTag] an der ANDEREN Person (was ich an ihr gesehen habe)
 ///    - gespeichert in transit_signals.tags
-///  * [TransitTag] ueber sich selbst (wie ich aussehe)
+///  * [TransitTag] über sich selbst (wie ich aussehe)
 ///    - gespeichert in transit_signals.self_tags
 ///
 /// Die Wire-Form bleibt FLACH: ein Slug je Array-Element, Farbe als
 /// 'slug:farbe'. Grund: das Matching vergleicht Slugs. Ein
-/// 'kategorie:wert'-Format wuerde alle Bestandswerte neu kodieren
-/// muessen.
+/// 'kategorie:wert'-Format würde alle Bestandswerte neu kodieren
+/// müssen.
 ///
 /// Haar- und Augenfarben haben eine EIGENE Palette. "schwarz" bei der
 /// Kleidung und "schwarz" beim Haar sind verschiedene Angaben - mit
-/// derselben Liste wuerde ein schwarzes Hemd mit schwarzem Haar
+/// derselben Liste würde ein schwarzes Hemd mit schwarzem Haar
 /// gleichgesetzt. Die Verwechslung wird dadurch verhindert, dass die
 /// SLUGS verschieden sind ('hoodie:black' vs. 'hair_color:black').
 class TransitTag {
@@ -236,13 +236,13 @@ class TransitTag {
     this.searchAliases = const <String>[],
   });
 
-  /// Technischer Slug (auch fuer das Matching, serverseitig whitelisted
-  /// ueber public.transit_tag_catalog).
+  /// Technischer Slug (auch für das Matching, serverseitig whitelisted
+  /// über public.transit_tag_catalog).
   final String slug;
 
   final IconData icon;
 
-  /// Farbwahl moeglich (optional, ueberspringbar) - Tag wird dann als
+  /// Farbwahl möglich (optional, überspringbar) - Tag wird dann als
   /// 'slug:color' gesendet.
   final bool colorizable;
 
@@ -252,8 +252,8 @@ class TransitTag {
   /// Eigene Farbpalette. Leer = die Standard-Kleidungspalette.
   ///
   /// Die Kleidung nutzt "black/white/grey/...", das Haar "blonde/
-  /// braun/schwarz/..." und die Augen "braun/blau/gruen/...". Ohne
-  /// getrennte Listen wuerde "schwarz" bei beiden dasselbe bedeuten.
+  /// braun/schwarz/..." und die Augen "braun/blau/grün/...". Ohne
+  /// getrennte Listen würde "schwarz" bei beiden dasselbe bedeuten.
   final List<String>? allowedColors;
 
   /// Eigene Werteliste (v0.10.0, Migration 187).
@@ -268,21 +268,21 @@ class TransitTag {
   /// ("hair_style:lockig").
   final List<String>? allowedValues;
 
-  /// Zusaetzliche Schreibweisen fuer die Suche (z. B. 't-shirt' fuer
+  /// Zusätzliche Schreibweisen für die Suche (z. B. 't-shirt' für
   /// 'tshirt'). Kleinbuchstaben, ohne Umlaute.
   final List<String> searchAliases;
 
-  /// L10n-Schluessel des Labels.
+  /// L10n-Schlüssel des Labels.
   String get labelKey => 'transit.tag.$slug';
 
-  /// Die Farben, die fuer DIESEN Wert wahlbar sind.
+  /// Die Farben, die für DIESEN Wert wahlbar sind.
   ///
-  /// Heisst "availableColors" und nicht "colors", weil es die statische
+  /// Heißt "availableColors" und nicht "colors", weil es die statische
   /// Liste [TransitTag.colors] (die Kleidungspalette) bereits gibt.
   List<String> get availableColors =>
       allowedColors ?? (colorizable ? TransitTag.clothingColors : const []);
 
-  /// Die Werte, die fuer DIESEN Merkmal wahlbar sind (leer = keine).
+  /// Die Werte, die für DIESEN Merkmal wahlbar sind (leer = keine).
   List<String> get availableValues => allowedValues ?? const [];
 
   /// Hat dieses Merkmal eine Werteliste? Dann wird es als
@@ -309,8 +309,8 @@ class TransitTag {
   ///
   /// BEFUND (06.11.2026, Betreiber): "Es muss mehr Haarfarben zur
   /// Auswahl geben." Die acht Werte decken nur die grobsten
-  /// Unterscheidungen ab - "dunkelbraun" und "hellbraun" sind fuer
-  /// viele Menschen genau die Unterscheidung, die zaehlt, und "Kupferrot"
+  /// Unterscheidungen ab - "dunkelbraun" und "hellbraun" sind für
+  /// viele Menschen genau die Unterscheidung, die zählt, und "Kupferrot"
   /// sieht anders aus als "Rot".
   ///
   /// Die Reihenfolge hier ist die Reihenfolge in der Auswahl. Der
@@ -320,7 +320,7 @@ class TransitTag {
   ///
   /// BEFUND (07.11.2026, Betreiber): "Zudem soll bei Haarfarben auch
   /// noch sowas wie lila usw. sein." Migration 186 hat die Palette um
-  /// lila, rosa, blau und gruen erweitert - 18 Werte.
+  /// lila, rosa, blau und grün erweitert - 18 Werte.
   static const List<String> hairColors = [
     'black',
     'brown',
@@ -342,12 +342,12 @@ class TransitTag {
     'green',
   ];
 
-  /// Haarlaengen. EIGENE Werteliste, siehe [allowedValues].
+  /// Haarlängen. EIGENE Werteliste, siehe [allowedValues].
   ///
   /// BEFUND (07.11.2026, Betreiber): "Ja kannst du auch mit aufnehmen,
   /// also Hairstyle und so." Der Server kannte "hair_length" schon -
-  /// aber ohne Werte war das Merkmal wertlos ("hat Haarlaenge"?).
-  /// Migration 187 hat die Werteliste eingefuehrt.
+  /// aber ohne Werte war das Merkmal wertlos ("hat Haarlänge"?).
+  /// Migration 187 hat die Werteliste eingeführt.
   ///
   /// Die Reihenfolge hier ist die Reihenfolge in der Auswahl. Der Server
   /// kennt dieselben Werte (public.transit_tag_catalog, Migration 187).
@@ -364,7 +364,7 @@ class TransitTag {
   /// Frisuren. EIGENE Werteliste, siehe [allowedValues].
   ///
   /// BEFUND (07.11.2026, Betreiber): "also Hairstyle und so."
-  /// Migration 187 hat die Werteliste eingefuehrt.
+  /// Migration 187 hat die Werteliste eingeführt.
   static const List<String> hairStyleValues = [
     'glatt',
     'lockig',
@@ -429,8 +429,8 @@ class TransitTag {
 
   /// Der Katalog, in Kategorien gegliedert (v0.10.0, Migration 148).
   ///
-  /// Reihenfolge = Anzeigereihenfolge. Jeder Wert gehoert zu genau
-  /// einer Kategorie, und je Kategorie ist hoechstens ein Wert waehlbar.
+  /// Reihenfolge = Anzeigereihenfolge. Jeder Wert gehört zu genau
+  /// einer Kategorie, und je Kategorie ist höchstens ein Wert wählbar.
   static const List<TransitTag> catalog = [
     // ---- Oberteil
     TransitTag(
@@ -615,13 +615,13 @@ class TransitTag {
       'hair_length',
       Icons.straighten,
       // EIGENE Kategorie (Migration 188): je Kategorie ist nur EIN
-      // Merkmal erlaubt. Haarlaenge und Frisur sind keine Alternative,
-      // sondern zwei Angaben - in derselben Kategorie wuerden sie sich
+      // Merkmal erlaubt. Haarlänge und Frisur sind keine Alternative,
+      // sondern zwei Angaben - in derselben Kategorie würden sie sich
       // ausschliessen.
       category: 'hair_length',
       // BEFUND (07.11.2026, Betreiber): "also Hairstyle und so". Als
-      // blosse Merkmale waren Haarlaenge und Frisur wertlos ("hat
-      // Haarlaenge?"). Migration 187 hat die Wertelisten eingefuehrt.
+      // blosse Merkmale waren Haarlänge und Frisur wertlos ("hat
+      // Haarlänge?"). Migration 187 hat die Wertelisten eingeführt.
       allowedValues: hairLengthValues,
       searchAliases: ['haarlaenge', 'hair length'],
     ),
@@ -651,7 +651,7 @@ class TransitTag {
   ///
   /// Verglichen wird gegen den Slug und die Schreibweisen aus
   /// [searchAliases]. Die SUCHE IM TEXT des Labels braucht die
-  /// Uebersetzung und passiert deshalb in der Oberflaeche, nicht hier.
+  /// Übersetzung und passiert deshalb in der Oberfläche, nicht hier.
   static List<TransitTag> search(String query) {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return catalog;

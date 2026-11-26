@@ -1,9 +1,9 @@
 // Der Teil '_InfoChip'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -32,7 +32,7 @@ class _InfoChip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: effectiveColor),
           const SizedBox(width: 6),
-          // Flexible: bei grosser Schrift waechst der Text ueber die
+          // Flexible: bei großer Schrift wächst der Text über die
           // Zeile hinaus (RenderFlex-Overflow, BEFUND 25.11.2026). Der
           // Chip steht in einem Wrap - der gibt seinen Kindern die
           // Breite des Bildschirms, der Text bricht also um.

@@ -1,13 +1,13 @@
 // Das eigene Profil (bisher kaum getestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/profile/profile_screen.dart 309 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich mit dem eigenen Profil (kein Absturz,
 //     kein Render-Overflow),
 //   * der Name steht da, das Verifiziert-Abzeichen auch,
-//   * die beiden Knoepfe in der Kopfzeile (QR-Code, Einstellungen).
+//   * die beiden Knöpfe in der Kopfzeile (QR-Code, Einstellungen).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,11 +78,11 @@ UserProfile _profil() => UserProfile(
 
 void main() {
   setUpAll(() async {
-    // DER SPEICHER DES GERAETS: der Auth-Client holt sich daraus die
-    // Sitzung - ohne den Mock schlaegt der Aufbau fehl.
+    // DER SPEICHER DES GERÄTS: der Auth-Client holt sich daraus die
+    // Sitzung - ohne den Mock schlägt der Aufbau fehl.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
-    // Der Supabase-Client wird genau einmal fuer die ganze Datei
+    // Der Supabase-Client wird genau einmal für die ganze Datei
     // aufgesetzt: die Stimmungskarte des Profils liest ihn. Ohne die
     // drei Optionen (kein Timer, kein Speicher, kein Deeplink-Observer)
     // scheitert der Aufbau auf dem CI-Runner.
@@ -101,7 +101,7 @@ void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    // DER KEYSTORE: die Einstellungen kommen aus dem verschluesselten
+    // DER KEYSTORE: die Einstellungen kommen aus dem verschlüsselten
     // Speicher - ohne den Mock ruft der Test auf dem CI-Runner das
     // echte Plugin (das findet dort keine libsecret-Sitzung).
     mockKeystore();
@@ -253,7 +253,7 @@ void main() {
     });
   });
   group('Das Profil-Menue', () {
-    /// Oeffnet das Profil-Menue (der Knopf mit dem Personensymbol).
+    /// Öffnet das Profil-Menü (der Knopf mit dem Personensymbol).
     Future<void> oeffneMenue(WidgetTester tester) async {
       await zeigeScreen(tester);
 
@@ -325,7 +325,7 @@ void main() {
         findsOneWidget,
       );
 
-      // Umstellen auf Geburtstag: der Stil-Wechsel darf nicht abstuerzen
+      // Umstellen auf Geburtstag: der Stil-Wechsel darf nicht abstürzen
       // (der Chip mit dem aktiven Stil wird eingeblendet).
       await tester.tap(
         find.text(L10n.tWithoutContext('profile.preview.modeBirthday')),
@@ -334,7 +334,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(tester.takeException(), isNull);
 
-      // Das Schliessen-Icon bringt die Vorschau wieder weg.
+      // Das Schließen-Icon bringt die Vorschau wieder weg.
       await tester.tap(find.byIcon(Icons.close));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

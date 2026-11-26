@@ -85,7 +85,7 @@ class MainNavigation extends ConsumerWidget {
   /// Routen, auf denen die Bottom-Navigation ausgeblendet wird.
   ///
   /// Chat (v0.9.0-Feedback): Im Chat sollen die Reiter unten nicht mehr
-  /// sichtbar sein - das Gespraech hat den vollen Bildschirm. v0.9.1: ALLE
+  /// sichtbar sein - das Gespräch hat den vollen Bildschirm. v0.9.1: ALLE
   /// Fenster innerhalb des Chats (Quiz, Eisbrecher, Profil-Detail) ebenfalls
   /// ohne Reiter.
   static const _hideBottomNavRoutes = {
@@ -184,8 +184,8 @@ class MainNavigation extends ConsumerWidget {
       }
     }
     if (!context.mounted) return;
-    // Radar laeuft und der Wechsel verlaesst den Transit-Tab: gleiche
-    // Rueckfrage wie beim Screen-Pop. Ohne diesen Haken blieb der Scan
+    // Radar läuft und der Wechsel verlässt den Transit-Tab: gleiche
+    // Rückfrage wie beim Screen-Pop. Ohne diesen Haken blieb der Scan
     // beim Tabsprung still im Hintergrund aktiv und adressierbar.
     if (GoRouterState.of(context).uri.path.startsWith('/transit')) {
       final mayLeave = await confirmTransitExit(context, ref);
@@ -204,7 +204,7 @@ class MainNavigation extends ConsumerWidget {
   ///
   /// Die Statusleiste wird nur dann richtig, wenn die Icon-Helligkeit
   /// zum Theme passt: dunkle Icons auf hellem Grund, helle auf dunklem.
-  /// Ohne diese Angabe bleiben sie in Flutter weiss - im Light-Mode
+  /// Ohne diese Angabe bleiben sie in Flutter weiß - im Light-Mode
   /// unlesbar.
   static SystemUiOverlayStyle _overlayStyle(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -258,7 +258,7 @@ class MainNavigation extends ConsumerWidget {
     // hervor - auf dem schwebenden, fast durchsichtigen Container der
     // App geht das unter: man sieht nicht, wo man ist.
     //
-    // Die eigene Leiste gibt dem aktiven Reiter eine GEFUELLTE PILLE
+    // Die eigene Leiste gibt dem aktiven Reiter eine GEFÜLLTE PILLE
     // um das Symbol, plus die Label-Farbe und eine fette Schrift. Das ist
     // dieselbe Sprache wie die Pillen-Leiste im Admin-Screen und im
     // Interessen-Screen - eine Form, ein Material.
@@ -269,18 +269,18 @@ class MainNavigation extends ConsumerWidget {
     );
 
     // Wischen zwischen den HAUPT-Reitern (NUTZERWUNSCH 28.10.2026).
-    // Nur wenn die Leiste sichtbar ist - im Chat wuerde ein Wischen
+    // Nur wenn die Leiste sichtbar ist - im Chat würde ein Wischen
     // sonst unerwartet den Reiter wechseln.
     //
     // BEFUND (09.11.2026, Betreiber): "Das Swipen zwischen den Reitern
     // soll bei Entdecken aber nicht in den Unterscreens davon
-    // funktionieren (selbes gilt auch fuer die anderen Reiter)."
+    // funktionieren (selbes gilt auch für die anderen Reiter)."
     //
     // Das Wischen ist damit ein REITER-Wechsel und kein Screen-Wechsel:
     // In jedem Unterscreen (Find your Spark, Profil bearbeiten,
-    // Einstellungen, die Kategorie-Sicht, ...) wuerde es den Reiter
-    // wechseln, waehrend man gerade in etwas anderem ist - und der
-    // Bildschirm, aus dem man wegwischt, kaeme nicht zurueck.
+    // Einstellungen, die Kategorie-Sicht, ...) würde es den Reiter
+    // wechseln, während man gerade in etwas anderem ist - und der
+    // Bildschirm, aus dem man wegwischt, käme nicht zurück.
     //
     // Deshalb: das Wischen gibt es NUR auf den vier Haupt-Reitern
     // (_routes). In allen Unterscreens ist es aus.
@@ -290,14 +290,14 @@ class MainNavigation extends ConsumerWidget {
     return Scaffold(
       // STATUSLEISTE (Nutzerwunsch, 27.10.2026).
       //
-      // Die AppBar setzt die Icon-Helligkeit ueber das Theme - aber
+      // Die AppBar setzt die Icon-Helligkeit über das Theme - aber
       // nicht jeder Screen hat eine AppBar (Startseite, Profil). Ohne
-      // diese Angabe bleiben die System-Icons dann weiss, auch im
+      // diese Angabe bleiben die System-Icons dann weiß, auch im
       // Light-Mode, und Akkustand, Uhrzeit und Empfangsanzeige sind
       // auf hellem Grund unlesbar.
       //
-      // AnnotatedRegion schlaegt die AppBar-Angabe fuer die Bildschirm-
-      // Flaeche, in der sie sitzt - deshalb steht sie HIER, einmal fuer
+      // AnnotatedRegion schlägt die AppBar-Angabe für die Bildschirm-
+      // Fläche, in der sie sitzt - deshalb steht sie HIER, einmal für
       // die ganze App, statt in jedem Screen einzeln.
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: _overlayStyle(context),
@@ -340,18 +340,18 @@ class MainNavigation extends ConsumerWidget {
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                // Der Schatten ist ausdruecklich ein BoxShadow und NICHT
+                // Der Schatten ist ausdrücklich ein BoxShadow und NICHT
                 // die Elevation des Material: die Material-Elevation
-                // zeichnet ihren Schatten je nach Geraet unterschiedlich
+                // zeichnet ihren Schatten je nach Gerät unterschiedlich
                 // (manchmal als harter Ring). Ein BoxShadow sieht
-                // ueberall gleich aus - und das Dock soll auf jedem
-                // Geraet dasselbe schwebende Objekt sein.
+                // überall gleich aus - und das Dock soll auf jedem
+                // Gerät dasselbe schwebende Objekt sein.
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(32),
                     // Eine feine Lichtkante: sie hebt das Dock vom
-                    // Hintergrund ab, ohne die Kanten zu ueberzeichnen.
+                    // Hintergrund ab, ohne die Kanten zu überzeichnen.
                     border: Border.all(
                       color: Theme.of(
                         context,
@@ -369,9 +369,9 @@ class MainNavigation extends ConsumerWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(32),
-                    // MaterialType.transparency: nur fuer die
+                    // MaterialType.transparency: nur für die
                     // Farb-Pinsel des InkWell - der Schatten kommt von
-                    // aussen.
+                    // außen.
                     child: Material(
                       type: MaterialType.transparency,
                       child: navBar,
@@ -388,15 +388,15 @@ class MainNavigation extends ConsumerWidget {
 ///
 /// NUTZERWUNSCH (28.10.2026): das Wischen soll NICHT mehr zwischen den
 /// Unterreitern der Interessen-Seite gehen, sondern zwischen den vier
-/// grossen Reitern der App (Aktuelles, Entdecken, Interessen, Profil).
-/// NUTZERWUNSCH (30.10.2026): "die Wisch-Animation soll fluessiger
-/// werden" - die Seite folgt dem Finger jetzt mit einer gedaempften
-/// Bewegung, federt beim Loslassen weich zurueck und der neue Reiter
+/// großen Reitern der App (Aktuelles, Entdecken, Interessen, Profil).
+/// NUTZERWUNSCH (30.10.2026): "die Wisch-Animation soll flüssiger
+/// werden" - die Seite folgt dem Finger jetzt mit einer gedämpften
+/// Bewegung, federt beim Loslassen weich zurück und der neue Reiter
 /// gleitet von der passenden Seite herein.
 ///
-/// Umsetzung: ein waagerechter Geste-Erkner ueber dem Seiteninhalt.
+/// Umsetzung: ein waagerechter Geste-Erkner über dem Seiteninhalt.
 /// Er wird nur aktiv, wenn die Reiterleiste sichtbar ist - im Chat oder
-/// im Quiz wuerde ein Wischen sonst unerwartet den Reiter wechseln.
+/// im Quiz würde ein Wischen sonst unerwartet den Reiter wechseln.
 class _TabSwipe extends StatefulWidget {
   const _TabSwipe({
     required this.child,
@@ -407,12 +407,12 @@ class _TabSwipe extends StatefulWidget {
 
   final Widget child;
 
-  /// Richtung: -1 = zurueck (nach rechts wischen), +1 = vor.
+  /// Richtung: -1 = zurück (nach rechts wischen), +1 = vor.
   final ValueChanged<int> onSwipe;
 
   final bool enabled;
 
-  /// Aktueller Reiter. Aendert er sich, gleitet der neue Inhalt herein.
+  /// Aktueller Reiter. Ändert er sich, gleitet der neue Inhalt herein.
   final int index;
 
   @override
@@ -420,13 +420,13 @@ class _TabSwipe extends StatefulWidget {
 }
 
 class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
-  /// Weg der aktuellen Geste in Pixeln (mit Widerstand gedaempft).
+  /// Weg der aktuellen Geste in Pixeln (mit Widerstand gedämpft).
   double _weg = 0;
 
-  /// Startwert der Rueckfeder-Animation.
+  /// Startwert der Rückfeder-Animation.
   double _federStart = 0;
 
-  /// Ob die Reitergrenze in dieser Geste schon ueberschritten wurde.
+  /// Ob die Reitergrenze in dieser Geste schon überschritten wurde.
   bool _geTickt = false;
 
   /// Richtung des hereingleitenden Reiters: +1 von rechts, -1 von links.
@@ -435,30 +435,30 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
   /// Der Inhalt, der gerade ANGEZEIGT wird.
   ///
   /// NUTZERWUNSCH (01.11.2026): "Das swipen in der App zwischen den
-  /// Reitern ist noch immer nicht fluessig."
+  /// Reitern ist noch immer nicht flüssig."
   ///
   /// Der Grund war nicht die Animation, sondern dass die alte Seite
   /// SOFORT verschwand: der Router tauschte sie aus, und die neue
   /// Seite fuhr von der Seite herein. Zwischen "alt" und "neu" gab es
-  /// keinen Uebergang - das ist ein Schnitt, und ein Schnitt wirkt
-  /// immer abrupt, egal wie schoen die Bewegung danach aussieht.
+  /// keinen Übergang - das ist ein Schnitt, und ein Schnitt wirkt
+  /// immer abrupt, egal wie schön die Bewegung danach aussieht.
   ///
-  /// Deshalb haelt dieser State den Inhalt selbst. Der Wechsel wird
-  /// hier zu Ende gefuehrt: die alte Seite bleibt eingebaut und
+  /// Deshalb hält dieser State den Inhalt selbst. Der Wechsel wird
+  /// hier zu Ende geführt: die alte Seite bleibt eingebaut und
   /// blendet aus, die neue blendet ein und gleitet herein.
   ///
   /// Wichtig: Die alte Seite wird hier NICHT neu eingebaut. Sie war
   /// vorher ein Kind dieses Staates und bleibt es - ein erneutes
-  /// Einbauen wuerde ihren State neu aufsetzen und zurueckflackern.
+  /// Einbauen würde ihren State neu aufsetzen und zurückflackern.
   late Widget _angezeigt;
 
   /// Der vorherige Inhalt, der beim Wechsel ausblendet.
   Widget? _ausblendend;
 
-  /// Der Weg, den der Finger beim Wechsel zurueckgelegt hatte.
+  /// Der Weg, den der Finger beim Wechsel zurückgelegt hatte.
   ///
-  /// Die alte Seite startet dort - sie springt nicht auf 0 zurueck und
-  /// faehrt dann weiter. Ohne das wirkt der Wechsel wie ein Schnitt mit
+  /// Die alte Seite startet dort - sie springt nicht auf 0 zurück und
+  /// fährt dann weiter. Ohne das wirkt der Wechsel wie ein Schnitt mit
   /// einem verschobenen Bild.
   double _wegBeimWechsel = 0;
 
@@ -468,12 +468,12 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
   /// Anteil des Fingerwegs, den die Seite sichtbar mitgeht.
   ///
   /// NUTZERWUNSCH (03.11.2026): "Das Swipen zwischen den Reitern
-  /// (links und rechts) sieht nicht nach einem fluessigen Swipe aus."
+  /// (links und rechts) sieht nicht nach einem flüssigen Swipe aus."
   ///
-  /// DER BEFUND: Die Seite folgte dem Finger nur mit 42 %. Das fuehlt
-  /// sich an, als haette die Seite einen Widerstand - der Finger
-  /// zieht, die Seite zoeodert hinterher. Ein Wischen, das sich
-  /// waech wie ein Wischen anfuehlt, geht 1:1 mit dem Finger.
+  /// DER BEFUND: Die Seite folgte dem Finger nur mit 42 %. Das fühlt
+  /// sich an, als hätte die Seite einen Widerstand - der Finger
+  /// zieht, die Seite zöodert hinterher. Ein Wischen, das sich
+  /// wäch wie ein Wischen anfühlt, geht 1:1 mit dem Finger.
   static const double _folge = 1.0;
 
   /// Wie weit die Seite beim Ziehen maximal mitwandert (Anteil der
@@ -482,10 +482,10 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
 
   /// Dauer des Hereinflugs bei einem Reiterwechsel per Tippen.
   ///
-  /// Der Weg, den die neue Seite zuruecklegt, ist die Bildschirmbreite
-  /// minus dem, was der Finger schon geschafft hat - die Dauer waechst
+  /// Der Weg, den die neue Seite zurücklegt, ist die Bildschirmbreite
+  /// minus dem, was der Finger schon geschafft hat - die Dauer wächst
   /// also mit der Reststrecke. Das ist der Unterschied zwischen
-  /// "abrupt" und "fluessig": eine kurze Bewegung wird zuegiger
+  /// "abrupt" und "flüssig": eine kurze Bewegung wird zügiger
   /// beendet, eine lange braucht ihre Zeit.
   static const int _wechselMs = 300;
 
@@ -495,11 +495,11 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
     value: 1,
   )..addStatusListener(_onEnterStatus);
 
-  /// Nach der Ueberblendung wird der alte Inhalt freigegeben.
+  /// Nach der Überblendung wird der alte Inhalt freigegeben.
   ///
-  /// Bis dahin bleibt er eingebaut (sonst wuerde er neu eingebaut
-  /// und zurueckflackern). Danach hat er nichts mehr zu tun - er
-  /// wuerde sonst ewig weiterlaufen (Timer, Streams, Abos).
+  /// Bis dahin bleibt er eingebaut (sonst würde er neu eingebaut
+  /// und zurückflackern). Danach hat er nichts mehr zu tun - er
+  /// würde sonst ewig weiterlaufen (Timer, Streams, Abos).
   void _onEnterStatus(AnimationStatus status) {
     if (status != AnimationStatus.completed) return;
     if (!mounted) return;
@@ -536,19 +536,19 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
       _enterRichtung = widget.index > oldWidget.index ? 1 : -1;
       // Die alte Seite bleibt eingebaut und blendet aus. Sie war
       // vorher ein Kind dieses Staates - sie wird hier also NICHT neu
-      // eingebaut (kein Zurueckflackern).
+      // eingebaut (kein Zurückflackern).
       _ausblendend = _angezeigt;
       _angezeigt = widget.child;
-      // Der Weg, den der Finger zurueckgelegt hat, wandert in die alte
+      // Der Weg, den der Finger zurückgelegt hat, wandert in die alte
       // Seite - sie startet dort, wo der Finger sie verlassen hat.
       _wegBeimWechsel = _weg;
-      // Der Weg wird HIER zurueckgesetzt - beim Loslassen blieb er
-      // stehen, damit die Seite nicht fuer ein Bild zuruecksprang.
+      // Der Weg wird HIER zurückgesetzt - beim Loslassen blieb er
+      // stehen, damit die Seite nicht für ein Bild zurücksprang.
       _weg = 0;
       _feder.stop();
-      // Die Dauer haengt an der Reststrecke: die neue Seite kommt von
+      // Die Dauer hängt an der Reststrecke: die neue Seite kommt von
       // neben dem Bildschirm und legt (Bildschirmbreite minus dem
-      // Fingerweg) zurueck. Ein kurzer Wisch wird also zuegiger
+      // Fingerweg) zurück. Ein kurzer Wisch wird also zügiger
       // beendet als ein langer.
       final breite = MediaQuery.sizeOf(context).width;
       final restweg = (breite + _wegBeimWechsel).abs();
@@ -563,8 +563,8 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
       //
       // Wichtig: Das Kind des ShellRoute wechselt bei JEDER Navigation
       // - nicht nur beim Reiterwechsel. Ohne diese Unterscheidung
-      // wuerde die Ueberblendung bei jedem Aufruf einer Detailseite
-      // ausgeloest, und die vorige Seite stuende noch 320 ms ueber
+      // würde die Überblendung bei jedem Aufruf einer Detailseite
+      // ausgelöst, und die vorige Seite stünde noch 320 ms über
       // der neuen.
       _angezeigt = widget.child;
       _ausblendend = null;
@@ -578,10 +578,10 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  /// Sichtbarer Versatz durch die laufende Rueckfeder.
+  /// Sichtbarer Versatz durch die laufende Rückfeder.
   double get _federWeg {
     if (!_feder.isAnimating) return _weg;
-    // Geklemmt: der Wert eines Controllers kann knapp ueber 1,0 landen -
+    // Geklemmt: der Wert eines Controllers kann knapp über 1,0 landen -
     // und Flutter wirft dann die Assertion "parametric value is outside
     // of [0, 1] range" (BEFUND 14.11.2026, gefunden von einem Test in
     // der Funke-Animation).
@@ -603,8 +603,8 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
         _geTickt = false;
       },
       onHorizontalDragUpdate: (details) {
-        // Widerstand ab der halben Strecke: die Seite laesst sich
-        // ziehen, laeuft aber nicht unbegrenzt mit.
+        // Widerstand ab der halben Strecke: die Seite lässt sich
+        // ziehen, läuft aber nicht unbegrenzt mit.
         final daempfung = _weg.abs() > _schwelle * 0.75 ? 0.35 : 1.0;
         final next = (_weg + details.delta.dx * daempfung).clamp(
           -breite * _maxWeg,
@@ -619,34 +619,34 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
       onHorizontalDragEnd: (_) {
         final gewickt = _weg.abs() >= _schwelle;
         // RICHTUNG (NUTZERWUNSCH 28.10.2026): Nach links wischen
-        // schiebt die Seite nach links - man kommt zum naechsten
-        // Reiter. Nach rechts waere es der vorherige.
+        // schiebt die Seite nach links - man kommt zum nächsten
+        // Reiter. Nach rechts wäre es der vorherige.
         final richtung = _weg < 0 ? 1 : -1;
         if (gewickt) {
           // NUTZERWUNSCH (01.11.2026): "die Animation, wenn ich
-          // zwischen den Reitern swipe, ist sehr abrupt und unschoen".
+          // zwischen den Reitern swipe, ist sehr abrupt und unschön".
           //
-          // Das Ruecksetzen auf 0 war der abrupte Teil: die Seite
-          // sprang fuer ein Bild zurueck, waehrend der neue Reiter
+          // Das Rücksetzen auf 0 war der abrupte Teil: die Seite
+          // sprang für ein Bild zurück, während der neue Reiter
           // von der Seite herein kam. Der Weg bleibt deshalb stehen -
           // der neue Inhalt zieht an der Stelle ein, an der der
-          // alte gerade lag, und das Wischen laeuft durch.
+          // alte gerade lag, und das Wischen läuft durch.
           //
-          // Zurueckgesetzt wird der Weg in didUpdateWidget, wenn der
-          // Reiter tatsaechlich wechselt. Passiert das nicht (am
+          // Zurückgesetzt wird der Weg in didUpdateWidget, wenn der
+          // Reiter tatsächlich wechselt. Passiert das nicht (am
           // Rand gibt es keinen weiteren Reiter), muss die Seite
-          // trotzdem zurueckfedern - das passiert im
+          // trotzdem zurückfedern - das passiert im
           // Post-Frame-Callback unten.
           widget.onSwipe(richtung);
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            // Der Wechsel hat den Weg bereits zurueckgesetzt.
+            // Der Wechsel hat den Weg bereits zurückgesetzt.
             if (_weg == 0) return;
             _federStart = _weg;
             _feder.forward(from: 0);
           });
         } else {
-          // Nicht weit genug: weich in die Ausgangslage zurueck.
+          // Nicht weit genug: weich in die Ausgangslage zurück.
           _federStart = _weg;
           _feder.forward(from: 0);
         }
@@ -661,22 +661,22 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
           final t = Curves.easeOutCubic.transform(_enter.value.clamp(0.0, 1.0));
 
           // NUTZERWUNSCH (03.11.2026): "Das Swipen ... sieht nicht nach
-          // einem fluessigen Swipe aus."
+          // einem flüssigen Swipe aus."
           //
           // DER BEFUND: Die neue Seite kam mit 18 % Hereinflug und der
-          // alte Inhalt blendete nur aus. Das ist eine Ueberblendung mit
+          // alte Inhalt blendete nur aus. Das ist eine Überblendung mit
           // einem kleinen Rutsch - kein Wischen.
           //
           // JETZT: Die beiden Seiten fahren GLEICHZEITIG und mit
-          // derselben Strecke: Die alte faehrt vom Fingerweg aus weiter
+          // derselben Strecke: Die alte fährt vom Fingerweg aus weiter
           // hinaus, die neue kommt von neben dem Bildschirm hinterher.
-          // Weil beide dieselbe Strecke zuruecklegen, wirkt es wie eine
+          // Weil beide dieselbe Strecke zurücklegen, wirkt es wie eine
           // einzige durchgehende Bewegung.
           //
           // Der Weg der neuen Seite ist die Bildschirmbreite minus dem,
           // was der Finger schon geschafft hat - sie setzt also genau
           // dort an, wo die alte Seite gerade ist. Kein Sprung, keine
-          // Luecke.
+          // Lücke.
           final alterWeg =
               _wegBeimWechsel * (1 - t) + (-_enterRichtung * breite) * t;
           final neuerWeg =
@@ -689,7 +689,7 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
             children: [
               if (_ausblendend != null)
                 Opacity(
-                  // Der alte Inhalt weicht zurueck, waehrend er
+                  // Der alte Inhalt weicht zurück, während er
                   // ausblendet - so bleibt die Bewegung eine
                   // durchgehende.
                   opacity: (1 - t).clamp(0.0, 1.0),

@@ -7,14 +7,14 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/screens/verification/verification_flow.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 
-/// Zaehlt, wie oft die Kamera tatsaechlich angefragt wurde.
+/// Zählt, wie oft die Kamera tatsächlich angefragt wurde.
 ///
-/// Entscheidend ist nicht, WAS zurueckkommt, sondern OB ueberhaupt
+/// Entscheidend ist nicht, WAS zurückkommt, sondern OB überhaupt
 /// gefragt wird - genau das war der Fehler: die App holte die
 /// Kamerabiliste in initState, also lange bevor der Nutzer gelesen
 /// hatte, warum sie gebraucht wird. Eine leere Liste reicht hier
-/// voellig: danach schlaegt der Aufruf in einen Fehlerzustand, was
-/// fuer diese Tests unerheblich ist.
+/// völlig: danach schlägt der Aufruf in einen Fehlerzustand, was
+/// für diese Tests unerheblich ist.
 class _CountingCamera extends CameraPlatform {
   int calls = 0;
 
@@ -34,7 +34,7 @@ void main() {
   late _CountingCamera camera;
 
   setUp(() {
-    // Leere Einstellungen: die Offenlegung wurde noch nicht bestaetigt.
+    // Leere Einstellungen: die Offenlegung wurde noch nicht bestätigt.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     camera = _CountingCamera();
     CameraPlatform.instance = camera;
@@ -43,7 +43,7 @@ void main() {
   Widget harness() => ProviderScope(
     overrides: [
       // localStorageProvider wirft UnimplementedError, wenn es nicht
-      // gesetzt ist - die echte Einstellungskette laeuft darueber.
+      // gesetzt ist - die echte Einstellungskette läuft darüber.
       localStorageProvider.overrideWithValue(_FakeLocalStorage()),
     ],
     child: const MaterialApp(home: VerificationVideoScreen()),
@@ -57,7 +57,7 @@ void main() {
 
     expect(
       // Der Text kommt aus dem L10n-Katalog - ein fixer Literal-Text
-      // hier waere bei jeder Formulierungsaenderung rot (und wurde es
+      // hier wäre bei jeder Formulierungsänderung rot (und wurde es
       // auch, als der Text auf echte Umlaute umgestellt wurde).
       find.text(L10n.tWithoutContext('verify.cameraDisclosureTitle')),
       findsOneWidget,
@@ -109,7 +109,7 @@ void main() {
 
 /// Minimaler Speicher im Arbeitsspeicher. `localStorageProvider` wirft
 /// absichtlich UnimplementedError, wenn er nicht gesetzt wird - ohne
-/// diesen Attrapp laeuft die Einstellungskette nicht.
+/// diesen Attrapp läuft die Einstellungskette nicht.
 class _FakeLocalStorage implements LocalStorage {
   final map = <String, String>{};
 

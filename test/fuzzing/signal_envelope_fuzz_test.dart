@@ -1,6 +1,6 @@
-// Fuzzing der Peer-Huelle (die Nachricht kommt von der GEGENSEITE).
+// Fuzzing der Peer-Hülle (die Nachricht kommt von der GEGENSEITE).
 //
-// WARUM DAS DIE WICHTIGSTE ZIEL IST (22.11.2026, Fuzzing): Die Huelle
+// WARUM DAS DIE WICHTIGSTE ZIEL IST (22.11.2026, Fuzzing): Die Hülle
 // im Peer-zu-Peer-Kanal schickt die ANDERE PERSON. Sie ist also
 // kontrolliert von jemandem, der der App schaden will - nicht von
 // einem Serverfehler.
@@ -14,8 +14,8 @@
 // lassen. Jetzt steht das Auslesen in `SignalEnvelope.parse` - es
 // wirft nie und verwirft, was nicht sauber ist.
 //
-// DER ORACLE: parse() wirft NIE, und es gibt eine Huelle nur dann
-// zurueck, wenn sie vollstaendig und plausibel ist.
+// DER ORACLE: parse() wirft NIE, und es gibt eine Hülle nur dann
+// zurück, wenn sie vollständig und plausibel ist.
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -24,7 +24,7 @@ import 'package:thestia/services/chat/signal_envelope.dart';
 
 import 'fuzz_harness.dart';
 
-/// Die Seeds der Laeufe.
+/// Die Seeds der Läufe.
 const _seeds = <int>[1, 42, 1337, 20261122];
 
 /// Der normale Fall (was die App selbst schickt).
@@ -47,7 +47,7 @@ void main() {
           final text = jsonText(eingabe);
           try {
             final huelle = SignalEnvelope.parse(text);
-            // Was zurueckkommt, muss benutzbar sein.
+            // Was zurückkommt, muss benutzbar sein.
             if (huelle != null) {
               expect(huelle.ciphertext, isNotEmpty);
               expect(huelle.typ, isA<SignalEnvelopeType>());

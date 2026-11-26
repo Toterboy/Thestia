@@ -1,10 +1,10 @@
 // Die Musik-Geschmack-Auswahl (Gemagte Genres + "mag ich nicht").
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/profile/music_taste_widgets.dart 74 offene Zeilen - der
-// Katalog war getestet, die beiden Oberflaechen aber gar nicht.
+// Katalog war getestet, die beiden Oberflächen aber gar nicht.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ein Klick auf ein Genre mag es (und ein zweiter Klick macht es
 //     wieder neutral),
 //   * ein verneintes Genre wird neutral, wenn man es im oberen Feld
@@ -29,7 +29,7 @@ void main() {
     letzteVerneinte = null;
   });
 
-  /// Baut den Editor (die Listen kommen aus dem Callback zurueck).
+  /// Baut den Editor (die Listen kommen aus dem Callback zurück).
   Future<void> zeigeEditor(
     WidgetTester tester, {
     List<String> liked = const [],
@@ -62,7 +62,7 @@ void main() {
   ///
   /// ACHTUNG: Ein Genre, das gemocht UND verneint ist, steht zweimal da
   /// (oben in der "mag ich"-Reihe, unten in der "mag ich nicht"-Reihe).
-  /// [unten] waehlt das untere Chip.
+  /// [unten] wählt das untere Chip.
   Future<void> tippeChip(
     WidgetTester tester,
     String label, {
@@ -105,7 +105,7 @@ void main() {
       await zeigeEditor(tester, disliked: <String>['rock']);
 
       // DAS OBERE FELD: Jedes Genre hat oben einen Chip - auch das
-      // verneinte. Der Klick zieht es dort zurueck.
+      // verneinte. Der Klick zieht es dort zurück.
       await tippeChip(tester, 'Rock');
 
       expect(
@@ -135,7 +135,7 @@ void main() {
   });
 
   group('Das Ausschliessen-Sheet', () {
-    /// Oeffnet das Sheet und wartet, bis es steht.
+    /// Öffnet das Sheet und wartet, bis es steht.
     Future<void> oeffneSheet(WidgetTester tester) async {
       await tester.tap(find.widgetWithText(InputChip, 'Genre ausschließen…'));
       await tester.pumpAndSettle();
@@ -215,7 +215,7 @@ void main() {
       await zeigeEditor(tester);
 
       await oeffneSheet(tester);
-      // DER AUSSERNE TAP: Der Weg zurueck, ohne etwas zu waehlen.
+      // DER AUSSERNE TAP: Der Weg zurück, ohne etwas zu wählen.
       await tester.tapAt(const Offset(10, 10));
       await tester.pumpAndSettle();
 

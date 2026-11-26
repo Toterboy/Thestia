@@ -1,21 +1,21 @@
-"""Prueft, dass BEIDE Store-Listen vollstaendig sind - und nicht dieselben.
+"""Prüft, dass BEIDE Store-Listen vollständig sind - und nicht dieselben.
 
-BEFUND (03.11.2026): Die englische Liste war unvollstaendig. Sie
+BEFUND (03.11.2026): Die englische Liste war unvollständig. Sie
 hatte keine Phone-Screenshots, und die Tablet-Bilder waren Kopien der
 deutschen - die Skripte kopierten dieselben Dateien in beide Sprachen.
-Wer die englische Liste oeffnete, sah ein englisches Feature-Graphic
-ueber deutschen Screenshots mit deutschen Headlines.
+Wer die englische Liste öffnete, sah ein englisches Feature-Graphic
+über deutschen Screenshots mit deutschen Headlines.
 
 Ein Bild, das in zwei Sprachen spricht, ist schlimmer als gar keins:
 Es verspricht dem englischsprachigen Besucher etwas, das die App in
 seiner Sprache nicht zeigt.
 
-Geprueft wird je Sprache:
+Geprüft wird je Sprache:
 
-  1. Vollstaendigkeit: 8 Phone-Screenshots, 8 Tablet-Bilder (7 Zoll),
+  1. Vollständigkeit: 8 Phone-Screenshots, 8 Tablet-Bilder (7 Zoll),
      8 Tablet-Bilder (10 Zoll), Icon und Feature-Graphic.
-  2. Eigenstaendigkeit: kein Bild in en-US ist byte-gleich mit dem
-     deutschen Gegenstueck. Sonst ist eine der beiden Listen eine
+  2. Eigenständigkeit: kein Bild in en-US ist byte-gleich mit dem
+     deutschen Gegenstück. Sonst ist eine der beiden Listen eine
      Kopie - und die falsche.
 
 WAS IN DER CI NICHT VORHANDEN IST (und deshalb kein Fehler ist):
@@ -31,10 +31,10 @@ Deshalb gilt:
   * Fehlen die Phone-Screenshots in BEIDEN Sprachen, ist das kein
     Befund. Der Ordner wird als "nicht erzeugt" gemeldet.
   * Fehlen sie in nur EINER Sprache, IST das ein Befund: dann ist eine
-    Liste unvollstaendig und die andere nicht - genau der Zustand, der
-    zur Korrektur fuehrt.
+    Liste unvollständig und die andere nicht - genau der Zustand, der
+    zur Korrektur fährt.
   * Die Tablet-Bilder und die Metadaten-Dateien sind versioniert und
-    muessen immer da sein.
+    müssen immer da sein.
 
 Aufruf:  python tool/checks/check_store_listing_languages.py
 """
@@ -48,8 +48,8 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -104,7 +104,7 @@ def main() -> int:
     problems = []
     pro_sprache = {}
 
-    # Welche Artefakt-Ordner gibt es ueberhaupt? Fehlt einer in ALLEN
+    # Welche Artefakt-Ordner gibt es überhaupt? Fehlt einer in ALLEN
     # Sprachen, ist das der normale CI-Zustand (nicht erzeugt).
     artefakt_vorhanden = {}
     for rel, _anzahl in ARTEFAKT:
@@ -171,7 +171,7 @@ def main() -> int:
             else:
                 print('  OK %-34s %d Bytes' % (rel, p.stat().st_size))
 
-    # Eigenstaendigkeit: kein Bild der einen Sprache darf byte-gleich
+    # Eigenständigkeit: kein Bild der einen Sprache darf byte-gleich
     # mit dem der anderen sein.
     print()
     if len(SPRACHEN) == 2:

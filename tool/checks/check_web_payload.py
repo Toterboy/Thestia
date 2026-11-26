@@ -1,6 +1,6 @@
-"""Prueft die veroeffentlichten Webseiten auf Bandbreite und Verhalten.
+"""Prüft die veröffentlichten Webseiten auf Bandbreite und Verhalten.
 
-Begruendung
+Begründung
 -----------
 Am 28.10.2026 kam die Meldung: "Ich verliere credits von netlify,
 wenn ich die Websiten besuche."
@@ -8,7 +8,7 @@ wenn ich die Websiten besuche."
 Gemessen wurde danach:
 
   * ein Besuch von /impressum kostet 1 Anfrage und 6.087 Byte
-    (Brotli) - das sind 0,000006 Credits. Besuche koennen Credits
+    (Brotli) - das sind 0,000006 Credits. Besuche können Credits
     also nicht auffressen.
   * Die Domain zeigt per CNAME direkt auf Netlify: jeder Bot-Hit
     ist ein Netlify-Request.
@@ -16,19 +16,19 @@ Gemessen wurde danach:
     must-revalidate" aus - der Browser MUSS bei jedem Reload
     nachfragen.
 
-Was dieser Pruefer absichert:
+Was dieser Prüfer absichert:
 
   1. Jede Seite bleibt klein (Obergrenze). Eine Seite, die
-     unbeabsichtigt um das Zehnfache waechst, faellt hier auf.
-  2. Jede Seite traegt eine Cache-Angabe mit max-age > 0 fuer
+     unbeabsichtigt um das Zehnfache wächst, fällt hier auf.
+  2. Jede Seite trägt eine Cache-Angabe mit max-age > 0 für
      BEIDE Schreibweisen des Pfads (mit und ohne .html) - sonst
      fragt der Browser bei jedem Besuch nach.
-  3. robots.txt existiert und laesst die Pflichtseiten zu.
-  4. Keine Seite laedt Ressourcen von fremden Servern (das waere
+  3. robots.txt existiert und lässt die Pflichtseiten zu.
+  4. Keine Seite lädt Ressourcen von fremden Servern (das wäre
      Bandbreite bei Dritten UND ein Datenschutzproblem).
   5. Kein Skript (Projektregel "statische Seite").
   6. Der Umschalt-Knopf kommt auf jeder Seite genau einmal vor -
-     zwei davon waeren zwei Knöpfe fuer denselben Schalter.
+     zwei davon wären zwei Knöpfe für denselben Schalter.
 
 Aufruf:  python tool/checks/check_web_payload.py
 Exit 0 = alles in Ordnung, Exit 1 = mindestens ein Befund.
@@ -40,8 +40,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -58,13 +58,13 @@ ROOT = _projektwurzel()
 
 ASSETS = ROOT / 'passkey-assets'
 
-# Die Seiten, die oeffentlich erreichbar sein muessen.
+# Die Seiten, die öffentlich erreichbar sein müssen.
 SEITEN = ['datenschutz.html', 'impressum.html', 'kinderschutz.html',
           'konto-loeschen.html']
 
-# Obergrenze je Seite (unkomprimiert). Der groesste Wert liegt bei
+# Obergrenze je Seite (unkomprimiert). Der größte Wert liegt bei
 # gut 60 KB; die Grenze ist doppelt so weit weg, damit ein
-# sinnvoller Zuwachs nicht auffaellt, ein Unfall aber schon.
+# sinnvoller Zuwachs nicht auffällt, ein Unfall aber schon.
 MAX_SEITE = 120 * 1024
 
 # Obergrenze je Datei im Publish-Verzeichnis.
@@ -78,18 +78,18 @@ PFLICHT_PFADE = ['/datenschutz', '/impressum', '/kinderschutz',
 # Deutsch und Englisch).
 #
 # Sie liegen unter /en/ und brauchen dieselben Cache-Angaben - sonst
-# fragt der Browser bei jedem Besuch nach. In robots.txt genuegt die
-# Praefix-Regel "Allow: /en/", deshalb stehen die einzelnen Pfade hier
-# nicht in der robots-Pruefung.
+# fragt der Browser bei jedem Besuch nach. In robots.txt genügt die
+# Präfix-Regel "Allow: /en/", deshalb stehen die einzelnen Pfade hier
+# nicht in der robots-Prüfung.
 EN_PFLICHT_PFADE = ['/en/', '/en/datenschutz', '/en/impressum',
                      '/en/kinderschutz', '/en/konto-loeschen',
                      '/en/daten-loeschen', '/en/eltern',
                      '/en/eltern/einstellungen']
 
-# Pfade, die NICHT gecacht werden duerfen (BEFUND 04.11.2026).
+# Pfade, die NICHT gecacht werden dürfen (BEFUND 04.11.2026).
 #
 # Das Eltern-Portal bekommt den Berechtigungs-Token aus der URL. Eine
-# Cache-Zeit wuerde die Seite zwischenspeichern und der Token
+# Cache-Zeit würde die Seite zwischenspeichern und der Token
 # landete im Netlify-Zugriffslog - und im Referer jedes internen
 # Klicks. "no-store" ist hier die richtige Angabe.
 KEIN_CACHE = {'/eltern/einstellungen', '/eltern-einstellungen.html',
@@ -112,7 +112,7 @@ def main() -> int:
         print('FEHLER: Publish-Verzeichnis fehlt: %s' % ASSETS)
         return 1
 
-    # --- 1) Groessen ------------------------------------------------
+    # --- 1) Größen ------------------------------------------------
     print('\n1) Groessen im Publish-Verzeichnis:')
     gesamt = 0
     for p in sorted(ASSETS.rglob('*')):
@@ -127,7 +127,7 @@ def main() -> int:
         print('   %8d B  %s' % (groesse, rel))
     print('   %8d B  SUMME' % gesamt)
 
-    # --- 2) Seiten pruefen -------------------------------------------
+    # --- 2) Seiten prüfen -------------------------------------------
     print('\n2) Seiten:')
     for name in SEITEN:
         p = ASSETS / name
@@ -150,7 +150,7 @@ def main() -> int:
         # angeklickt - das kostet uns keine Bandbreite und ist ein
         # normaler Verweis (z. B. auf das Play-Entwicklerprofil im
         # Impressum). Automatisch geladen wird dagegen alles mit src=
-        # sowie Stylesheets und url() im CSS - das waere Bandbreite
+        # sowie Stylesheets und url() im CSS - das wäre Bandbreite
         # bei Dritten und ein Datenschutzproblem.
         for m in re.finditer(r'\ssrc\s*=\s*"(https?://[^"]+)"', html):
             flag('%s: laedt automatisch von draussen: %s' % (name, m.group(1)))
@@ -158,7 +158,7 @@ def main() -> int:
                 r'<link[^>]+href\s*=\s*"(https?://[^"]+)"', html, re.I):
             # EIN canonical-Tag ist kein Stylesheet: Er bindet nichts
             # ein, er benennt nur die Originalseite. Ohne diese
-            # Ausnahme wuerde der Check jede Seite mit canonical als
+            # Ausnahme würde der Check jede Seite mit canonical als
             # "bindet ein fremdes Stylesheet ein" melden.
             if 'rel="canonical"' in m.group(0):
                 continue
@@ -174,7 +174,7 @@ def main() -> int:
         if anzahl != 1:
             flag('%s: %d Umschalter (erwartet: genau 1)' % (name, anzahl))
 
-        # Die Seite traegt ihr Design selbst (CSS im Dokument).
+        # Die Seite trägt ihr Design selbst (CSS im Dokument).
         if 'Web-Design (tool/helpers/web_theme.py)' not in html:
             flag('%s: traegt das gemeinsame Design nicht' % name)
 
@@ -200,9 +200,9 @@ def main() -> int:
     # den Snippet aus dem Seiteninhalt - und auf auth.thestia.de ist der
     # einzige Text im DOM genau diese Fehlermeldung.
     #
-    # Zusaetzlich sperrte die robots.txt (Disallow: /, gedacht fuer die
-    # CAPTCHA-Seite) auch thestia.de - die oeffentliche Seite war damit
-    # gar nicht indexierbar. Beides wird hier geprueft.
+    # Zusätzlich sperrte die robots.txt (Disallow: /, gedacht für die
+    # CAPTCHA-Seite) auch thestia.de - die öffentliche Seite war damit
+    # gar nicht indexierbar. Beides wird hier geprüft.
     print('\n2b) Landing-Seite und Suchmaschinen:')
     LANDING = [('index.html', 'https://thestia.de/'),
                ('en/index.html', 'https://thestia.de/en/')]
@@ -230,7 +230,7 @@ def main() -> int:
             flag('%s: canonical ist %s, erwartet %s'
                  % (name, m.group(1), canonical))
 
-        # Die Bilder, auf die die Seite zeigt, muessen existieren.
+        # Die Bilder, auf die die Seite zeigt, müssen existieren.
         fehlend = 0
         for rel in re.findall(r'src="(screenshots/[^"]+)"', html):
             if not (p.parent / rel).is_file():
@@ -301,12 +301,12 @@ def main() -> int:
                     continue
                 # BEFUND 04.11.2026: Das Eltern-Portal ist die EINZIGE
                 # Ausnahme. Dort steht der Berechtigungs-Token in der
-                # URL (?token=...). Eine Cache-Zeit wuerde die Seite
+                # URL (?token=...). Eine Cache-Zeit würde die Seite
                 # mit dem Token in der Cache-Adresse zwischenspeichern -
                 # und der Token landet im Netlify-Zugriffslog. Deshalb
                 # "no-store" statt max-age.
                 #
-                # Der Inhalt der Seite ist fuer alle Nutzer identisch
+                # Der Inhalt der Seite ist für alle Nutzer identisch
                 # (der Token wird nur clientseitig gelesen) - es geht
                 # nicht um die Inhalte, sondern um das Cache-LOG.
                 if variante in KEIN_CACHE:
@@ -332,17 +332,17 @@ def main() -> int:
         # X-Content-Type-Options, Referrer-Policy, Permissions-Policy
         # und ein CSP-HEADER.
         #
-        # Zwei Angriffsszenarien, die dadurch moeglich waren:
-        #   * Clickjacking der CAPTCHA-Seite (auth.thestia.de liess
+        # Zwei Angriffsszenarien, die dadurch möglich waren:
+        #   * Clickjacking der CAPTCHA-Seite (auth.thestia.de ließ
         #     sich in jedem iframe einbetten).
         #   * Clickjacking des Eltern-Portals: /eltern/einstellungen
-        #     enthaelt "Freigabe bestaetigen" und "Freigabe
-        #     widerrufen" - geframt und ueberlagert kann ein
+        #     enthält "Freigabe bestätigen" und "Freigabe
+        #     widerrufen" - geframt und überlagert kann ein
         #     Angreifer einen Elternteil dazu bringen, die elterliche
-        #     Freigabe zu bestaetigen oder zu widerrufen.
+        #     Freigabe zu bestätigen oder zu widerrufen.
         #
-        # Der "/*"-Block in _headers gilt fuer jede Datei; Netlify
-        # wendet alle passenden Bloecke an.
+        # Der "/*"-Block in _headers gilt für jede Datei; Netlify
+        # wendet alle passenden Blöcke an.
         sicherheits_header = [
             'X-Content-Type-Options',
             'Referrer-Policy',
@@ -368,18 +368,18 @@ def main() -> int:
     #
     # BEFUND 04.11.2026: 10 der 18 Seiten trugen ein hartes
     # <meta name="robots" content="noindex"> - darunter die im Play
-    # Console eingetragenen Loesch-URLs, die gesetzlich geforderte
+    # Console eingetragenen Lösch-URLs, die gesetzlich geforderte
     # Kinderschutz-Meldestelle und das Eltern-Portal. Sie waren
     # erreichbar, aber nicht indexierbar - die Anforderung war
     # "auffindbar auf thestia.de".
     #
     # Und: 16 Seiten hatten gar kein canonical. thestia.de und
-    # auth.thestia.de sind EIN Netlify-Projekt - ohne canonical weiss
+    # auth.thestia.de sind EIN Netlify-Projekt - ohne canonical weiß
     # eine Suchmaschine nicht, welche Fassung die Originalseite ist.
     #
     # noindex ist NUR richtig, wo die URL pro Nutzer verschieden ist
     # (das Eltern-Portal mit dem Token) oder transient ist (die
-    # Bestaetigungsseite).
+    # Bestätigungsseite).
     print('\n3b) canonical und noindex:')
     TRANSIENT = ('bestaetigt.html', 'einstellungen.html')
     for seite in sorted(ASSETS.rglob('*.html')):
@@ -411,8 +411,8 @@ def main() -> int:
         inhalt = robots_pfad.read_text(encoding='utf-8')
         # "Allow: /" erlaubt alles - dann braucht es die einzelnen
         # Allow-Zeilen nicht (das ist der Stand seit 04.11.2026: die
-        # oeffentliche Seite soll indexierbar sein, und die CAPTCHA-
-        # Sperre liegt jetzt in robots-auth.txt fuer den Auth-Host).
+        # öffentliche Seite soll indexierbar sein, und die CAPTCHA-
+        # Sperre liegt jetzt in robots-auth.txt für den Auth-Host).
         alles_erlaubt = re.search(r'(?m)^Allow:\s*/\s*$', inhalt) is not None
         for pfad in PFLICHT_PFADE:
             if alles_erlaubt:
@@ -422,7 +422,7 @@ def main() -> int:
         print('   vorhanden, %d Zeichen%s'
               % (len(inhalt), ' (alles erlaubt)' if alles_erlaubt else ''))
 
-    # Die Sperre fuer den Auth-Host: dort muss die CAPTCHA-Seite
+    # Die Sperre für den Auth-Host: dort muss die CAPTCHA-Seite
     # weiterhin ausgeschlossen bleiben.
     auth_robots = ASSETS / 'robots-auth.txt'
     if auth_robots.is_file():

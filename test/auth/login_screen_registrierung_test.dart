@@ -1,18 +1,18 @@
-// Die Registrierung: Formular, Alters-Bestaetigung und Sicherheitscheck.
+// Die Registrierung: Formular, Alters-Bestätigung und Sicherheitscheck.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/login_screen.dart 85 offene Zeilen - darunter der
 // ganze Registrierungs-Weg (die Pflichtfelder, das Geburtsdatum, die
-// Alters-Bestaetigung und der Sicherheitscheck VOR der Registrierung).
+// Alters-Bestätigung und der Sicherheitscheck VOR der Registrierung).
 //
-// DER WEG: Fuer den Sicherheitscheck braucht es den WebView-Ersatz
+// DER WEG: Für den Sicherheitscheck braucht es den WebView-Ersatz
 // (test/support/webview_fake.dart) und einen Sitekey in der Umgebung
 // (sonst ist der Bot-Schutz abgeschaltet und der Weg wird nie
 // betreten).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ohne Alters-Bestaetigung geht die Registrierung nicht raus (und
-//     der Nutzer weiss warum),
+// WAS HIER GEPRÜFT WIRD:
+//   * ohne Alters-Bestätigung geht die Registrierung nicht raus (und
+//     der Nutzer weiß warum),
 //   * ohne Geburtsdatum auch nicht,
 //   * die Registrierung fragt ZUERST nach dem Sicherheitscheck,
 //   * bricht der Nutzer ab, wird das gemeldet und es wird nichts
@@ -39,7 +39,7 @@ import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 import '../support/webview_fake.dart';
 
-/// Der Sitekey, den der Test setzt (ein oeffentlicher Schluessel).
+/// Der Sitekey, den der Test setzt (ein öffentlicher Schlüssel).
 const String _sitekey = '0x4AAAAAAFDhMgIL_nrpUokM';
 
 /// Der Speicher im RAM.
@@ -97,9 +97,9 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
     // HIVE: der Chat-Dienst liest beim Start seine Boxen. Die
-    // Adapter des Verschluesselungs-Dienstes muessen registriert
-    // sein - sonst kann er sie nicht oeffnen und die Registrierung
-    // bleibt haengen.
+    // Adapter des Verschlüsselungs-Dienstes müssen registriert
+    // sein - sonst kann er sie nicht öffnen und die Registrierung
+    // bleibt hängen.
     await mockHive();
     Hive.registerAdapter(SignalIdentityKeyPairAdapterAdapter());
     Hive.registerAdapter(SignalPreKeyRecordAdapterAdapter());
@@ -109,8 +109,8 @@ void main() {
     Hive.registerAdapter(EncryptedMessageAdapterAdapter());
     Hive.registerAdapter(SignalIdentityKeyStoreAdapterAdapter());
 
-    // DER VERSCHLUESSELUNGS-DIENST: Die Registrierung wartet auf
-    // seinen Schluessel (der aus dem Keystore abgeleitet wird). Der
+    // DER VERSCHLÜSSELUNGS-DIENST: Die Registrierung wartet auf
+    // seinen Schlüssel (der aus dem Keystore abgeleitet wird). Der
     // Dienst startet seine Initialisierung selbst - im Test muss
     // man darauf warten, sonst wartet die Registrierung ewig.
     encryption = EncryptionService();
@@ -147,7 +147,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     // DER ROUTER: Nach der Registrierung geht der Screen zur
-    // E-Mail-Bestaetigung - ohne Router wuerfe er.
+    // E-Mail-Bestätigung - ohne Router würfe er.
     final router = GoRouter(
       initialLocation: AppRoutes.login,
       routes: [
@@ -188,7 +188,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Fuellt das Formular (ohne Alters-Bestaetigung).
+  /// Füllt das Formular (ohne Alters-Bestätigung).
   Future<void> fuelleFormular(WidgetTester tester) async {
     final felder = find.byType(TextFormField);
     await tester.enterText(felder.at(0), 'Mira');
@@ -199,7 +199,7 @@ void main() {
     await tester.pump();
   }
 
-  /// Waehlt das Geburtsdatum ueber den Kalender.
+  /// Wählt das Geburtsdatum über den Kalender.
   Future<void> waehleGeburtsdatum(WidgetTester tester) async {
     final knopf = find.text(L10n.tWithoutContext('auth.birthDatePick'));
     await tester.ensureVisible(knopf);
@@ -227,7 +227,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Tippt die Alters-Bestaetigung an.
+  /// Tippt die Alters-Bestätigung an.
   Future<void> bestaetigeAlter(WidgetTester tester) async {
     final haken = find.byType(CheckboxListTile);
     await tester.ensureVisible(haken.first);
@@ -324,15 +324,15 @@ void main() {
 
       await tippeRegistrieren(tester);
       // DIE SEITE MELDET DAS TOKEN (so, wie es die echte Turnstile-Seite
-      // ueber den JavaScript-Bridge tut).
+      // über den JavaScript-Bridge tut).
       webview.sendeAusDerSeite('1.lAbV5RcI1e_abcdef.0123456789');
       await tester.pump();
       // DIE REGISTRIERUNG WARTET: Der Auth-Dienst braucht 600 ms
       // (Demo-Modus) - die Test-Uhr muss das weiterdrehen.
       await tester.pump(const Duration(milliseconds: 800));
-      // DER VERSCHLUESSELUNGS-DIENST: Er leitet beim Start seinen
-      // Schluessel ab (PBKDF2, 600k Runden) - das dauert echte Zeit.
-      // MEHRERE RUNDEN: Erst kommt die Sperrpruefung (ein Aufruf), dann
+      // DER VERSCHLÜSSELUNGS-DIENST: Er leitet beim Start seinen
+      // Schlüssel ab (PBKDF2, 600k Runden) - das dauert echte Zeit.
+      // MEHRERE RUNDEN: Erst kommt die Sperrprüfung (ein Aufruf), dann
       // die Registrierung (ein weiterer) - dazwischen muss die Test-Uhr
       // jeweils weiterlaufen.
       for (var i = 0; i < 4; i++) {

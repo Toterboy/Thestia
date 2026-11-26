@@ -1,28 +1,28 @@
 """
 tool/checks/check_gitignore_selftest.py
 =================================
-Prueft, dass `check_gitignore.py` FEHLER meldet, wenn er fehlschlagen
-muss - und dass er nach einem Lauf mit gebuendelten git-Aufrufen
+Prüft, dass `check_gitignore.py` FEHLER meldet, wenn er fehlschlagen
+muss - und dass er nach einem Lauf mit gebündelten git-Aufrufen
 genauso viel sieht wie vorher.
 
-ANLASS (01.11.2026): Beim Umschreiben des Checkers auf gebuendelte
+ANLASS (01.11.2026): Beim Umschreiben des Checkers auf gebündelte
 git-Aufrufe (`git check-ignore -z --stdin`) wurde die Ausgabe falsch
 gelesen. Das Format mit -z ist VIERFELDERIG:
 
     <quelle>\\0<zeilennummer>\\0<muster>\\0<pfad>\\0
 
 und nicht "<quelle>:<nummer>:<muster>" in einem Feld. Der Checker
-meldete danach KEINE Inkonsistenz mehr - und niemand haette es
-gemerkt, weil "0 Beanstandungen" nach wie vor gruen aussieht.
+meldete danach KEINE Inkonsistenz mehr - und niemand hätte es
+gemerkt, weil "0 Beanstandungen" nach wie vor grün aussieht.
 
-Genau das ist der Grund fuer diesen Selbsttest: ein Checker, der
+Genau das ist der Grund für diesen Selbsttest: ein Checker, der
 nichts findet, sieht aus wie ein Checker, der sauber ist. Das ist
 kein theoretisches Risiko - es ist genau so eingetreten.
 
 Aufruf:
     python tool/checks/check_gitignore_selftest.py
 
-Exit 0 = alle Negativfaelle wurden erkannt.
+Exit 0 = alle Negativfälle wurden erkannt.
 """
 
 import importlib.util
@@ -37,8 +37,8 @@ from contextlib import redirect_stdout
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -77,7 +77,7 @@ def make_repo(tmp: pathlib.Path, ignore_text: str) -> pathlib.Path:
 
 
 def run_checker(repo: pathlib.Path):
-    """Fuehrt main() im Test-Repo aus. Liefert (exit_code, ausgabe)."""
+    """Fährt main() im Test-Repo aus. Liefert (exit_code, ausgabe)."""
     buf = io.StringIO()
     old_root = cgi.ROOT
     old_out = cgi.OUT

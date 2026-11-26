@@ -1,14 +1,14 @@
 // Der Eisbrecher-Vorschlag im 1:1-Chat (bisher ungetestet).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/chat_detail_screen.dart 1.264 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * nach fuenf Minuten Stille kommt EIN Vorschlag (Nutzerwunsch:
+// WAS HIER GEPRÜFT WIRD:
+//   * nach fünf Minuten Stille kommt EIN Vorschlag (Nutzerwunsch:
 //     "Icebreaker-Vorschlag an beide nach 5 Minuten ohne Nachricht"),
 //   * hat der Nutzer schon geschrieben, kommt KEIN Vorschlag,
 //   * der Vorschlag kommt nur EINMAL je Funke (nicht bei jedem
-//     Oeffnen) - sonst nervt er.
+//     Öffnen) - sonst nervt er.
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -35,7 +35,7 @@ import 'package:thestia/utils/common/constants.dart';
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
-/// Der Schluessel, unter dem die bereits vorgeschlagenen Funke stehen.
+/// Der Schlüssel, unter dem die bereits vorgeschlagenen Funke stehen.
 const String _vorgeschlagenKey = 'icebreaker_suggested_chats';
 
 /// Der Speicher im RAM - der Vorschlag merkt sich seine Merkliste.
@@ -72,7 +72,7 @@ class _FakeLocalStorage implements LocalStorage {
 /// Der P2P-Service ohne WebRTC.
 ///
 /// DER GRUND (15.11.2026): Die echte Direktverbindung braucht das
-/// WebRTC-Plugin - im Test gibt es kein Geraet. Ohne diesen Ersatz
+/// WebRTC-Plugin - im Test gibt es kein Gerät. Ohne diesen Ersatz
 /// bleibt `connect()` im EventChannel des Plugins HANGEN, und damit
 /// auch der ganze Bootstrap des Chat-Bildschirms (Relay-Abruf,
 /// Partnerprofil, Eisbrecher-Vorschlag).
@@ -89,7 +89,7 @@ class _FakeP2PChatService extends P2PChatService {
 
   @override
   Future<void> dispose() async {
-    // Der echte Aufraeumen wuerde das WebRTC-Plugin brauchen.
+    // Der echte Aufräumen würde das WebRTC-Plugin brauchen.
   }
 }
 
@@ -134,7 +134,7 @@ void main() {
 
     // ANGEMELDET: Die eigene User-ID kommt aus der Sitzung - ohne sie
     // kennt der Chat nicht, was von mir kommt (und der Vorschlag
-    // wuerde gar nicht erst starten).
+    // würde gar nicht erst starten).
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
 
@@ -143,7 +143,7 @@ void main() {
   /// [eigeneNachricht] entscheidet, ob der Nutzer schon geschrieben hat
   /// (dann gibt es keinen Vorschlag). [bereitsVorgeschlagen] legt den
   /// Funke in die Merkliste - dann bleibt der Vorschlag aus, weil er
-  /// fuer diesen Funke schon kam.
+  /// für diesen Funke schon kam.
   Future<_FakeLocalStorage> zeigeChat(
     WidgetTester tester, {
     bool eigeneNachricht = false,
@@ -155,7 +155,7 @@ void main() {
     final storage = _FakeLocalStorage();
 
     // Der Hinweis auf den Chat-Hintergrund kommt beim ersten Chat - im
-    // Test stoert er nur, also ist er als "gesehen" markiert (sonst
+    // Test stört er nur, also ist er als "gesehen" markiert (sonst
     // steht ein Dialog im Weg).
     await storage.saveString(
       AppConstants.prefsSettingsKey,
@@ -178,7 +178,7 @@ void main() {
     );
 
     // Die Merkliste muss VOR dem Aufbau stehen: der Screen liest sie
-    // direkt beim Oeffnen (nicht erst nach fuenf Minuten).
+    // direkt beim Öffnen (nicht erst nach fünf Minuten).
     if (bereitsVorgeschlagen) {
       await storage.saveString(
         _vorgeschlagenKey,
@@ -231,7 +231,7 @@ void main() {
       // Vorher ist kein Dialog da.
       expect(find.byType(AlertDialog), findsNothing);
 
-      // Fuenf Minuten Stille. Der Bootstrap des Bildschirms braucht
+      // Fünf Minuten Stille. Der Bootstrap des Bildschirms braucht
       // echte Zeit (Hive-Zugriff) - deshalb erst das kurz warten, dann
       // die Zeit vorspulen. Sonst startet der Timer erst NACH dem
       // Zeitsprung.
@@ -239,7 +239,7 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 300));
       });
       await tester.pump();
-      // Fuenf Minuten Stille: Der Timer des Vorschlags startet, sobald
+      // Fünf Minuten Stille: Der Timer des Vorschlags startet, sobald
       // der Bildschirm fertig aufgebaut ist (das dauert echte Zeit -
       // Hive-Zugriff). Deshalb wird abwechselnd echte Zeit gegeben und
       // die Uhr vorgespult.

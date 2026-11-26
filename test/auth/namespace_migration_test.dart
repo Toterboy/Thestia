@@ -1,34 +1,34 @@
-// Regressionstest fuer die Keystore-Namespaces-Migration
+// Regressionstest für die Keystore-Namespaces-Migration
 // (31.10.2026: auf readAll umgestellt).
 //
-// BEFUND: Die Migration las fuer jeden Schluessel einzeln aus dem
+// BEFUND: Die Migration las für jeden Schlüssel einzeln aus dem
 // Keystore - bis zu 21 Zugriffe, JEDER vor dem ersten Frame der App.
-// Jeder Zugriff kostet eine Dateioperation mit Entschluesselung im
+// Jeder Zugriff kostet eine Dateioperation mit Entschlüsselung im
 // Android Keystore.
 //
 // Umgestellt auf readAll: EIN Aufruf je Namespace, und der
-// Legacy-Namespace (der von allen fuenf Ziel-Namespaces geteilt wird)
+// Legacy-Namespace (der von allen fünf Ziel-Namespaces geteilt wird)
 // wird genau einmal gelesen.
 //
 // Diese Tests sichern die WIRKUNG ab - nicht nur die Geschwindigkeit:
-// die Werte muessen nach wie von im alten Namespace in den neuen
-// wandern und dort danach LOESCHEN (kein Klartext-Duplikat).
+// die Werte müssen nach wie von im alten Namespace in den neuen
+// wandern und dort danach LÖSCHEN (kein Klartext-Duplikat).
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:thestia/services/storage/secure_storage_namespaces.dart';
 
-/// Keystore-Attrapp: haelt die Werte je Namespace im Speicher.
+/// Keystore-Attrapp: hält die Werte je Namespace im Speicher.
 ///
 /// Der Namespace ergibt sich aus den Optionen - so wie im echten
 /// Plugin, wo der Namespace der Name der SharedPreferences-Datei ist.
 class _FakeSecureStorage extends FlutterSecureStorage {
   _FakeSecureStorage(this.data);
 
-  /// Namespace -> Schluessel -> Wert.
+  /// Namespace -> Schlüssel -> Wert.
   final Map<String, Map<String, String>> data;
 
-  /// Jeder Zugriff wird gezaehlt - damit sichergestellt ist, dass die
+  /// Jeder Zugriff wird gezählt - damit sichergestellt ist, dass die
   /// Migration nicht wieder einzeln liest.
   int readAllCalls = 0;
   int singleReadCalls = 0;
@@ -110,7 +110,7 @@ void main() {
       expect(tokens['auth_access_token'], 'token-abc');
       expect(tokens['auth_refresh_token'], 'refresh-abc');
 
-      // Kein Klartext-Duplikat zuruecklassen.
+      // Kein Klartext-Duplikat zurücklassen.
       expect(storage.data['']?.containsKey('auth_access_token'), isFalse);
       expect(storage.data['']?.containsKey('auth_refresh_token'), isFalse);
     });
@@ -160,8 +160,8 @@ void main() {
     });
 
     test('liest den Legacy-Namespace nur einmal (Performance)', () async {
-      // Fuenf Ziel-Namespaces, alle aus demselben Legacy-Namespace.
-      // Ohne readAll waeren das bis zu 21 Zugriffe - mit readAll
+      // Fünf Ziel-Namespaces, alle aus demselben Legacy-Namespace.
+      // Ohne readAll wären das bis zu 21 Zugriffe - mit readAll
       // genau einer.
       final storage = _FakeSecureStorage({
         '': {
@@ -204,7 +204,7 @@ void main() {
         await migrateLegacyNamespaces(storage: storage);
 
         // Der Legacy selbst genau einmal, plus je Ziel-Namespace einer.
-        // Fuenf Namespaces, aber nur die mit Altdaten brauchen einen.
+        // Fünf Namespaces, aber nur die mit Altdaten brauchen einen.
         expect(storage.readAllCalls, lessThanOrEqualTo(4));
       },
     );

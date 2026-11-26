@@ -6,12 +6,12 @@ import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
 /// Screen mit den Community-Regeln (Netiquette) der App.
-/// Oeffentliche Kinderschutz-Seite (Play Child Safety Standards).
+/// Öffentliche Kinderschutz-Seite (Play Child Safety Standards).
 ///
-/// Play verlangt fuer Dating-, Social- und Random-Chat-Apps einen
-/// oeffentlich erreichbaren Bereich mit: Verbot von Kindesmissbrauch,
+/// Play verlangt für Dating-, Social- und Random-Chat-Apps einen
+/// öffentlich erreichbaren Bereich mit: Verbot von Kindesmissbrauch,
 /// benannter Kontaktperson und beschriebenem Meldeweg. Die Seite
-/// liegt statisch bei Netlify neben der Datenschutz-Erklaerung.
+/// liegt statisch bei Netlify neben der Datenschutz-Erklärung.
 const String kChildSafetyUrl = 'https://auth.thestia.de/kinderschutz';
 
 class CommunityGuidelinesScreen extends StatelessWidget {
@@ -25,10 +25,10 @@ class CommunityGuidelinesScreen extends StatelessWidget {
     (titleKey: 'cg.3.title', bodyKey: 'cg.3.body'),
     (titleKey: 'cg.4.title', bodyKey: 'cg.4.body'),
     (titleKey: 'cg.5.title', bodyKey: 'cg.5.body'),
-    // v0.10.0: Play verlangt fuer Dating- und Random-Chat-Apps ein
-    // AUSDRUECKLICHES Verbot von Kindesmissbrauch (CSAE/CSAM) in den
-    // veroeffentlichten Standards. Fehlt es dort, ist das ein
-    // Verstoss gegen die Child Safety Standards - unabhaengig von der
+    // v0.10.0: Play verlangt für Dating- und Random-Chat-Apps ein
+    // AUSDRÜCKLICHES Verbot von Kindesmissbrauch (CSAE/CSAM) in den
+    // veröffentlichten Standards. Fehlt es dort, ist das ein
+    // Verstoss gegen die Child Safety Standards - unabhängig von der
     // Altersfreigabe.
     (titleKey: 'cg.6.title', bodyKey: 'cg.6.body'),
   ];
@@ -56,13 +56,13 @@ class CommunityGuidelinesScreen extends StatelessWidget {
         itemCount: paragraphs.length + 1,
         separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, i) {
-          // Letzte Zeile: Link auf die oeffentliche Kinderschutz-Seite.
+          // Letzte Zeile: Link auf die öffentliche Kinderschutz-Seite.
           //
-          // Play verlangt fuer Dating-Apps einen oeffentlich
+          // Play verlangt für Dating-Apps einen öffentlich
           // erreichbaren Kinderschutz-Bereich mit: Verbot von
           // Kindesmissbrauch, benannter Kontaktperson und beschriebenem
           // Meldeweg. Die Seite liegt statisch bei Netlify neben der
-          // Datenschutz-Erklaerung.
+          // Datenschutz-Erklärung.
           if (i == paragraphs.length) {
             return Card(
               child: Padding(

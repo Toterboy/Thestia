@@ -6,37 +6,37 @@ import 'package:thestia/models/profile/user_profile.dart';
 /// Hinweis auf ein junges Konto.
 ///
 /// Ein Hinweis, kein Beweis - auch echte neue Nutzer fallen darunter.
-/// Er soll davor schuetzen, dass man dauerhaft von Accounts
+/// Er soll davor schützen, dass man dauerhaft von Accounts
 /// angeschrieben wird, die es gerade erst gibt, ohne dabei ein
 /// Erstellungsdatum offenzulegen.
 ///
-/// Bewusst KEIN [Chip]: der Chip ist an dieser Stelle ein Fremdkoerper.
-/// Er sitzt als pillfoermige Plakette mit eigener Schriftgroesse neben
+/// Bewusst KEIN [Chip]: der Chip ist an dieser Stelle ein Fremdkörper.
+/// Er sitzt als pillförmige Plakette mit eigener Schriftgrösse neben
 /// dem Namen, wo bereits das Verifiziert-Badge steht. Zwei unterschiedlich
-/// gewichtige Platten nebeneinander wuerden um die Aufmerksamkeit
-/// konkurrieren, die dem Verifiziert-Badge gehoert.
+/// gewichtige Platten nebeneinander würden um die Aufmerksamkeit
+/// konkurrieren, die dem Verifiziert-Badge gehört.
 ///
-/// Die Form folgt dem Verifiziert-Badge: gleiche Hoehe, gleicher
+/// Die Form folgt dem Verifiziert-Badge: gleiche Höhe, gleicher
 /// Abstand, gleiche Position in der Zeile - damit die Namenszeile bei
-/// beiden Zustaenden gleich hoch bleibt und nichts springt.
+/// beiden Zuständen gleich hoch bleibt und nichts springt.
 class NewAccountBadge extends StatelessWidget {
   const NewAccountBadge({super.key, this.profile});
 
-  /// Das Profil, dessen Kontoalter geprueft wird.
+  /// Das Profil, dessen Kontoalter geprüft wird.
   final UserProfile? profile;
 
   @override
   Widget build(BuildContext context) {
     final p = profile;
-    // Ohne Alter keine Anzeige: eine falsche Entwarnung waere
-    // schaedlicher als ein fehlender Hinweis.
+    // Ohne Alter keine Anzeige: eine falsche Entwarnung wäre
+    // schädlicher als ein fehlender Hinweis.
     if (p == null || !p.isRecentlyCreated) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
     return Tooltip(
       message: L10n.t(context, 'profile.newAccountTooltip'),
       child: Semantics(
-        // Als Text fuer Screenreader, nicht nur als Grafik.
+        // Als Text für Screenreader, nicht nur als Grafik.
         label: L10n.t(context, 'profile.newAccountBadge'),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),

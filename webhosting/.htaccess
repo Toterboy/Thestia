@@ -2,28 +2,28 @@
 # THESTIA - Apache-Konfiguration
 #
 # ERZEUGT von tool/web/make_htaccess.py aus passkey-assets/_redirects
-# und passkey-assets/_headers. NICHT von Hand aendern - das naechste
-# Erzeugen ueberschreibt die Datei.
+# und passkey-assets/_headers. NICHT von Hand ändern - das nächste
+# Erzeugen überschreibt die Datei.
 #
-# Vor der Aenderung an _redirects oder _headers:
+# Vor der Änderung an _redirects oder _headers:
 #     python tool/web/make_htaccess.py
 # und dann:
 #     python tool/checks/check_publish_folder.py
 #
-# Diese Datei gehoert in das WURZELVERZEICHNIS der Website (dort, wo
-# index.html liegt). Sie wird nur fuer das klassische Webhosting
+# Diese Datei gehört in das WURZELVERZEICHNIS der Website (dort, wo
+# index.html liegt). Sie wird nur für das klassische Webhosting
 # gebraucht - Netlify und Cloudflare Pages lesen stattdessen
 # _redirects und _headers.
 # ============================================================
 
 # Keine Verzeichnisliste, und KEIN "MultiViews": Apache soll die
-# Adressen nur ueber die Regeln unten erreichen, nicht zufaellig
-# ueber die Dateinamen.
+# Adressen nur über die Regeln unten erreichen, nicht zufällig
+# über die Dateinamen.
 Options -Indexes -MultiViews
 DirectoryIndex index.html
 
 # KEIN AUTOMATISCHER SCHRAGSTRICH (BEFUND 23.11.2026): Unter /en/
-# lag ein Ordner "eltern/" (fuer die Eltern-Einstellungen-Seite) und
+# lag ein Ordner "eltern/" (für die Eltern-Einstellungen-Seite) und
 # daneben die Datei "en/eltern.html". Ohne diese Zeile machte Apache aus
 # /en/eltern (der Adresse aus der Sitemap!) einen 301 auf /en/eltern/
 # und dort gibt es keinen Index -> 403. Mit "DirectorySlash Off" greift
@@ -206,7 +206,7 @@ Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_39
 Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_40
 </IfModule>
 
-# --- 5) Der Auth-Host und die spaetere Web-Version --------------
+# --- 5) Der Auth-Host und die spätere Web-Version --------------
 
 # Der Auth-Host (auth.thestia.de) bekommt die gesperrte robots.txt
 # (siehe Abschnitt 2) und den Header "X-Robots-Tag: noindex". Beides
@@ -215,7 +215,7 @@ Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_40
 # Host-Rewrite in _redirects. Hier steht nichts mehr, damit es nicht
 # auseinanderlaufen kann.
 
-# Fuer die Web-Version der App (v0.12.0) kommt hier der
+# Für die Web-Version der App (v0.12.0) kommt hier der
 # SPA-Fallback hin: unbekannte Adressen liefern dann index.html.
 # RewriteCond %%{REQUEST_FILENAME} !-f
 # RewriteCond %%{REQUEST_FILENAME} !-d

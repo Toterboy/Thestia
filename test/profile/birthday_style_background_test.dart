@@ -1,14 +1,14 @@
-// Der Hintergrund der Geburtstagsflaeche (NUTZERWUNSCH 22.11.2026:
+// Der Hintergrund der Geburtstagsfläche (NUTZERWUNSCH 22.11.2026:
 // "Die Geburtstagsvorschau ist noch immer komplett falsch, da der
 // Hintergrund nicht der des Geburtstagsthemes ist").
 //
-// DER BEFUND: Die Profilflaeche malte eine eigene, schwaeche Tönung
-// (22 % Akzent auf der weissen Flaeche) - der Verlauf des Stils lag
-// PRIVAT in der Vorschaukarte. Bei midnight und mono war die Flaeche
-// damit praktisch weiss: der Hintergrund des Geburtstagsthemes war
+// DER BEFUND: Die Profilfläche malte eine eigene, schwäche Tönung
+// (22 % Akzent auf der weissen Fläche) - der Verlauf des Stils lag
+// PRIVAT in der Vorschaukarte. Bei midnight und mono war die Fläche
+// damit praktisch weiß: der Hintergrund des Geburtstagsthemes war
 // nirgends zu sehen.
 //
-// DER TEST: Die Flaeche muss DENSELBEN Verlauf malen, den der Nutzer
+// DER TEST: Die Fläche muss DENSELBEN Verlauf malen, den der Nutzer
 // in der Auswahl sieht - und auf den dunklen Stilen muss der Text
 // hell sein.
 import 'package:flutter/material.dart';
@@ -90,7 +90,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Der Text erbt die Farbe der Flaeche (weiss auf dunkel).
+      // Der Text erbt die Farbe der Fläche (weiß auf dunkel).
       final erbung = DefaultTextStyle.of(
         tester.element(find.text('Hallo')),
       ).style.color;

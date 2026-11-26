@@ -1,9 +1,9 @@
 // Der Teil '_BusyIconState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -47,8 +47,8 @@ class _BusyIconState extends State<_BusyIcon>
       animation: anim,
       child: widget.child,
       builder: (context, child) => Opacity(
-        // Der Wert bleibt immer ueber 0 - ein ganz verschwindendes
-        // Symbol wuerde wie ein Fehler aussehen.
+        // Der Wert bleibt immer über 0 - ein ganz verschwindendes
+        // Symbol würde wie ein Fehler aussehen.
         opacity: widget.busy ? 0.45 + 0.4 * anim.value : 1.0,
         child: child,
       ),

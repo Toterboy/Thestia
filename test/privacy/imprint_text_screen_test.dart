@@ -3,12 +3,12 @@
 //
 // DIE URSACHE: Die App verlinkte auf https://thestia.de/impressum.
 // Diese Domain ist ein VERIFIZIERTER APP-LINK (assetlinks.json +
-// android:autoVerify im Manifest) - Android oeffnet einen solchen Link
+// android:autoVerify im Manifest) - Android öffnet einen solchen Link
 // in der App selbst, nicht im Browser. Die App bekam ihren eigenen Link
 // und zeigte nichts.
 //
 // Wie bei den Nutzungsbedingungen (14.11.2026) steht der Text jetzt im
-// Binary. Und: die App oeffnet thestia.de grundsatzlich nicht mehr -
+// Binary. Und: die App öffnet thestia.de grundsatzlich nicht mehr -
 // der Test am Ende sichert das ab.
 import 'dart:io';
 
@@ -112,7 +112,7 @@ void main() {
   test('beide Sprachfassungen sind vollstaendig', () {
     expect(kImprintDe, isNotEmpty);
     expect(kImprintEn, isNotEmpty);
-    // Beide Fassungen muessen gleich lang sein - sonst fehlt in einer
+    // Beide Fassungen müssen gleich lang sein - sonst fehlt in einer
     // Sprache ein Abschnitt.
     expect(kImprintDe.length, kImprintEn.length);
     expect(kImprintDe.any((b) => b.text.contains(_anschrift)), isTrue);
@@ -126,9 +126,9 @@ void main() {
 
   test('die App oeffnet thestia.de nicht - das waere die App selbst', () {
     // DER BEFUND: thestia.de ist ein verifizierter App-Link. Jeder Link
-    // auf diese Domain, den die App oeffnet, landet in der App statt in
-    // einem Browser - der Nutzer sieht nichts. Die Webfassung laeuft
-    // deshalb ueber auth.thestia.de.
+    // auf diese Domain, den die App öffnet, landet in der App statt in
+    // einem Browser - der Nutzer sieht nichts. Die Webfassung läuft
+    // deshalb über auth.thestia.de.
     final treffer = <String>[];
     final dateien = Directory(
       'lib',
@@ -138,7 +138,7 @@ void main() {
       final inhalt = datei.readAsStringSync();
       // Jede Stelle, an der eine URL entsteht (Uri.parse, launchUrl),
       // mit dem Textfenster dahinter: dort stehen auch die URLs, die
-      // ein Bedingungsausdruck waehlt.
+      // ein Bedingungsausdruck wählt.
       for (final muster in [RegExp(r'Uri\.parse\('), RegExp(r'launchUrl\(')]) {
         var pos = 0;
         while (true) {

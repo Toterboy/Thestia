@@ -1,13 +1,13 @@
-// Render-Tests fuer das KI-Herkunfts-Abzeichen.
+// Render-Tests für das KI-Herkunfts-Abzeichen.
 //
 // ANLASS (Nutzerwunsch Transparenz): Das Abzeichen unterscheidet
-// lokale KI (On-Device - nichts verlaesst das Geraet) von Cloud-KI
+// lokale KI (On-Device - nichts verlässt das Gerät) von Cloud-KI
 // (Daten gehen an einen Drittanbieter). Wer die beiden verwechselt,
-// sagt den Nutzern das Falsche ueber ihre Daten - deshalb wird hier
-// mehr als "es steht irgendwas da" geprueft: Text, Symbol UND Farbe.
+// sagt den Nutzern das Falsche über ihre Daten - deshalb wird hier
+// mehr als "es steht irgendwas da" geprüft: Text, Symbol UND Farbe.
 //
 // Die Farbe ist wichtig: In einem Dialog-Titel sitzt der Badge neben
-// dem Text, und das Auge trennt die beiden Sorten an der Flaeche, nicht
+// dem Text, und das Auge trennt die beiden Sorten an der Fläche, nicht
 // an der Beschriftung.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,10 +16,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/profile/ai_badge.dart';
 
-/// Huelle fuer den Badge.
+/// Hülle für den Badge.
 ///
-/// Der [L10nScope] steht ueber dem [MaterialApp]: `L10n.t` sucht ihn
-/// ueber den Kontext. Ohne ihn liefert der Badge immer Deutsch - auch
+/// Der [L10nScope] steht über dem [MaterialApp]: `L10n.t` sucht ihn
+/// über den Kontext. Ohne ihn liefert der Badge immer Deutsch - auch
 /// dann, wenn die App auf Englisch steht.
 Widget _huelle(Widget kind, {Locale? sprache, double scale = 1.0}) {
   return ProviderScope(
@@ -71,7 +71,7 @@ void main() {
     });
 
     testWidgets('die zwei Sorten sehen unterschiedlich aus', (tester) async {
-      // Gegenprobe: Wenn beide Sorten gleich aussaehen, traegt die
+      // Gegenprobe: Wenn beide Sorten gleich aussähen, trägt die
       // Farbe die Unterscheidung nicht - und das Auge kann sie nicht
       // mehr herleiten.
       await tester.pumpWidget(_huelle(const AiBadge.local()));
@@ -83,7 +83,7 @@ void main() {
       final cloud = _deko(tester);
 
       expect(lokal.color, isNot(cloud.color));
-      // Die Cloud-Variante hat zusaetzlich einen Rahmen, die lokale
+      // Die Cloud-Variante hat zusätzlich einen Rahmen, die lokale
       // nicht - das ist der zweite Unterschied neben der Farbe.
       expect(lokal.border, isNull);
       expect(cloud.border, isNotNull);
@@ -103,7 +103,7 @@ void main() {
       tester,
     ) async {
       // Der Dialog-Titel braucht einen Badge in einer bestimmten
-      // Sprache, unabhaengig davon, was die App gerade eingestellt hat.
+      // Sprache, unabhängig davon, was die App gerade eingestellt hat.
       await tester.pumpWidget(
         _huelle(const AiBadge(languageCode: 'en'), sprache: const Locale('de')),
       );
@@ -128,7 +128,7 @@ void main() {
     });
 
     testWidgets('die kompakte Form traegt denselben Text', (tester) async {
-      // Kompakt heisst "kleiner", nicht "anderes": die Aussage muss
+      // Kompakt heißt "kleiner", nicht "anderes": die Aussage muss
       // dieselbe bleiben.
       await tester.pumpWidget(_huelle(const AiBadge.cloudCompact()));
       await tester.pumpAndSettle();

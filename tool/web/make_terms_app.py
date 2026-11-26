@@ -1,19 +1,19 @@
-"""Erweitert make_terms.py um die Dart-Ausgabe fuer die App.
+"""Erweitert make_terms.py um die Dart-Ausgabe für die App.
 
 WARUM (14.11.2026, Betreiber): "Die Nutzungsbedingungen funktionieren in
 der App nicht." Die App verlinkte auf die Webseite - ein Browser muss
 dann installiert sein, die Seite muss online sein, und in der App steht
-selbst nichts. Die Datenschutzerklaerung macht es seit dem 03.11.2026
+selbst nichts. Die Datenschutzerklärung macht es seit dem 03.11.2026
 besser: ihr Volltext steht als Datei im Binary (lib/generated/) und wird
 im App-Screen angezeigt. Die Nutzungsbedingungen bekommen denselben Weg:
 
-  * dieselben Bloecke (PrivacyBlock),
+  * dieselben Blöcke (PrivacyBlock),
   * denselben Bildschirm (LegalTextScreen),
   * dieselbe Sprache je App-Sprache (deutsch/englisch).
 
 Damit kann die App die Bedingungen auch dann zeigen, wenn das Handy
 keinen Browser hat oder das Netz weg ist - und Play findet die
-Bedingungen in der App selbst (wie bei der Erklaerung).
+Bedingungen in der App selbst (wie bei der Erklärung).
 """
 
 import pathlib
@@ -23,8 +23,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -55,13 +55,13 @@ def dart_quote(s: str) -> str:
 def render_dart(daten: dict, klasse: str) -> str:
     """Die Bedingungen als Liste von PrivacyBlock."""
     zeilen = [
-        "// GENERIERTE DATEI - NICHT VON HAND AENDERN.",
+        "// GENERIERTE DATEI - NICHT VON HAND ÄNDERN.",
         "// Quelle: tool/web/make_terms.py",
         "// Neu erzeugen mit: python tool/web/make_terms.py",
         "",
         "import 'package:thestia/generated/privacy_policy_blocks.dart';",
         "",
-        "/// Die Nutzungsbedingungen als Bloecke, in der Reihenfolge der",
+        "/// Die Nutzungsbedingungen als Blöcke, in der Reihenfolge der",
         "/// Quelle.",
         "const List<PrivacyBlock> %s = <PrivacyBlock>[" % klasse,
         "  PrivacyBlock('h1', %s)," % dart_quote(daten["titel"]),
@@ -74,7 +74,7 @@ def render_dart(daten: dict, klasse: str) -> str:
             zeilen.append("  PrivacyBlock('p', %s)," % dart_quote(inhalt))
         elif art == "ul":
             # Jeder Listenpunkt wird ein eigener Block (kind 'li') - so
-            # rendert der Bildschirm ihn als Aufzaehlung.
+            # rendert der Bildschirm ihn als Aufzählung.
             for li in inhalt:
                 zeilen.append("  PrivacyBlock('li', %s)," % dart_quote(li))
     zeilen.append("];")
@@ -83,7 +83,7 @@ def render_dart(daten: dict, klasse: str) -> str:
 
 
 def formatiere(pfad: pathlib.Path) -> None:
-    """Formatiert die erzeugte Datei (die CI prueft das Format)."""
+    """Formatiert die erzeugte Datei (die CI prüft das Format)."""
     for befehl in ('dart format "%s"' % pfad, 'flutter format "%s"' % pfad):
         try:
             ergebnis = subprocess.run(

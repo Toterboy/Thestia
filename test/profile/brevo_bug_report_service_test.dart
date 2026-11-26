@@ -1,15 +1,15 @@
-// Der Versand eines Bug-Reports (per E-Mail ueber Brevo).
+// Der Versand eines Bug-Reports (per E-Mail über Brevo).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/services/profile/brevo_bug_report_service.dart offene Zeilen. Der
 // Versand ist der einzige Weg, mit dem der Nutzer der App einen Fehler
 // melden kann - und er schickt dabei Bildschirmshots mit.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Report geht an die Edge Function (mit der Beschreibung und den
-//     Geraeteinformationen),
-//   * die Bilder kommen an - aber hoechstens fuenf,
-//   * eine zu lange Beschreibung wird abgelehnt (der Server wuerde sie
+//     Geräteinformationen),
+//   * die Bilder kommen an - aber höchstens fünf,
+//   * eine zu lange Beschreibung wird abgelehnt (der Server würde sie
 //     ohnehin ablehnen - der Client soll es sofort sagen),
 //   * ein Serverfehler wird als "nicht gesendet" gemeldet (nicht als
 //     Erfolg).
@@ -33,8 +33,8 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
-    // DIE VERSION: Ohne sie bleibt die Geraeteinformation leer - der
-    // Report waere dann nicht zuzuordnen.
+    // DIE VERSION: Ohne sie bleibt die Geräteinformation leer - der
+    // Report wäre dann nicht zuzuordnen.
     mockPackageInfo();
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
@@ -49,7 +49,7 @@ void main() {
     );
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
     // DER DIENST: Die Klasse hat einen privaten Konstruktor - der Test
-    // holt sie sich ueber den Provider (so wie die App).
+    // holt sie sich über den Provider (so wie die App).
     final container = ProviderContainer();
     addTearDown(container.dispose);
     dienst = container.read(brevoBugReportServiceProvider);

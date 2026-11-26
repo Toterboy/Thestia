@@ -1,33 +1,33 @@
 #!/usr/bin/env python3
-"""Erzeugt die Tablet-Screenshots fuer den Play Store - als KACHELN.
+"""Erzeugt die Tablet-Screenshots für den Play Store - als KACHELN.
 
 WARUM (03.11.2026): "Bei beiden Tablet Versionen soll es wieder in
-Kacheln sein wie auch beim Smartphone. Ausserdem ist beim 10" alles zu
+Kacheln sein wie auch beim Smartphone. Außerdem ist beim 10" alles zu
 weit links im Bild."
 
 ZWEI BEFUNDE:
 
-1. Die Tablet-Saetze waren cuts aus den Phone-Bildern. Ein Beschnitt
+1. Die Tablet-Sätze waren cuts aus den Phone-Bildern. Ein Beschnitt
    ist keine Komposition: beim 10-Zoll-Bild (Querformat) liegt der
    Kachel-Block LINKS und der Text RECHTS - der Beschnitt auf 1920x1200
    hat genau den Text abgeschnitten. Deshalb stand "alles zu weit
    links".
 
-2. Das Richtige ist, dieselbe Komposition in der Groesse zu erzeugen, in
+2. Das Richtige ist, dieselbe Komposition in der Größe zu erzeugen, in
    der sie gebraucht wird. Das Compositor-Skript kann das jetzt:
-   compose_card_wqhd() hat die Groesse als Parameter bekommen.
+   compose_card_wqhd() hat die Größe als Parameter bekommen.
 
-DIE GROESSEN (Play-Vorgaben):
+DIE GRÖSSEN (Play-Vorgaben):
 
   7 Zoll:  1080x1920 Hochformat - das ist exakt die Kachel-Variante
-           des Smartphones (9x16-kacheln). Sie wird 1:1 uebernommen.
+           des Smartphones (9x16-kacheln). Sie wird 1:1 übernommen.
   10 Zoll: 1920x1200 Querformat - neu komponiert, mit dem Kachel-Block
            links und dem Text rechts (wie das Smartphone im Querformat),
-           aber in der richtigen Groesse und mittig.
+           aber in der richtigen Größe und mittig.
 
 SPRACHEN (03.11.2026): Bis hierher bekam die englische Liste die
 DEUTSCHEN Tablet-Bilder - dieses Skript kopierte dieselben Dateien in
-beide Sprachen. Jetzt laeuft es je Sprache ueber die eigene Quelle
+beide Sprachen. Jetzt läuft es je Sprache über die eigene Quelle
 (comp.PROFILE) und die eigenen Texte. Die englischen Bilder zeigen
 englische Screens und englische Headlines.
 
@@ -53,15 +53,15 @@ sys.path.insert(
 )
 
 # Das Compositor-Skript bringt die Texte, die Schriften und die
-# Kompositions-Helfer mit. Der Import laedt es nur - die main() laeuft
-# nicht (sie ist ueber __name__ geschuetzt).
+# Kompositions-Helfer mit. Der Import lädt es nur - die main() läuft
+# nicht (sie ist über __name__ geschützt).
 import make_store_screenshots as comp  # noqa: E402
 
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -111,7 +111,7 @@ def _komponiere_10zoll(comp, profil, name, headline, subline, badge, dunkel):
     (Modus-Kacheln, App-Kacheln oder der geteilte Bildschirm).
     """
     if name == '04_entdecken':
-        # Die fuenf echten Modus-Kacheln, nicht der Placeholder-Screen.
+        # Die fünf echten Modus-Kacheln, nicht der Placeholder-Screen.
         tiles = sorted(profil['tiles'].glob('tile_*.png'),
                        key=lambda p: int(p.stem.split('_')[1]))
         if not tiles:
@@ -121,9 +121,9 @@ def _komponiere_10zoll(comp, profil, name, headline, subline, badge, dunkel):
                                         W=GROSSE_10[0], H=GROSSE_10[1])
 
     if name == '06_hell_dunkel':
-        # HELL + DUNKEL als EINER Screen, schraeg geteilt. Ohne den
+        # HELL + DUNKEL als EINER Screen, schräg geteilt. Ohne den
         # Split stand nur die helle Variante im Bild, obwohl die
-        # Ueberschrift "Hell oder dunkel" versprach.
+        # Überschrift "Hell oder dunkel" versprach.
         hell = profil['src'] / '04_anpassen.png'
         dunkel_src = profil['src'] / '04_anpassen_dunkel.png'
         if not dunkel_src.exists():
@@ -173,16 +173,16 @@ def main() -> int:
         # ------------------------------------------------------------------
         # 7 Zoll: dieselben Bilder wie beim Smartphone.
         #
-        # BEGRUENDUNG (04.11.2026): Der Nutzer wollte die Tablet-Bilder
+        # BEGRÜNDUNG (04.11.2026): Der Nutzer wollte die Tablet-Bilder
         # "in Kacheln wie auch beim Smartphone" - und dass die
-        # Ueberschrift in ALLEN Bildern an derselben Stelle steht (der
-        # fruehere 7-Zoll-Satz hatte die Startseite als Telefon-Screen
-        # zwischen Kacheln-Bildern: andere Ueberschriftenposition,
+        # Überschrift in ALLEN Bildern an derselben Stelle steht (der
+        # frühere 7-Zoll-Satz hatte die Startseite als Telefon-Screen
+        # zwischen Kacheln-Bildern: andere Überschriftenposition,
         # anderer Aufbau, unten abgeschnitten).
         #
-        # Beide Saetze haben 1080x1920 - also ist es derselbe Satz, und
+        # Beide Sätze haben 1080x1920 - also ist es derselbe Satz, und
         # das ist auch in Ordnung: die App hat kein Tablet-Layout, und
-        # ein erfundenes waere eine falsche Darstellung.
+        # ein erfundenes wäre eine falsche Darstellung.
         # ------------------------------------------------------------------
         # Die KACHELN (ohne nachgeahmte Statusleiste) - so sollen die
         # Tablet-Bilder aussehen (NUTZERWUNSCH 04.11.2026: "Bei den
@@ -211,9 +211,9 @@ def main() -> int:
         #   2) Kacheln aus dem Export  -> compose_cards_wqhd
         #   3) der volle Bildschirm     -> compose_landscape
         #
-        # compose_landscape schneidet NICHTS: der Screen kommt vollstaendig
-        # ins Bild (vorher fehlten oben Stuecke der AppBar und unten die
-        # letzten Chat-Hintergruende). Alle Bilder benutzen dasselbe
+        # compose_landscape schneidet NICHTS: der Screen kommt vollständig
+        # ins Bild (vorher fehlten oben Stöcke der AppBar und unten die
+        # letzten Chat-Hintergründe). Alle Bilder benutzen dasselbe
         # Raster: der Inhalt steht an derselben Stelle, der Text beginnt
         # an derselben Stelle.
         # ------------------------------------------------------------------

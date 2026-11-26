@@ -31,7 +31,7 @@ class SelectableTile<T> extends StatelessWidget {
   final String title;
   final ValueChanged<T?> onChanged;
 
-  /// Optionale Erklaerung unter dem Titel.
+  /// Optionale Erklärung unter dem Titel.
   final String? subtitle;
 
   @override

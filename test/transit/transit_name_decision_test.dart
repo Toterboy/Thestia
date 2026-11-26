@@ -1,10 +1,10 @@
-// Test fuer die Namens-Entscheidung beim Transit Spark (v0.10.1).
+// Test für die Namens-Entscheidung beim Transit Spark (v0.10.1).
 //
 // BEFUND (Betreiber, 10.11.2026): "Die Abfrage über die Entscheidung
 // Name an oder aus soll beim ersten öffnen des Transit Spark screens
 // kommen und dann nachträglich noch änderbar sein."
 //
-// Geprueft wird das Modell: der Wert (AN/AUS) und das Flag "hat der
+// Geprüft wird das Modell: der Wert (AN/AUS) und das Flag "hat der
 // Nutzer entschieden" (das den Dialog steuert) sind getrennt.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/settings/app_settings.dart';

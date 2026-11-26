@@ -1,26 +1,26 @@
-// Die reinen Bild-Helfer der Alterspruefung.
+// Die reinen Bild-Helfer der Altersprüfung.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/services/transit/age_estimation_service.dart 193 offene Zeilen -
-// darunter die reinen Helfer (Crop, Tensor, Groesse, Ueberschneidung).
-// Die Alterspruefung ist die einzige Stelle der App, die ein Gesicht
-// bewertet: ein Fehler in einem dieser Helder faellt auf dem Geraet
-// nicht auf, sondern faellt nur durch - die Pruefung landet dann
+// darunter die reinen Helfer (Crop, Tensor, Größe, Überschneidung).
+// Die Altersprüfung ist die einzige Stelle der App, die ein Gesicht
+// bewertet: ein Fehler in einem dieser Helder fällt auf dem Gerät
+// nicht auf, sondern fällt nur durch - die Prüfung landet dann
 // grundlos bei der manuellen Kontrolle.
 //
-// DIE LOESUNG: Die Helfer sind jetzt oeffentlich und mit
+// DIE LÖSUNG: Die Helfer sind jetzt öffentlich und mit
 // `@visibleForTesting` markiert (wie die Box-Namen im Chat-Dienst).
 // Die App benutzt sie trotzdem nur an dieser Stelle.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * das mittige Quadrat (der Crop, wenn kein Gesicht gefunden wird),
 //   * das Klemmen des Crops auf die Bildgrenzen (nie 0 Pixel, nie
-//     ausserhalb),
-//   * der UltraFace-Tensor: Groesse, Normierung ((x-127)/128) und die
+//     außerhalb),
+//   * der UltraFace-Tensor: Größe, Normierung ((x-127)/128) und die
 //     Reihenfolge der Ebenen (R, G, B),
-//   * das Verkleinern: hoechstens 640 Pixel, das Seitenverhaeltnis bleibt,
+//   * das Verkleinern: höchstens 640 Pixel, das Seitenverhältnis bleibt,
 //   * der Alters-Tensor: NCHW, die Normierungen und der Crop-Ausschnitt,
-//   * die Ueberschneidungsflaeche (NMS des Detektors).
+//   * die Überschneidungsfläche (NMS des Detektors).
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -29,7 +29,7 @@ import 'package:image/image.dart' as img;
 import 'package:thestia/services/transit/age_estimation_service.dart';
 
 void main() {
-  /// Ein einfarbiges Bild (rot) in der angegebenen Groesse.
+  /// Ein einfarbiges Bild (rot) in der angegebenen Größe.
   Uint8List bildBytes(int breite, int hoehe) {
     final bild = img.Image(width: breite, height: hoehe);
     img.fill(bild, color: img.ColorRgb8(255, 0, 0));
@@ -157,7 +157,7 @@ void main() {
       expect(klein, isNotNull);
       expect(klein![0], lessThanOrEqualTo(640));
       expect(klein[1], lessThanOrEqualTo(640));
-      // Das Seitenverhaeltnis bleibt erhalten (1280x720 -> 640x360).
+      // Das Seitenverhältnis bleibt erhalten (1280x720 -> 640x360).
       expect(klein[0], 640);
       expect(klein[1], 360);
     });
@@ -231,7 +231,7 @@ void main() {
     });
 
     test('nur der Crop wird uebernommen', () {
-      // Der Crop nimmt die linke Haelfte - dort ist das Bild rot.
+      // Der Crop nimmt die linke Hälfte - dort ist das Bild rot.
       final tensor = cropResizeFromRgbSync(<String, dynamic>{
         'rgb': rgbPuffer(4, 4),
         'w': 4,
@@ -267,8 +267,8 @@ void main() {
     });
 
     test('die Haelfte zaehlt halb', () {
-      // Zwei 10x10-Rechtecke, die sich auf 5 Pixel Breite ueberlappen:
-      // die Schnittflaeche ist 50, die Vereinigung 150 -> 1/3.
+      // Zwei 10x10-Rechtecke, die sich auf 5 Pixel Breite überlappen:
+      // die Schnittfläche ist 50, die Vereinigung 150 -> 1/3.
       expect(
         AgeEstimationService.iou(
           <double>[0, 0, 10, 10],

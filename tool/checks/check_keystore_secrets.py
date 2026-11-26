@@ -1,23 +1,23 @@
-"""Prueft, dass die Signier-Passwoerter NICHT im Projektordner liegen.
+"""Prüft, dass die Signier-Passwörter NICHT im Projektordner liegen.
 
-GRUND (04.11.2026): Die Passwoerter des Release-Keystores lagen im
+GRUND (04.11.2026): Die Passwörter des Release-Keystores lagen im
 Klartext in `android/key.properties`. Die Datei war gitignored - aber
 sie lag im Projektverzeichnis, also in Backups, in Sync-Mappen
 (OneDrive, Dropbox) und in Screenshots des Ordners.
 
-Jetzt liegen sie in einer Secret-Datei ausserhalb des Projekts bzw. in
-Umgebungsvariablen fuer CI (siehe `tool/helpers/keystore_secrets.py`).
+Jetzt liegen sie in einer Secret-Datei außerhalb des Projekts bzw. in
+Umgebungsvariablen für CI (siehe `tool/helpers/keystore_secrets.py`).
 
-Geprueft wird:
+Geprüft wird:
 
   1. Im Projektverzeichnis steht kein Passwort mehr. Gesucht wird in
      JEDER `*.properties`-Datei unterhalb des Repositorys (nicht nur in
      key.properties) - eine Datei, die sich woanders einschleichen
-     laesst, wird genauso gefunden.
-  2. Die Aufloesungsreihenfolge ist in `android/app/build.gradle.kts`
+     lässt, wird genauso gefunden.
+  2. Die Auflösungsreihenfolge ist in `android/app/build.gradle.kts`
      dokumentiert: Umgebungsvariablen, Secret-Datei, key.properties.
-  3. Liegt eine Secret-Datei vor, liegt sie ausserhalb des Projekts
-     und ist nicht fuer alle Benutzer lesbar (Windows: die ACL
+  3. Liegt eine Secret-Datei vor, liegt sie außerhalb des Projekts
+     und ist nicht für alle Benutzer lesbar (Windows: die ACL
      darf weder "Everyone" noch "Users"/"Authenticated Users" eine
      Leseberechtigung geben).
 
@@ -37,8 +37,8 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -58,7 +58,7 @@ import keystore_secrets  # noqa: E402
 
 GRADLE = ROOT / 'android' / 'app' / 'build.gradle.kts'
 
-# Schluessel, die ein Passwort tragen.
+# Schlüssel, die ein Passwort tragen.
 PASSWORT_SCHLUESSEL = ('storePassword', 'keyPassword')
 
 # Verzeichnisse, die nicht durchsucht werden (Bauausgaben).
@@ -78,7 +78,7 @@ def alle_properties() -> list[pathlib.Path]:
 
 
 def passwoerter_in(datei: pathlib.Path) -> list[str]:
-    """Die Schluessel mit Wert in dieser Datei."""
+    """Die Schlüssel mit Wert in dieser Datei."""
     raus = []
     try:
         inhalt = datei.read_text(encoding='utf-8', errors='replace')
@@ -117,7 +117,7 @@ def main() -> int:
     if not gefunden:
         print('  OK  keine *.properties im Projekt enthaelt ein Passwort')
 
-    # 2) Die Aufloesungsreihenfolge ist im Gradle-Skript hinterlegt.
+    # 2) Die Auflösungsreihenfolge ist im Gradle-Skript hinterlegt.
     print('\n2) Aufloesungsreihenfolge in build.gradle.kts')
     if not GRADLE.is_file():
         problems.append('android/app/build.gradle.kts fehlt')
@@ -140,7 +140,7 @@ def main() -> int:
             print('  OK  Umgebungsvariablen, Secret-Datei und Vorgabe-Pfad '
                   'sind hinterlegt')
 
-    # 3) Die Secret-Datei liegt ausserhalb und ist nicht fuer alle lesbar.
+    # 3) Die Secret-Datei liegt außerhalb und ist nicht für alle lesbar.
     print('\n3) Secret-Datei')
     secret = keystore_secrets.secret_file_path()
     if secret is None:
@@ -157,7 +157,7 @@ def main() -> int:
         except ValueError:
             print('  OK  %s liegt ausserhalb des Projekts' % secret)
 
-        # ACL pruefen (nur Windows, nur wenn icacls da ist).
+        # ACL prüfen (nur Windows, nur wenn icacls da ist).
         if sys.platform == 'win32':
             try:
                 p = subprocess.run(['icacls', str(secret)],
@@ -180,7 +180,7 @@ def main() -> int:
             except (OSError, subprocess.SubprocessError):
                 print('  -  ACL nicht pruefbar (icacls fehlt)')
 
-    # 4) Ist ueberhaupt alles konfiguriert?
+    # 4) Ist überhaupt alles konfiguriert?
     print('\n4) Konfigurationsstand')
     p = keystore_secrets.read_props()
     vollstaendig = keystore_secrets.signing_ready(p)

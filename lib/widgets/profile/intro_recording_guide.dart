@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 
-/// Drei-Schritte-Leitfaden als Begleitung WAEHREND der Audio-Aufnahme.
+/// Drei-Schritte-Leitfaden als Begleitung WÄHREND der Audio-Aufnahme.
 ///
 /// WARUM (03.11.2026, ROADMAP-Punkt "Vorstellungs-Vorlagen (Text +
 /// Audio)"): Die Text-Vorstellung hat rotierende Prompt-Karten
@@ -22,17 +22,17 @@ import 'package:thestia/l10n/app_strings.dart';
 ///
 /// ZWEI ENTSCHEIDUNGEN, die absicht sind:
 ///
-/// 1. **Automatisch nach Zeit, aber ueberschreibbar.** Ohne Automatik
-///    haette man drei Schritte manuell antippen muessen, bevor man
-///    ueberhaupt anfangen kann - das ist genau die Huerde, die wir
-///    abbauen wollen. Mit Automatik laeuft der Leitfaden von selbst;
-///    ein Tipp auf einen Schritt uebernimmt aber die Steuerung (der
+/// 1. **Automatisch nach Zeit, aber überschreibbar.** Ohne Automatik
+///    hätte man drei Schritte manuell antippen müssen, bevor man
+///    überhaupt anfangen kann - das ist genau die Hürde, die wir
+///    abbauen wollen. Mit Automatik läuft der Leitfaden von selbst;
+///    ein Tipp auf einen Schritt übernimmt aber die Steuerung (der
 ///    Nutzer hat das letzte Wort).
 ///
 /// 2. **Nach dem dritten Schritt bleibt der dritte stehen.** Wer weiter
 ///    redet, soll nicht in eine Schleife geschickt werden. Die
-///    Aufnahme laeuft bis 5 Minuten, der Leitfaden hat aber nur drei
-///    Winkel - danach ist er erledigt und traegt nichts mehr bei.
+///    Aufnahme läuft bis 5 Minuten, der Leitfaden hat aber nur drei
+///    Winkel - danach ist er erledigt und trägt nichts mehr bei.
 class IntroRecordingGuide extends StatefulWidget {
   const IntroRecordingGuide({
     super.key,
@@ -40,7 +40,7 @@ class IntroRecordingGuide extends StatefulWidget {
     this.paused = false,
   });
 
-  /// Laufzeit der Aufnahme in Sekunden. Die Pause zaehlt nicht mit
+  /// Laufzeit der Aufnahme in Sekunden. Die Pause zählt nicht mit
   /// (das ist die Semantik von `_recordSeconds` im Editor).
   final int elapsedSeconds;
 
@@ -50,7 +50,7 @@ class IntroRecordingGuide extends StatefulWidget {
   /// Dauer eines Schrittes in Sekunden.
   ///
   /// 15 Sekunden: kurz genug, dass alle drei Winkel auch in einer
-  /// kurzen Vorstellung (Mindestlaenge 10 Sekunden) vorkommen, lang
+  /// kurzen Vorstellung (Mindestlänge 10 Sekunden) vorkommen, lang
   /// genug, dass man pro Winkel mindestens einen Satz sagen kann.
   static const int stepSeconds = 15;
 
@@ -76,8 +76,8 @@ class IntroRecordingGuide extends StatefulWidget {
 }
 
 class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
-  /// Vom Nutzer gewaehlter Schritt. Solange `null`, laeuft die
-  /// automatische Auswahl nach Zeit; ein Tipp uebernimmt dauerhaft.
+  /// Vom Nutzer gewählter Schritt. Solange `null`, läuft die
+  /// automatische Auswahl nach Zeit; ein Tipp übernimmt dauerhaft.
   int? _manualStep;
 
   @override
@@ -133,10 +133,10 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
 
   /// Eine Zeile des Leitfadens: Nummer, Text, Zustand.
   ///
-  /// Drei Zustaende, klar unterscheidbar:
-  ///   * aktiv   - gefuellter Kreis, Text in der Akzentfarbe, fett
-  ///   * erledigt- Haken im Kreis, Text zurueckgenommen
-  ///   * offen   - offener Kreis, Text zurueckgenommen
+  /// Drei Zustände, klar unterscheidbar:
+  ///   * aktiv   - gefüllter Kreis, Text in der Akzentfarbe, fett
+  ///   * erledigt- Haken im Kreis, Text zurückgenommen
+  ///   * offen   - offener Kreis, Text zurückgenommen
   Widget _stepRow(BuildContext context, int index, int aktiv) {
     final scheme = Theme.of(context).colorScheme;
     final istAktiv = index == aktiv;
@@ -149,7 +149,7 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
         padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 2),
         child: Row(
           children: [
-            // Nummer-Kreis: gefuellt = aktiv, Haken = erledigt.
+            // Nummer-Kreis: gefüllt = aktiv, Haken = erledigt.
             Container(
               width: 22,
               height: 22,

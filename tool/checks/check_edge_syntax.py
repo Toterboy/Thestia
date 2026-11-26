@@ -1,12 +1,12 @@
-"""Prueft die Syntax der Edge Functions unter supabase/functions/.
+"""Prüft die Syntax der Edge Functions unter supabase/functions/.
 
 WARUM DIESES SKRIPT ES GIBT (04.11.2026):
 ==========================================
 
-Am 04.11.2026 hat eine Aenderung an check-location/index.ts die Datei
+Am 04.11.2026 hat eine Änderung an check-location/index.ts die Datei
 zerlegt: Ein Skript hatte den Hilfsblock an der falschen Stelle
 ausgeschnitten, sodass die Schleife des Helpers offen blieb und der
-Rest der Funktion in ihrem Koerper lande.
+Rest der Funktion in ihrem Körper lande.
 
 Zwei Dinge machten das schlimm:
 
@@ -14,25 +14,25 @@ Zwei Dinge machten das schlimm:
      gefangen ("The module's source code could not be parsed"), aber
      bis dahin war die kaputte Version im Repository.
 
-  2) Die Syntaxpruefung, die bis dahin lief, war
+  2) Die Syntaxprüfung, die bis dahin lief, war
      "node --experimental-strip-types --check" - und die MELDET
-     SICH NICHT. Sie meldete auch die zerlegte Datei als gueltig.
-     Eine Pruefung, die kaputten Code als gut meldet, ist schlimmer
-     als keine Pruefung.
+     SICH NICHT. Sie meldete auch die zerlegte Datei als gültig.
+     Eine Prüfung, die kaputten Code als gut meldet, ist schlimmer
+     als keine Prüfung.
 
-DAS SCRIPT PRUEFT DESHALB MIT ESBUILD
+DAS SCRIPT PRÜFT DESHALB MIT ESBUILD
 ======================================
 
-esbuild parst TypeScript, ohne es auszufuehren, und meldet echte
-Syntaxfehler. Die Pruefung laeuft auf allen 23 Funktionen und auf dem
+esbuild parst TypeScript, ohne es auszuführen, und meldet echte
+Syntaxfehler. Die Prüfung läuft auf allen 23 Funktionen und auf dem
 gemeinsamen Modul unter _shared/.
 
 WENN ESBUILD NICHT DA IST:
-Der Check meldet es laut und macht auf die Structural-Pruefung
-zurueck (Klammerbalance je Datei, ohne Strings und Kommentare). Die
-Structural-Pruefung faengt grobe Bruche - sie faengt nicht jeden
-Fehler. Deshalb steht im Ergebnis, welcher Modus lief: "gruen aus der
-Structural-Pruefung" ist nicht dasselbe wie "gruen aus esbuild".
+Der Check meldet es laut und macht auf die Structural-Prüfung
+zurück (Klammerbalance je Datei, ohne Strings und Kommentare). Die
+Structural-Prüfung fängt grobe Bruche - sie fängt nicht jeden
+Fehler. Deshalb steht im Ergebnis, welcher Modus lief: "grün aus der
+Structural-Prüfung" ist nicht dasselbe wie "grün aus esbuild".
 """
 import pathlib
 import re
@@ -47,8 +47,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -67,11 +67,11 @@ FN = ROOT / "supabase" / "functions"
 
 
 def esbuild_vorhanden() -> str | None:
-    """Findet den Befehl, mit dem esbuild laeuft."""
+    """Findet den Befehl, mit dem esbuild läuft."""
     exe = shutil.which("esbuild")
     if exe:
         return exe
-    # ueber npx (Windows braucht npx.cmd, weil die Ausfuehrungsrichtlinie
+    # über npx (Windows braucht npx.cmd, weil die Ausführungsrichtlinie
     # .ps1-Skripte blockiert)
     for name in ("npx.cmd", "npx"):
         exe = shutil.which(name)
@@ -85,7 +85,7 @@ def dateien() -> list[pathlib.Path]:
 
 
 def pruefe_mit_esbuild(befehl: str) -> tuple[list[str], bool]:
-    """Gibt die Fehlerliste und True zurueck, wenn esbuild lief."""
+    """Gibt die Fehlerliste und True zurück, wenn esbuild lief."""
     fehler: list[str] = []
     with tempfile.TemporaryDirectory() as tmp:
         for f in dateien():

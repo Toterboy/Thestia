@@ -1,25 +1,25 @@
 // Die Standort-Hinweise im Profil-Editor.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/profile/parts/locationnotice.dart 0 % Abdeckung. Der Kasten
-// ist die einzige Stelle, an der der Nutzer erfaehrt bekommt, dass der
+// ist die einzige Stelle, an der der Nutzer erfährt bekommt, dass der
 // Standort nicht ermittelt werden konnte - ohne ihn steht da einfach
 // kein Bundesland, und der Nutzer wundert sich.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne GPS (kein Standort) kommt der Hinweis "Standort nicht
 //     ermittelt",
-//   * ein Standort, der zu weit vom bisherigen Geraet abweicht, kommt mit
+//   * ein Standort, der zu weit vom bisherigen Gerät abweicht, kommt mit
 //     dem Verdachts-Hinweis (nicht stillschweigend gespeichert).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 // Das Plattform-Interface wird von permission_handler exportiert, aber
-// nicht weitergereicht - der Test setzt die Attrappe darueber.
+// nicht weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
@@ -28,7 +28,7 @@ import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 import 'hilfen.dart';
 
-/// Der Ort-Dienst, der jeden Standort als "verdaechtig" meldet.
+/// Der Ort-Dienst, der jeden Standort als "verdächtig" meldet.
 class _VerdaechtigerOrtService extends FakeOrtService {
   _VerdaechtigerOrtService({super.position});
 
@@ -96,7 +96,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      // OHNE POSITION: Das Geraet gibt keine Position her.
+      // OHNE POSITION: Das Gerät gibt keine Position her.
       await profileEditScreenPump(
         tester,
         profileEditScreenProfil,

@@ -1,23 +1,23 @@
-// Ein winziger Ersatz fuer den Supabase-Server - fuer die Tests.
+// Ein winziger Ersatz für den Supabase-Server - für die Tests.
 //
-// WOFUER: Zwei Bildschirme schreiben ueber PostgREST und lesen zur
-// Kontrolle wieder zurueck: der Profil-Editor ("Lokal gespeichert.
+// WOFÜR: Zwei Bildschirme schreiben über PostgREST und lesen zur
+// Kontrolle wieder zurück: der Profil-Editor ("Lokal gespeichert.
 // Server-Sync fehlgeschlagen") und der Admin-Bereich (die Listen
-// kommen aus SECURITY DEFINER-RPCs). Ohne Server laeuft der
-// Schreibvorgang ins Leere - der Test koennte dann nur noch pruefen
+// kommen aus SECURITY DEFINER-RPCs). Ohne Server läuft der
+// Schreibvorgang ins Leere - der Test kännte dann nur noch prüfen
 // "nichts ist passiert".
 //
-// Mit diesem Fake kann ein Test beide Faelle stellen:
+// Mit diesem Fake kann ein Test beide Fülle stellen:
 //   * der Server antwortet (200) - die App meldet Erfolg,
 //   * der Server schweigt (500)     - die App meldet den Fehlschlag.
 //
-// DER FAKE HAELT DEN ZUSTAND: Ein Schreibvorgang wird gemerkt und bei
-// der naechsten Lese-Anfrage zurueckgespiegelt. Genau so arbeitet der
-// echte Server mit seiner Verifikation ("per Zuruecklesen bestaetigen")
-// - sonst wuerde jede Verifikation scheitern und die App wuerde
+// DER FAKE HÄLT DEN ZUSTAND: Ein Schreibvorgang wird gemerkt und bei
+// der nächsten Lese-Anfrage zurückgespiegelt. Genau so arbeitet der
+// echte Server mit seiner Verifikation ("per Zurücklesen bestätigen")
+// - sonst würde jede Verifikation scheitern und die App würde
 // grundlos einen Sync-Fehler melden.
 //
-// KEIN NETZ, KEINE ZEIT: Alles laeuft im RAM, es gibt keine Wartezeit
+// KEIN NETZ, KEINE ZEIT: Alles läuft im RAM, es gibt keine Wartezeit
 // und keine offenen Timer.
 import 'dart:convert';
 
@@ -28,7 +28,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 /// Der Fake-Server.
 ///
 /// Er wird dem Supabase-Client bei [supabase.Supabase.initialize] als
-/// `httpClient` uebergeben - danach laeuft JEDE Anfrage der App hier
+/// `httpClient` übergeben - danach läuft JEDE Anfrage der App hier
 /// hinein, statt ins Netz.
 class FakeSupabaseServer extends http.BaseClient {
   FakeSupabaseServer({this.userId = 'test-user'});
@@ -38,7 +38,7 @@ class FakeSupabaseServer extends http.BaseClient {
 
   /// Wenn true, antwortet der Server mit einem Fehler (500).
   ///
-  /// Damit laesst sich der Fall "der Server schweigt" stellen.
+  /// Damit lässt sich der Fall "der Server schweigt" stellen.
   bool antwortetMitFehler = false;
 
   /// Die Antworten der RPCs: Name der Funktion -> Antwort.
@@ -46,31 +46,31 @@ class FakeSupabaseServer extends http.BaseClient {
   /// Ohne Eintrag antwortet eine RPC mit `null`.
   final Map<String, Object?> rpcAntworten = <String, Object?>{};
 
-  /// Die RPC-Aufrufe (Name + Koerper) in der Reihenfolge.
+  /// Die RPC-Aufrufe (Name + Körper) in der Reihenfolge.
   ///
-  /// DAMIT KANN EIN TEST PRUEFEN, WAS AN DEN SERVER GESCHICKT WURDE -
+  /// DAMIT KANN EIN TEST PRÜFEN, WAS AN DEN SERVER GESCHICKT WURDE -
   /// beim automatischen Funke zum Beispiel, dass die RPC die Adresse der
   /// ANDEREN Person bekommt (nicht die eigene) und ob "behalten" oder
-  /// "Person entfernen" gewaehlt wurde.
+  /// "Person entfernen" gewählt wurde.
   final List<Map<String, dynamic>> rpcAufrufe = <Map<String, dynamic>>[];
 
   /// Die RPCs, die mit einem Fehler (500) antworten.
   ///
-  /// WARUM (15.11.2026): Bei einem kompletten Serverausfall schliesst
-  /// der Admin-Bereich sofort (fail-closed - der Server-Check schlaegt
-  /// fehl). Damit laesst sich der Listen-Fehler nicht stellen: man
+  /// WARUM (15.11.2026): Bei einem kompletten Serverausfall schließt
+  /// der Admin-Bereich sofort (fail-closed - der Server-Check schlägt
+  /// fehl). Damit lässt sich der Listen-Fehler nicht stellen: man
   /// braucht einen Server, der den Admin-Check beantwortet, aber bei
   /// EINER bestimmten Liste schweigt.
   final Set<String> rpcFehler = <String>{};
 
-  /// Eigene Fehlerantworten fuer bestimmte Pfade.
+  /// Eigene Fehlerantworten für bestimmte Pfade.
   ///
-  /// DER GRUND: Die App uebersetzt Server-Fehler in verstaendliche
+  /// DER GRUND: Die App übersetzt Server-Fehler in verständliche
   /// Texte ("Email oder Passwort ist falsch" statt "Invalid login
-  /// credentials"). Um das zu pruefen, muss der Server GENAU diese
+  /// credentials"). Um das zu prüfen, muss der Server GENAU diese
   /// Meldung liefern - mit dem allgemeinen 500-Schalter geht das nicht.
   ///
-  /// Der Schluessel ist ein Teil des Pfades (z. B. '/auth/v1/token').
+  /// Der Schlüssel ist ein Teil des Pfades (z. B. '/auth/v1/token').
   final Map<String, ({int status, String body})> fehlerAntworten =
       <String, ({int status, String body})>{};
 
@@ -82,7 +82,7 @@ class FakeSupabaseServer extends http.BaseClient {
   /// Die Passkeys des Kontos (die Verwaltung im Einstellungs-Screen).
   ///
   /// DER GRUND: Der Client erwartet ein reines JSON-Array. Der Test
-  /// stellt damit genau die Liste, die er pruefen will.
+  /// stellt damit genau die Liste, die er prüfen will.
   final List<Map<String, dynamic>> passkeys = <Map<String, dynamic>>[];
 
   /// Die Aufrufe der Edge Functions (Name + Body) in der Reihenfolge.
@@ -96,7 +96,7 @@ class FakeSupabaseServer extends http.BaseClient {
   final Map<String, Map<String, dynamic>> zeilen =
       <String, Map<String, dynamic>>{};
 
-  /// Die Schreibvorgaenge in der Reihenfolge - zum Nachpruefen.
+  /// Die Schreibvorgänge in der Reihenfolge - zum Nachprüfen.
   final List<Map<String, dynamic>> schreibvorgaenge = <Map<String, dynamic>>[];
 
   /// Wie viele Anfragen sind angekommen?
@@ -106,14 +106,14 @@ class FakeSupabaseServer extends http.BaseClient {
   ///
   /// DER GRUND: Viele Wege der App fragen den Server mit mehreren
   /// Spaltenlisten (eine fehlende Spalte kippt die ganze Abfrage). Der
-  /// Test muss diesen Fall stellen koennen: der Server kennt die erste
+  /// Test muss diesen Fall stellen können: der Server kennt die erste
   /// Liste nicht, die zweite schon.
   int fehlerBeiDenErstenN = 0;
 
   /// Die Pfade der angefragten URLs (in der Reihenfolge).
   ///
-  /// DAMIT KANN EIN TEST PRUEFEN, WELCHE Funktion aufgerufen wurde -
-  /// der Zaehler allein sagt das nicht.
+  /// DAMIT KANN EIN TEST PRÜFEN, WELCHE Funktion aufgerufen wurde -
+  /// der Zähler allein sagt das nicht.
   final List<String> pfade = <String>[];
 
   @override
@@ -133,7 +133,7 @@ class FakeSupabaseServer extends http.BaseClient {
 
     // DIE ERSTEN ANFRAGEN SCHLAGEN FEHL: Der Test stellt damit einen
     // Server dar, der eine Spalte (oder eine RPC-Signatur) noch nicht
-    // kennt - die App muss auf eine aeltere Fassung zurueckfallen.
+    // kennt - die App muss auf eine ältere Fassung zurückfallen.
     if (fehlerBeiDenErstenN > 0) {
       fehlerBeiDenErstenN--;
       return _antwort(
@@ -144,8 +144,8 @@ class FakeSupabaseServer extends http.BaseClient {
     }
 
     // DIE EIGENEN FEHLERANTWORTEN: Der Test bestimmt genau, welche
-    // Meldung der Server liefert (die App uebersetzt sie in einen
-    // verstaendlichen Text).
+    // Meldung der Server liefert (die App übersetzt sie in einen
+    // verständlichen Text).
     for (final eintrag in fehlerAntworten.entries) {
       if (!pfad.contains(eintrag.key)) continue;
       return _antwort(request, eintrag.value.status, eintrag.value.body);
@@ -159,21 +159,21 @@ class FakeSupabaseServer extends http.BaseClient {
     // Die Passkeys des Kontos (die Verwaltung im Einstellungs-Screen).
     //
     // DER GRUND: Die Liste liefert der Client als reines JSON-Array.
-    // Ohne diese Antwort wuerde die Karte den Fehler zeigen - und der
-    // Weg "Passkey umbenennen" bzw. "loeschen" waere ungetestet.
+    // Ohne diese Antwort würde die Karte den Fehler zeigen - und der
+    // Weg "Passkey umbenennen" bzw. "löschen" wäre ungetestet.
     if (pfad.endsWith('/auth/v1/passkeys')) {
       return _antwort(request, 200, jsonEncode(passkeys));
     }
 
     // Die Session (Anmeldung, Token-Aktualisierung).
     //
-    // DER GRUND (15.11.2026): Die Edge Functions gehen ueber den
+    // DER GRUND (15.11.2026): Die Edge Functions gehen über den
     // Auth-Weg - vor dem Senden holt der Client das Access-Token
-    // (`getSession()`). Fehlt eine gueltige Session, wartet er auf
+    // (`getSession()`). Fehlt eine gültige Session, wartet er auf
     // eine Token-Aktualisierung - und ohne Antwort darauf bleibt der
     // Aufruf stehen (der Test lief in den Zehn-Minuten-Timeout).
     //
-    // Die Antwort traegt deshalb ein JWT mit Ablaufdatum - der Client
+    // Die Antwort trägt deshalb ein JWT mit Ablaufdatum - der Client
     // rechnet mit `expires_in`, nicht mit dem JWT selbst.
     if (pfad.contains('/auth/v1/token')) {
       return _antwort(
@@ -193,7 +193,7 @@ class FakeSupabaseServer extends http.BaseClient {
     if (pfad.contains('/rest/v1/rpc/')) {
       const marker = '/rest/v1/rpc/';
       final name = pfad.substring(pfad.indexOf(marker) + marker.length);
-      // DER AUFZEICHNER: Der Koerper wird gemerkt - so sieht ein Test,
+      // DER AUFZEICHNER: Der Körper wird gemerkt - so sieht ein Test,
       // was an den Server geschickt wurde.
       final koerper = await _leseBody(request);
       rpcAufrufe.add(<String, dynamic>{'funktion': name, ...koerper});
@@ -224,15 +224,15 @@ class FakeSupabaseServer extends http.BaseClient {
     // Der Speicher (die Profilbilder).
     //
     // DER GRUND: Ein Download liefert ein echtes, winziges PNG. Ohne
-    // Bild-Daten (leerer Body) wuerde `Image.memory` beim Anzeigen
-    // abstuerzen ("Unable to decode image data") - der Test scheitert
+    // Bild-Daten (leerer Body) würde `Image.memory` beim Anzeigen
+    // abstürzen ("Unable to decode image data") - der Test scheitert
     // dann an einem Fehler, den der Bildschirm gar nicht verursacht hat.
     if (pfad.contains('/storage/v1/')) {
       if (request.method == 'GET') {
         return _antwortBytes(request, 200, _kleinesPng, 'image/png');
       }
       // DER UPLOAD: Das Storage-Client erwartet eine JSON-Antwort mit dem
-      // Schluessel ("Key") - ohne sie castet es den leeren Body auf null
+      // Schlüssel ("Key") - ohne sie castet es den leeren Body auf null
       // und der Upload scheitert mit "type 'Null' is not a subtype of
       // type 'Map'".
       if (pfad.contains('/object/sign/') && request.method == 'POST') {
@@ -261,7 +261,7 @@ class FakeSupabaseServer extends http.BaseClient {
           }),
         );
       }
-      // Das Loeschen (der Speicher-Aufraeum) - der Server meldet Erfolg
+      // Das Löschen (der Speicher-Aufräum) - der Server meldet Erfolg
       // (das Client erwartet eine Liste, keinen leeren Body).
       return _antwort(request, 200, '[]');
     }
@@ -285,16 +285,16 @@ class FakeSupabaseServer extends http.BaseClient {
   /// Die Antwort auf eine Lese-Anfrage.
   ///
   /// Gefragt wird nach bestimmten Spalten (`select=...`) - der Fake
-  /// gibt genau die zurueck, die geschrieben wurden. Das entspricht
-  /// dem echten Server und ist wichtig: die App prueft ihren Schreibvorgang
-  /// per Zuruecklesen.
+  /// gibt genau die zurück, die geschrieben wurden. Das entspricht
+  /// dem echten Server und ist wichtig: die App prüft ihren Schreibvorgang
+  /// per Zurücklesen.
   ///
   /// WICHTIG (14.11.2026, gefunden von einem Test): PostgREST liefert
   /// bei einer Tabellen-Abfrage **immer ein Array** - auch bei genau
-  /// einem Treffer. Der Fake gab vorher ein einzelnes Objekt zurueck;
-  /// die Verifikation des Profils ("per Zuruecklesen bestaetigen")
+  /// einem Treffer. Der Fake gab vorher ein einzelnes Objekt zurück;
+  /// die Verifikation des Profils ("per Zurücklesen bestätigen")
   /// scheiterte daran und das Speichern brach ab, bevor der Name
-  /// uebernommen wurde.
+  /// übernommen wurde.
   dynamic _gelesen(String tabelle, Uri url) {
     final zeile = zeilen[tabelle] ?? <String, dynamic>{};
     final select = url.queryParameters['select'];
@@ -304,7 +304,7 @@ class FakeSupabaseServer extends http.BaseClient {
     final gewaehlt = <String, dynamic>{};
     for (final spalte in select.split(',')) {
       final name = spalte.trim();
-      // DER STERN: "select=*" heisst "alle Spalten" - so liefert es
+      // DER STERN: "select=*" heißt "alle Spalten" - so liefert es
       // der echte Server auch. Ohne das bekam der Admin-Bereich (der
       // die Foto-Moderation mit "select=*, user:profiles(name)" holt)
       // eine leere Liste und die Warteschlange sah immer leer aus.
@@ -389,7 +389,7 @@ class FakeSupabaseServer extends http.BaseClient {
   }
 }
 
-/// Ein 1x1-Pixel-Bild (transparent) - der Platzhalter fuer Downloads.
+/// Ein 1x1-Pixel-Bild (transparent) - der Platzhalter für Downloads.
 ///
 /// Es ist ein echtes PNG: ein Bild-Decoder kann es fehlerfrei lesen.
 final List<int> _kleinesPng = <int>[
@@ -407,7 +407,7 @@ final List<int> _kleinesPng = <int>[
 /// Meldet ein Konto an - ohne echten Server.
 ///
 /// Der Client akzeptiert ein selbstgebautes JWT (die Signatur wird
-/// lokal nicht geprueft) und fragt danach beim Server, wer angemeldet
+/// lokal nicht geprüft) und fragt danach beim Server, wer angemeldet
 /// ist. Genau diese Frage beantwortet der [FakeSupabaseServer].
 Future<void> alsNutzerAnmelden(
   supabase.SupabaseClient client,
@@ -421,8 +421,8 @@ Future<void> alsNutzerAnmelden(
 
 /// Ein JWT, das der Client lokal akzeptiert.
 ///
-/// Die Signatur wird NICHT geprueft (es gibt keinen Server, der sie
-/// pruefen koennte) - wichtig ist nur, dass der Payload ein gueltiges
+/// Die Signatur wird NICHT geprüft (es gibt keinen Server, der sie
+/// prüfen kännte) - wichtig ist nur, dass der Payload ein gültiges
 /// Ablaufdatum hat.
 String _jwt(String userId) {
   final jetzt = DateTime.now().millisecondsSinceEpoch ~/ 1000;
@@ -442,7 +442,7 @@ String _jwt(String userId) {
   return '$kopf.$nutzlast.$signatur';
 }
 
-/// Base64 ohne Fuellzeichen (so wie es JWTs tun).
+/// Base64 ohne Füllzeichen (so wie es JWTs tun).
 String _base64(String text) {
   return base64Url.encode(utf8.encode(text)).replaceAll('=', '');
 }

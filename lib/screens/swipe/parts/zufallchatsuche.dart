@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -111,7 +111,7 @@ extension _ZufallChatSuche on _RandomChatScreenState {
       final service = ref.read(randomChatServiceProvider);
       final sessionId = _sessionId;
       if (service == null || sessionId == null || !mounted) return;
-      // Jeder Netzwerkfehler wuerde sonst als unhandled Async-Error aus
+      // Jeder Netzwerkfehler würde sonst als unhandled Async-Error aus
       // dem Timer-Callback herausfliegen - alle 2 s erneut, ohne Stopp.
       RandomChatSession? session;
       try {

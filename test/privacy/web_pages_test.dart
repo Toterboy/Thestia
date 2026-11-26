@@ -4,13 +4,13 @@ import 'package:image/image.dart' as img;
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Publish-Verzeichnis des Netlify-Projekts fuer thestia.de.
+/// Publish-Verzeichnis des Netlify-Projekts für thestia.de.
 final Directory assets = Directory('${Directory.current.path}/passkey-assets');
 
-/// Alle oeffentlich ausgelieferten Seiten.
+/// Alle öffentlich ausgelieferten Seiten.
 ///
 /// index.html und bestaetigt.html sind eingeschlossen: sie tragen das
-/// Design ebenfalls (nur ohne Kopfzeile und Inhalts-Huelle, weil sie
+/// Design ebenfalls (nur ohne Kopfzeile und Inhalts-Hülle, weil sie
 /// eigene Ansichten haben).
 const List<String> seiten = [
   'index.html',
@@ -24,7 +24,7 @@ const List<String> seiten = [
 
 /// Die Seiten, die als Pflichtseite im Play Console eingetragen sind.
 ///
-/// Diese MUESSEN statisch sein: kein Skript, keine externen Requests.
+/// Diese MÜSSEN statisch sein: kein Skript, keine externen Requests.
 const List<String> pflichtseiten = [
   'datenschutz.html',
   'impressum.html',
@@ -53,18 +53,18 @@ void main() {
 
     test('Die langen Seiten haben rechts einen Scrollstrich', () {
       // BEFUND (14.11.2026, Betreiber): "Nutzungsbedingungen,
-      // Datenschutzerklaerung und Impressum sollen rechts diesen
+      // Datenschutzerklärung und Impressum sollen rechts diesen
       // Scrollstrich haben, woran man erkennen kann wie weit die Seite
-      // noch geht und man soll damit auch scrollen koennen mit dem
+      // noch geht und man soll damit auch scrollen können mit dem
       // Strich."
       //
-      // Drei Stuecke muessen drin sein:
+      // Drei Stöcke müssen drin sein:
       //   * overflow-y: scroll  - die Leiste ist IMMER da (auf dem
       //     Telefon blendet der Browser sie sonst aus, bis man
       //     scrollt),
       //   * ::-webkit-scrollbar - sie ist sichtbar und dick genug zum
       //     Ziehen (Chrome, Safari),
-      //   * scrollbar-width/-color - dasselbe fuer Firefox.
+      //   * scrollbar-width/-color - dasselbe für Firefox.
       const seitenMitStrich = [
         'datenschutz.html',
         'impressum.html',
@@ -119,8 +119,8 @@ void main() {
       // richtigen Variante angezeigt werden. Der Button soll dennoch
       // bleiben."
       //
-      // Dafuer braucht es eine Media-Query fuer den Systemzustand - und
-      // eine zweite fuer den Schalter, der umdreht.
+      // Dafür braucht es eine Media-Query für den Systemzustand - und
+      // eine zweite für den Schalter, der umdreht.
       for (final name in seiten) {
         final html = File('${assets.path}/$name').readAsStringSync();
         expect(
@@ -141,9 +141,9 @@ void main() {
     });
 
     test('Die Farbpalette ist fuer jeden der vier Zustaende definiert', () {
-      // Vier Zustaende: System hell/dunkel x Schalter aus/an. Jeder
+      // Vier Zustände: System hell/dunkel x Schalter aus/an. Jeder
       // braucht seinen eigenen Satz Variablen - sonst fehlt in einem
-      // Zustand eine Farbe und die Seite sieht halb umgefuehrt aus.
+      // Zustand eine Farbe und die Seite sieht halb umgeführt aus.
       final html = File('${assets.path}/index.html').readAsStringSync();
       for (final farbe in [
         '--bg',
@@ -169,13 +169,13 @@ void main() {
     test('Keine Seite laedt Ressourcen von fremden Servern', () {
       // Wichtig ist der Unterschied zu einem Link: ein <a href> wird
       // angeklickt - das kostet keine Bandbreite. Automatisch geladen
-      // wird alles mit src= sowie fremde Stylesheets - das waere
+      // wird alles mit src= sowie fremde Stylesheets - das wäre
       // Bandbreite bei Dritten und ein Datenschutzproblem.
       for (final name in seiten) {
         final html = File('${assets.path}/$name').readAsStringSync();
-        // Nur die TAGS zaehlen - nicht beliebige Zeichenketten. Die
-        // Captcha-Seite laedt Turnstile per Skript ("s.src = ..."); das
-        // ist noetig und wird nicht automatisch geladen.
+        // Nur die TAGS zählen - nicht beliebige Zeichenketten. Die
+        // Captcha-Seite lädt Turnstile per Skript ("s.src = ..."); das
+        // ist nötig und wird nicht automatisch geladen.
         expect(
           RegExp(r'''<img[^>]+src\s*=\s*["']https?://''').hasMatch(html),
           isFalse,
@@ -183,7 +183,7 @@ void main() {
         );
         expect(
           // WICHTIG (04.11.2026): Ein <link rel="canonical"> bindet KEIN
-          // Stylesheet ein - der Browser laedt daraus nichts. Ohne diese
+          // Stylesheet ein - der Browser lädt daraus nichts. Ohne diese
           // Ausnahme wird die eigene kanonische Adresse als "fremde
           // Ressource" gewertet.
           RegExp(
@@ -216,15 +216,15 @@ void main() {
     });
 
     test('Kein Bild verweist auf eine Datei, die es nicht gibt', () {
-      // Ein toter Bildverweis faellt auf thestia.de sofort auf - und
-      // faellt erst auf, wenn jemand die Seite oeffnet. Deshalb hier.
+      // Ein toter Bildverweis fällt auf thestia.de sofort auf - und
+      // fällt erst auf, wenn jemand die Seite öffnet. Deshalb hier.
       final re = RegExp(r'''<img[^>]+src\s*=\s*["']([^"']+)["']''');
       for (final name in seiten) {
         final html = File('${assets.path}/$name').readAsStringSync();
         for (final m in re.allMatches(html)) {
           final url = m.group(1)!;
           if (url.startsWith('http')) continue;
-          // Pfade mit einem fuehrenden Schraegstrich sind relativ zur
+          // Pfade mit einem führenden Schrägstrich sind relativ zur
           // Wurzel des Publish-Verzeichnisses.
           final pfad = '${assets.path}${url.startsWith('/') ? url : '/$url'}';
           expect(
@@ -256,7 +256,7 @@ void main() {
       final html = File('${assets.path}/index.html').readAsStringSync();
       // Die Pfade sind RELATIV (04.11.2026): so zeigt /en/ die
       // englischen Bilder und / die deutschen. Absolute Pfade
-      // (/screenshots/...) wuerden auf der englischen Seite die
+      // (/screenshots/...) würden auf der englischen Seite die
       // deutschen Bilder zeigen.
       final bilder = RegExp(r'''<img[^>]+src\s*=\s*["']([^"']+)["']''')
           .allMatches(html)
@@ -273,14 +273,14 @@ void main() {
       );
 
       for (final url in bilder) {
-        // Relativ zum Ordner der HTML-Datei aufloesen.
+        // Relativ zum Ordner der HTML-Datei auflösen.
         final pfad = url.startsWith('/')
             ? '${assets.path}$url'
             : '${assets.path}/$url';
         expect(File(pfad).existsSync(), isTrue, reason: 'Bild fehlt: $url');
         // Die Obergrenze aus tool/checks/check_web_payload.py (200 KB). Wer
-        // das Publish-Verzeichnis hochlaedt, darf nicht an der
-        // Groessengrenze scheitern.
+        // das Publish-Verzeichnis hochlädt, darf nicht an der
+        // Größengrenze scheitern.
         final kb = File(pfad).lengthSync() / 1024;
         expect(
           kb,
@@ -291,7 +291,7 @@ void main() {
     });
 
     test('Jedes Bild hat einen Alternativtext', () {
-      // Ohne alt-Text ist das Bild fuer einen Screenreader nichts. Der
+      // Ohne alt-Text ist das Bild für einen Screenreader nichts. Der
       // Text sagt, was auf dem Bild zu sehen ist - nicht "Bild" oder
       // "Screenshot".
       final html = File('${assets.path}/index.html').readAsStringSync();
@@ -308,8 +308,8 @@ void main() {
       // 05 Anpassen, 06 Hell/Dunkel, 07 Eisbrecher, 08 Datenschutz.
       final html = File('${assets.path}/index.html').readAsStringSync();
       // Nur die <img>-Elemente: das og:image in den Meta-Angaben
-      // nennt ebenfalls "screenshots/01_..." und wuerde die Liste
-      // sonst um einen Eintrag verlaengern.
+      // nennt ebenfalls "screenshots/01_..." und würde die Liste
+      // sonst um einen Eintrag verlängern.
       final reihenfolge = RegExp(
         r'''<img[^>]+src\s*=\s*["'][^"']*screenshots/(\d\d)_''',
       ).allMatches(html).map((m) => m.group(1)!).toList();
@@ -325,19 +325,19 @@ void main() {
   });
 
   group('Die Seiten fuer die Play-Anforderungen', () {
-    // Google Play verlangt fuer "Daten loeschen" eine oeffentlich
-    // erreichbare Seite, die drei Dinge erfuellt:
+    // Google Play verlangt für "Daten löschen" eine öffentlich
+    // erreichbare Seite, die drei Dinge erfüllt:
     //
     //   1. Sie bezieht sich auf die App oder den Entwicklernamen aus
     //      dem Store-Eintrag.
     //   2. Sie zeigt gut sichtbar die Schritte, mit denen Nutzer die
-    //      Loeschung ihrer Daten (oder ihres Kontos) anfordern.
-    //   3. Sie nennt die Art der zu loeschenden oder aufzubewahrenden
-    //      Daten und eine etwaige zusaetzliche Aufbewahrungsdauer.
+    //      Löschung ihrer Daten (oder ihres Kontos) anfordern.
+    //   3. Sie nennt die Art der zu löschenden oder aufzubewahrenden
+    //      Daten und eine etwaige zusätzliche Aufbewahrungsdauer.
     //
     // Diese Tests halten fest, dass die Seite das weiterhin tut - sie
-    // waere sonst nach der naechsten Textaenderung stillschweigend
-    // unvollstaendig.
+    // wäre sonst nach der nächsten Textänderung stillschweigend
+    // unvollständig.
     String datenLoeschen() =>
         File('${assets.path}/daten-loeschen.html').readAsStringSync();
     String eltern() => File('${assets.path}/eltern.html').readAsStringSync();
@@ -436,7 +436,7 @@ void main() {
       final h = eltern();
       expect(h, contains('Thestia'));
       expect(h, contains('Thoralf Illg'));
-      // Die Schritte fuer die Eltern.
+      // Die Schritte für die Eltern.
       expect(h, contains('E-Mail'));
       expect(h, contains('bestätigen'));
       // Die Daten, die verarbeitet werden.
@@ -462,13 +462,13 @@ void main() {
   });
 
   group('Die Zweisprachigkeit (NUTZERWUNSCH 03.11.2026)', () {
-    // "Jede der Websites soll auf Englisch und Deutsch verfuegbar sein.
-    //  Standardmaessig auf Deutsch."
+    // "Jede der Websites soll auf Englisch und Deutsch verfügbar sein.
+    //  Standardmässig auf Deutsch."
     //
     // Diese Tests halten fest, dass jede Seite einen Sprachknopf hat,
     // dass er auf die andere Fassung zeigt und dass die andere Fassung
-    // auch wirklich existiert. Sonst koennte der Knopf ins Leere
-    // zeigen - und niemand faellt es, bis ein Besucher darauf klickt.
+    // auch wirklich existiert. Sonst kännte der Knopf ins Leere
+    // zeigen - und niemand fällt es, bis ein Besucher darauf klickt.
     const seiten = [
       'impressum',
       'kinderschutz',
@@ -557,8 +557,8 @@ void main() {
     });
 
     test('Der Elternbereich liegt in beiden Sprachen unter /eltern', () {
-      // /eltern ist die oeffentliche Seite, /eltern/einstellungen der
-      // persoenliche Bereich des Elternteils (nur mit dem Token).
+      // /eltern ist die öffentliche Seite, /eltern/einstellungen der
+      // persönliche Bereich des Elternteils (nur mit dem Token).
       expect(lese('eltern.html'), contains('/eltern/einstellungen'));
       expect(lese('en/eltern.html'), contains('/en/eltern/einstellungen'));
       expect(
@@ -591,7 +591,7 @@ void main() {
 
     test('Die Seiten folgen der Systemeinstellung fuer Hell/Dunkel', () {
       // Das Theme richtet sich nach prefers-color-scheme; der Schalter
-      // dreht nur um. Ohne diese Regel waere die Seite IMMER hell - oder
+      // dreht nur um. Ohne diese Regel wäre die Seite IMMER hell - oder
       // immer dunkel, je nachdem, was der Rechner gerade eingestellt hat.
       for (final s in ['impressum', 'kinderschutz']) {
         expect(
@@ -605,8 +605,8 @@ void main() {
 
   group('Die veroeffentlichten Artefakte', () {
     test('Die Sitemap enthaelt kein Geheimnis', () {
-      // docs/betrieb/ADMIN-UUID.md enthaelt die Admin-UUID und darf nicht
-      // veroeffentlicht werden. Das Publish-Verzeichnis wird per
+      // docs/betrieb/ADMIN-UUID.md enthält die Admin-UUID und darf nicht
+      // veröffentlicht werden. Das Publish-Verzeichnis wird per
       // Drag-and-Drop hochgeladen - dort darf sie nicht liegen.
       final verboten = ['46f3f558-b134-4d25-946b-4e052a8ab3b5'];
       for (final datei in assets.listSync(recursive: true).whereType<File>()) {
@@ -637,15 +637,15 @@ void main() {
     test('Die Galerie-Ueberschrift hat keinen Trennstrich', () {
       // NUTZERWUNSCH (31.10.2026): "Bei thestia.de soll der Strich
       // zwischen dem oberen Bereich mit den Buttons (Im Play Store
-      // etc.) und der Ueberschrift Ein Blick in die App weg."
+      // etc.) und der Überschrift Ein Blick in die App weg."
       //
       // Der Strich kommt aus der h2-Regel des gemeinsamen Designs
       // (border-top). Auf den Textseiten trennt er die Abschnitte -
       // hier aber die Karte mit den Buttons von der Galerie, die
-      // zusammengehoeren.
+      // zusammengehören.
       final h = html();
       expect(h, contains('.galerie-titel'));
-      // Die Regel muss border-top ausdruecklich abschalten.
+      // Die Regel muss border-top ausdrücklich abschalten.
       final regel = RegExp(r'\.galerie-titel\s*\{([^}]*)\}').firstMatch(h);
       expect(
         regel,
@@ -663,9 +663,9 @@ void main() {
 
     test('Die untersten Kacheln stehen mittig', () {
       // NUTZERWUNSCH (31.10.2026): "Unten bei den 5 Kacheln soll die
-      // untere mittig sein und nicht linksbuendig."
+      // untere mittig sein und nicht linksbündig."
       //
-      // Am 03.11.2026 waren es sieben Kacheln (neu: Daten loeschen und
+      // Am 03.11.2026 waren es sieben Kacheln (neu: Daten löschen und
       // Eltern & Jugendliche); bei ungerader Zahl blieb eine Kachel
       // allein in der letzten Zeile.
       //
@@ -677,10 +677,10 @@ void main() {
       // zentriert jede Zeile einzeln).
       //
       // Die grid-Regel (grid-column: 1 / -1 + justify-self: center)
-      // bleibt im CSS fuer den Fall, dass eine Kachel ALLEIN in der
+      // bleibt im CSS für den Fall, dass eine Kachel ALLEIN in der
       // letzten Zeile bleibt - etwa wenn eine Kachel wegfällt oder bei
       // sehr schmalen Fenstern. Sie wird bei gerader Kachelzahl nicht
-      // ausgeloest (nth-child(odd)).
+      // ausgelöst (nth-child(odd)).
       final h = html();
       expect(
         RegExp(r'class="held-link"').allMatches(h).length,
@@ -717,8 +717,8 @@ void main() {
       // Bilder zentriert werden."
       //
       // Bei acht Bildern und drei Spalten bleiben zwei in der letzten
-      // Reihe. Im GRID stehen die linksbuendig - jede Zeile wird
-      // einzeln gefuellt. Mit Flex und `justify-content: center`
+      // Reihe. Im GRID stehen die linksbündig - jede Zeile wird
+      // einzeln gefüllt. Mit Flex und `justify-content: center`
       // richtet Flex jede Zeile einzeln aus, und die letzte Reihe mit
       // zwei Bildern steht damit mittig.
       final h = html();
@@ -741,7 +741,7 @@ void main() {
       // Die Galerie-Regeln standen einmal in index.html UND einmal im
       // Theme. Die Kopie in index.html stand VOR dem Theme und brachte
       // `display: grid` - das Theme (mit Flex) kam danach und war
-      // wirkungslos. Die unteren Bilder standen deshalb linksbuendig.
+      // wirkungslos. Die unteren Bilder standen deshalb linksbündig.
       //
       // Regeln, die an mehreren Stellen stehen, driften auseinander.
       final h = html();
@@ -762,9 +762,9 @@ void main() {
       // benutzt werden, die mit Kacheln sind, also keine, die eine
       // Statusleiste oder so haben."
       //
-      // Geprueft an den Pixeln: In der Kacheln-Variante ist der
-      // oberste Streifen reiner Markenverlauf. Beim Geraete-Screen
-      // stuende dort die nachgeahmte Statusleiste (Uhrzeit, WLAN,
+      // Geprüft an den Pixeln: In der Kacheln-Variante ist der
+      // oberste Streifen reiner Markenverlauf. Beim Geräte-Screen
+      // stünde dort die nachgeahmte Statusleiste (Uhrzeit, WLAN,
       // Akku) auf weissem Grund.
       final bilder = Directory('${assets.path}/screenshots')
           .listSync()
@@ -791,12 +791,12 @@ void main() {
 
 /// Anteil der weissen Pixel in den obersten 60 Zeilen eines Bildes.
 ///
-/// Der App-Screen ist weiss (255,255,255). Der Markenverlauf der
+/// Der App-Screen ist weiß (255,255,255). Der Markenverlauf der
 /// Kachel ist rosa bis violett. Steht oben eine nachgeahmte
-/// Statusleiste, ist der Streifen weiss.
+/// Statusleiste, ist der Streifen weiß.
 ///
 /// 60 Zeilen entsprechen bei der Kachel (540 x 960) gut dem Bereich,
-/// in dem die Statusleiste stuende.
+/// in dem die Statusleiste stünde.
 double obersteZeilenSindWeiss(File datei) {
   final bild = img.decodeJpg(datei.readAsBytesSync());
   if (bild == null) {

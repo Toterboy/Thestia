@@ -1,9 +1,9 @@
 // Der Teil '_ReceivedLikesTabState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -17,10 +17,10 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
 
   /// Wurde die Liste mindestens einmal geladen?
   ///
-  /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend fuer
+  /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist störend für
   /// die Animation dort". Der Kreis ersetzte beim Nachladen den GANZEN
-  /// Inhalt - die Liste verschwand fuer einen Moment und kam als
-  /// Kreis zurueck. Das ist kein Warten, das ist ein Schnitt.
+  /// Inhalt - die Liste verschwand für einen Moment und kam als
+  /// Kreis zurück. Das ist kein Warten, das ist ein Schnitt.
   ///
   /// Deshalb gilt: der Platzhalter steht nur beim ERSTEN Laden, wenn
   /// es noch nichts zu zeigen gibt. Ab dann bleibt der Inhalt
@@ -50,7 +50,7 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
   @override
   Future<void> reloadTab() => _load();
 
-  /// Laedt neu - vom Pull-to-Refresh der Seite aufgerufen.
+  /// Lädt neu - vom Pull-to-Refresh der Seite aufgerufen.
   Future<void> refresh() => _load();
 
   Future<void> _load() async {
@@ -81,8 +81,8 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
   ///
   /// BEFUND (07.11.2026, Betreiber): Das Auge mit dem Strich soll
   /// "ausblenden" bedeuten, nicht "ablehnen". Die Gegenseite bekommt
-  /// bei einem Ausblenden nichts zu sehen - ein Ablehnen waere eine
-  /// Zurueckweisung, und genau das war die Missdeutung des Symbols.
+  /// bei einem Ausblenden nichts zu sehen - ein Ablehnen wäre eine
+  /// Zurückweisung, und genau das war die Missdeutung des Symbols.
   Future<void> _ignoreLike(ReceivedLike like) async {
     if (_busyLikeId != null) return;
     setState(() => _busyLikeId = like.likeId);
@@ -172,7 +172,7 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
     }
     if (_likes.isEmpty) {
       // Eingebettet scrollt die SEITE - kein eigener Leerraum von
-      // 60 % Bildschirmhoehe (der waere ein Loch in der Seite).
+      // 60 % Bildschirmhöhe (der wäre ein Loch in der Seite).
       if (widget.embedded) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
@@ -211,7 +211,7 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
         final profile = like.profile;
         final busy = _busyLikeId == like.likeId;
         // Gibt es mit dieser Person schon einen Funke? Dann gibt es
-        // nichts zu bestaetigen (BEFUND 09.11.2026).
+        // nichts zu bestätigen (BEFUND 09.11.2026).
         final serverFunken =
             ref.watch(serverMatchesProvider).valueOrNull ?? const [];
         final hatFunke = serverFunken.any((m) => m.partner.id == profile.id);
@@ -249,7 +249,7 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                   ),
                   onTap: () =>
                       context.go(AppRoutes.profileDetailPath(profile.id)),
-                  // Die Werkzeuge fuer die Person (NUTZERWUNSCH
+                  // Die Werkzeuge für die Person (NUTZERWUNSCH
                   // 01.11.2026). Die aktionsspezifischen Knöpfe
                   // stehen gleich darunter - hier kommen die
                   // allgemeinen (Profil, Melden, Blockieren), die es
@@ -268,14 +268,14 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                 Row(
                   children: [
                     // AUSBLENDEN (BEFUND 07.11.2026: "Das Auge mit dem
-                    // Strich ist like abgelehnt, aber man wuerde eher
+                    // Strich ist like abgelehnt, aber man würde eher
                     // sowas wie ausblenden oder ignorieren darunter
                     // verstehen.").
                     //
                     // Das Auge hat IMMER "ausblenden" bedeutet - es rief
                     // aber das ABLEHNEN auf: die andere Person sah die
                     // Ablehnung. Jetzt blendet es nur aus (ignore_like,
-                    // Migration 198) und laesst die andere Person in
+                    // Migration 198) und lässt die andere Person in
                     // Ruhe.
                     IconButton(
                       icon: const Icon(Icons.visibility_off_outlined),
@@ -283,21 +283,21 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                       onPressed: busy ? null : () => _ignoreLike(like),
                     ),
                     const SizedBox(width: 8),
-                    // FUNKE BESTAETIGEN.
+                    // FUNKE BESTÄTIGEN.
                     //
-                    // BEFUND (09.11.2026, Betreiber): "Zurueck liken und
-                    // Funke bestaetigen laeuft doch aufs selbe hinaus."
+                    // BEFUND (09.11.2026, Betreiber): "Zurück liken und
+                    // Funke bestätigen läuft doch aufs selbe hinaus."
                     // **Das stimmt - und die Reihenfolge war es, die den
-                    // Fehler verstaendlich machte.** Es gab hier zwei
-                    // Knöpfe fuer dieselbe Person: "Zurueck liken" und
-                    // "Funke bestaetigen".
+                    // Fehler verständlich machte.** Es gab hier zwei
+                    // Knöpfe für dieselbe Person: "Zurück liken" und
+                    // "Funke bestätigen".
                     //
-                    // "Zurueck liken" rief `like_user` auf. Und diese
+                    // "Zurück liken" rief `like_user` auf. Und diese
                     // Serverfunktion macht bei einem BEIDSEITIGEN Like
                     // SOFORT einen Funke (Migration 197, Zeile 127-136:
                     // "BEIDSEITIGER LIKE: jetzt entsteht der Funke"). Auf
                     // dieser Karte hat die andere Seite aber IMMER schon
-                    // geliked - ein "Zurueck liken" erzeugte hier also
+                    // geliked - ein "Zurück liken" erzeugte hier also
                     // immer genau denselben Funke wie der Knopf daneben.
                     //
                     // Der Kommentar an dem Knopf behauptete das Gegenteil
@@ -310,10 +310,10 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                     // raten, welcher der richtige ist.
                     // BEFUND (09.11.2026, Betreiber): "Man kann nicht bei
                     // der selben Person einen Funken haben und ihn dann
-                    // noch bestaetigen koennen."
+                    // noch bestätigen können."
                     //
                     // Wenn es den Funke schon gibt, gibt es nichts zu
-                    // bestaetigen - der Knopf wuerde den Server nur
+                    // bestätigen - der Knopf würde den Server nur
                     // erneut das Gleiche tun lassen. Stattdessen steht
                     // der Hinweis da.
                     if (hatFunke)
@@ -362,7 +362,7 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
     );
 
     // Eingebettet zieht die Seite den RefreshIndicator - ein zweiter
-    // darin waere wirkungslos.
+    // darin wäre wirkungslos.
     if (widget.embedded) return liste;
     return RefreshIndicator(onRefresh: _load, child: liste);
   }

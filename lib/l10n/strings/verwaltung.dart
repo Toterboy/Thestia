@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsVerwaltung = {
@@ -35,7 +35,7 @@ const Map<String, Map<String, String>> stringsVerwaltung = {
     'admin.close': 'Schließen',
     'admin.decideFailed': 'Entscheidung fehlgeschlagen: {error}',
     'admin.deniedBody': 'Du hast keine Berechtigung, diesen Bereich zu öffnen.',
-    'admin.emptyAppealsTitle': 'Keine Einsprueche',
+    'admin.emptyAppealsTitle': 'Keine Einsprüche',
     'admin.emptyBansTitle': 'Keine Sperren',
     'admin.emptyBugsTitle': 'Keine neuen Bugs',
     'admin.emptyModerationTitle': 'Keine offenen Moderationen',
@@ -98,7 +98,7 @@ const Map<String, Map<String, String>> stringsVerwaltung = {
     'admin.searchBans': 'Sperren durchsuchen',
     'admin.searchBansClear': 'Suche leeren',
     'admin.searchBansEmpty':
-        'Keine Sperre passt zu dieser Suche. Suchbegriff loeschen oder '
+        'Keine Sperre passt zu dieser Suche. Suchbegriff löschen oder '
         'anders schreiben.',
     'admin.searchBansHint': 'E-Mail, Begründung oder Person',
     'admin.searchBansResult': '{count} von {total} Sperren',
@@ -137,17 +137,17 @@ const Map<String, Map<String, String>> stringsVerwaltung = {
     'verify.badge': 'Verifiziert',
     'verify.cameraDisclosureAccept': 'Kamera freigeben',
     'verify.cameraDisclosureBody':
-        'Um dein Alter zu schaetzen, braucht die App Zugriff auf Kamera und Mikrofon. Die Aufnahme startet erst, wenn du unten bestaetigst. Das Bild wird ausgewertet und danach nicht gespeichert.',
+        'Um dein Alter zu schätzen, braucht die App Zugriff auf Kamera und Mikrofon. Die Aufnahme startet erst, wenn du unten bestätigst. Das Bild wird ausgewertet und danach nicht gespeichert.',
     'verify.cameraDisclosureTitle': 'Kamera und Mikrofon für die Altersprüfung',
     'verify.cameraError': 'Kamera konnte nicht initialisiert werden: {error}',
-    // Prominente Kamera-Offenlegung: Google Play verlangt fuer CAMERA
-    // dieselbe vorangezeigte Begruendung wie fuer das Mikrofon. Ohne
-    // Kamera ist die Alterspruefung nicht moeglich - deshalb endet eine
-    // Ablehnung in einem erklaerenden Zustand und nicht in einer Sackgasse.
+    // Prominente Kamera-Offenlegung: Google Play verlangt für CAMERA
+    // dieselbe vorangezeigte Begründung wie für das Mikrofon. Ohne
+    // Kamera ist die Altersprüfung nicht möglich - deshalb endet eine
+    // Ablehnung in einem erklärenden Zustand und nicht in einer Sackgasse.
     // Der Text nennt auch den Ton: die Challenge "speakNumber" verlangt
-    // eine gesprochene Zahl, und die Aufnahme laeuft mit
-    // enableAudio: true. Wer nur die Kamera ankündigt, haelt RECORD_AUDIO
-    // fuer mitgeteilt - das waere eine unvollstaendige Offenlegung.
+    // eine gesprochene Zahl, und die Aufnahme läuft mit
+    // enableAudio: true. Wer nur die Kamera ankündigt, hält RECORD_AUDIO
+    // für mitgeteilt - das wäre eine unvollständige Offenlegung.
     'verify.cameraDeclined':
         'Ohne Kamera können wir dein Alter nicht einschätzen. Du kannst sie jederzeit in den Einstellungen erlauben.',
     'verify.challenge.action.smile': 'lächeln',
@@ -243,7 +243,7 @@ const Map<String, Map<String, String>> stringsVerwaltung = {
     'verify.start': 'Video-Verifizierung starten',
     'verify.stateUnderReview': 'Wird geprüft',
     // Der Hinweis auf "Aktuelles" (Startbildschirm). Eigene Texte, weil
-    // die fuer den Modus-Sperr-Dialog geschrieben sind ("Fuer diesen
+    // die für den Modus-Sperr-Dialog geschrieben sind ("Für diesen
     // Modus musst du ...") - auf dem Startbildschirm geht es nicht um
     // einen Modus, sondern um den Vollzugang.
     'home.verifyHintUnverifiedTitle': 'Dein Profil ist noch nicht verifiziert',

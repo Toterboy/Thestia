@@ -1,18 +1,18 @@
 // Das Match-Quiz ("Wie gut kenn ich mein Match") - bisher ungetestet.
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/quiz/quiz_screen.dart 283 offene Zeilen - der Screen war
 // gar nicht getestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Zustand kommt vom Server (RPC) - ohne Antwort gibt es eine
 //     Fehlermeldung,
 //   * das Foto ist vor dem ersten Versuch ganz verdeckt,
 //   * ein Versuch stellt eine Frage (serverseitig), die Antwort wird
-//     serverseitig geprueft,
-//   * das Ergebnis kennt vier Faelle: falsch, wartet auf den Partner,
+//     serverseitig geprüft,
+//   * das Ergebnis kennt vier Fülle: falsch, wartet auf den Partner,
 //     Runde geschlossen, bestanden,
-//   * nach einem Fehlversuch laeuft der Cooldown.
+//   * nach einem Fehlversuch läuft der Cooldown.
 //
 // WIE DER SERVER ERSETZT WIRD: Der [FakeSupabaseServer] beantwortet die
 // RPCs (get_match_quiz_state, start_quiz_attempt, submit_quiz_answer)
@@ -99,10 +99,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Raeumt den Screen ab (die Timer des Quiz-Screens werden beendet).
-  /// Raeumt den Screen ab.
+  /// Räumt den Screen ab (die Timer des Quiz-Screens werden beendet).
+  /// Räumt den Screen ab.
   ///
-  /// Das Zeitlimit der Edge-Function-Aufrufe (20 Sekunden) laeuft hier
+  /// Das Zeitlimit der Edge-Function-Aufrufe (20 Sekunden) läuft hier
   /// ab: der Avatar-Abruf ("match-media") wartet im Test auf eine
   /// Antwort, die nicht kommt - ohne das Absaufen bleibt der Timer
   /// stehen und der Test scheitert an "a Timer is still pending".
@@ -200,7 +200,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Eine Antwort waehlen und absenden.
+      // Eine Antwort wählen und absenden.
       await tester.tap(find.text('Mira'));
       await tester.pump();
       await tester.tap(find.text(L10n.tWithoutContext('quiz.submit')));
@@ -282,7 +282,7 @@ void main() {
       await tester.tap(find.text('Mira'));
       await tester.pump();
       // Der Server meldet: die Runde ist vorbei. Der Zustand danach
-      // hat keine laufende Runde mehr - sonst laedt der Screen die
+      // hat keine laufende Runde mehr - sonst lädt der Screen die
       // Frage neu und der Hinweis verschwindet wieder.
       server.rpcAntworten['get_match_quiz_state'] = <String, dynamic>{
         'matchId': _matchId,

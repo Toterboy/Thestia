@@ -1,9 +1,9 @@
 // Der Teil '_VerificationTabState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -143,12 +143,12 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
     final est = (data['estimatedAge'] as num?)?.toDouble();
     final stated = (data['statedAge'] as num?)?.toDouble();
     final dev = _VerificationTabState._deviation(data);
-    // Minderjaehrigkeitsfall (v0.10.0, Migration 144).
+    // Minderjährigkeitsfall (v0.10.0, Migration 144).
     //
-    // 'pending_minor' heisst: die Person ist 21 oder juenger und wird
-    // IMMER von Hand geprueft. Ohne eigene Anzeige steht sie in der
+    // 'pending_minor' heißt: die Person ist 21 oder jünger und wird
+    // IMMER von Hand geprüft. Ohne eigene Anzeige steht sie in der
     // Warteschlange wie jeder andere Fall - und genau die Person, um
-    // die es am meisten geht, ist damit am leichtesten zu uebersehen.
+    // die es am meisten geht, ist damit am leichtesten zu übersehen.
     final isMinorCase = data['status'] == 'pending_minor';
     final ageLine = (est == null || stated == null)
         ? L10n.tf(context, 'admin.ageNoAi', {
@@ -159,9 +159,9 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
             'est': est.toStringAsFixed(0),
             'dev': dev.toStringAsFixed(0),
           });
-    // Abweichung > 2 Jahre faerbt die Karte rot. Das ist die einzige
+    // Abweichung > 2 Jahre färbt die Karte rot. Das ist die einzige
     // Stelle im Screen, die eine semantische Farbe benutzt - sie markiert
-    // den Fall, der vor allen anderen zu pruefen ist.
+    // den Fall, der vor allen anderen zu prüfen ist.
     final flagged = dev > 2;
     return Card(
       margin: EdgeInsets.zero,
@@ -256,7 +256,7 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
     }
     // Beide Queues leer: EIN Leerzustand statt zweierhalber. Vorher stand
     // "Keine offenen Verifizierungen" oben und "Keine Auto-Freigaben" darunter
-    // - zwei Saetze fuer den Zustand "nichts zu tun".
+    // - zwei Sätze für den Zustand "nichts zu tun".
     if (_items.isEmpty && _auditItems.isEmpty) {
       return EmptyState(
         icon: Icons.verified_outlined,
@@ -266,7 +266,7 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
     }
     // Pending-Queue UND Auto-Stichproben in EINER scrollbaren Liste
     // (v0.9.0, Manipulationsschutz): Auto-Freigaben werden weiterhin
-    // nachtraeglich pruefbar gehalten (Video ansehen, bei Missbrauch
+    // nachträglich prüfbar gehalten (Video ansehen, bei Missbrauch
     // entziehen).
     return RefreshIndicator(
       onRefresh: _load,

@@ -1,13 +1,13 @@
-// Die Helfer fuer die Tests des Bildschirms 'store_v091_shots'.
+// Die Helfer für die Tests des Bildschirms 'store_v091_shots'.
 //
 // DER WEG: Die Testdatei war zu lang (> 1000 Zeilen). Die Helfer
 // (Ersatz-Speicher, Aufbau, Bildschirm-Helfer) liegen hier -
 // die Tests selbst sind nach Themen auf eigene Dateien verteilt.
 
-// Store-Screenshot-Generator fuer v0.9.1 (KEIN regulaerer Test).
+// Store-Screenshot-Generator für v0.9.1 (KEIN regulärer Test).
 //
-// Rendert 5 ausgewahlte Screens in ZWEI Aufloesungen:
-//   9:16  -> 1080x1920  (Play-Store-Standard fuer Handys)
+// Rendert 5 ausgewahlte Screens in ZWEI Auflösungen:
+//   9:16  -> 1080x1920  (Play-Store-Standard für Handys)
 //   WQHD  -> 2560x1440  (16:9, Tablet-/Landscape-Variante)
 //
 // Aufruf (schreibt/aktualisiert):
@@ -96,12 +96,12 @@ Future<void> loadFontsOnce() async {
       await loader.load();
     }
   });
-  // Emoji (31.10.2026): Die Startseite begruesst mit "Hallo, du! <Emoji>".
-  // Ohne Emoji-Schrift zeichnet der Test ein leeres Kaestchen - im
+  // Emoji (31.10.2026): Die Startseite begrüßt mit "Hallo, du! <Emoji>".
+  // Ohne Emoji-Schrift zeichnet der Test ein leeres Kästchen - im
   // Store-Listing sieht das nach einem Fehler aus. Die Schrift ist
   // optional: Fehlt sie (Linux ohne Noto-Color-Emoji), wird einfach
-  // nichts nachgeladen - der Render laeuft dann eben mit dem
-  // Kaestchen.
+  // nichts nachgeladen - der Render läuft dann eben mit dem
+  // Kästchen.
   for (final pfad in const [
     r'C:\Windows\Fonts\seguiemj.ttf', // Windows: Segoe UI Emoji
     '/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf', // Linux
@@ -129,7 +129,7 @@ class FakeLocalStorage implements LocalStorage {
   /// das Chat-Hintergrund Pop up vor dem Chat, was so nicht sein soll").
   ///
   /// Der Dialog erscheint, solange `chatBackgroundSeen` nicht gesetzt
-  /// ist - der Store-Screenshot zeigt einen Geraet, auf dem der Nutzer
+  /// ist - der Store-Screenshot zeigt einen Gerät, auf dem der Nutzer
   /// die Auswahl schon getroffen hat.
   static const _settingsMitDialogGesehen =
       '{"chatBackgroundSeen":true,"blindModeEnabled":true}';
@@ -179,13 +179,13 @@ Widget harness(
   List<Override> extra = const [],
   bool dark = false,
 }) {
-  // Card-SchattEN nur fuer den Store-Render abschalten: der Test-Rasterizer
-  // zeichnet den Drop-Shadow als harte graue Kontur statt weich - im Play Store
-  // sieht das nach einem Renderfehler aus ("grauer Rahmen"). Auf dem Geraet ist
-  // der Schatten weich, die App selbst bleibt unveraendert.
+  // Card-SchattEN nur für den Store-Render abschalten: der Test-Rasterizer
+  // zeichnet den Drop-Shadow als harte graü Kontur statt weich - im Play Store
+  // sieht das nach einem Renderfehler aus ("graür Rahmen"). Auf dem Gerät ist
+  // der Schatten weich, die App selbst bleibt unverändert.
   //
-  // [dark] = true rendert den DUNKLEN Farbsatz. Das ist fuer die
-  // Split-Kachel noetig (Hell und Dunkel auf einem Bild) - der
+  // [dark] = true rendert den DUNKLEN Farbsatz. Das ist für die
+  // Split-Kachel nötig (Hell und Dunkel auf einem Bild) - der
   // Store soll zeigen, dass die App in beiden Modi lesbar ist.
   final theme = dark
       ? AppTheme.dark(theme: ThestiaTheme.classic)
@@ -196,9 +196,9 @@ Widget harness(
       securePrefsProvider.overrideWithValue(FakeSecurePrefs()),
       secureProfileStoreProvider.overrideWithValue(FakeSecureProfileStore()),
       sharedPrefsProvider.overrideWithValue(prefs),
-      // Die Sprache. `L10n.t` liest localeProvider ueber den
+      // Die Sprache. `L10n.t` liest localeProvider über den
       // L10nScope - dieser Override ist das, was den Screen wirklich
-      // umschaltet. MaterialApp.locale allein aendert nur die
+      // umschaltet. MaterialApp.locale allein ändert nur die
       // Material-Widgets (Datum, Zahlen), nicht die App-Texte.
       localeProvider.overrideWith((ref) => Locale(lang)),
       // Das Profil als VERIFIZIERT (NUTZERWUNSCH 31.10.2026: "Die Modi
@@ -212,14 +212,14 @@ Widget harness(
       //    verifiziert ist. Im Store-Bild sahen sie ausgegraut aus und
       //    trugen ein Schloss - das Bild zeigte damit einen Zustand,
       //    den ein Nutzer NICHT kennenlernen kann (der muss erst
-      //    ein Video einreichen). Alle fuenf Modi sichtbar und
+      //    ein Video einreichen). Alle fünf Modi sichtbar und
       //    bedienbar zu zeigen ist die ehrlichere Darstellung.
       //
       // 2. Die Startseite zeigte die Karte "Nicht verifiziert" mit dem
-      //    Text "Fuer diesen Modus musst du dein Alter mit einem kurzen
-      //    Video bestaetigen" - auf dem UEBERSCHRIFT des Bildes. Das
-      //    war doppelt stoerend: die Karte nimmt die halbe Hoehe ein
-      //    und erklaert etwas, das im Bild nicht gebraucht wird.
+      //    Text "Für diesen Modus musst du dein Alter mit einem kurzen
+      //    Video bestätigen" - auf dem ÜBERSCHRIFT des Bildes. Das
+      //    war doppelt störend: die Karte nimmt die halbe Höhe ein
+      //    und erklärt etwas, das im Bild nicht gebraucht wird.
       //
       // Der Name bleibt leer - der Screenshot zeigt dadurch weiterhin
       // "Hallo, du!" statt eines erfundenen Namens.
@@ -236,10 +236,10 @@ Widget harness(
             // ERWACHSENEN-ALTER (03.11.2026).
             //
             // Ohne birthDate ist `profil.age` null, der Code rechnet dann
-            // mit 0 - und 0 ist ein Minderjaehriger. Der Datenschutz-
+            // mit 0 - und 0 ist ein Minderjähriger. Der Datenschutz-
             // Bildschirm zeigte deshalb die Jugendschutz-Variante
-            // ("In deinem Alter bleibt die Entfernung aus"), waehrend
-            // die Kachel-Ueberschrift das Verhalten von Erwachsenen
+            // ("In deinem Alter bleibt die Entfernung aus"), während
+            // die Kachel-Überschrift das Verhalten von Erwachsenen
             // beschreibt ("erst, wenn du sie erlaubst: Stufen von
             // 10 km"). Zwei widersprechende Aussagen in EINEM Bild.
             //
@@ -255,8 +255,8 @@ Widget harness(
       }),
       ...extra,
     ],
-    // Der L10nScope steht UEBER dem MaterialApp: `L10n.t` sucht ihn
-    // ueber den Kontext. Wer ihn weglässt, bekommt deutsche Texte in
+    // Der L10nScope steht ÜBER dem MaterialApp: `L10n.t` sucht ihn
+    // über den Kontext. Wer ihn weglässt, bekommt deutsche Texte in
     // einem englischen Listing.
     child: L10nScope(
       child: MaterialApp(
@@ -296,11 +296,11 @@ Future<void> pump(
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = dpr;
   addTearDown(tester.view.reset);
-  // System-Insets eines echten Geraets setzen.
+  // System-Insets eines echten Geräts setzen.
   //
   // Die Logik liegt in tool/store_screenshot_insets.dart, NICHT hier:
-  // diese Datei ist gitignoriert, der Fix waere beim naechsten Checkout
-  // verloren gegangen. Siehe dort, warum es ueberhaupt noetig ist -
+  // diese Datei ist gitignoriert, der Fix wäre beim nächsten Checkout
+  // verloren gegangen. Siehe dort, warum es überhaupt nötig ist -
   // ohne Insets setzt SafeArea im flutter_test nichts und der Render
   // zeigt die App ohne Statusleiste.
   applyStoreInsets(tester.view);
@@ -308,13 +308,13 @@ Future<void> pump(
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   sharedPrefsOrNull = prefs;
-  // Ohne Mock zeigt die Fusszeile "Version ." - im Store wuerde das wie ein
+  // Ohne Mock zeigt die Fusszeile "Version ." - im Store würde das wie ein
   // Platzhalter aussehen.
   //
   // Version und Build werden aus pubspec.yaml GELESEN, nicht hier
   // festgeschrieben. Festgeschriebene Werte sind bei jedem Release
   // stillschweigend veraltet - so stand hier bis v0.9.2 "0.9.1" im
-  // Store-Login-Screenshot, waehrend bereits 0.9.2 ausgeliefert wurde.
+  // Store-Login-Screenshot, während bereits 0.9.2 ausgeliefert wurde.
   final pub = readPubspecVersionSync();
   PackageInfo.setMockInitialValues(
     appName: 'Thestia',
@@ -330,7 +330,7 @@ Future<void> pump(
   );
   await tester.pumpWidget(
     MediaQuery(
-      // Nur fuer Screens, die sonst ueber den unteren Rand hinauslaufen
+      // Nur für Screens, die sonst über den unteren Rand hinauslaufen
       // (Entdecken-Liste): echtes UI, kompakter gesetzt.
       data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
       child: harness(child, prefs, extra: extra, dark: dark),
@@ -390,7 +390,7 @@ Future<void> wegtippeVerbindungshinweis(WidgetTester tester) async {
 
 void noop(String _) {}
 Widget anpassenScreen(String erscheinung) {
-  // Die Ueberschriften sind im echten Screen L10n-Keys
+  // Die Überschriften sind im echten Screen L10n-Keys
   // ('settings.colors' = Farbwelt/Color scheme,
   // 'settings.chatBg' = Chat-Hintergrund/Chat background). Hier steht
   // die kurzere Fassung, damit sie im Bild Platz haben.
@@ -496,10 +496,10 @@ Widget soleTileHost(Card card) {
           GlobalCupertinoLocalizations.delegate,
         ],
         home: Scaffold(
-          // Die Kachel darf die View NICHT fuellen. Im Listen-Kontext
-          // bestimmt ihr Inhalt die Hoehe; hier wuerde sie sonst
+          // Die Kachel darf die View NICHT füllen. Im Listen-Kontext
+          // bestimmt ihr Inhalt die Höhe; hier würde sie sonst
           // gestreckt und das Icon landete unten. Column mit
-          // mainAxisSize.min erzwingt die Inhaltshoehe.
+          // mainAxisSize.min erzwingt die Inhaltshöhe.
           body: Align(
             alignment: Alignment.topCenter,
             child: Padding(
@@ -571,9 +571,9 @@ Future<void> writeCardRects(
   rects.forEach((name, r) {
     payload[name] = [r.left, r.top, r.width, r.height];
   });
-  // Das Schreiben muss in runAsync. flutter_test laeuft in einer
+  // Das Schreiben muss in runAsync. flutter_test läuft in einer
   // FakeAsync-Zone: ein echtes Dateisystem-Versprechen wird dort nie
-  // fertig, und der Test haengt bis zum 10-Minuten-Timeout. Genau das
+  // fertig, und der Test hängt bis zum 10-Minuten-Timeout. Genau das
   // war die Ursache der Timeouts beim ersten Versuch.
   await tester.runAsync(() async {
     await file.parent.create(recursive: true);
@@ -601,7 +601,7 @@ Future<void> vorbereiteChatSpeicher(WidgetTester tester) async {
   final hiveDir = Directory.systemTemp.createTempSync('thestia_store_chat');
   Hive.init(hiveDir.path);
   addTearDown(() {
-    // Dateikoepfe bleiben unter Windows gern kurz offen - fuer
+    // Dateiköpfe bleiben unter Windows gern kurz offen - für
     // einen Temp-Ordner ist das kein Fehler.
     bestEffortSync('hiveDir.deleteSync', () {
       hiveDir.deleteSync(recursive: true);
@@ -672,21 +672,21 @@ List<Message> chatHistory() {
     timestamp: now.add(Duration(minutes: min)),
   );
   // 'me' ist die Demo-ID, die AppConstants.currentUserId ohne
-  // Supabase-Session zurueckgibt. Nachrichten mit dieser Absender-ID
+  // Supabase-Session zurückgibt. Nachrichten mit dieser Absender-ID
   // landen auf der eigenen Seite, die anderen beim Partner.
-  // Absurder und nicht/generischer Chat-Inhalt fuer den Store-Screenshot.
+  // Absurder und nicht/generischer Chat-Inhalt für den Store-Screenshot.
   //
   // "Hey, schreib mir" verkauft eine App nicht. Der Text soll zeigen,
   // dass hier Menschen miteinander reden und nicht miteinander
-  // ausfuellen - und er soll auf den ersten Blick ungewoehnlich genug
-  // sein, dass jemand innehaelt und weiterklickt.
+  // ausfüllen - und er soll auf den ersten Blick ungewöhnlich genug
+  // sein, dass jemand innehält und weiterklickt.
   //
-  // Bewusst ohne Schwaeren ("Kaffee am Wochenende?") - der Screenshot
-  // soll Spass machen, nicht kraenkend sein.
+  // Bewusst ohne Schwären ("Kaffee am Wochenende?") - der Screenshot
+  // soll Spass machen, nicht kränkend sein.
   //
   // Die letzte Nachricht beantwortet die davor ("Gewinnst du meistens?")
   // und bleibt im selben Thema. Ein Themenwechsel auf eine Date-Einladung
-  // an der letzten Zeile wirkt, als haette man den Faden verloren - und
+  // an der letzten Zeile wirkt, als hätte man den Faden verloren - und
   // genau so gelesen wird das Bild zuerst.
   return [
     m(

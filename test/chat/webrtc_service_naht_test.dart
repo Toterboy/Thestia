@@ -1,16 +1,16 @@
 // Der WebRTC-Dienst mit der Peer-Connection-Attrappe.
 //
-// ANLASS (20.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (20.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/webrtc_service.dart 228 offene Zeilen - die komplette
 // Verbindung und Nachrichtenweiterleitung war untestbar, weil
 // `createPeerConnection()` die native Schicht braucht.
 //
 // DER WEG: Die Naht `WebRTCService.peerConnectionFactory` liefert eine
-// Attrappe. Der Test prueft damit genau das, was der Nutzer merkt:
+// Attrappe. Der Test prüft damit genau das, was der Nutzer merkt:
 //   * ein Offer baut Verbindung UND Datenkanal auf,
 //   * der ICE-Zustand setzt "verbunden",
 //   * eine eingehende Nachricht kommt bei der App an,
-//   * ein Ruecksetzen baut eine neue Verbindung (kein stale ICE).
+//   * ein Rücksetzen baut eine neue Verbindung (kein stale ICE).
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -98,8 +98,8 @@ void main() {
       addTearDown(sub.cancel);
 
       // DER FALL: Ein fremder (oder kompromittierter) Peer schickt
-      // Gueltiges JSON mit ungueltigem Inhalt. Die App darf das nicht
-      // abstuerzen lassen - sie muss die Nachricht verwerfen und
+      // Gültiges JSON mit ungültigem Inhalt. Die App darf das nicht
+      // abstürzen lassen - sie muss die Nachricht verwerfen und
       // weiterlaufen.
       kanal.empfange(
         '{"type":"signal_message","ciphertext":"???","messageType":2}',

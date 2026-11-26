@@ -1,13 +1,13 @@
-// Tests fuer die Vorstellung (Text + Audio) im UserProfile.
+// Tests für die Vorstellung (Text + Audio) im UserProfile.
 //
 // BEFUND (07.11.2026, Betreiber):
 //   "Meine Vorstellung stimmt auch nicht, da beide Nutzer eine
 //    Vorstellung gemacht haben aber hier steht, dass keine hinterlegt
 //    wurde (also bei Profil und dann meine Vorstellung)."
-//   "Vorstellung von anderen nicht abhoerbar. Sie laedt nicht oder
+//   "Vorstellung von anderen nicht abhörbar. Sie lädt nicht oder
 //    braucht seeeeeeehr lange."
 //
-// WARUM ueberhaupt ein Test:
+// WARUM überhaupt ein Test:
 //   Die Daten waren in der Datenbank nachweislich vorhanden (Text ja,
 //   Audio-Datei ja) - nur kam der Client nicht an sie heran. Der Grund
 //   war ein Schreib-/Lese-Unterschied: das Profil wird aus drei
@@ -15,13 +15,13 @@
 //   (Server: snake_case, handgebaute Maps und Cache: camelCase). Der
 //   Parser kannte nur eine davon.
 //
-//   Solche Fehler sind beim Testen auf dem Geraet unsichtbar: Es gibt
+//   Solche Fehler sind beim Testen auf dem Gerät unsichtbar: Es gibt
 //   keinen Fehler, nur ein leeres Feld. Deshalb wird hier jede
-//   Schreibweise einzeln geprueft - und der Weg ueber den Cache
+//   Schreibweise einzeln geprüft - und der Weg über den Cache
 //   (Schreiben und wieder Lesen) ebenfalls.
 //
-// ZUSAETZLICH: tool/checks/check_profile_cache_keys.py sucht im Quelltext
-// nach weiteren solchen Mismatches. Dieser Test haelt die Reparatur
+// ZUSÄTZLICH: tool/checks/check_profile_cache_keys.py sucht im Quelltext
+// nach weiteren solchen Mismatches. Dieser Test hält die Reparatur
 // fest.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/profile/user_profile.dart';
@@ -112,7 +112,7 @@ void main() {
 
   group('Die Vorstellung ueberlebt den App-Neustart', () {
     test('Schreiben und wieder Lesen liefert dieselbe Vorstellung', () {
-      // DER WEG, DER IM AUFTRAG KAPUTT WAR: Der Cache enthaelt die
+      // DER WEG, DER IM AUFTRAG KAPUTT WAR: Der Cache enthält die
       // Vorstellung, aber der Parser las sie nicht - nach jedem
       // Neustart war sie weg.
       final original = UserProfile.fromPublicView(serverMap());
@@ -149,11 +149,11 @@ void main() {
 
     test('der Server gewinnt, wenn beide Schreibweisen dastehen', () {
       // WICHTIG (Befund 07.11.2026: "Die Profilvorschau soll dem
-      // entsprechen, was auch andere wirklich sehen koennen"): Der
-      // Server ist die Wahrheit fuer das, was andere sehen. Die
+      // entsprechen, was auch andere wirklich sehen können"): Der
+      // Server ist die Wahrheit für das, was andere sehen. Die
       // snake_case-Schreibweise kommt deshalb zuerst - ein leerer
-      // Serverwert ("keine Vorstellung") schlaegt also einen
-      // alten Cachewert. Sonst wuerde die Vorschau etwas zeigen, was
+      // Serverwert ("keine Vorstellung") schlägt also einen
+      // alten Cachewert. Sonst würde die Vorschau etwas zeigen, was
       // andere gar nicht sehen.
       final gemischt = <String, dynamic>{
         'id': 'x',
@@ -172,7 +172,7 @@ void main() {
       'ein leerer Wert verdeckt einen echten Wert derselben Quelle nicht',
       () {
         // Innerhalb EINER Quelle ist der Wert eindeutig: der Server
-        // liefert "" fuer "keine Vorstellung" - es gibt dann nichts zu
+        // liefert "" für "keine Vorstellung" - es gibt dann nichts zu
         // verbergen.
         final profil = UserProfile.fromJson(<String, dynamic>{
           'id': 'x',

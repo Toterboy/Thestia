@@ -11,30 +11,30 @@ import 'package:thestia/utils/location/distance_bucket.dart';
 
 /// Verifikationszustand einer Person.
 ///
-/// DREI Zustaende, nicht zwei. Der Unterschied ist der Kern der
-/// Anzeige: wer sich geprueft hat, aber die Freigabe noch nicht
+/// DREI Zustände, nicht zwei. Der Unterschied ist der Kern der
+/// Anzeige: wer sich geprüft hat, aber die Freigabe noch nicht
 /// bekommen hat, ist NICHT "nicht verifiziert" - er ist "wird
-/// geprueft". Beides zu vermischen fuehrt zu zwei falschen Aussagen:
+/// geprüft". Beides zu vermischen fährt zu zwei falschen Aussagen:
 /// "Deine Verifizierung fehlt" (falsch, sie liegt vor) und
-/// "Du bist nicht verifiziert" (falsch, die Pruefung laeuft).
+/// "Du bist nicht verifiziert" (falsch, die Prüfung läuft).
 enum VerificationState {
-  /// Kein Video eingereicht, keine Pruefung.
+  /// Kein Video eingereicht, keine Prüfung.
   unverified,
 
-  /// Eingereicht, Pruefung laeuft oder ausstehend.
+  /// Eingereicht, Prüfung läuft oder ausstehend.
   underReview,
 
   /// Freigegeben - manuell oder automatisch.
   verified;
 
-  /// Ist der Vollzugang moeglich? Nur bei [verified].
+  /// Ist der Vollzugang möglich? Nur bei [verified].
   bool get grantsFullAccess => this == VerificationState.verified;
 
-  /// Liest den Zustand aus der oeffentlichen Projektion.
+  /// Liest den Zustand aus der öffentlichen Projektion.
   ///
   /// Erwartet wird `verification_state` (Migration 144). Fehlt das
-  /// Feld - aeltere Server, oder ein Aufruf, der die Projektion nicht
-  /// nutzt -, wird auf [isVerified] zurueckgefallen, damit das
+  /// Feld - ältere Server, oder ein Aufruf, der die Projektion nicht
+  /// nutzt -, wird auf [isVerified] zurückgefallen, damit das
   /// verifizierte Abzeichen nicht verloren geht.
   static VerificationState fromJson(
     Map<String, dynamic> json, {
@@ -59,11 +59,11 @@ enum VerificationState {
   /// Liest den Zustand aus der Spalte `verification_status` der Tabelle
   /// `profiles` (Migration 144/155).
   ///
-  /// Das ist ein anderes Format als die oeffentliche Projektion: hier
+  /// Das ist ein anderes Format als die öffentliche Projektion: hier
   /// stehen die Rohwerte 'none', 'pending', 'pending_minor', 'approved',
   /// 'rejected' und 'auto'.
   ///
-  /// Wichtig: der Status wird nur GELESEN. Ein 'rejected' ist fuer die
+  /// Wichtig: der Status wird nur GELESEN. Ein 'rejected' ist für die
   /// Anzeige "nicht verifiziert" - die Meldung, dass die Verifizierung
   /// fehlt, ist damit korrekt; der Nutzer kann sie erneut einreichen.
   static VerificationState fromServerStatus(
@@ -148,8 +148,8 @@ class UserProfile {
 
   /// Dreistufiger Verifikationszustand (v0.10.0, Migration 144).
   ///
-  /// Aus `is_verified` allein ist "wird geprueft" nicht ableitbar -
-  /// dafuer braucht es den Rohstatus aus der Projektion.
+  /// Aus `is_verified` allein ist "wird geprüft" nicht ableitbar -
+  /// dafür braucht es den Rohstatus aus der Projektion.
   final VerificationState verificationState;
 
   /// Standort des Nutzers wurde als verdächtig eingestuft.
@@ -233,28 +233,28 @@ class UserProfile {
 
   /// Zeitpunkt, zu dem das Konto angelegt wurde.
   ///
-  /// Wird fuer die Anzeige "neuer Account" gebraucht (siehe
+  /// Wird für die Anzeige "neuer Account" gebraucht (siehe
   /// [isRecentlyCreated]). Die Spalte `created_at` liefern sowohl das
   /// eigene Profil als auch `get_public_profile` bereits mit - sie war
   /// nur nie im Modell abgelegt.
   ///
   /// Bewusst der Zeitpunkt des Kontos und nicht der Registrierung: das
-  /// ist der fuer den Missbrauch relevante Zeitraum.
+  /// ist der für den Missbrauch relevante Zeitraum.
   final DateTime? createdAt;
 
   /// Ab wie vielen Tagen gilt ein Konto nicht mehr als neu.
   static const int recentAccountDays = 7;
 
-  /// Ob das Konto juenger als [recentAccountDays] Tage ist.
+  /// Ob das Konto jünger als [recentAccountDays] Tage ist.
   ///
   /// Ein Hinweis, kein Beweis: auch echte neue Nutzer fallen darunter.
-  /// Er soll davor schuetzen, dass man dauerhaft von Accounts
+  /// Er soll davor schützen, dass man dauerhaft von Accounts
   /// angeschrieben wird, die es gerade erst gibt. Ein exaktes Datum
-  /// waere zusaetzlich ein Datenleck, deshalb wird nichts genauer
+  /// wäre zusätzlich ein Datenleck, deshalb wird nichts genauer
   /// angezeigt als "neu".
   ///
   /// Ohne [createdAt] (Server liefert die Spalte nicht) gilt das Konto
-  /// bewusst NICHT als neu: eine falsche Entwarnung waere schaedlicher
+  /// bewusst NICHT als neu: eine falsche Entwarnung wäre schädlicher
   /// als ein fehlender Hinweis.
   bool get isRecentlyCreated {
     final created = createdAt;
@@ -289,17 +289,17 @@ class UserProfile {
   /// v0.10.0: Die View liefert keine Koordinaten mehr. Bis Migration 138
   /// standen hier `lat_approx`/`lng_approx` (1 Dezimal, ~11 km) - sie
   /// wurden auf locationLat/locationLng abgebildet und damit in Profile
-  /// geschrieben, die man in die Lokalitaet anderer brachte. Die
+  /// geschrieben, die man in die Lokalität anderer brachte. Die
   /// Zuordnungen sind bewusst entfernt und nicht auf null gesetzt: ein
-  /// stillschweigend befuelltes locationLat sieht nach Standort aus und
-  /// waere es nicht.
+  /// stillschweigend befülltes locationLat sieht nach Standort aus und
+  /// wäre es nicht.
   factory UserProfile.fromPublicView(Map<String, dynamic> json) {
     // Alter rückrechnen: ungefähres Geburtsjahr.
     //
     // BEFUND (22.11.2026, Fuzzing): `json['age'] as int?` wirft, wenn
     // der Server eine Zahl mit Nachkommastellen oder einen Text
-    // liefert. Das oeffentliche Profil kommt vom SERVER - ein Fehler
-    // dort darf die App nicht abstuerzen lassen.
+    // liefert. Das öffentliche Profil kommt vom SERVER - ein Fehler
+    // dort darf die App nicht abstürzen lassen.
     final age = intOf(json, ['age']);
     final birthDate = age != null
         ? DateTime(DateTime.now().year - age, 1, 1)
@@ -307,11 +307,11 @@ class UserProfile {
 
     // Verifikationsstatus (v0.10.0, Migration 144).
     //
-    // BUG (Security-Audit 22.10.2026): die oeffentliche Projektion
+    // BUG (Security-Audit 22.10.2026): die öffentliche Projektion
     // liefert is_verified und verification_state mit - sie wurden hier
     // aber nie gelesen. Dadurch zeigte die App bei fremden Profilen
     // nie das Verifikations-Abzeichen, obwohl der Server die Information
-    // hatte. Die Modus-Sperre (Verifikation noetig) blieb dadurch auch
+    // hatte. Die Modus-Sperre (Verifikation nötig) blieb dadurch auch
     // bei verifizierten Personen bestehen.
     final publicVerified = boolOf(json, ['is_verified']) ?? false;
     final publicState = VerificationState.fromJson(
@@ -320,7 +320,7 @@ class UserProfile {
     );
 
     // Der Geburtstagsstil: ein leerer Serverwert bedeutet "keiner
-    // gewaehlt" - dann gilt der Standard. (Vorher stand hier ein
+    // gewählt" - dann gilt der Standard. (Vorher stand hier ein
     // `as bool?`-Cast auf dem Wert, der bei einem Textfeld auch
     // fehlschlagen konnte.)
     final geburtstagsStil =
@@ -337,7 +337,7 @@ class UserProfile {
       //
       // BEFUND (22.11.2026, Fuzzing): `map((e) => e as String)` wirft,
       // sobald der Server eine Zahl in die Liste stellt. Der Leser
-      // [textListOf] ueberspringt solche Elemente.
+      // [textListOf] überspringt solche Elemente.
       photos: textListOf(json, ['photos']),
       interests: textListOf(json, ['interests']),
       gender: _leseText(json, ['gender']),
@@ -359,12 +359,12 @@ class UserProfile {
           ? (_leseText(json, ['favorite_band', 'favoriteBand']) ?? '').trim()
           : null,
       // Die Vorstellung des ANDEREN. BEFUND (07.11.2026, Betreiber):
-      // "Vorstellung von anderen nicht abhoerbar. Sie laedt nicht oder
+      // "Vorstellung von anderen nicht abhörbar. Sie lädt nicht oder
       // braucht seeeeeeehr lange."
       //
       // Hier standen nur die snake_case-Namen. Die RPC get_public_profile
       // liefert die Vorstellung zwar - aber diese Fabrik wird auch mit
-      // Maps aus dem Cache gefuellt (dort camelCase). Dann war die
+      // Maps aus dem Cache gefüllt (dort camelCase). Dann war die
       // Vorstellung leer und der Abspiel-Button gar nicht da.
       //
       // Siehe die Lese-Helfer weiter unten in dieser Datei.
@@ -386,7 +386,7 @@ class UserProfile {
           .toDouble(),
       matchScore: _leseZahl(json, ['match_score', 'matchScore'])?.toInt(),
       // Die RPC liefert created_at mit (profile_to_jsonb), es wurde nur
-      // nie gelesen. Wird fuer den Hinweis "neuer Account" gebraucht.
+      // nie gelesen. Wird für den Hinweis "neuer Account" gebraucht.
       createdAt: _parseCreatedAt(_leseText(json, ['created_at', 'createdAt'])),
       isVerified: publicVerified,
       verificationState: publicState,
@@ -399,7 +399,7 @@ class UserProfile {
   /// Der Zustand wird als ENUM-NAME gespeichert, nicht als der
   /// Server-Wert ('under_review'). Beim Lesen wird deshalb zuerst der
   /// eigene Name versucht, danach der Server-Wert, und zuletzt der
-  /// Rueckfall auf [isVerified].
+  /// Rückfall auf [isVerified].
   static VerificationState _stateFromStorage(Object? raw, bool isVerified) {
     if (raw is String) {
       for (final st in VerificationState.values) {
@@ -505,9 +505,9 @@ class UserProfile {
     'location_lat': locationLat,
     'location_lng': locationLng,
     'is_verified': isVerified,
-    // Der Dreifachzustand wird mitgespeichert. Ohne das faellt er
-    // nach dem Neustart auf is_verified zurueck - und "wird geprueft"
-    // waere dann nicht mehr von "nicht verifiziert" zu unterscheiden.
+    // Der Dreifachzustand wird mitgespeichert. Ohne das fällt er
+    // nach dem Neustart auf is_verified zurück - und "wird geprüft"
+    // wäre dann nicht mehr von "nicht verifiziert" zu unterscheiden.
     'verification_state': verificationState.name,
     'is_location_suspicious': isLocationSuspicious,
     'mood': mood,
@@ -527,7 +527,7 @@ class UserProfile {
   ///
   /// Die Spalte kommt aus Supabase als ISO-String, kann aber auch
   /// bereits ein [DateTime] sein (z. B. aus einem Cache) und ist in
-  /// manchen Faellen null. Ein kaputter Wert darf den Profilaufbau
+  /// manchen Fällen null. Ein kaputter Wert darf den Profilaufbau
   /// nicht sprengen - dann gilt das Konto schlicht nicht als neu.
   static DateTime? _parseCreatedAt(Object? raw) {
     if (raw == null) return null;
@@ -543,7 +543,7 @@ class UserProfile {
   // da beide Nutzer eine Vorstellung gemacht haben aber hier steht, dass
   // keine hinterlegt wurde."
   //
-  // DER GRUND: Es gibt drei Quellen fuer ein UserProfile, und sie
+  // DER GRUND: Es gibt drei Quellen für ein UserProfile, und sie
   // benutzen unterschiedliche Schreibweisen:
   //
   //   * Server-Antworten (REST, RPC, View) -> snake_case
@@ -552,16 +552,16 @@ class UserProfile {
   //     (introText, favoriteSong, birthdayStyle, id)
   //   * der lokale Cache (toJson)         -> camelCase
   //
-  // Vor dieser Aenderung lasen die Parser NUR eine davon. Ein Feld, das
+  // Vor dieser Änderung lasen die Parser NUR eine davon. Ein Feld, das
   // der Produzent anders schrieb, kam nicht an - ohne Fehlermeldung. Bei
   // der Vorstellung hiess das: Die Daten lagen in der Datenbank, das
   // Profil zeigte trotzdem "keine hinterlegt".
   //
   // Deshalb liest jedes Feld jetzt unter ALLEN seinen Schreibweisen.
-  // Der erste Treffer gewinnt; null zaehlt nicht als Treffer.
+  // Der erste Treffer gewinnt; null zählt nicht als Treffer.
   //
   // Das Werkzeug tool/checks/check_profile_cache_keys.py sucht nach jedem
-  // weiteren solchen Mismatch - es prueft toJson(), fromJson() und die
+  // weiteren solchen Mismatch - es prüft toJson(), fromJson() und die
   // Server-Zuordnung gegeneinander.
   // =========================================================================
 
@@ -593,7 +593,7 @@ class UserProfile {
   /// Wie [_lese], aber als Wahrheitswert.
   ///
   /// Achtung: der Wert wird NICHT per `as bool?` gelesen - ein
-  /// PostgREST liefert `true`/`false`, ein Cache koennte aber auch
+  /// PostgREST liefert `true`/`false`, ein Cache kännte aber auch
   /// "true" (Text) enthalten. Das wird hier sauber gelesen, statt die
   /// ganze Profil-Erzeugung zu sprengen.
   static bool? _leseBool(Map<String, dynamic> json, List<String> keys) {
@@ -734,18 +734,18 @@ class UserProfile {
   );
 }
 
-/// Einheitliches Distanz-Label fuer andere Nutzer (v0.10.0).
+/// Einheitliches Distanz-Label für andere Nutzer (v0.10.0).
 ///
 /// Die Entfernung wird NICHT als Zahl ausgegeben, sondern als 10-km-Stufe
 /// ("10 bis 20 km"). Der genaue Wert bleibt beim Betrachter - er sieht
 /// nur die Stufe, und unterhalb von 5 km gar nichts.
 ///
 /// [t] ist [L10n.t] als Funktion, damit das Modell ohne BuildContext
-/// auskommt (und der Text in Tests pruefbar ist).
+/// auskommt (und der Text in Tests prüfbar ist).
 ///
-/// Rueckgabe: leerer String, wenn nichts angezeigt werden darf. Aufrufende
+/// Rückgabe: leerer String, wenn nichts angezeigt werden darf. Aufrufende
 /// Widgets SHOULD den Wert nur einsetzen, wenn er nicht leer ist - sonst
-/// entstehen fuehrende Leerzeichen.
+/// entstehen führende Leerzeichen.
 extension UserProfileDistanceLabel on UserProfile {
   String distanceLabel(String Function(String key) t) =>
       DistanceBucket.labelForKm(distanceKm, t) ?? '';

@@ -1,20 +1,20 @@
 // Die Berechtigungswege des Transit-Bluetooth-Dienstes.
 //
-// ANLASS (20.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (20.11.2026): Die Coverage-Messung zeigte für
 // lib/services/transit/transit_ble_service.dart 106 offene Zeilen. Der
 // Grund: Auf dem Testrechner (Linux/Windows) sind `Platform.isAndroid`
 // und `Platform.isIOS` immer false - die gesamte Berechtigungslogik
-// war unerreichbar. Genau dort liegen aber die Fehlergruende
+// war unerreichbar. Genau dort liegen aber die Fehlergründe
 // ('location_permission', 'bluetooth_scan', 'bluetooth_connect' ...),
 // die der Bildschirm dem Nutzer nennt.
 //
 // DER WEG: Die kleine Naht `TransitPlattform` (nur Plattform + SDK-Version)
-// und die vorhandenen Plugin-Ersatzwaerter erlauben es, Android 11,
-// Android 12 und iOS im Test nachzustellen. Der Produktionscode laeuft
-// unveraendert auf dem echten Geraet.
+// und die vorhandenen Plugin-Ersatzwärter erlauben es, Android 11,
+// Android 12 und iOS im Test nachzustellen. Der Produktionscode läuft
+// unverändert auf dem echten Gerät.
 import 'package:flutter_test/flutter_test.dart';
 // Das Plattform-Interface wird von permission_handler exportiert, aber
-// nicht weitergereicht - der Test setzt die Attrappe darueber.
+// nicht weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 
@@ -40,7 +40,7 @@ class FakeTransitPlattform extends TransitPlattform {
   Future<int> androidSdkInt() async => sdk;
 }
 
-/// Der Berechtigungs-Ersatz: eine ausgewaehlte Berechtigung wird
+/// Der Berechtigungs-Ersatz: eine ausgewählte Berechtigung wird
 /// verweigert, alle anderen erteilt.
 class FakeBerechtigungen extends PermissionHandlerPlatform {
   FakeBerechtigungen(this.verweigert);

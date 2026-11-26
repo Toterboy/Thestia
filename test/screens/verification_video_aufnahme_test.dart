@@ -1,21 +1,21 @@
 // Die Video-Aufnahme in der Verifizierung.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/verification/parts/verificationvideoscreenstate.dart 134
 // offene Zeilen. Der bestehende Test deckt die Kamera-Offenlegung und
 // die Kamera-Freigabe im Hintergrund ab - offen war die AUFNAHME:
-// starten, zaehlen, von selbst stoppen und der Fehlerfall.
+// starten, zählen, von selbst stoppen und der Fehlerfall.
 //
 // DER WEG: Die Kamera-Attrappe (test/support/fake_camera.dart) kann
-// auch aufnehmen - sonst wuerde der Aufnahme-Pfad nie betreten.
+// auch aufnehmen - sonst würde der Aufnahme-Pfad nie betreten.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Aufnahme startet (und der Screen zeigt den Zaehler),
-//   * der Zaehler laeuft (der Nutzer sieht, wie lange er schon filmt),
+// WAS HIER GEPRÜFT WIRD:
+//   * die Aufnahme startet (und der Screen zeigt den Zähler),
+//   * der Zähler läuft (der Nutzer sieht, wie lange er schon filmt),
 //   * nach 15 Sekunden stoppt die Aufnahme von selbst (die App soll den
 //     Nutzer nicht endlos filmen lassen - und der Server bekommt kein
 //     unbegrenztes Video),
-//   * schlaegt der Start fehl, wird dem Nutzer der Grund gesagt.
+//   * schlägt der Start fehl, wird dem Nutzer der Grund gesagt.
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -102,7 +102,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     // DER ROUTER: Nach der Aufnahme geht der Screen weiter - ohne
-    // Router wuerfe er.
+    // Router würfe er.
     final router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -127,7 +127,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Bestaetigt die Kamera-Offenlegung und wartet auf die Kamera.
+  /// Bestätigt die Kamera-Offenlegung und wartet auf die Kamera.
   Future<void> kameraFreigeben(WidgetTester tester) async {
     await tester.tap(
       find.widgetWithText(
@@ -144,7 +144,7 @@ void main() {
     }
   }
 
-  /// Tippt auf die Aufnahme (der grosse runde Knopf mit dem
+  /// Tippt auf die Aufnahme (der große runde Knopf mit dem
   /// Kamera-Symbol).
   Future<void> tippeAufnahme(WidgetTester tester) async {
     final symbol = find.byIcon(Icons.videocam);
@@ -161,8 +161,8 @@ void main() {
       await tippeAufnahme(tester);
 
       expect(tester.takeException(), isNull);
-      // DER TEXT: "Aufnahme: 3 s" - der Platzhalter ({s}) steht fuer
-      // die Sekunden, deshalb wird der Anfang des Textes geprueft.
+      // DER TEXT: "Aufnahme: 3 s" - der Platzhalter ({s}) steht für
+      // die Sekunden, deshalb wird der Anfang des Textes geprüft.
       final anzeige = L10n.tWithoutContext('verify.recording');
       expect(
         find.textContaining(anzeige.split('{').first),

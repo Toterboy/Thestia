@@ -1,9 +1,9 @@
 // Der Teil '_InterestPanelButton'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -28,9 +28,9 @@ class _InterestPanelButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final fg = open ? scheme.onPrimaryContainer : scheme.onSurfaceVariant;
 
-    // Feste Hoehe (siehe [_pillenHoehe]): der aufgeklappte Bereich
-    // rueckt genau um _reiterUeberlappung darunter. Ohne feste Hoehe
-    // waere die Ueberlappung von der Schriftgroesse abhaengig.
+    // Feste Höhe (siehe [_pillenHoehe]): der aufgeklappte Bereich
+    // rückt genau um _reiterUeberlappung darunter. Ohne feste Höhe
+    // wäre die Überlappung von der Schriftgrösse abhängig.
     return SizedBox(
       height: _pillenHoehe(context),
       child: Material(

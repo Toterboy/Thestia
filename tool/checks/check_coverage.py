@@ -1,7 +1,7 @@
-"""Meldet die Testabdeckung des Dart-Codes und prueft einen Mindestwert.
+"""Meldet die Testabdeckung des Dart-Codes und prüft einen Mindestwert.
 
-WARUM (13.11.2026, Betreiber): "gibt es jetzt fuer jeden Teil der App von
-funktionen ueber sicherheit und datenschutz tests?" - Die ehrliche
+WARUM (13.11.2026, Betreiber): "gibt es jetzt für jeden Teil der App von
+funktionen über sicherheit und datenschutz tests?" - Die ehrliche
 Antwort war: es gibt 1000+ Tests, aber KEINE Messung. Ohne Zahl ist die
 Frage nicht beantwortbar, und "wir testen viel" ist keine Antwort.
 
@@ -13,22 +13,22 @@ Daraus wird:
     utils, generated),
   * ein Vergleich mit einem Mindestwert.
 
-DER MINDESTWERT ist ein Gate: faellt die Abdeckung unter die Grenze,
-schlaegt der Befehl fehl. Ohne diese Grenze waere die Zahl nur eine
-Zahl - man koennte sie wegkuerzen, ohne dass jemand etwas merkt.
+DER MINDESTWERT ist ein Gate: fällt die Abdeckung unter die Grenze,
+schlägt der Befehl fehl. Ohne diese Grenze wäre die Zahl nur eine
+Zahl - man kännte sie wegkürzen, ohne dass jemand etwas merkt.
 
 Der Mindestwert ist absichtlich NICHT auf dem aktuellen Stand festge-
-nagelt: der Stand wuerde jeden Tag wachsen und das Gate waere dann
+nagelt: der Stand würde jeden Tag wachsen und das Gate wäre dann
 nutzlos. Er ist ein Boden, darunter ist es ein Fehler.
 
 AUFruf::
 
-    python tool/checks/check_coverage.py                 # Messen und pruefen
+    python tool/checks/check_coverage.py                 # Messen und prüfen
     python tool/checks/check_coverage.py --min 65        # eigene Grenze
     python tool/checks/check_coverage.py --datei pfad    # andere lcov-Datei
 
 Ohne lcov-Datei sagt das Skript, dass es nichts messen konnte - es
-behauptet nicht, es sei gruen.
+behauptet nicht, es sei grün.
 """
 
 import argparse
@@ -41,8 +41,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -59,10 +59,10 @@ ROOT = _projektwurzel()
 
 
 # Der Boden. Er liegt bewusst NICHT auf dem aktuellen Stand: der Stand
-# waechst mit jedem Test, und ein Boden, der morgen auf dem heutigen
-# Stand klebt, waere nach zwei Wochen entweder rot (weil ein Modul
+# wächst mit jedem Test, und ein Boden, der morgen auf dem heutigen
+# Stand klebt, wäre nach zwei Wochen entweder rot (weil ein Modul
 # dazukam) oder nutzlos. Der Boden ist die Linie, unterhalb deren ein
-# fehlendes Modul als Fehler auffaellt. Er wird mit jedem Testlauf
+# fehlendes Modul als Fehler auffällt. Er wird mit jedem Testlauf
 # nachgezogen (siehe docs/betrieb/BETRIEBSAUFGABEN.md).
 #
 # Stand 13.11.2026: 24,3 % (vor den neuen Tests: 20,8 %) - der Boden
@@ -72,16 +72,16 @@ ROOT = _projektwurzel()
 # Stand 19.11.2026: 72,2 % (vor den neuen Tests: 70,0 %) - der Boden
 # liegt jetzt bei 70,0 %.
 #
-# DER BODEN LIEGT ETWAS NIEDRIGER ALS DIE MESSUNG: Auf Linux laeuft
+# DER BODEN LIEGT ETWAS NIEDRIGER ALS DIE MESSUNG: Auf Linux läuft
 # eine Gruppe nicht (das UnifiedPush-Plugin kennt dort kein DBus) - die
 # Abdeckung ist dort also etwas kleiner als lokal. Der Boden soll den
-# Stand sichern, nicht an der Plattform haengen.
+# Stand sichern, nicht an der Plattform hängen.
 #
-# WARUM 70 %: Der Boden war 30 % - das war eine Notfallgrenze fuer den
-# Anfang. Bei 72 % gemessener Deckung waere ein Boden von 30 % sinnlos:
-# es koennte die Haelfte des Codes ungetestet wegfallen, ohne dass das
-# Gate anschlaegt. Der Boden ist jetzt 70 % - knapp unter dem Stand, mit
-# Luft fuer die Linux-Messung.
+# WARUM 70 %: Der Boden war 30 % - das war eine Notfallgrenze für den
+# Anfang. Bei 72 % gemessener Deckung wäre ein Boden von 30 % sinnlos:
+# es kännte die Hälfte des Codes ungetestet wegfallen, ohne dass das
+# Gate anschlägt. Der Boden ist jetzt 70 % - knapp unter dem Stand, mit
+# Luft für die Linux-Messung.
 MINDEST = 70.0
 
 # Die Bereiche, in die die lib-Dateien einsortiert werden.
@@ -143,7 +143,7 @@ def main() -> int:
         print("  (%s ist leer - nichts zu messen.)" % args.datei)
         return 1
 
-    # NUR die App-Dateien (lib/). third_party/ gehoert nicht dazu.
+    # NUR die App-Dateien (lib/). third_party/ gehört nicht dazu.
     app = {d: v for d, v in daten.items()
            if d.replace("\\", "/").startswith("lib/")}
 
@@ -160,7 +160,7 @@ def main() -> int:
     print("  Abdeckung:   %.1f %%" % gesamt)
     print()
 
-    # Je Bereich aufsummieren (die Bereiche ueberlappen nicht).
+    # Je Bereich aufsummieren (die Bereiche überlappen nicht).
     def summiere(praefix):
         f = g = 0
         for d, (df, dg) in app.items():
@@ -200,9 +200,9 @@ def main() -> int:
                                    d.replace("\\", "/")))
     print()
 
-    # DIE LISTE FUER DEN NAECHSTEN TESTDURCHGANG: die Dateien mit den
+    # DIE LISTE FÜR DEN NÄCHSTEN TESTDURCHGANG: die Dateien mit den
     # MEISTEN unbedeckten Zeilen. Prozentzahlen allein sagen nichts
-    # darueber, wo die Arbeit winkt - eine Datei mit 3.000 Zeilen und
+    # darüber, wo die Arbeit winkt - eine Datei mit 3.000 Zeilen und
     # 10 % Abdeckung ist das halbe Budget.
     print("  Die groessten Luecken (unbedeckte Zeilen):")
     luecken = sorted(

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gemeinsames Web-Design fuer alle Seiten in passkey-assets/.
+"""Gemeinsames Web-Design für alle Seiten in passkey-assets/.
 
 DREI VORGABEN, die hier zusammenkommen:
 
@@ -11,23 +11,23 @@ DREI VORGABEN, die hier zusammenkommen:
    grauenhaft aus. Die Schriftart ist schlimm. Der Button zum Umschalten
    sieht vom Icon nicht ganz logisch aus." Daraus wurden drei Regeln:
      * eine echte Typografie (System-Schrift in der richtigen
-       Reihenfolge, groessere Grundgroesse, klare Hierarchie, Zeilenlaenge
+       Reihenfolge, größere Grundgrösse, klare Hierarchie, Zeilenlänge
        begrenzt) statt der vorherigen Standard-Browser-Schrift,
-     * eine Karten-Anordnung wie in der App (Karte auf getoentem
+     * eine Karten-Anordnung wie in der App (Karte auf getöntem
        Grund, Radius 24) statt einer nackten Textseite,
      * ein Umschalt-Knopf mit EINEM logischen Symbol.
 
-3. PROJEKTREGEL: Die veroeffentlichten Seiten sind bewusst statisch.
-   Kein JavaScript, keine externen Requests - das prueft
+3. PROJEKTREGEL: Die veröffentlichten Seiten sind bewusst statisch.
+   Kein JavaScript, keine externen Requests - das prüft
    test/privacy_policy_test.dart ("Die HTML-Datei ist statisch - kein
-   Skript, keine externen Requests"). Ein Skript waere hier nicht nur
-   unnoetig, es waere auch ein Grund, die Seite nicht mehr ohne
+   Skript, keine externen Requests"). Ein Skript wäre hier nicht nur
+   unnötig, es wäre auch ein Grund, die Seite nicht mehr ohne
    Weiteres zu statischen Dateien zu halten.
 
 DER UMSCHALTER OHNE JAVASCRIPT:
 
 Ein echter Schalter, versteckt, plus ein sichtbares Label - beides
-reines CSS ueber die Pseudo-Klasse :has():
+reines CSS über die Pseudo-Klasse :has():
 
     <input type="checkbox" id="modus-umschalter" class="modus-schalter">
     <label for="modus-umschalter" class="modus-knopf"> ... </label>
@@ -36,17 +36,17 @@ reines CSS ueber die Pseudo-Klasse :has():
 
 Vorteile:
   * Die Checkbox bleibt fokussierbar und mit der Leertaste bedienbar -
-    ein <label> allein waere fuer die Tastatur tot.
+    ein <label> allein wäre für die Tastatur tot.
   * Der Klick auf das Label schaltet die Checkbox um, das Label ist der
     sichtbare Knopf.
   * Kein Skript, keine Speicherung, keine Anfrage.
 
-Nachteil, ehrlich benannt: die Wahl ueberlebt das Neuladen NICHT (ohne
-localStorage). Beim naechsten Besuch gilt wieder die Systemeinstellung.
-Das ist der Preis fuer die Projektregel "statische Seite".
+Nachteil, ehrlich benannt: die Wahl überlebt das Neuladen NICHT (ohne
+localStorage). Beim nächsten Besuch gilt wieder die Systemeinstellung.
+Das ist der Preis für die Projektregel "statische Seite".
 
 Browser ohne :has() (sehr alte Safari/Firefox) zeigen die Seite im
-hellen Modus; `color-scheme: light dark` faerbt trotzdem die
+hellen Modus; `color-scheme: light dark` färbt trotzdem die
 Formularfelder und die Scrollleiste ein.
 
 DAS SYMBOL DES KNOPFS (Nutzerwunsch, zweite Runde):
@@ -58,7 +58,7 @@ SVG-Symbolpaar aus den Material-Icons (dark_mode / light_mode).
 
 DIE LOGIK: das Symbol zeigt den Modus, in den man WECHSELT, nicht den,
 in dem man ist. Im hellen Modus steht ein MOND (Klick = dunkel), im
-dunklen Modus eine SONNE (Klick = hell). Das ist die uebliche
+dunklen Modus eine SONNE (Klick = hell). Das ist die übliche
 Konvention und die einzige, die man nicht nachschlagen muss.
 """
 
@@ -66,15 +66,15 @@ Konvention und die einzige, die man nicht nachschlagen muss.
 THEME_CSS = """
     /* Web-Design (tool/helpers/web_theme.py) */
     /* ---------------------------------------------------------------
-       Eine Quelle fuer alle Seiten.
+       Eine Quelle für alle Seiten.
 
-       Die Farben kommen aus der App: Primaer #E9457B, heller
-       Grund #F7F7FB, Karten weiss, dunkler Grund #121212, Karten
+       Die Farben kommen aus der App: Primär #E9457B, heller
+       Grund #F7F7FB, Karten weiß, dunkler Grund #121212, Karten
        #1E1E1E. Die Linkfarbe ist eine dunklere Variante des Rosa
-       (#d62d6c), damit sie auf weiss den Kontrast-Anspruch von 4,5:1
+       (#d62d6c), damit sie auf weiß den Kontrast-Anspruch von 4,5:1
        erreicht.
        --------------------------------------------------------------- */
-    /* --- Farben: zwei Paletten, vier Zustaende --------------------- */
+    /* --- Farben: zwei Paletten, vier Zustände --------------------- */
     /*
      * (1) Die Seite folgt der Systemeinstellung - ohne Zutun.
      * (2) Der Schalter dreht um: hell -> dunkel, dunkel -> hell.
@@ -87,9 +87,9 @@ THEME_CSS = """
      *   System dunkel + Schalter aus -> dunkel
      *   System dunkel + Schalter an  -> hell
      *
-     * Specificitaet: alle vier Selektoren haben (0,2,0) - `:root:has(...)`
+     * Specificität: alle vier Selektoren haben (0,2,0) - `:root:has(...)`
      * gewinnt gegen `:root` (0,1,0), und die beiden Media-Query-Varianten
-     * entscheiden sich ueber die Reihenfolge (die letzte gewinnt).
+     * entscheiden sich über die Reihenfolge (die letzte gewinnt).
      */
     :root {
       color-scheme: light;
@@ -171,20 +171,20 @@ THEME_CSS = """
       -webkit-text-size-adjust: 100%;
       /* --- Der Scrollstrich rechts ---------------------------------
          BEFUND (14.11.2026, Betreiber): "Nutzungsbedingungen,
-         Datenschutzerklaerung und Impressum sollen rechts diesen
+         Datenschutzerklärung und Impressum sollen rechts diesen
          Scrollstrich haben, woran man erkennen kann wie weit die Seite
-         noch geht und man soll damit auch scrollen koennen mit dem
+         noch geht und man soll damit auch scrollen können mit dem
          Strich."
 
-         Drei Stuecke, die zusammenspielen:
+         Drei Stöcke, die zusammenspielen:
            * `overflow-y: scroll` - die Leiste ist IMMER da. Ohne das
              blendet der Browser sie auf dem Telefon aus, bis man
              scrollt; man sieht dann nicht, wie lang die Seite noch ist.
            * `::-webkit-scrollbar` - macht die Leiste sichtbar und dick
              genug, um sie mit dem Finger zu ziehen (Chrome, Safari).
-           * `scrollbar-width` / `scrollbar-color` - dasselbe fuer
+           * `scrollbar-width` / `scrollbar-color` - dasselbe für
              Firefox, das keine ::-webkit-Regeln kennt.
-         `scrollbar-gutter: stable` haelt den Platz frei, damit die
+         `scrollbar-gutter: stable` hält den Platz frei, damit die
          Seite beim Scrollen nicht springt. */
       overflow-y: scroll;
       scrollbar-gutter: stable;
@@ -222,9 +222,9 @@ THEME_CSS = """
       color: var(--fg);
       /* Die Reihenfolge ist wichtig: `system-ui` zuerst nimmt die
          System-Schrift (San Francisco, Segoe UI Variable, Roboto) -
-         das ist auf jedem Geraet die Schrift, fuer die die App gebaut
-         ist. Die konkreten Namen danach sind der Fallback fuer
-         aeltere Systeme, `sans-serif` der letzte Notnagel. */
+         das ist auf jedem Gerät die Schrift, für die die App gebaut
+         ist. Die konkreten Namen danach sind der Fallback für
+         ältere Systeme, `sans-serif` der letzte Notnagel. */
       font-family: system-ui, -apple-system, "Segoe UI Variable Text",
                    "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans",
                    Arial, sans-serif;
@@ -257,7 +257,7 @@ THEME_CSS = """
     }
 
     /* Die Checkbox bleibt im Quelltext (Tastatur!), ist aber nicht
-       sichtbar. Der Klick geht ueber das Label. */
+       sichtbar. Der Klick geht über das Label. */
     .modus-schalter {
       position: absolute;
       width: 1px;
@@ -270,10 +270,10 @@ THEME_CSS = """
       margin-left: auto;
       /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
          Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
-         auch diesen Knopf - er ist ja ein <label> fuer den
-         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
-         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
-         hier vollstaendig definiert: kein margin, damit keine Seite
+         auch diesen Knopf - er ist ja ein <label> für den
+         unsichtbaren Schalter. Dadurch saß er 5,6 px höher als der
+         Sprachknopf daneben. Die Kopfschaltflächen werden deshalb
+         hier vollständig definiert: kein margin, damit keine Seite
          sie versehentlich verschieben kann. */
       margin-top: 0;
       margin-bottom: 0;
@@ -306,8 +306,8 @@ THEME_CSS = """
 
     /* Der Sprachknopf sitzt rechts neben dem Modus-Knopf. Er ist ein
        LINK, kein Schalter: die zweite Sprache ist eine eigene Datei, und
-       ein Link laesst sich mit der Tastatur bedienen und im neuen Tab
-       oeffnen. */
+       ein Link lässt sich mit der Tastatur bedienen und im neuen Tab
+       öffnen. */
     .sprach-knopf {
       width: 42px;
       height: 42px;
@@ -375,7 +375,7 @@ THEME_CSS = """
       }
     }
 
-    /* --- Inhalt: eine Karte auf getoentem Grund -------------------- */
+    /* --- Inhalt: eine Karte auf getöntem Grund -------------------- */
     .inhalt {
       max-width: 46rem;
       margin: clamp(16px, 3vw, 32px) auto 0;
@@ -461,8 +461,8 @@ THEME_CSS = """
       border-spacing: 0;
       width: 100%;
       margin: 0;
-      /* 0,88 rem statt 0,95: die grosse Tabelle der
-         Datenschutzerklaerung brauchte 693 px, die Karte bietet 672 px.
+      /* 0,88 rem statt 0,95: die große Tabelle der
+         Datenschutzerklärung brauchte 693 px, die Karte bietet 672 px.
          Mit der kleineren Schrift passt sie in die Karte - sonst
          schneidet der Kartenrand die letzte Spalte ab. */
       font-size: .88rem;
@@ -492,7 +492,7 @@ THEME_CSS = """
     }
     footer p { margin-bottom: .4rem; }
 
-    /* --- Landing- und Bestaetigungsseite ---------------------------- */
+    /* --- Landing- und Bestätigungsseite ---------------------------- */
     .held { max-width: 46rem; margin: 0 auto; padding: clamp(20px, 4vw, 32px); }
     .held-karte {
       background: var(--card); border: 1px solid var(--line);
@@ -532,18 +532,18 @@ THEME_CSS = """
       margin: 0;
     }
     /*
-     * Die unterste der fuenf Kacheln steht allein in ihrer Zeile
+     * Die unterste der fünf Kacheln steht allein in ihrer Zeile
      * (NUTZERWUNSCH 31.10.2026: "Unten bei den 5 Kacheln soll die
-     * untere mittig sein und nicht linksbuendig").
+     * untere mittig sein und nicht linksbündig").
      *
-     * Bei fuenf Kacheln und zwei Spalten bleibt eine Kachel uebrig, die
-     * allein in der letzten Zeile steht - und die hing linksbuendig.
-     * Das sah nach einem Fehler aus: als waere die Zeile unvollstaendig.
+     * Bei fünf Kacheln und zwei Spalten bleibt eine Kachel übrig, die
+     * allein in der letzten Zeile steht - und die hing linksbündig.
+     * Das sah nach einem Fehler aus: als wäre die Zeile unvollständig.
      *
-     * `grid-column: 1 / -1` laesst sie die ganze Zeile einnehmen,
+     * `grid-column: 1 / -1` lässt sie die ganze Zeile einnehmen,
      * `justify-self: center` stellt sie mittig darin. Ihre Breite
      * bleibt dabei die einer normalen Kachel (die Spaltenbreite) -
-     * sonst waere sie plötzlich doppelt so breit wie ihre Schwestern.
+     * sonst wäre sie plötzlich doppelt so breit wie ihre Schwestern.
      */
     .held-liste > .held-link:last-child:nth-child(odd) {
       grid-column: 1 / -1;
@@ -552,7 +552,7 @@ THEME_CSS = """
     }
     /* Bei einer Spalte (schmale Fenster) ist die Kachel allein und
        darf die volle Breite nehmen - dort ist "mittig" nicht sinnvoll,
-       die Kachel fuellt die Zeile ohnehin aus. */
+       die Kachel füllt die Zeile ohnehin aus. */
     @media (max-width: 479px) {
       .held-liste > .held-link:last-child:nth-child(odd) {
         width: 100%;
@@ -594,13 +594,13 @@ THEME_CSS = """
       font-weight: 650; margin: 0 0 .35rem;
       /* KEIN Trennstrich (NUTZERWUNSCH 31.10.2026: "Bei thestia.de
        * soll der Strich zwischen dem oberen Bereich mit den Buttons
-       * (Im Play Store etc.) und der Ueberschrift Ein Blick in die App
+       * (Im Play Store etc.) und der Überschrift Ein Blick in die App
        * weg").
        *
-       * Die h2-Regel setzt einen Strich ueber jede Zwischenueberschrift
+       * Die h2-Regel setzt einen Strich über jede Zwischenüberschrift
        * - auf den Textseiten trennt er die Abschnitte voneinander, das
        * ist richtig. Hier aber trennt er zwei Dinge, die zusammen
-       * gehoeren: die Karte mit den Buttons und die Galerie direkt
+       * gehören: die Karte mit den Buttons und die Galerie direkt
        * darunter. Der Strich sah aus wie ein Rest der Karte. */
       border-top: none;
       padding-top: 0;
@@ -614,14 +614,14 @@ THEME_CSS = """
      * werden").
      *
      * Bei acht Bildern und drei Spalten bleiben in der letzten Reihe
-     * zwei uebrig - im Grid standen die linksbuendig, als waeren sie
-     * nicht dazugehoerig. Mit Flex und `justify-content: center`
+     * zwei übrig - im Grid standen die linksbündig, als wären sie
+     * nicht dazugehörig. Mit Flex und `justify-content: center`
      * richtet Flex jede Zeile einzeln aus: die letzte Reihe mit zwei
      * Bildern steht damit automatisch mittig.
      *
      * Flex ist hier robuster als Grid: bei einer anderen Bildzahl
      * (sieben, neun, zehn) stimmt die Zentrierung immer - im Grid
-     * muesste man die Positionen hart codieren, und das passte dann
+     * müste man die Positionen hart codieren, und das passte dann
      * nur bei genau acht Bildern.
      *
      * Die Breite ist fest (kein wachsen): `flex: 0 0 <breite>`
@@ -637,7 +637,7 @@ THEME_CSS = """
       max-width: calc(50% - 7px);
     }
     /* Ab Tablet-Breite: drei Spalten statt zwei. Die Bilder sind dann
-       gross genug, dass man sie ohne Zooming lesen kann, und die
+       groß genug, dass man sie ohne Zooming lesen kann, und die
        Bildunterschrift passt in zwei Zeilen. */
     @media (min-width: 640px) {
       .galerie-bild {
@@ -715,7 +715,7 @@ THEME_CSS = """
 
 # Der Schalter und sein sichtbares Label.
 #
-# Die Checkbox kommt ZUERST: das Label greift ueber `for` auf sie zu und
+# Die Checkbox kommt ZUERST: das Label greift über `for` auf sie zu und
 # die CSS-Regel `.modus-schalter:focus-visible + .modus-knopf` braucht das
 # Label als unmittelbar nachfolgenden Geschwister.
 #
@@ -749,7 +749,7 @@ _SVG_MOND = (
 # DAS BILD: /logo.png wird von tool/web/make_favicon.py aus derselben
 # Quelle erzeugt wie die Favicons (assets/images/thestia_icon_base.png).
 # Es ist ein Bild, kein Vektor - das Artwork (Verlauf, Herz, Silhouetten,
-# Funken, Schriftzug) ist eine Rastergrafik. "vektorisiert" waere eine
+# Funken, Schriftzug) ist eine Rastergrafik. "vektorisiert" wäre eine
 # ANDERE Marke.
 _BILD_MARKE = '<img src="/logo.png" alt="Thestia-Logo" width="30" height="30">'
 
@@ -772,8 +772,8 @@ KOPF_HTML = (
 def sprachknopf(ziel: str, sprache: str) -> str:
     """Der Sprachknopf (leer, wenn es keine zweite Fassung gibt).
 
-    NUTZERWUNSCH (03.11.2026): "Oben rechts neben dem Button fuer Dark
-    und Light Mode soll ein Button fuer die Sprache zwischen Deutsch und
+    NUTZERWUNSCH (03.11.2026): "Oben rechts neben dem Button für Dark
+    und Light Mode soll ein Button für die Sprache zwischen Deutsch und
     Englisch sein."
 
     Der Knopf zeigt die ZIEL-Sprache, nicht die aktuelle: auf der
@@ -781,7 +781,7 @@ def sprachknopf(ziel: str, sprache: str) -> str:
     dieselbe Logik wie beim Modus-Knopf (das Symbol zeigt den Modus, in
     den man wechselt) und die einzige, die man nicht nachschlagen muss.
 
-    [sprache] ist das Kuerzel des ZIELS ("EN" oder "DE").
+    [sprache] ist das Kürzel des ZIELS ("EN" oder "DE").
     """
     if not ziel:
         return ''
@@ -799,19 +799,19 @@ def sprachknopf(ziel: str, sprache: str) -> str:
 #
 # WARUM (05.11.2026): Ohne <meta name="description"> zeigt Google im
 # Suchergebnis einen beliebigen Textausschnitt der Seite. Bei der
-# Datenschutzerklaerung oder dem Impressum ist das der schlechteste
-# moegliche Ausschnitt - meistens ein Nebensatz ueber Cookies.
+# Datenschutzerklärung oder dem Impressum ist das der schlechteste
+# mögliche Ausschnitt - meistens ein Nebensatz über Cookies.
 #
-# Der Schluessel ist der Seitenname OHNE den Ordner "en/" und OHNE
-# ".html" - "eltern-einstellungen.html" steht fuer beide Fassungen
+# Der Schlüssel ist der Seitenname OHNE den Ordner "en/" und OHNE
+# ".html" - "eltern-einstellungen.html" steht für beide Fassungen
 # (de/eltern-einstellungen.html und en/eltern-einstellungen.html), denn
 # beide bekommen denselben Text in ihrer Sprache. Die Adressen
 # (/eltern/einstellungen und /en/eltern/einstellungen) kommen aus den
 # Rewrite-Regeln in _redirects.
 #
-# KEIN Eintrag fuer die transienten Seiten (bestaetigt.html,
+# KEIN Eintrag für die transienten Seiten (bestaetigt.html,
 # eltern-einstellungen.html): sie stehen auf noindex - eine
-# Suchmaschinen-Beschreibung waere dort sinnlos.
+# Suchmaschinen-Beschreibung wäre dort sinnlos.
 BESCHREIBUNG = {
     'impressum': (
         'Impressum von Thestia: Anbieterkennzeichnung nach Par. 5 DDG '
@@ -885,7 +885,7 @@ BESCHREIBUNG = {
 
 
 def beschreibung(seitenname: str, sprache: str = 'de') -> str:
-    """Die Suchmaschinen-Beschreibung fuer eine Seite (leer, wenn keine).
+    """Die Suchmaschinen-Beschreibung für eine Seite (leer, wenn keine).
 
     [seitenname] ist der Pfad relativ zu passkey-assets/, z. B.
     "en/eltern-einstellungen.html" oder "impressum.html".
@@ -909,7 +909,7 @@ def meta_description(html: str, text: str) -> str:
     """Setzt die meta description - aber nur, wenn noch keine da ist.
 
     NUR wenn noch keine da ist: Das Werkzeug muss wiederholbar sein.
-    Ein Ersetzen wuerde bei jedem Durchlauf die Datei anruehren.
+    Ein Ersetzen würde bei jedem Durchlauf die Datei anrühren.
     """
     if not text or 'name="description"' in html:
         return html
@@ -921,24 +921,24 @@ def meta_description(html: str, text: str) -> str:
     return html.replace('</head>', zeile + '\n</head>', 1)
 
 
-# Kurzname fuer den Generator, der bisher ein eigenes CSS hatte.
+# Kurzname für den Generator, der bisher ein eigenes CSS hatte.
 CSS = THEME_CSS
 
 # Marker: daran erkennt apply_theme(), dass eine Seite schon bearbeitet
-# wurde. Ohne ihn waere jeder Lauf ein zweiter Durchgang.
+# wurde. Ohne ihn wäre jeder Lauf ein zweiter Durchgang.
 MARKER = '/* Web-Design (tool/helpers/web_theme.py) */'
 
-# AELTERE Marker. Das Design wurde zweimal ueberarbeitet; wer eine Seite
-# mit einer aelteren Fassung bearbeitet, traegt deren CSS sonst ZUSAETZLICH
+# ÄLTERE Marker. Das Design wurde zweimal überarbeitet; wer eine Seite
+# mit einer älteren Fassung bearbeitet, trägt deren CSS sonst ZUSÄTZLICH
 # zum neuen - zwei Umschalter-Regeln und ein Knopf an zwei Stellen.
-# Deshalb werden beim Entfernen alle bekannten Marker beruecksichtigt.
+# Deshalb werden beim Entfernen alle bekannten Marker berücksichtigt.
 AELTERE_MARKER = [
     # Fassung 0 (28.10.2026, erste Fassung des Themes).
     '/* modus-knopf (tool/helpers/web_theme.py)',
     # Fassung 1 (28.10.2026, die "eine Quelle"-Fassung). Ihr Marker
     # war NICHT exakt der Anfang des CSS-Blocks - deshalb hat
-    # strip_theme() sie nicht gefunden und jede Ausfuehrung hat eine
-    # weitere Kopie eingefuegt (am Ende waren es sieben in einer
+    # strip_theme() sie nicht gefunden und jede Ausführung hat eine
+    # weitere Kopie eingefügt (am Ende waren es sieben in einer
     # Seite). Deshalb stehen HIER alle bekannten Fassungen.
     'Web-Design (tool/helpers/web_theme.py) - eine Quelle',
 ]
@@ -948,18 +948,18 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
     """Entfernt ein bereits eingespieltes Design samt Schalter.
 
     Nötig, weil das Design nachgebessert wurde: ohne dieses Entfernen
-    stuende in jeder Seite zweimal das alte Theme-CSS und der alte
+    stünde in jeder Seite zweimal das alte Theme-CSS und der alte
     Schalter daneben - zwei Umschalter auf einer Seite.
 
-    [remove_chrome] = False: die Kopfzeile und die Inhalts-Huelle
+    [remove_chrome] = False: die Kopfzeile und die Inhalts-Hülle
     bleiben stehen. Das braucht die Captcha-Seite (index.html): ihre
-    Kopfzeile ist Teil der Seite (sie traegt die Landing-Ansicht), und
-    ihre Huelle wird nicht eingefuegt.
+    Kopfzeile ist Teil der Seite (sie trägt die Landing-Ansicht), und
+    ihre Hülle wird nicht eingefügt.
     """
     import re
 
     # 1) Den CSS-Block des Themes entfernen (Marker bis </style>).
-    #    Bei mehreren Markern zaehlt der FRUEHESTE - dann ist der Rest
+    #    Bei mehreren Markern zählt der FRUEHESTE - dann ist der Rest
     #    des Style-Blocks genau der Block, der weg muss.
     positionen = [i for i in (html.find(m) for m in [MARKER] + AELTERE_MARKER)
                   if i >= 0]
@@ -967,42 +967,42 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
         i = min(positionen)
         j = html.find('</style>', i)
         if j >= 0:
-            # Der Anteil VOR dem Marker gehoert ebenfalls zum Theme und
+            # Der Anteil VOR dem Marker gehört ebenfalls zum Theme und
             # muss mit entfernt werden.
             #
             # BEFUND (01.11.2026): THEME_CSS beginnt mit einem Umbruch
-            # und einer Einrueckung, und der Marker sitzt erst an
+            # und einer Einrückung, und der Marker sitzt erst an
             # Position 5 des CSS-Blocks. Beim Entfernen blieb genau
             # dieser Rest stehen - bei jedem Lauf kam eine Zeile dazu.
             # Die Seite war dadurch NIE wieder identisch, auch wenn sich
-            # an ihr nichts geaendert hatte: der Betreiber musste also
+            # an ihr nichts geändert hatte: der Betreiber musste also
             # nach jedem Durchlauf alles neu hochladen.
             #
-            # Deshalb geht das Zurueckgehen jetzt ueber den ganzen
+            # Deshalb geht das Zurückgehen jetzt über den ganzen
             # Leerraum vor dem Marker. Der Rest der Seite (das eigene
-            # CSS der Seite) bleibt unberuehrt - es endet mit dem
+            # CSS der Seite) bleibt unberührt - es endet mit dem
             # letzten Zeichen vor dem Leerraum.
             k = i
             while k > 0 and html[k - 1] in ' \t\r\n':
                 k -= 1
             # Genau EIN Zeilenumbruch bleibt erhalten: er beendet die
-            # letzte CSS-Zeile der Seite. Ohne das rueckte die
-            # Einrueckung der Theme-Regeln in die vorige Zeile, und
-            # die Seite waere nach dem ersten Durchlauf anders als
-            # nach dem zweiten - der erste Durchlauf muesste also
+            # letzte CSS-Zeile der Seite. Ohne das rückte die
+            # Einrückung der Theme-Regeln in die vorige Zeile, und
+            # die Seite wäre nach dem ersten Durchlauf anders als
+            # nach dem zweiten - der erste Durchlauf müste also
             # immer wiederholt werden.
             if '\n' in html[k:i]:
                 html = html[:k] + '\n' + html[j:]
             else:
                 html = html[:k] + html[j:]
 
-    # 1b) Die eigenstaendigen ":root { color-scheme: light dark; }"-Bloecke
+    # 1b) Die eigenständigen ":root { color-scheme: light dark; }"-Blöcke
     #     entfernen - in JEDER Schreibweise.
     #
-    #     Der Block war ueber Jahre als Extra ueber dem Theme. Er ist
-    #     ueberfluessig (das Theme setzt color-scheme selbst) und er
+    #     Der Block war über Jahre als Extra über dem Theme. Er ist
+    #     überflüssig (das Theme setzt color-scheme selbst) und er
     #     hat sich bei jedem Lauf verdoppelt, weil der Abgleich nur die
-    #     Einzeilen-Form kannte, eingefuegt wurde aber die
+    #     Einzeilen-Form kannte, eingefügt wurde aber die
     #     mehrzeilige. Deshalb: Regex statt Textvergleich.
     html = re.sub(
         r'[ \t]*:root\s*\{\s*color-scheme:\s*light\s+dark;\s*\}\s*',
@@ -1021,28 +1021,28 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
         # 3) Die alte Kopfzeile entfernen, falls sie schon existiert.
         #
         #    WICHTIG: Der Umbruch zwischen <body> und der Kopfzeile
-        #    gehoert zum eingefuegten Chrome - apply_theme() setzt ihn
+        #    gehört zum eingefügten Chrome - apply_theme() setzt ihn
         #    ("<body>\n" + kopf). Bliebe er beim Entfernen stehen,
-        #    haette die Seite nach jedem Lauf eine Zeile mehr, ohne
-        #    dass sich an ihr etwas geaendert haette. Deshalb wird er
+        #    hätte die Seite nach jedem Lauf eine Zeile mehr, ohne
+        #    dass sich an ihr etwas geändert hätte. Deshalb wird er
         #    hier MIT entfernt: das Muster beginnt bei <body>.
         html = re.sub(
             r'(<body[^>]*>)\s*<header class="kopf">.*?</header>\s*',
             r'\1', html, flags=re.S)
-        # Notfall fuer Quellen, in denen die Kopfzeile ohne <body>
-        # davor steht: sie muss trotzdem weg, sonst stuende sie
+        # Notfall für Quellen, in denen die Kopfzeile ohne <body>
+        # davor steht: sie muss trotzdem weg, sonst stünde sie
         # doppelt.
         html = re.sub(r'<header class="kopf">.*?</header>\s*', '', html,
                       flags=re.S)
-        # 4) Die alte Inhalts-Huelle entfernen. Ohne diesen Schritt
-        #    stapelt sich bei jedem Lauf eine weitere Huelle - der Inhalt
-        #    saehe dann in einer Karte in einer Karte in einer Karte aus.
+        # 4) Die alte Inhalts-Hülle entfernen. Ohne diesen Schritt
+        #    stapelt sich bei jedem Lauf eine weitere Hülle - der Inhalt
+        #    sähe dann in einer Karte in einer Karte in einer Karte aus.
         #
         # WICHTIG (05.11.2026): Es werden BEIDE Formen entfernt - die
         # alte (<div class="inhalt">) und die neue (<main
         # class="inhalt">). Das <main> kam wegen der Lighthouse-Meldung
         # "Document does not have a main landmark": ohne es springt ein
-        # Screenreader durch Kopfzeile und Fuss statt zum Inhalt.
+        # Screenreader durch Kopfzeile und Fuß statt zum Inhalt.
         html = html.replace('<main class="inhalt">\n', '')
         html = html.replace('<main class="inhalt">', '')
         html = html.replace('<div class="inhalt">\n', '')
@@ -1052,14 +1052,14 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
     return html
 
 
-# Die Favicon-Links fuer alle Seiten.
+# Die Favicon-Links für alle Seiten.
 #
 # WARUM (06.11.2026, Betreiber): In der Google-Suche stand neben
 # "Thestia" ein allgemeiner Globus-Knopf statt des Logos - die Seite
 # hatte kein Favicon. Genau dieses Bild zeigt die Suche an.
 #
 # Zentral hier im Theme, damit es nicht auf 22 Seiten (x 2 Sprachen)
-# verteilt ist und beim naechsten Mal auf einer Seite fehlt.
+# verteilt ist und beim nächsten Mal auf einer Seite fehlt.
 FAVICON_LINKS = (
     '<link rel="icon" href="/favicon.ico" sizes="any">\n'
     '<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">\n'
@@ -1069,11 +1069,11 @@ FAVICON_LINKS = (
 
 
 def favicon_links(html: str) -> str:
-    """Haengt die Favicon-Links in den Kopf - nur, wenn noch keiner da ist.
+    """Hängt die Favicon-Links in den Kopf - nur, wenn noch keiner da ist.
 
     Nur wenn noch keiner da ist: Das Werkzeug muss wiederholbar sein
-    (wie bei der meta description). Ein Ersetzen wuerde bei jedem Lauf
-    die Datei anruehren.
+    (wie bei der meta description). Ein Ersetzen würde bei jedem Lauf
+    die Datei anrühren.
     """
     if 'rel="icon"' in html or "rel='icon'" in html:
         return html
@@ -1089,66 +1089,66 @@ def apply_theme(html: str, css_extra: str = '',
                 sprach_ziel: str = '',
                 sprache: str = 'EN',
                 beschreibung: str = '') -> str:
-    """Haengt Design, Kopfzeile und Umschalt-Knopf in eine HTML-Seite ein.
+    """Hängt Design, Kopfzeile und Umschalt-Knopf in eine HTML-Seite ein.
 
     [css_extra] sind seiten-eigene Regeln, die VOR den gemeinsamen
-    kommen - die gemeinsamen gewinnen dann, weil sie spaeter im
+    kommen - die gemeinsamen gewinnen dann, weil sie später im
     Style-Block stehen.
 
     [insert_chrome] = False: nur das gemeinsame CSS, keine Kopfzeile
-    und keine Inhalts-Huelle. Das braucht die Captcha-Seite
+    und keine Inhalts-Hülle. Das braucht die Captcha-Seite
     (index.html): sie hat ZWEI Ansichten (Sicherheitscheck und
     Landing-Seite) und bringt ihre eigene Kopfzeile mit - die
-    gemeinsame Huelle wuerde den Sicherheitscheck in eine Karte
+    gemeinsame Hülle würde den Sicherheitscheck in eine Karte
     packen.
 
     [sprach_ziel] = Adresse der anderen Sprachfassung (z. B.
     "/en/impressum"). Leer lassen, wenn es keine gibt - dann fehlt
     der Sprachknopf.
 
-    [sprache] = Kuerzel des ZIELS: "EN" auf der deutschen Seite,
+    [sprache] = Kürzel des ZIELS: "EN" auf der deutschen Seite,
     "DE" auf der englischen.
 
-    [beschreibung] = der Text fuer <meta name="description">. Wird
+    [beschreibung] = der Text für <meta name="description">. Wird
     nur gesetzt, wenn die Seite noch keinen hat. Leer lassen, wenn
     die Seite keine bekommen soll (transiente Seiten auf noindex).
     """
-    # Die Favicon-Links zuerst: sie gehören in den <head> und duerfen
+    # Die Favicon-Links zuerst: sie gehören in den <head> und dürfen
     # nicht zwischen <body> und der Kopfzeile landen.
     html = favicon_links(html)
 
     # Ein altes Design wird entfernt, damit die Seite nie zweimal
     # gestyled wird. Die Kopfzeile wird nur entfernt, wenn sie auch
-    # automatisch eingefuegt wurde.
+    # automatisch eingefügt wurde.
     html = strip_theme(html, remove_chrome=insert_chrome)
 
     # 0) Die Suchmaschinen-Beschreibung (nur, wenn noch keine da ist).
     #
-    #    WICHTIG (05.11.2026): Vor der Kopfzeile. Der meta-Tag gehoert
+    #    WICHTIG (05.11.2026): Vor der Kopfzeile. Der meta-Tag gehört
     #    in den <head> - er darf nicht zwischen <body> und der
     #    Kopfzeile landen.
     html = meta_description(html, beschreibung)
 
-    # 1) Die alte eigenstaendige :root-Zeile braucht es nicht mehr.
+    # 1) Die alte eigenständige :root-Zeile braucht es nicht mehr.
     #
-    #    Frueher stand hier ein Block, der nur color-scheme setzte. Das
-    #    THEME_CSS traegt die Eigenschaft selbst (im eigenen :root) -
+    #    Früher stand hier ein Block, der nur color-scheme setzte. Das
+    #    THEME_CSS trägt die Eigenschaft selbst (im eigenen :root) -
     #    der Extra-Block war also doppelt.
     #
     #    WICHTIG: Er wurde per exaktem Textvergleich gesucht, obwohl er
-    #    mehrzeilig eingefuegt wurde. Der Vergleich traf nie zu, also
-    #    wurde bei jedem Lauf ein weiterer eingefuegt: nach 18 Laeufen
-    #    standen 18 identische Bloecke in impressum.html. Deshalb
+    #    mehrzeilig eingefügt wurde. Der Vergleich traf nie zu, also
+    #    wurde bei jedem Lauf ein weiterer eingefügt: nach 18 Läufen
+    #    standen 18 identische Blöcke in impressum.html. Deshalb
     #    entfernt strip_theme() jetzt ALLE Varianten per Regex - gleich
     #    ob einzeilig oder mehrzeilig.
 
-    # 2) Die gemeinsamen Regeln an den Style-Block haengen.
+    # 2) Die gemeinsamen Regeln an den Style-Block hängen.
     #
     # WICHTIG (05.11.2026): Der Style-Block muss das eigene CSS VOR dem
     # gemeinsamen tragen. Grund: strip_theme() entfernt den gemeinsamen
-    # Block und laesst bei einer Seite, die NUR den gemeinsamen Block
-    # im Style-Block hat, eine Leerzeile stehen - der naechste Durchlauf
-    # haette sie wieder drin und die Datei waere ein Zeichen laenger.
+    # Block und lässt bei einer Seite, die NUR den gemeinsamen Block
+    # im Style-Block hat, eine Leerzeile stehen - der nächste Durchlauf
+    # hätte sie wieder drin und die Datei wäre ein Zeichen länger.
     # Der Idempotenz-Gate der CI ("Web-Theme wiederholbar") hat genau
     # das gemeldet. Seiten mit eigenem CSS im Style-Block sind stabil.
     if '</style>' in html:
@@ -1172,8 +1172,8 @@ def apply_theme(html: str, css_extra: str = '',
         import re as _re
         html = _re.sub(r'(<body[^>]*>)', r'\1\n' + kopf, html, count=1)
 
-    # 4) Die Karte schliessen - VOR dem Fuss, falls die Seite einen
-    #    hat. Der Fuss steht dann auf dem Seitenhintergrund und nicht
+    # 4) Die Karte schließen - VOR dem Fuß, falls die Seite einen
+    #    hat. Der Fuß steht dann auf dem Seitenhintergrund und nicht
     #    in der Karte (wie die Fusszeile der App unter der Karte).
     if '<footer' in html:
         i = html.index('<footer')

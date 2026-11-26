@@ -6,12 +6,12 @@ import 'package:thestia/utils/location/location_privacy.dart';
 import '../support/l10n_quellen.dart';
 import '../support/quelltext.dart';
 
-/// Laedt die Texte direkt aus app_strings.dart.
+/// Lädt die Texte direkt aus app_strings.dart.
 ///
-/// Bewusst geparst statt ueber [L10n]: der Test soll ohne Widget-Baum
-/// laufen. Aufgebaut wird derselbe Block, den app_strings.dart fuer
+/// Bewusst geparst statt über [L10n]: der Test soll ohne Widget-Baum
+/// laufen. Aufgebaut wird derselbe Block, den app_strings.dart für
 /// [L10nScope] bereitstellt - Key-Zeilen und Folgezeilen (Zeilenumbruch
-/// in der Quelle) werden zusammengefuegt.
+/// in der Quelle) werden zusammengefügt.
 Map<String, String> _sprache(String sprache) {
   final src = liesL10nQuellen();
   final start = src.indexOf("'$sprache': {");
@@ -42,7 +42,7 @@ Map<String, String> _sprache(String sprache) {
 final Map<String, String> _de = _sprache('de');
 final Map<String, String> _en = _sprache('en');
 
-/// Tests fuer die Standort-Privatisierung.
+/// Tests für die Standort-Privatisierung.
 ///
 /// Kernpunkt: was gespeichert wird, ist das Bundesland und ein
 /// 5-km-Raster - nicht der Ortsname und nicht die exakte Position.
@@ -64,7 +64,7 @@ void main() {
       // und von DORT aus ein paar Meter Weg testen - so ist der Punkt
       // garantiert mittig im Raster.
       final mitte = LocationPrivacy.snapToGrid(53.10, 8.20);
-      // ~8 m noerdlich, ~5 m oestlich
+      // ~8 m nördlich, ~5 m östlich
       final nah = LocationPrivacy.snapToGrid(
         mitte.lat + 0.000072,
         mitte.lng + 0.000072,
@@ -74,8 +74,8 @@ void main() {
     });
 
     test('das Raster ist diskret: weit auseinander = anderes Raster', () {
-      // Hamburg und Muenchen, beide vorher auf ihr Raster gelegt:
-      // muessen garantiert verschiedene Raster sein.
+      // Hamburg und München, beide vorher auf ihr Raster gelegt:
+      // müssen garantiert verschiedene Raster sein.
       final hamburg = LocationPrivacy.snapToGrid(53.55, 9.99);
       final muenchen = LocationPrivacy.snapToGrid(48.14, 11.58);
       expect(hamburg.lat == muenchen.lat, isFalse);
@@ -83,9 +83,9 @@ void main() {
     });
 
     test('der Laengengrad wird am Breitengrad gestreckt', () {
-      // Am Aequator ist 1 Grad Laenge 111 km, in 53 Grad Breite nur
-      // rund 67. Ohne Streckung waere das Raster in Mitteleuropa zu
-      // fein - der gleiche_km-Schritt waere dort kleiner als beabsichtigt.
+      // Am Äquator ist 1 Grad Länge 111 km, in 53 Grad Breite nur
+      // rund 67. Ohne Streckung wäre das Raster in Mitteleuropa zu
+      // fein - der gleiche_km-Schritt wäre dort kleiner als beabsichtigt.
       final aequator = LocationPrivacy.snapToGrid(0.0, 0.05);
       final mitteleuropa = LocationPrivacy.snapToGrid(53.0, 8.05);
       final stepAequator = aequator.lng.abs();
@@ -94,7 +94,7 @@ void main() {
     });
 
     test('Punkte auf dem Aequator und an den Polen sprengen nicht', () {
-      // cos(90 Grad) waere 0 und damit Division durch Null.
+      // cos(90 Grad) wäre 0 und damit Division durch Null.
       expect(() => LocationPrivacy.snapToGrid(90.0, 0.0), returnsNormally);
       expect(() => LocationPrivacy.snapToGrid(-90.0, 0.0), returnsNormally);
       expect(() => LocationPrivacy.snapToGrid(0.0, 0.0), returnsNormally);
@@ -115,9 +115,9 @@ void main() {
     });
 
     test('ist idempotent: zweimal rasteren aendert nichts', () {
-      // Wichtig fuer den Sync: der Client snappt, der Server snappt noch
+      // Wichtig für den Sync: der Client snappt, der Server snappt noch
       // einmal. Liegt das Ergebnis nicht auf dem Raster, wandert es bei
-      // jedem Sync ein Stueck weiter - die Entfernung wuerde driften.
+      // jedem Sync ein Stück weiter - die Entfernung würde driften.
       final p = LocationPrivacy.snapToGrid(52.52, 13.405);
       final g = LocationPrivacy.snapToGrid(p.lat, p.lng);
       expect(g.lat, p.lat);
@@ -138,19 +138,19 @@ void main() {
     });
 
     test('zwei Punkte in verschiedenen Rastern gelten als verschieden', () {
-      // Hamburg und München muessen auseinanderfallen.
+      // Hamburg und München müssen auseinanderfallen.
       expect(LocationPrivacy.sameGridSpot(53.55, 9.99, 48.14, 11.58), isFalse);
     });
 
     test('Rundungsrauschen gilt nicht als Wechsel', () {
-      // Toleranz von 1 m: sonst wuerde ein Punkt, der exakt auf dem
+      // Toleranz von 1 m: sonst würde ein Punkt, der exakt auf dem
       // Raster liegt, beim Sync springen.
       final p = LocationPrivacy.snapToGrid(53.1, 8.2);
       expect(LocationPrivacy.sameGridSpot(p.lat, p.lng, p.lat, p.lng), isTrue);
     });
 
     test('die Toleranz ist winzig gegenueber einem Rasterschritt', () {
-      // Sonst waere die Toleranz so weit, dass benachbarte Raster
+      // Sonst wäre die Toleranz so weit, dass benachbarte Raster
       // zusammenfielen und die Entfernung falsch bliebe.
       final step = LocationPrivacy.gridKm / LocationPrivacy.kmPerDegreeLat;
       expect(step, greaterThan(0.001));
@@ -161,7 +161,7 @@ void main() {
     // Gegenprobe auf den Quelltext: describePlace() lieferte
     // "Bremen, Bremen" (locality + administrativeArea). Solange das im
     // Einrichtungs-Screen aufgerufen und nach city geschrieben wird, ist
-    // die Privatisierung nicht erreicht - unabhaengig davon, wie korrekt
+    // die Privatisierung nicht erreicht - unabhängig davon, wie korrekt
     // die Rasterung ist.
     final src = liesQuelltext(
       'lib/screens/onboarding/settings_privacy_once_screen.dart',
@@ -170,7 +170,7 @@ void main() {
     test('der Screen ruft describePlace nicht mehr auf', () {
       // describePlace() LIEGT weiter in geo_names.dart (dort liefert der
       // Geocoder den Ortsnamen) - aber der Screen ruft sie nicht mehr
-      // auf. Geprueft wird deshalb der Aufruf, nicht die Existenz.
+      // auf. Geprüft wird deshalb der Aufruf, nicht die Existenz.
       expect(src.contains('describePlace'), isFalse);
     });
 
@@ -187,10 +187,10 @@ void main() {
   });
 
   // v0.9.3: Der Profil-Edit-Screen hatte ein eigenes Ortsfeld mit
-  // Tippvorschlag "Berlin", Debounce und einer GPS-Gegenpruefung
+  // Tippvorschlag "Berlin", Debounce und einer GPS-Gegenprüfung
   // ("liegt mehr als 15 km entfernt"). Genau dort landete der Ort
   // wieder in profiles.city - nur eben beim Bearbeiten, nicht bei der
-  // Einrichtung. Der Test haelt beide Wege dicht.
+  // Einrichtung. Der Test hält beide Wege dicht.
   group('Auch der Profil-Edit-Screen kennt keinen Ortsnamen', () {
     final src = liesQuelltext('lib/screens/profile/profile_edit_screen.dart');
 
@@ -204,14 +204,14 @@ void main() {
 
     test('GPS leitet nur das Bundesland ab und rastet vorher', () {
       expect(src.contains('describeStateFor'), isTrue);
-      // Ohne vorheriges Raster wuerden die ungerundeten Koordinaten
+      // Ohne vorheriges Raster würden die ungerundeten Koordinaten
       // gespeichert - der Server rastet zwar auch, aber ein Client,
-      // der ungerundet schickt, macht das Rastering von sich abhaengig.
+      // der ungerundet schickt, macht das Rastering von sich abhängig.
       expect(src.contains('LocationPrivacy.snapToGrid'), isTrue);
     });
 
     test('der Server bekommt kein city-Feld mehr', () {
-      // Auch der Praeferenz-Sync darf den Ort nicht mehr mitschicken.
+      // Auch der Präferenz-Sync darf den Ort nicht mehr mitschicken.
       expect(src.contains('savePreferencesToServer'), isTrue);
       expect(src.contains('city: location'), isFalse);
     });
@@ -245,9 +245,9 @@ void main() {
     });
   });
 
-  // Ohne diesen Schritt bleibt profile_locations fuer neue Accounts leer
-  // und die Entfernungsanzeige faellt aus. Migration 135 hat die Tabelle
-  // nur fuer Bestandsprofile gefuellt.
+  // Ohne diesen Schritt bleibt profile_locations für neue Accounts leer
+  // und die Entfernungsanzeige fällt aus. Migration 135 hat die Tabelle
+  // nur für Bestandsprofile gefüllt.
   group('Die Koordinaten landen in profile_locations', () {
     final db = liesQuelltext(
       'lib/services/server/supabase_database_service.dart',
@@ -255,7 +255,7 @@ void main() {
 
     test('der Service schreibt per upsert in profile_locations', () {
       expect(db.contains('saveOwnLocation'), isTrue);
-      // insert wuerde beim zweiten Speichern (GPS-Knopf) scheitern.
+      // insert würde beim zweiten Speichern (GPS-Knopf) scheitern.
       expect(db.contains("from('profile_locations').upsert"), isTrue);
     });
 
@@ -287,9 +287,9 @@ void main() {
     });
   });
 
-  // Die Anzeige ist die zweite Haelfte der Zusage: gespeichert wird auf
+  // Die Anzeige ist die zweite Hälfte der Zusage: gespeichert wird auf
   // 5-km-Raster, ANGEZEIGT wird in 10-km-Stufen, und unterhalb von 5 km
-  // gar nicht. Ein zurueckgerutschter Meter-Zaehler waere genauso schlimm
+  // gar nicht. Ein zurückgerutschter Meter-Zähler wäre genauso schlimm
   // wie der alte Ortsname.
   group('Die Entfernung wird in Stufen angezeigt, nicht in Metern', () {
     UserProfile mit(double km) =>
@@ -308,7 +308,7 @@ void main() {
     test('die Stufen sind 10 km breit', () {
       expect(label(5), 'unter 10 km');
       expect(label(9.9), 'unter 10 km');
-      // Grenze gehoert nach oben: 10,0 ist schon "10 bis 20".
+      // Grenze gehört nach oben: 10,0 ist schon "10 bis 20".
       expect(label(10), '10 bis 20 km');
       expect(label(19.99), '10 bis 20 km');
       expect(label(20), '20 bis 30 km');
@@ -342,7 +342,7 @@ void main() {
         expect(_de[k], isNotNull, reason: 'DE fehlt: $k');
         expect(_en[k], isNotNull, reason: 'EN fehlt: $k');
       }
-      // Platzhalter muessen in beiden Sprachen gleich sein.
+      // Platzhalter müssen in beiden Sprachen gleich sein.
       expect(_de['distance.bucketRange'], contains('{from}'));
       expect(_en['distance.bucketRange'], contains('{from}'));
     });

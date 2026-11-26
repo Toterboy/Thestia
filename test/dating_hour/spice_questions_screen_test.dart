@@ -1,10 +1,10 @@
 // Die Eisbrecher-Fragen (bisher ungetestet - 0 %).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
-// lib/screens/spice/spice_questions_screen.dart 0 % - der Screen, ueber
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
+// lib/screens/spice/spice_questions_screen.dart 0 % - der Screen, über
 // den der Nutzer eine gute Frage in den Chat holt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Screen zeigt die Kategorien aus dem Katalog,
 //   * eine aufgeklappte Kategorie zeigt ihre Fragen,
 //   * die Suche filtert - und sagt, wenn sie nichts findet,
@@ -23,9 +23,9 @@ import 'package:thestia/screens/spice/spice_questions_screen.dart';
 void main() {
   /// Der Text, der zuletzt in die Zwischenablage gelegt wurde.
   ///
-  /// DER GRUND FUER DEN EIGENEN KANAL: Die Zwischenablage des Geraets
-  /// gibt es im Test nicht - ohne Ersatz bleibt der Aufruf haengen
-  /// (der Test wartet dann bis zum Zeitueberlauf).
+  /// DER GRUND FÜR DEN EIGENEN KANAL: Die Zwischenablage des Geräts
+  /// gibt es im Test nicht - ohne Ersatz bleibt der Aufruf hängen
+  /// (der Test wartet dann bis zum Zeitüberlauf).
   String? kopierterText;
 
   setUp(() {
@@ -194,7 +194,7 @@ void main() {
       final kopie = await Clipboard.getData(Clipboard.kTextPlain);
       expect(kopie?.text, ersteFrage().textFor('de'));
       expect(kopierterText, ersteFrage().textFor('de'));
-      // ... und der Nutzer bekommt die Bestaetigung.
+      // ... und der Nutzer bekommt die Bestätigung.
       expect(find.text(L10n.tWithoutContext('spice.copied')), findsOneWidget);
     });
   });

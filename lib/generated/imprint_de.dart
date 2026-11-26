@@ -1,14 +1,14 @@
-// GENERIERTE DATEI - NICHT VON HAND AENDERN.
+// GENERIERTE DATEI - NICHT VON HAND ÄNDERN.
 // Quelle: passkey-assets/impressum.html
 // Neu erzeugen mit: python tool/web/make_imprint_app.py
 
 import 'package:thestia/generated/privacy_policy_blocks.dart';
 
-/// Das Impressum als Bloecke, in der Reihenfolge der Quelle.
+/// Das Impressum als Blöcke, in der Reihenfolge der Quelle.
 ///
 /// BEFUND (20.11.2026, Betreiber): "Das Impressum in der App
 /// funktioniert nicht." thestia.de ist ein verifizierter App-Link -
-/// Android oeffnete den Link in der App selbst statt im Browser.
+/// Android öffnete den Link in der App selbst statt im Browser.
 /// Der Text steht deshalb jetzt im Binary, wie Datenschutz und
 /// Nutzungsbedingungen.
 const List<PrivacyBlock> kImprintDe = <PrivacyBlock>[

@@ -1,16 +1,16 @@
 // Die Provider der Dating Hour und des Meet-Intents.
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/providers/dating_hour/dating_hour_provider.dart und
 // lib/providers/dating_hour/meet_intent_provider.dart je 0 % - sie wurden nie
-// beruehrt. Beide Provider sind die Schnittstelle zwischen der
-// Oberflaeche und dem Server: ein Fehler dort faellt im Alltag nicht
+// berührt. Beide Provider sind die Schnittstelle zwischen der
+// Oberfläche und dem Server: ein Fehler dort fällt im Alltag nicht
 // auf, sondern nur gar nicht.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Meet-Intent-Notifier: laden, Zustimmung setzen, "getroffen"
-//     bestaetigen, neu laden - und der Fall, dass der Server nichts
-//     zurueckgibt (dann bleibt der Zustand unveraendert),
+//     bestätigen, neu laden - und der Fall, dass der Server nichts
+//     zurückgibt (dann bleibt der Zustand unverändert),
 //   * der Fehlerfall: der Server schweigt -> der Notifier bleibt
 //     ruhig (kein Crash, kein roter Bildschirm),
 //   * die Dating-Hour-Provider: kein Event -> null; ein Event ->
@@ -36,20 +36,20 @@ import '../support/plugin_mocks.dart';
 
 /// Der Meet-Intent-Dienst ohne Datenbank.
 ///
-/// DER GRUND FUER DEN ERSATZ: [MeetIntentService] spricht die Datenbank
-/// ueber den globalen Supabase-Client an. Fuer die Logik des Notifiers
-/// ist aber nur wichtig, was der Dienst zurueckgibt - also wird genau
+/// DER GRUND FÜR DEN ERSATZ: [MeetIntentService] spricht die Datenbank
+/// über den globalen Supabase-Client an. Für die Logik des Notifiers
+/// ist aber nur wichtig, was der Dienst zurückgibt - also wird genau
 /// das hier festgelegt.
 class _FakeMeetIntentService extends MeetIntentService {
   _FakeMeetIntentService(super.client);
 
-  /// Was der Dienst zurueckgibt (null = "es gibt nichts").
+  /// Was der Dienst zurückgibt (null = "es gibt nichts").
   MeetIntent? antwort;
 
-  /// Der Fehlerfall: der Dienst schlaegt fehl.
+  /// Der Fehlerfall: der Dienst schlägt fehl.
   bool schlaegtFehl = false;
 
-  /// Die Aufrufe (fuer die Nachpruefung).
+  /// Die Aufrufe (für die Nachprüfung).
   final List<String> aufrufe = <String>[];
 
   @override
@@ -74,12 +74,12 @@ class _FakeMeetIntentService extends MeetIntentService {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // DER SUPABASE-CLIENT wird EINMAL fuer die ganze Datei aufgesetzt
-  // (er ist ein Singleton - ein zweites initialize waere ein Fehler).
+  // DER SUPABASE-CLIENT wird EINMAL für die ganze Datei aufgesetzt
+  // (er ist ein Singleton - ein zweites initialize wäre ein Fehler).
   late FakeSupabaseServer server;
 
   setUpAll(() async {
-    // Der Speicher des Geraets (ohne ihn finden die Provider nichts).
+    // Der Speicher des Geräts (ohne ihn finden die Provider nichts).
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     server = FakeSupabaseServer(userId: 'ich');

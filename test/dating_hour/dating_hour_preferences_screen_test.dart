@@ -1,14 +1,14 @@
-// Die Dating-Hour-Einstellungen - bisher voellig ungetestet.
+// Die Dating-Hour-Einstellungen - bisher völlig ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/dating_hour/dating_hour_preferences_screen.dart 198 offene
 // Zeilen bei 203 Zeilen gesamt - der Bildschirm, auf dem die Person
 // festlegt, wen sie in der Dating Hour treffen will, war komplett
 // ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (alle Abschnitte stehen da),
-//   * die zuletzt gespeicherten Vorstellungen werden uebernommen,
+//   * die zuletzt gespeicherten Vorstellungen werden übernommen,
 //   * das Speichern geht an den Server - mit den Werten, die der
 //     Nutzer eingestellt hat,
 //   * ohne Event wird das Speichern dem Nutzer gesagt (nicht
@@ -127,8 +127,8 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final storage = _FakeLocalStorage();
-    // DER ROUTER: Nach dem Speichern springt der Bildschirm zurueck -
-    // ohne Router waere das ein Absturz.
+    // DER ROUTER: Nach dem Speichern springt der Bildschirm zurück -
+    // ohne Router wäre das ein Absturz.
     final router = GoRouter(
       initialLocation: '/dh-prefs',
       routes: [
@@ -207,7 +207,7 @@ void main() {
       await zeigeScreen(tester);
 
       expect(tester.takeException(), isNull);
-      // Der Trait steht da - der Nutzer sieht, was zuletzt gewaehlt war.
+      // Der Trait steht da - der Nutzer sieht, was zuletzt gewählt war.
       expect(
         find.text(L10n.tWithoutContext('dh.prefs.trait.honesty')),
         findsWidgets,
@@ -262,7 +262,7 @@ void main() {
         isTrue,
         reason: 'Die Vorstellungen muessen beim Server landen.',
       );
-      // Und der Nutzer bekommt die Bestaetigung.
+      // Und der Nutzer bekommt die Bestätigung.
       expect(
         find.text(L10n.tWithoutContext('dh.prefs.savedHint')),
         findsOneWidget,
@@ -298,7 +298,7 @@ void main() {
         ),
         isFalse,
       );
-      // Und der Nutzer erfaehrt es.
+      // Und der Nutzer erfährt es.
       expect(
         find.textContaining('Event'),
         findsWidgets,

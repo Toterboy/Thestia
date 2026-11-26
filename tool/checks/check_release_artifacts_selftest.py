@@ -1,19 +1,19 @@
 """
 tool/checks/check_release_artifacts_selftest.py
 =========================================
-Prueft, dass `check_release_artifacts.py` FEHLER meldet, wenn er
+Prüft, dass `check_release_artifacts.py` FEHLER meldet, wenn er
 fehlschlagen muss.
 
 Hintergrund: der Checker ist entstanden, nachdem ein Admin-Build unter
-oeffentlichem Namen gelandet war. Ein Checker, der nur "gruene Null"
+öffentlichem Namen gelandet war. Ein Checker, der nur "grüne Null"
 oder "irgendetwas gefunden" sagt, ist schlimmer als keiner - er
 verspricht eine Sicherheit, die er nicht hat. Deshalb hier die
-Negativfaelle, jeweils gegen eine kuenstliche Release-Struktur.
+Negativfälle, jeweils gegen eine künstliche Release-Struktur.
 
 Aufruf:
     python tool/checks/check_release_artifacts_selftest.py
 
-Exit 0 = alle Negativfaelle wurden erkannt.
+Exit 0 = alle Negativfälle wurden erkannt.
 """
 
 import importlib.util
@@ -29,8 +29,8 @@ from contextlib import redirect_stderr, redirect_stdout
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -53,7 +53,7 @@ spec.loader.exec_module(cra)
 
 
 def make_zip(path, entries, compress=True):
-    """Baut eine APK/AAB-artige Datei mit den angegebenen Eintraegen."""
+    """Baut eine APK/AAB-artige Datei mit den angegebenen Eintrügen."""
     mode = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
     with zipfile.ZipFile(path, 'w', mode) as z:
         for name, data in entries.items():
@@ -68,10 +68,10 @@ def uuid_str():
 def make_world(tmp, public_names, admin_uuid, secret_in=(), with_admin=True):
     """Legt eine Release-Welt an.
 
-    public_names: Dateinamen der oeffentlichen Artefakte
+    public_names: Dateinamen der öffentlichen Artefakte
     admin_uuid:   die UUID, die nur im Admin-Build steckt
-    secret_in:    Namen oeffentlicher Dateien, die die UUID enthalten
-    with_admin:   ohne Admin-Build laeuft der UUID-Diff nicht - fuer
+    secret_in:    Namen öffentlicher Dateien, die die UUID enthalten
+    with_admin:   ohne Admin-Build läuft der UUID-Diff nicht - für
                   den Test "leerer Versionsordner" gebraucht
     """
     releases = tmp / 'releases'
@@ -84,8 +84,8 @@ def make_world(tmp, public_names, admin_uuid, secret_in=(), with_admin=True):
         if n in secret_in:
             payload = common + admin_uuid.encode()
         # Der Dateiname wandert als eigener Eintrag mit in das Archiv.
-        # Sonst waere ein kontaminierter .aab byte-identisch zum
-        # Admin-APK, und der Kollisionscheck wuerde feuern, bevor der
+        # Sonst wäre ein kontaminierter .aab byte-identisch zum
+        # Admin-APK, und der Kollisionscheck würde feuern, bevor der
         # eigentliche AAB-Test etwas zu sehen bekommt.
         make_zip(vdir / n, {
             'lib/arm64-v8a/libapp.so': payload,
@@ -94,10 +94,10 @@ def make_world(tmp, public_names, admin_uuid, secret_in=(), with_admin=True):
         }, compress=(n.endswith('.aab')))
 
     if with_admin:
-        # Der Admin-Build heisst <oeffentlicher Name>-ADMIN.apk. Der
+        # Der Admin-Build heißt <öffentlicher Name>-ADMIN.apk. Der
         # Name ist nicht kosmetisch: der Checker paart Admin- und
-        # oeffentlichen Build ueber genau diesen Namensrest. Ohne die
-        # Paarung muesste er raten und koennte nicht melden.
+        # öffentlichen Build über genau diesen Namensrest. Ohne die
+        # Paarung müste er raten und kännte nicht melden.
         mate = public_names[0] if public_names else 'play.apk'
         make_zip(vdir / 'admin' / f'{mate[:-4]}-ADMIN.apk', {
             'lib/arm64-v8a/libapp.so': common + admin_uuid.encode(),
@@ -108,18 +108,18 @@ def make_world(tmp, public_names, admin_uuid, secret_in=(), with_admin=True):
 
 
 def run_checker():
-    """Fuehrt main() aus und liefert (exit_code, ausgabe).
+    """Fährt main() aus und liefert (exit_code, ausgabe).
 
     apksigner wird auf None gesetzt: die Testartefakte sind keine
     echten APKs, apksigner scheitert daran mit einer
-    MinSdkVersionException - und das wuerde jeden Negativfall mit
-    einem Grundfehler drownen, den man nicht pruefen wollte. Der
+    MinSdkVersionException - und das würde jeden Negativfall mit
+    einem Grundfehler drownen, den man nicht prüfen wollte. Der
     Signaturpfad wird dadurch nicht getestet; der Inhalts- und der
     Kollisionspfad schon.
 
     Ebenso wird aapt2 durch einen Attrappen ersetzt: die Test-APKs
     sind synthetisch, ihre Build-Nummer ist nicht lesbar. Die
-    Build-Nummer-Regel wird deshalb ueber [build_nummer] geprueft -
+    Build-Nummer-Regel wird deshalb über [build_nummer] geprüft -
     der Attrapp liefert genau diese Nummer.
     """
     buf = io.StringIO()
@@ -135,9 +135,9 @@ def run_checker():
         cra.find_apksigner = lambda: None
         cra.find_aapt2 = lambda: pathlib.Path('aapt2-attrappe')
         cra.apk_version_code = lambda aapt2, apk: build_nummer
-        # Beide Kanaele: sys.exit("text") schreibt nach stderr, und genau
-        # diese Faelle (fehlender Versionsordner) sind die, die man
-        # pruefen will.
+        # Beide Kanäle: sys.exit("text") schreibt nach stderr, und genau
+        # diese Fülle (fehlender Versionsordner) sind die, die man
+        # prüfen will.
         with redirect_stdout(buf), redirect_stderr(err):
             try:
                 cra.main()
@@ -147,8 +147,8 @@ def run_checker():
                 # sys.exit("Text") gibt eine Zeichenkette als Code. Die
                 # schreibt Python erst dann auf stderr, wenn die
                 # Exception UNBEHANDELT bleibt - wir fangen sie aber ab.
-                # Also selbst uebernehmen, sonst fehlt genau die
-                # Meldung, die man pruefen will.
+                # Also selbst übernehmen, sonst fehlt genau die
+                # Meldung, die man prüfen will.
                 if isinstance(e.code, str):
                     err.write(e.code)
     finally:
@@ -164,14 +164,14 @@ def run_checker():
 CASES = []
 
 # Die Build-Nummer, die der Attrapp meldet. Standard: die, die zum
-# Test-Stand passt (oeffentlich 99 + 9000). Die Faelle, die eine
-# falsche pruefen, setzen sie selbst.
+# Test-Stand passt (öffentlich 99 + 9000). Die Fülle, die eine
+# falsche prüfen, setzen sie selbst.
 build_nummer = 99 + cra.ADMIN_BUILD_OFFSET
 
-# Zwei moegliche-detektionswege. Der Unterschied ist Absicht: das
-# Artefakt kann ueber die UUID-Differenz auffallen (es enthaelt die
-# Admin-UUID, der Partnerbuild ist sauber) oder ueber die
-# Superset-Regel (es enthaelt saemtliche UUIDs des Admin-Builds). Beide
+# Zwei mögliche-detektionswege. Der Unterschied ist Absicht: das
+# Artefakt kann über die UUID-Differenz auffallen (es enthält die
+# Admin-UUID, der Partnerbuild ist sauber) oder über die
+# Superset-Regel (es enthält sämtliche UUIDs des Admin-Builds). Beide
 # sind korrekt, die Diagnose unterscheidet sich nur im Wortlaut.
 DETECTED = ('nur im Admin-Build', 'sämtliche UUIDs',
             'Admin-Zugang', 'Admin-UUID')
@@ -250,7 +250,7 @@ def _c8(tmp, admin):
 
 @case('ALLE öffentlichen Artefakte kontaminiert -> trotzdem erkannt')
 def _c9(tmp, admin):
-    # Der haeufigste blinde Fleck: ist die Basis selbst verraet, ist die
+    # Der häufigste blinde Fleck: ist die Basis selbst verrät, ist die
     # Differenz leer und der Check sagt "keine unbekannte UUID".
     world = make_world(tmp, ['play.apk', 'fdroid.apk'], admin,
                        secret_in={'play.apk', 'fdroid.apk'})
@@ -270,7 +270,7 @@ def _c5(tmp, admin):
     cra.current_version = lambda: ('9.9.9', '99')
     code, out = run_checker()
     assert 'FEHLER' not in out, out[-600:]
-    # 2 = alles in Ordnung, Signatur aber ungeprueft (kein apksigner).
+    # 2 = alles in Ordnung, Signatur aber ungeprüft (kein apksigner).
     assert code == 2, f'erwartet 2 (ungepruefte Signatur), kam {code}'
 
 
@@ -324,8 +324,8 @@ def _c8(tmp, admin):
 
 @case('Admin-Build mit richtiger Build-Nummer -> kein Fehler')
 def _c9(tmp, admin):
-    # Das Gegenstueck: der richtige Admin-Build darf nicht beanstandet
-    # werden. Sonst waere das Gate nur streng, nicht richtig.
+    # Das Gegenstück: der richtige Admin-Build darf nicht beanstandet
+    # werden. Sonst wäre das Gate nur streng, nicht richtig.
     world = make_world(tmp, ['play.apk'], admin)
     cra.ROOT = tmp
     cra.RELEASES = world

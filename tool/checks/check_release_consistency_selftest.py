@@ -1,19 +1,19 @@
-"""Selbsttest fuer das Release-Konsistenz-Gate.
+"""Selbsttest für das Release-Konsistenz-Gate.
 
-WARUM (07.11.2026): Bei diesem Gate sind drei Dinge geaendert worden,
+WARUM (07.11.2026): Bei diesem Gate sind drei Dinge geändert worden,
 die man nur durch Ausprobieren bemerkt:
 
   1. Der Release-Ordner folgt jetzt der Version aus pubspec.yaml.
      Vorher stand dort fest 'releases/v0.9.2' - die Abnahme von
-     v0.10.0 pruefte die Dateien von v0.9.2.
+     v0.10.0 prüfte die Dateien von v0.9.2.
   2. ACCESS_FINE_LOCATION ist nicht mehr verboten, sondern nur noch
-     mit maxSdkVersion=30 erlaubt (Android 11 und aelter brauchen die
-     genaue Berechtigung fuer den BLE-Scan).
-  3. Das AAB wird jetzt ueberhaupt geprueft - es ist die Datei, die
+     mit maxSdkVersion=30 erlaubt (Android 11 und älter brauchen die
+     genaue Berechtigung für den BLE-Scan).
+  3. Das AAB wird jetzt überhaupt geprüft - es ist die Datei, die
      in den Play Store geht.
 
 Ein Gate, das man nie rot gesehen hat, ist kein Gate. Dieser
-Selbsttest baut deshalb ein synthetisches AAB und prueft, dass der
+Selbsttest baut deshalb ein synthetisches AAB und prüft, dass der
 Leser die richtigen Werte findet und dass die Regeln anschlagen.
 
 Aufruf::
@@ -33,8 +33,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -55,7 +55,7 @@ import check_release_consistency as g  # noqa: E402
 
 
 # =====================================================================
-# Ein minimaler Protobuff-Encoder (genug fuer das Manifest)
+# Ein minimaler Protobuff-Encoder (genug für das Manifest)
 # =====================================================================
 def varint(wert: int) -> bytes:
     aus = bytearray()
@@ -70,7 +70,7 @@ def varint(wert: int) -> bytes:
 
 
 def feld(nummer: int, inhalt: bytes) -> bytes:
-    """Feld mit Laenge (Wire-Typ 2)."""
+    """Feld mit Länge (Wire-Typ 2)."""
     return varint((nummer << 3) | 2) + varint(len(inhalt)) + inhalt
 
 

@@ -1,16 +1,16 @@
 // Der Kinderschutz-Abschnitt in den Einstellungen.
 //
-// ANLASS (16.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (16.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/settings/guardian_section.dart 256 offene Zeilen - und gerade hier
 // geht es um die elterliche Aufsicht (Nutzungszeit, PIN).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Stand kommt vom Server und wird angezeigt,
 //   * das Entsperren fragt nach der vierstelligen PIN,
 //   * eine falsche PIN (zu kurz oder falsch) wird abgewiesen,
-//   * die richtige PIN schaltet die Aenderungen frei.
+//   * die richtige PIN schaltet die Änderungen frei.
 //
-// DIE PIN LAEUFT AUF DEM SERVER: Das Geraet kennt die PIN nie - der
+// DIE PIN LÄUFT AUF DEM SERVER: Das Gerät kennt die PIN nie - der
 // Vergleich passiert in der Datenbank (Migration 167). Deshalb wird
 // hier der Server beantwortet, nicht die PIN nachgebaut.
 import 'package:flutter/material.dart';
@@ -35,8 +35,8 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
     mockZeitzone();
-    // HIVE: der Signal-Dienst (der im Hintergrund mitlaeuft) liest seine
-    // verschluesselten Boxen - ohne initialisierten Hive scheitert der
+    // HIVE: der Signal-Dienst (der im Hintergrund mitläuft) liest seine
+    // verschlüsselten Boxen - ohne initialisierten Hive scheitert der
     // Aufbau.
     await mockHive();
 
@@ -82,7 +82,7 @@ void main() {
       const ProviderScope(
         child: MaterialApp(
           home: Scaffold(
-            // Der Abschnitt ist laenger als der Bildschirm - in der App
+            // Der Abschnitt ist länger als der Bildschirm - in der App
             // steht er in einer scrollbaren Liste.
             body: SingleChildScrollView(child: GuardianSection()),
           ),
@@ -177,14 +177,14 @@ void main() {
         findsOneWidget,
         reason: 'Eine falsche PIN muss abgewiesen werden.',
       );
-      // Und der Server wurde gefragt (der Vergleich laeuft dort).
+      // Und der Server wurde gefragt (der Vergleich läuft dort).
       expect(
         server.pfade.any((p) => p.contains('verify_guardian_pin')),
         isTrue,
       );
 
       // UND: Der Bereich bleibt gesperrt - die Nutzungszeit des
-      // Jugendlichen darf nur der Elternteil aendern.
+      // Jugendlichen darf nur der Elternteil ändern.
       expect(
         find.text(L10n.tWithoutContext('guardian.pinLocked')),
         findsOneWidget,
@@ -199,7 +199,7 @@ void main() {
       tester,
     ) async {
       await zeigeAbschnitt(tester);
-      // Der Server bestaetigt die PIN.
+      // Der Server bestätigt die PIN.
       server.rpcAntworten['verify_guardian_pin'] = true;
 
       final knopf = find.text(L10n.tWithoutContext('guardian.pinLocked'));

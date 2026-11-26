@@ -41,7 +41,7 @@ part 'parts/signedappealimagestate.dart';
 part 'parts/locationcheckstab.dart';
 part 'parts/locationcheckstabstate.dart';
 
-/// Hilfsfunktion: Prueft, ob der aktuell eingeloggte Nutzer der Admin ist.
+/// Hilfsfunktion: Prüft, ob der aktuell eingeloggte Nutzer der Admin ist.
 ///
 /// Die Admin-UUID wird via --dart-define=ADMIN_UUID=... beim Build gesetzt.
 /// Ist sie nicht konfiguriert (leerer String), gibt die Funktion IMMER false
@@ -58,28 +58,28 @@ bool isCurrentUserAdmin() {
 
 /// Ob der aktuell eingeloggte Nutzer Admin ist - als Provider.
 ///
-/// DER WEG (14.11.2026): Ueber einen Provider ist der Admin-Bereich im
-/// Test erreichbar, ohne die echte Admin-UUID im Test zu braeren.
+/// DER WEG (14.11.2026): Über einen Provider ist der Admin-Bereich im
+/// Test erreichbar, ohne die echte Admin-UUID im Test zu brären.
 ///
 /// DIE REGEL BLEIBT: Ohne konfigurierte Admin-UUID (Build-Parameter) ist
-/// NIE jemand Admin, und der Bildschirm prueft zusaetzlich serverseitig
-/// (fail-closed). Nur der TEST ueberschreibt diesen Provider - die
+/// NIE jemand Admin, und der Bildschirm prüft zusätzlich serverseitig
+/// (fail-closed). Nur der TEST überschreibt diesen Provider - die
 /// Produktion nicht.
 final adminAccessProvider = Provider<bool>((ref) => isCurrentUserAdmin());
 
-/// Geschuetzter Admin-Screen.
+/// Geschützter Admin-Screen.
 ///
-/// SCHUTZKONZEPT (warum normale Nutzer ihn nicht sehen koennen):
-///  1. Route nur aus "Mein Profil" verlinkt; der Screen prueft beim Oeffnen
+/// SCHUTZKONZEPT (warum normale Nutzer ihn nicht sehen können):
+///  1. Route nur aus "Mein Profil" verlinkt; der Screen prüft beim Öffnen
 ///     clientseitig [isCurrentUserAdmin] UND serverseitig den RPC
 ///     `is_current_user_admin` (fail-closed - bei Fehler wird umgeleitet).
-///  2. Alle Daten kommen ausschliesslich aus SECURITY DEFINER-RPCs
+///  2. Alle Daten kommen ausschließlich aus SECURITY DEFINER-RPCs
 ///     (`admin_list_*`), die `is_current_user_admin()` serverseitig
-///     pruefen. Ohne Admin-Flag liefern sie leere Ergebnisse bzw. Fehler -
-///     selbst bei manipuliertem Client ist kein Datenzugriff moeglich.
+///     prüfen. Ohne Admin-Flag liefern sie leere Ergebnisse bzw. Fehler -
+///     selbst bei manipuliertem Client ist kein Datenzugriff möglich.
 ///  3. Schreibaktionen (Verifizierungs-Freigabe) laufen durch die Edge
 ///     Function `verify-account`, die den Admin-Status ebenfalls
-///     serverseitig gegen die profiles-Tabelle prueft.
+///     serverseitig gegen die profiles-Tabelle prüft.
 class AdminScreen extends ConsumerStatefulWidget {
   const AdminScreen({super.key});
 
@@ -105,7 +105,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
 
   void _enforceAdmin() {
     if (!ref.read(adminAccessProvider) && mounted) {
-      // Fail-closed bleibt (Audit H6), aber der Grund gehoert ins Log.
+      // Fail-closed bleibt (Audit H6), aber der Grund gehört ins Log.
       // Ohne das ist die häufigste Ursache - die FALSCHE APK - nur daran
       // zu erkennen, dass der Screen sofort wieder zugeht, und das sieht
       // wie ein Fehler der App aus statt wie ein Baufehler.
@@ -122,9 +122,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         );
       }
       // NACH dem Aufbau navigieren (BEFUND 14.11.2026, gefunden von einem
-      // Test): Ein `context.go()` waehrend des Aufbaus wirft "setState()
+      // Test): Ein `context.go()` während des Aufbaus wirft "setState()
       // or markNeedsBuild() called during build" - der Aufruf kommt hier
-      // aus dem initState/didChangeDependencies, also genau waehrend des
+      // aus dem initState/didChangeDependencies, also genau während des
       // Aufbaus. Der Bereich ist trotzdem zu: der Aufbau selbst zeigt
       // den Hinweis ("admin.denied"), erst danach geht es zur Startseite.
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -176,7 +176,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
       // aber es gibt ACHT Tabs (Pillen) und ACHT Seiten (TabBarView).
       // Der letzte (Posteingang) war dadurch nicht erreichbar: ein
       // Klick darauf rief controller.animateTo(7) auf einem Controller
-      // mit 7 Eintraegen auf - das ist ein Assertion-Fehler.
+      // mit 7 Eintrügen auf - das ist ein Assertion-Fehler.
       // Die Zahl muss zur Zahl der Pillen passen.
       length: 8,
       child: Builder(
@@ -192,7 +192,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
               // Pillen-Indikator statt TabBar: der TabBar-Indikator ist
               // ein Unterstrich zwischen den Labels und damit bei sechs
               // Tabs mit Icon mehrdeutig. Die Pille sitzt HINTER dem
-              // aktiven Tab und traegt dieselbe Zahl wie die Kennzahlen-
+              // aktiven Tab und trägt dieselbe Zahl wie die Kennzahlen-
               // Zeile, sodass man von beiden Stellen sieht, wo Arbeit
               // wartet.
               //
@@ -236,16 +236,16 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                       icon: Icons.block,
                       count: (counts?.bans ?? 0) > 0 ? counts!.bans : null,
                     ),
-                    // Die Standort-Pruefungen: Profile, bei denen der
+                    // Die Standort-Prüfungen: Profile, bei denen der
                     // Standort-Check aufgefallen ist. Reiner Hinweis -
-                    // die App verhaelt sich dadurch nicht anders.
+                    // die App verhält sich dadurch nicht anders.
                     PillTab(
                       label: L10n.t(context, 'admin.tabLocations'),
                       icon: Icons.location_on_outlined,
                     ),
                     // Der Posteingang: eingehende Mails an die Adresse
                     // des Betreibers, nach Rubrik gefiltert. Nur lesen -
-                    // antworten geht weiterhin ueber das Mail-Programm.
+                    // antworten geht weiterhin über das Mail-Programm.
                     PillTab(
                       label: L10n.t(context, 'admin.tabMail'),
                       icon: Icons.inbox_outlined,
@@ -269,8 +269,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
               children: [
                 // Kennzahlen-Zeile: beantwortet "wo liegt Arbeit" ohne
                 // Durchklicken. Die Tabs melden dem Provider nach einer
-                // Aktion ueber `refreshAdminCounts(ref)`, damit die Zeile
-                // nicht bis zum naechsten Oeffnen falsch bleibt.
+                // Aktion über `refreshAdminCounts(ref)`, damit die Zeile
+                // nicht bis zum nächsten Öffnen falsch bleibt.
                 _AdminMetricsBar(),
                 Expanded(
                   child: TabBarView(
@@ -296,7 +296,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
 }
 
 // ===========================================================================
-// Gemeinsames Lade-Geruest fuer Server-Listen.
+// Gemeinsames Lade-Gerüst für Server-Listen.
 // ===========================================================================
 
 String _fmtTs(BuildContext context, dynamic ts) {
@@ -318,7 +318,7 @@ String _fmtTs(BuildContext context, dynamic ts) {
 // ===========================================================================
 
 // ===========================================================================
-// Tab 4: Foto-Moderation (unveraendert uebernommen, mit Hash-Guard)
+// Tab 4: Foto-Moderation (unverändert übernommen, mit Hash-Guard)
 // ===========================================================================
 
 // ===========================================================================
@@ -339,21 +339,21 @@ String _fmtTs(BuildContext context, dynamic ts) {
 // ===========================================================================
 
 // ===========================================================================
-// Tab: Standort-Pruefungen (Profile mit gesetztem Verdachtsflag)
+// Tab: Standort-Prüfungen (Profile mit gesetztem Verdachtsflag)
 // ===========================================================================
 //
 // WAS DAS ZEIGT: Profile, bei denen der Standort-Check aufgefallen ist -
 // der Standort sprang um mehr als 15 km oder die Fortbewegungs-
-// geschwindigkeit lag ueber 300 km/h.
+// geschwindigkeit lag über 300 km/h.
 //
 // WAS ES NICHT TUT: Niemand wird aus der Discovery genommen, niemand
-// gesperrt, kein Verhalten der App aendert sich. Das Flag
+// gesperrt, kein Verhalten der App ändert sich. Das Flag
 // `is_location_suspicious` wird seit Migration 180 geschrieben, aber
-// von keiner Abfrage ausgewertet - es ist ein Hinweis fuer den Admin,
+// von keiner Abfrage ausgewertet - es ist ein Hinweis für den Admin,
 // kein Filter. Die Entscheidung des Nutzers (06.11.2026) war
-// ausdruecklich "nur im Admin-Bereich anzeigen".
+// ausdrücklich "nur im Admin-Bereich anzeigen".
 //
-// DIE DATENLOESUNG: Die RPC admin_list_location_checks prueft selbst,
+// DIE DATENLOESUNG: Die RPC admin_list_location_checks prüft selbst,
 // ob der Aufrufer Admin ist - ohne Admin liefert sie eine leere
 // Liste. Die Anzeige ist damit nicht nur im Admin-Bereich, sondern
-// nur fuer Admins erreichbar.
+// nur für Admins erreichbar.

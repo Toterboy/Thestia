@@ -1,14 +1,14 @@
 // Der Kinderschutz-Stand in den Einstellungen (bisher ungetestet).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/settings/settings_screen.dart 351 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne Einwilligung steht das drin (nicht "nichts"),
 //   * mit Einwilligung steht der aktive Stand,
 //   * ein Lesefehler wird als Fehler gemeldet - nicht als "keine
-//     Aufsicht" (das waere eine falsche Aussage ueber die Aufsicht),
-//   * der Eintrag fuehrt in den Elternbereich.
+//     Aufsicht" (das wäre eine falsche Aussage über die Aufsicht),
+//   * der Eintrag fährt in den Elternbereich.
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -84,8 +84,8 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
     // DIE ZEITZONE: Der Dienst meldet sie dem Server (die elterliche
-    // Nutzungszeit laeuft in der lokalen Zeit) - ohne den Mock bleibt
-    // der Abruf haengen und der Stand kommt nie an.
+    // Nutzungszeit läuft in der lokalen Zeit) - ohne den Mock bleibt
+    // der Abruf hängen und der Stand kommt nie an.
     mockZeitzone();
 
     server = FakeSupabaseServer(userId: 'ich');
@@ -100,8 +100,8 @@ void main() {
       ),
     );
 
-    // HIVE: die verschluesselten Schluessel (Signal-Protokoll) liegen in
-    // Hive-Boxen - ohne initialisierten Hive schlaegt der Aufbau fehl.
+    // HIVE: die verschlüsselten Schlüssel (Signal-Protokoll) liegen in
+    // Hive-Boxen - ohne initialisierten Hive schlägt der Aufbau fehl.
     final tempDir = await Directory.systemTemp.createTemp('thesia_guardian');
     Hive.init(tempDir.path);
   });
@@ -121,7 +121,7 @@ void main() {
   /// Baut die Einstellungen mit dem angegebenen Kinderschutz-Stand.
   ///
   /// Der Stand kommt vom Server (RPC `get_my_guardian_status`) - so wird
-  /// der ganze Weg geprueft, nicht nur die Anzeige.
+  /// der ganze Weg geprüft, nicht nur die Anzeige.
   Future<void> zeigeEinstellungen(
     WidgetTester tester,
     GuardianStatus status,
@@ -188,7 +188,7 @@ void main() {
   /// Scrollt zu einem Text (der Bildschirm ist eine lange Liste).
   ///
   /// FEINE Schritte: der Kinderschutz-Eintrag steht knapp unter dem
-  /// Datenschutz-Block. Mit grossen Schritten springt man darueber
+  /// Datenschutz-Block. Mit großen Schritten springt man darüber
   /// hinweg - und der Eintrag wird dann nicht mehr gebaut.
   Future<void> scrolleZu(WidgetTester tester, String text) async {
     final ziel = find.text(text);
@@ -237,7 +237,7 @@ void main() {
 
     testWidgets('ein Lesefehler wird als Fehler gemeldet', (tester) async {
       // Der Server schweigt - die App darf daraus NICHT "keine Aufsicht"
-      // machen (das waere eine falsche Aussage ueber die Aufsicht).
+      // machen (das wäre eine falsche Aussage über die Aufsicht).
       server.antwortetMitFehler = true;
       await zeigeEinstellungen(
         tester,

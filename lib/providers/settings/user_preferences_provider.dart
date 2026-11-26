@@ -38,18 +38,18 @@ extension DistanceFilterModeLabel on DistanceFilterMode {
 
   /// Der Wert, den die DATENBANK kennt (Migration 127).
   ///
-  /// **WICHTIG (BEFUND 13.11.2026, Betreiber: "Server Sync schlaegt fehl,
+  /// **WICHTIG (BEFUND 13.11.2026, Betreiber: "Server Sync schlägt fehl,
   /// wenn ich mein Profil anpasse"):** `distanceFilterMode.name` ist der
   /// Dart-Enum-Name `distanceKm` - die Spalte `distance_filter_mode`
   /// akzeptiert aber NUR `distance_km`, `state` oder `germany`
   /// (CHECK-Constraint `profiles_distance_filter_mode_check`).
   ///
   /// Ein PostgREST-UPDATE ist **atomar**: EIN verletztes Feld macht das
-  /// GANZE Update unmoeglich. Wer `.name` schickt, verliert damit ALLE
-  /// Profilaenderungen (Name, Bio, Interessen, Vorstellung ...) - und
+  /// GANZE Update unmöglich. Wer `.name` schickt, verliert damit ALLE
+  /// Profiländerungen (Name, Bio, Interessen, Vorstellung ...) - und
   /// sieht nur "Server-Sync fehlgeschlagen".
   ///
-  /// Der Fehler war im Praeferenz-Provider schon behoben (dort stand
+  /// Der Fehler war im Präferenz-Provider schon behoben (dort stand
   /// ein eigenes `switch`), aber im Profil-Editor stand weiterhin
   /// `.name` - deshalb schlug der Sync NUR dort fehl. Diese
   /// Abbildung ist jetzt der EINZIGE Ort, an dem der DB-Wert entsteht.
@@ -178,24 +178,24 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
 
   static const _prefsKey = 'user_preferences';
 
-  /// Der Schluessel fuer die Aenderung, die noch auf den Server muss.
+  /// Der Schlüssel für die Änderung, die noch auf den Server muss.
   static const _pendingSyncKey = 'user_preferences_pending_sync';
 
-  /// MERKT eine Aenderung vor, die noch nicht auf dem Server ist.
+  /// MERKT eine Änderung vor, die noch nicht auf dem Server ist.
   ///
   /// BEFUND (09.11.2026, Betreiber): "Server Sync ist fehlgeschlagen.
-  /// Wenn Daten aktuell nicht synchronisiert werden koennen, soll dies
-  /// Nachtraeglich gehen."
+  /// Wenn Daten aktuell nicht synchronisiert werden können, soll dies
+  /// Nachträglich gehen."
   ///
   /// DER GRUND: Der Sync scheiterte (kein Netz, Server gerade nicht
-  /// erreichbar) - und dann war die Aenderung weg. Der Server behielt
+  /// erreichbar) - und dann war die Änderung weg. Der Server behielt
   /// den alten Wert, die Altersspanne (die es nur auf dem Server gibt)
-  /// war ueberhaupt nirgends mehr, und der Fehler stand nur im Log -
-  /// fuer den Nutzer unsichtbar. Beim naechsten Start wurde der
-  /// Serverwert geholt: die Aenderung war weg.
+  /// war überhaupt nirgends mehr, und der Fehler stand nur im Log -
+  /// für den Nutzer unsichtbar. Beim nächsten Start wurde der
+  /// Serverwert geholt: die Änderung war weg.
   ///
-  /// JETZT: Die Aenderung wird VORGEMERKT und beim naechsten Start
-  /// nachgeholt. Der Marker loescht sich, sobald der Server sie
+  /// JETZT: Die Änderung wird VORGEMERKT und beim nächsten Start
+  /// nachgeholt. Der Marker löscht sich, sobald der Server sie
   /// angenommen hat.
   Future<void> _markPendingSync(Map<String, dynamic> felder) async {
     await bestEffort('saveString', () async {
@@ -203,7 +203,7 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
     });
   }
 
-  /// Die vorgemerkte Aenderung (null = nichts wartet).
+  /// Die vorgemerkte Änderung (null = nichts wartet).
   Future<Map<String, dynamic>?> _readPendingSync() async {
     final raw = await _storage.getString(_pendingSyncKey);
     if (raw == null || raw.isEmpty) return null;
@@ -212,20 +212,20 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
       if (map is Map<String, dynamic>) return map;
       return null;
     } catch (_) {
-      // Kaputter Eintrag: nicht blockieren, nur loeschen.
+      // Kaputter Eintrag: nicht blockieren, nur löschen.
       await _clearPendingSync();
       return null;
     }
   }
 
-  /// Der Marker ist erledigt (der Server hat die Aenderung).
+  /// Der Marker ist erledigt (der Server hat die Änderung).
   Future<void> _clearPendingSync() async {
     await bestEffort('remove', () async {
       await _storage.remove(_pendingSyncKey);
     });
   }
 
-  /// Holt eine wartende Aenderung nach - einmal beim Start.
+  /// Holt eine wartende Änderung nach - einmal beim Start.
   ///
   /// Wichtig: Es wird der VORGEMERKTE Stand geschrieben, nicht der
   /// aktuelle Zustand. Die Altersspanne steckt nur im Marker (sie
@@ -267,10 +267,10 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
   }
 
   Future<void> _load() async {
-    // Eine zuvor gescheiterte Server-Aenderung wird nachgeholt
+    // Eine zuvor gescheiterte Server-Änderung wird nachgeholt
     // (BEFUND 09.11.2026, Betreiber: "Server Sync ist fehlgeschlagen.
-    // Wenn Daten aktuell nicht synchronisiert werden koennen, soll dies
-    // Nachtraeglich gehen.").
+    // Wenn Daten aktuell nicht synchronisiert werden können, soll dies
+    // Nachträglich gehen.").
     unawaited(_retryPendingSync());
 
     // Migration: alten Klartext-Eintrag in den sicheren Speicher übernehmen.
@@ -444,11 +444,11 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
       final body = <String, dynamic>{
         'max_distance_km': state.maxDistanceKm,
         // Modus mitsenden (Migration 085) - sonst springt er nach
-        // Neuinstallation zurueck (der eigentliche Radius-weg-Bug).
+        // Neuinstallation zurück (der eigentliche Radius-weg-Bug).
         'distance_filter_mode': dbMode,
         'gender_preferences': state.genderPreferences,
         // Bewusst IMMER schreiben (auch null = Filter "Ganz Deutschland"),
-        // sonst wuerde ein spaeterer Sync den alten Wert zurueckholen.
+        // sonst würde ein späterer Sync den alten Wert zurückholen.
       };
 
       // relationship_type und preferred_state werden GETRENNT
@@ -457,14 +457,14 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
       // BUG (stiller Totalausfall): beide Spalten haben CHECK-
       // Constraints mit einer ganz anderen Wertedomaene als die App
       // verwendet. Ein PostgREST-UPDATE ist atomar: EIN verletztes
-      // Feld macht das GANZE Update unmoeglich. Dadurch wurden auch
+      // Feld macht das GANZE Update unmöglich. Dadurch wurden auch
       // max_distance_km, age_range_min/max, gender_preferences und
       // distance_filter_mode nie gespeichert - bei JEDEM Aufruf, auch
-      // ohne dass der Nutzer etwas angefasst haette.
+      // ohne dass der Nutzer etwas angefasst hätte.
       //
       // Der Fehler wurde dreifach verschluckt und war damit unsichtbar.
       //
-      // Der Split loest das: das Haupt-Update enthaelt nur Felder, die
+      // Der Split löst das: das Haupt-Update enthält nur Felder, die
       // der Server sicher annimmt. Die beiden problematischen Felder
       // gehen in einen zweiten, eigenen Schreibvorgang - scheitert er,
       // ist nur das betroffen.
@@ -486,8 +486,8 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
           'betroffen: max_distance_km, age_range, gender_preferences, '
           'distance_filter_mode',
         );
-        // VORMERKEN: Die Aenderung geht nicht verloren, sie wird beim
-        // naechsten Start nachgeholt (BEFUND 09.11.2026, Betreiber).
+        // VORMERKEN: Die Änderung geht nicht verloren, sie wird beim
+        // nächsten Start nachgeholt (BEFUND 09.11.2026, Betreiber).
         await _markPendingSync(body);
       } else {
         // Der Server hat den Stand - es wartet nichts mehr.
@@ -495,7 +495,7 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
       }
 
       // Der Sonderfall separat. Ein Fehler hier darf das Haupt-Update
-      // nicht rueckgaengig machen - und der Aufrufer soll ihn sehen.
+      // nicht rückgängig machen - und der Aufrufer soll ihn sehen.
       try {
         await db.updateOwnProfile(sonderBody);
       } catch (e) {
@@ -529,14 +529,14 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
     };
   }
 
-  /// Abbildung des bevorzugten Bundeslandes auf die Server-Domaene.
+  /// Abbildung des bevorzugten Bundeslandes auf die Server-Domäne.
   ///
-  /// Die Spalte `preferred_state` wird fuer zwei verschiedene Dinge
-  /// benutzt: historisch fuer die Beziehungsform (CHECK aus Migration
-  /// 127) und heute fuer das gewuenschte Bundesland. Der CHECK erlaubt
+  /// Die Spalte `preferred_state` wird für zwei verschiedene Dinge
+  /// benutzt: historisch für die Beziehungsform (CHECK aus Migration
+  /// 127) und heute für das gewünschte Bundesland. Der CHECK erlaubt
   /// nur die Beziehungswerte, das Bundesland kommt also nicht durch.
   /// Deshalb wird hier nichts geschrieben, wenn es ein Bundesland ist
-  /// - der Radiusfilter laeuft ueber `state` und
+  /// - der Radiusfilter läuft über `state` und
   /// `distance_filter_mode`, die beide funktionieren.
   ///
   /// BEFUND (13.11.2026): Der Profil-Editor schickte den Rohwert

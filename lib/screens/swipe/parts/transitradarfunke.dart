@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -27,13 +27,13 @@ extension _TransitRadarFunke on _TransitRadarScreenState {
     if (!mounted) return;
     if (result == null) {
       final reason = ref.read(transitProvider).lastError;
-      // Eigene Lage statt Rohfehler: "kein Geraet in Reichweite" ist
+      // Eigene Lage statt Rohfehler: "kein Gerät in Reichweite" ist
       // kein Fehler, sondern der Normalfall, wenn niemand nearby ist.
-      // Der Serverfehler dazu war "Bad request" (400) - fuer den
+      // Der Serverfehler dazu war "Bad request" (400) - für den
       // Nutzer eine tote Meldung (BEFUND 06.11.2026).
       //
       // Und: der eigene Token fehlt (v0.10.0, Migration 185) - das
-      // heisst, das Radar sendet noch kein Signal. Ohne ihn kann der
+      // heißt, das Radar sendet noch kein Signal. Ohne ihn kann der
       // Server keinen Match finden; das wird gesagt statt still
       // nichts zu tun.
       final text = reason == 'no_devices'
@@ -62,7 +62,7 @@ extension _TransitRadarFunke on _TransitRadarScreenState {
       // beide Richtungen an. Existiert mit der Person SCHON ein Funke,
       // bleibt es bei diesem einen (ON CONFLICT DO NOTHING) - der
       // Nutzer sah aber trotzdem den Erfolgs-Dialog. Das war
-      // irrefuehrend.
+      // irreführend.
       //
       // JETZT: Der Server teilt mit, ob der Match NEU war. Wenn nicht,
       // wird das gesagt (mit Weg in den bestehenden Chat) statt des
@@ -156,7 +156,7 @@ extension _TransitRadarFunke on _TransitRadarScreenState {
       // Limit des erneuten Drückens wartet sonst vergeblich).
       _watchForLateSpark();
       // BEFUND (11.11.2026): Die Kandidatenliste - alle Personen in der
-      // Naehe, deren Beschreibung passt. Wer mehrere sind, bekommt sie
+      // Nähe, deren Beschreibung passt. Wer mehrere sind, bekommt sie
       // alle vorgeschlagen und kann mehreren zuwinken.
       unawaited(_showCandidates(picked.tags));
     }
@@ -171,19 +171,19 @@ extension _TransitRadarFunke on _TransitRadarScreenState {
     }
 
     // NUTZERWUNSCH (Build 30): Transit Spark nur ab 18. build() blendet
-    // den Start-Button fuer Minderjaehrige bereits aus, diese Pruefung
-    // ist die zweite Verteidigungslinie fuer den Fall, dass ein bereits
-    // gestarteter Radar nach einer Profilaenderung weiterlaeuft - der
-    // Server wuerde den Heartbeat ohnehin mit transit_age_restricted
-    // ablehnen, dann waere der Fehler aber erst nach dem BLE-Start
+    // den Start-Button für Minderjährige bereits aus, diese Prüfung
+    // ist die zweite Verteidigungslinie für den Fall, dass ein bereits
+    // gestarteter Radar nach einer Profiländerung weiterläuft - der
+    // Server würde den Heartbeat ohnehin mit transit_age_restricted
+    // ablehnen, dann wäre der Fehler aber erst nach dem BLE-Start
     // sichtbar.
     final age = ref.read(profileProvider).age;
     if (age == null || age < 18) return;
 
     // Der Server kann Transit Spark abschalten (Migration 159 - die
-    // Notbremse fuer den Fall, dass der BLE-Gerätetest nicht besteht).
+    // Notbremse für den Fall, dass der BLE-Gerätetest nicht besteht).
     // Dann wird nicht nur der Funk unterlassen: der Nutzer bekommt
-    // eine klare Begruendung statt einer Alters-Meldung, die nicht
+    // eine klare Begründung statt einer Alters-Meldung, die nicht
     // zutrifft.
     if (ref.read(transitProvider).featureDisabled) {
       if (!mounted) return;
@@ -196,8 +196,8 @@ extension _TransitRadarFunke on _TransitRadarScreenState {
       return;
     }
 
-    // Taegliche Selbst-Angaben (v0.9.0): Pflicht vor dem Start - andere
-    // koennen dich nur darueber finden. Jeden Tag neu angeben. Plus
+    // Tägliche Selbst-Angaben (v0.9.0): Pflicht vor dem Start - andere
+    // können dich nur darüber finden. Jeden Tag neu angeben. Plus
     // optionale freie Ergänzung (v0.9.1, eigenes Textfeld).
     final self = await _showTagPickerSheet(
       titleKey: 'transit.self.title',
@@ -210,9 +210,9 @@ extension _TransitRadarFunke on _TransitRadarScreenState {
     transit.setSelfTags(self.tags);
     transit.setSelfNote(self.note);
 
-    // BEFUND (06.11.2026): Auf Android 11 und aelter fragt der
-    // BLE-Scan den genauen Standort an - Google Play verlangt dafuer
-    // eine prominente Begruendung IN DER APP, bevor der Systemdialog
+    // BEFUND (06.11.2026): Auf Android 11 und älter fragt der
+    // BLE-Scan den genauen Standort an - Google Play verlangt dafür
+    // eine prominente Begründung IN DER APP, bevor der Systemdialog
     // erscheint. Ab Android 12 reicht Bluetooth, da wird gar nicht
     // erst nach dem Standort gefragt.
     if (await TransitBleService.brauchtStandort() && mounted) {

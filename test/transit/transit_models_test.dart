@@ -4,12 +4,12 @@
 // abgedeckt. Gerade die Suche ist wichtig - der Nutzer tippt "pulli"
 // und muss das richtige Merkmal finden.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * das Ergebnis des Signal-Versands wird richtig gelesen (inkl.
 //     leerer Notiz),
-//   * die Kategorien sind ueber ihren Slug auffindbar,
+//   * die Kategorien sind über ihren Slug auffindbar,
 //   * die Suche findet Slugs und Schreibweisen (Aliasse),
-//   * die Suche versteht Umlaute ("muetze" findet "mütze"),
+//   * die Suche versteht Umlaute ("mütze" findet "mütze"),
 //   * ein leerer Suchbegriff liefert den ganzen Katalog.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/transit/transit_models.dart';
@@ -82,7 +82,7 @@ void main() {
     });
 
     test('eine Schreibweise aus den Aliasen wird gefunden', () {
-      // "t-shirt" ist ein Alias fuer "tshirt".
+      // "t-shirt" ist ein Alias für "tshirt".
       final treffer = TransitTag.search('t-shirt');
       expect(treffer, isNotEmpty);
       expect(treffer.map((t) => t.slug), contains('tshirt'));

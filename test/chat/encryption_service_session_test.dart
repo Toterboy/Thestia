@@ -1,26 +1,26 @@
-// Die Ende-zu-Ende-Verschluesselung - der Session-Aufbau war ungetestet.
+// Die Ende-zu-Ende-Verschlüsselung - der Session-Aufbau war ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/encryption_service.dart 136 offene Zeilen. Die
 // Session-Aufbau-Funktionen (PreKey-Bundle, Session, Trust) waren
 // ungetestet - obwohl sie die ZUSEITUNG der App tragen: "Ende-zu-Ende-
-// verschluesselt".
+// verschlüsselt".
 //
 // ANMERKUNG: Diese Tests laufen als NORMALE Tests (nicht als
 // Widget-Tests) - Hive braucht echte Datei-Arbeit.
 //
-// ANMERKUNG ZUM ZWEITEN GERAET: Zwei echte Geraete teilen sich keine
-// Boxen - im Test waere das ein Fehler (beide naemen dieselben
+// ANMERKUNG ZUM ZWEITEN GERÄT: Zwei echte Geräte teilen sich keine
+// Boxen - im Test wäre das ein Fehler (beide nämen dieselben
 // PreKeys). Deshalb wird die Gegenseite hier durch ein zweites Bundle
-// aus demselben Dienst angedeutet: geprueft wird der AUFBAU der
-// Session, nicht der Austausch zwischen zwei Geraeten.
+// aus demselben Dienst angedeutet: geprüft wird der AUFBAU der
+// Session, nicht der Austausch zwischen zwei Geräten.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * das PreKey-Bundle traegt alle oeffentlichen Schluessel,
+// WAS HIER GEPRÜFT WIRD:
+//   * das PreKey-Bundle trägt alle öffentlichen Schlüssel,
 //   * eine Session wird aufgebaut,
-//   * ein geaenderter Identity-Key des Peers wird NICHT still
-//     akzeptiert (der Nutzer muss die Safety-Nummer pruefen),
-//   * das Zuruecksetzen des Vertrauens loest die Session,
+//   * ein geänderter Identity-Key des Peers wird NICHT still
+//     akzeptiert (der Nutzer muss die Safety-Nummer prüfen),
+//   * das Zurücksetzen des Vertrauens löst die Session,
 //   * die Safety-Nummer ist stabil,
 //   * der Signed-PreKey ist vorhanden.
 import 'dart:convert';
@@ -40,7 +40,7 @@ void main() {
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // DER KEYSTORE: die Boxen sind AES-256-verschluesselt.
+    // DER KEYSTORE: die Boxen sind AES-256-verschlüsselt.
     mockKeystore();
     // DIE ADAPTER: die Boxen halten Signal-Objekte.
     Hive.registerAdapter(SignalIdentityKeyPairAdapterAdapter());
@@ -133,7 +133,7 @@ void main() {
       //
       // DER WEG: Ein echter, fremder Identity-Key (ein gültiger
       // Curve25519-Punkt). Der Dienst im Test teilt sich die Boxen mit
-      // dem ersten - sein eigener Key waere also DERSELBE.
+      // dem ersten - sein eigener Key wäre also DERSELBE.
       final fremdesPaar = Curve.generateKeyPair();
       final falschesBundle = <String, dynamic>{
         ...bundle,
@@ -156,11 +156,11 @@ void main() {
       expect(await service.hasSession('partner-1'), isTrue);
 
       // DER TRUST-EINTRAG: Der Dienst merkt sich den Identity-Key des
-      // Peers (TOFU). Nach dem Zuruecksetzen ist er weg - erst dann darf
+      // Peers (TOFU). Nach dem Zurücksetzen ist er weg - erst dann darf
       // ein neuer Key kommen.
       //
       // DER WEG: Der Test liest die Box direkt (der Dienst bietet keinen
-      // Getter dafuer an).
+      // Getter dafür an).
       final trustBox = Hive.box<String>('signal_peer_trust');
       expect(trustBox.get('partner-1'), isNotNull);
 

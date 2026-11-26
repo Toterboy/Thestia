@@ -27,24 +27,24 @@ ALLE ABGERUNDET (nicht rund):
   favicon.png   192x192  - das ThestiaIcon, abgerundet
   favicon.ico   16/32/48/64/128/256 - dasselbe, abgerundet. Das ist der
                 Weg, den die Suche nimmt (sie fragt /favicon.ico).
-  favicon.svg   dasselbe als SVG (mit dem PNG eingebettet) - fuer
+  favicon.svg   dasselbe als SVG (mit dem PNG eingebettet) - für
                 Browser, die SVG-Icons bevorzugen. Ohne diese Datei
                 nimmte der Browser das Herz.
-  logo.png      256x256  - dasselbe Bild fuer die Kopfzeile und die
+  logo.png      256x256  - dasselbe Bild für die Kopfzeile und die
                 Karte jeder Seite (23.11.2026, Betreiber: "Bei allen
                 Websites und auch auth.thestia soll statt diesem Herz
                 Icon das richtige App logo da sein, also dieses
                 abgerundete, aber nicht ganz runde").
 
 DIE ENTSCHEIDUNG VOM 09.11.2026 ("Hier muss das Bild Rund sein") ist
-damit ueberholt (23.11.2026, Betreiber): "Das Icon sollte außerdem
+damit überholt (23.11.2026, Betreiber): "Das Icon sollte außerdem
 nicht rund sein. Es soll so sein wie thestia_icon_base.png aus
 assets/images." Die Quelle hat bereits abgerundete, transparente Ecken
 - es wird nur skaliert, nicht mehr in einen Kreis geschnitten.
 
-WARUM EIN WERKZEUG FUER BEIDES: Der Weg zum Logo laeuft sonst
-auseinander - das war schon einmal der Grund fuer den Bug vom
-09.11.2026. Wer das Logo aendert, aendert es hier an EINER Stelle.
+WARUM EIN WERKZEUG FÜR BEIDES: Der Weg zum Logo läuft sonst
+auseinander - das war schon einmal der Grund für den Bug vom
+09.11.2026. Wer das Logo ändert, ändert es hier an EINER Stelle.
 
 Aufruf:
     python tool/web/make_favicon.py
@@ -70,8 +70,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -94,14 +94,14 @@ QUELLE = WURZEL / "assets" / "images" / "thestia_icon_base.png"
 #: ABGERUNDET, NICHT RUND (23.11.2026, Betreiber): "Das Icon sollte
 #: außerdem nicht rund sein. Es soll so sein wie thestia_icon_base.png
 #: aus assets/images." Die runde Fassung (tool/images/logo_round.py)
-#: war die Entscheidung vom 09.11.2026 - sie ist damit ueberholt.
+#: war die Entscheidung vom 09.11.2026 - sie ist damit überholt.
 #: Die Quelle unten ist bereits das abgerundete Artwork mit
 #: transparenten Ecken; es wird nur noch skaliert, nicht maskiert.
 
 # ---------------------------------------------------------------------
-# 1) Das abgerundete Icon in den benoetigten Groessen
+# 1) Das abgerundete Icon in den benötigten Größen
 # ---------------------------------------------------------------------
-# 256 als Quelle fuer die ICO: das groesste Format darin soll nicht
+# 256 als Quelle für die ICO: das größte Format darin soll nicht
 # hochskaliert werden. Die abgerundeten Ecken sind in der Quelle
 # bereits transparent - es wird nur skaliert, nicht maskiert.
 gross = Image.open(QUELLE).convert("RGBA")
@@ -124,9 +124,9 @@ print("  favicon.ico   16-256  %d Bytes" % ico_pfad.stat().st_size)
 # ---------------------------------------------------------------------
 # WARUM EINGEBETTET UND NICHT ALS VEKTOR: Das Artwork (Verlauf, Herz,
 # Kopf-Silhouetten, Funken, Schriftzug) ist eine Rastergrafik. Eine
-# "vektorisierte" Marke waere eine andere Marke - und genau das war der
+# "vektorisierte" Marke wäre eine andere Marke - und genau das war der
 # Fehler, den der Betreiber gemeldet hat ("nur ein Herz"). Das SVG
-# enthaelt deshalb DASSELBE Bild wie die PNG, nur in einem Gefaess, das
+# enthält deshalb DASSELBE Bild wie die PNG, nur in einem Gefäss, das
 # Browser als Icon akzeptieren.
 puffer = io.BytesIO()
 gross.resize((192, 192), Image.LANCZOS).save(puffer, "PNG", optimize=True)
@@ -148,7 +148,7 @@ print("  favicon.svg          %d Bytes (abgerundetes ThestiaIcon)"
       % svg_pfad.stat().st_size)
 
 # ---------------------------------------------------------------------
-# 3) Das Logo fuer die Seiten (das ABGERUNDETE ThestiaIcon)
+# 3) Das Logo für die Seiten (das ABGERUNDETE ThestiaIcon)
 # ---------------------------------------------------------------------
 # WARUM (23.11.2026, Betreiber): "Bei allen Websites und auch auth.thestia
 # soll statt diesem Herz Icon das richtige App logo da sein, also dieses
@@ -156,9 +156,9 @@ print("  favicon.svg          %d Bytes (abgerundetes ThestiaIcon)"
 # Marke aus einem Herz-SVG - nicht das Logo der App. Die Seite zeigt
 # jetzt DASSELBE Bild wie der Launcher.
 #
-# DIE GROESSE: 256 Pixel - die Karte zeigt es mit 96 Pixeln (auf einem
-# Pixel-doppelten Geraet also 192), die Kopfzeile mit 30. Mehr waere
-# Dateigroesse ohne Nutzen, weniger waere unscharf.
+# DIE GRÖSSE: 256 Pixel - die Karte zeigt es mit 96 Pixeln (auf einem
+# Pixel-doppelten Gerät also 192), die Kopfzeile mit 30. Mehr wäre
+# Dateigrösse ohne Nutzen, weniger wäre unscharf.
 LOGO_GROESSE = 256
 
 logo = Image.open(QUELLE).convert("RGBA")

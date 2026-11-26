@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -11,7 +11,7 @@
 part of '../settings_privacy_once_screen.dart';
 
 extension _EinrichtungNavigation on _SettingsPrivacyOnceScreenState {
-  /// Leert die Vorstellung, wenn der Schritt uebersprungen wurde.
+  /// Leert die Vorstellung, wenn der Schritt übersprungen wurde.
   ///
   /// Ohne das bliebe eine halbfertige Aufnahme (Text ohne Ton oder
   /// Ton ohne Text) im Profil stehen, obwohl der Schritt nie
@@ -37,9 +37,9 @@ extension _EinrichtungNavigation on _SettingsPrivacyOnceScreenState {
   }
 
   void _nextPage() {
-    // Pflicht-Schritte (3 Profil, 4 Vorstellung): Grundangaben muessen
-    // erledigt sein, bevor weitergeblaettert werden kann. Schritt 2
-    // (Filter) hat sinnvolle Defaults und ist damit immer gueltig.
+    // Pflicht-Schritte (3 Profil, 4 Vorstellung): Grundangaben müssen
+    // erledigt sein, bevor weitergeblättert werden kann. Schritt 2
+    // (Filter) hat sinnvolle Defaults und ist damit immer gültig.
     if (_currentPage == _SettingsPrivacyOnceScreenState._profilePage) {
       if (_bioCtrl.text.trim().isEmpty) {
         _showStepHint(L10n.t(context, 'setup.hintBio'));
@@ -54,25 +54,25 @@ extension _EinrichtungNavigation on _SettingsPrivacyOnceScreenState {
     if (_currentPage == _SettingsPrivacyOnceScreenState._introPage) {
       // OPTIONAL (v0.10.0). Vorher blockierte dieser Schritt die
       // Einrichtung: ohne 10 Sekunden Audio ging es nicht weiter, obwohl
-      // der Schrittentext "du kannst diesen Schritt auch ueberspringen"
+      // der Schrittentext "du kannst diesen Schritt auch überspringen"
       // versprach. Jetzt: leer ist erlaubt, und was eingegeben wurde,
       // wird gespeichert.
       //
       // NUTZERWUNSCH (03.11.2026): "Kann man die Einrichtung abschliessen
-      // ohne eine Sprachaufnahme bei der Vorstellung machen zu muessen?"
+      // ohne eine Sprachaufnahme bei der Vorstellung machen zu müssen?"
       //
-      // Die Antwort war: der Schritt ist ueberspringbar - ABER wer Text
+      // Die Antwort war: der Schritt ist überspringbar - ABER wer Text
       // OHNE Audio eintippt, hat seinen Text verloren: isValid() verlangt
       // beides, dadurch wurde _clearIntro() gerufen und der getippte
       // Text verworfen. Das war die eigentliche Stolperfalle.
       //
       // Jetzt: Text allein wird gespeichert, Audio allein auch, beides
-      // natuerlich auch. Nur ein vollstaendig leerer Schritt loescht.
+      // natürlich auch. Nur ein vollständig leerer Schritt löscht.
       //
       // (09.11.2026): `isValid` verlangt inzwischen nur noch den TEXT -
-      // die Aufnahme ist ueberall freiwillig. Der Betreiber: "Es kann
+      // die Aufnahme ist überall freiwillig. Der Betreiber: "Es kann
       // jedoch, wenn man sich vorstellt nur eine textliche Vorstellung
-      // sein und die Audio kann man dann bei einem Funken hoeren. Das
+      // sein und die Audio kann man dann bei einem Funken hören. Das
       // bleibt freigestellt.")
       if (_introText.trim().isNotEmpty || _introAudioPath != null) {
         _saveIntro();

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/services/storage/local_storage.dart';
 
-/// Schluessel der angepinnten Funken in der lokalen Speicherung.
+/// Schlüssel der angepinnten Funken in der lokalen Speicherung.
 const pinnedMatchesPrefsKey = 'pinned_matches';
 
 /// Die angepinnten Funken (NUTZERWUNSCH, 28.10.2026: "sowie Einstellungen
@@ -13,12 +13,12 @@ const pinnedMatchesPrefsKey = 'pinned_matches';
 ///
 /// LOKAL und nicht auf dem Server - mit Absicht:
 ///
-///   * "Fixieren" ist eine Anordnung, keine Datenbeziehung. Sie gehoert
-///     dem Geraet, auf dem man sie macht - wie eine Merkliste im
+///   * "Fixieren" ist eine Anordnung, keine Datenbeziehung. Sie gehört
+///     dem Gerät, auf dem man sie macht - wie eine Merkliste im
 ///     Telefonbuch.
 ///   * Es braucht keine Migration, keine neue Spalte in `matches` und
-///     keinen neuen RPC. Ein Server-Feld waere hier eine
-///     Ueberdimensionierung: es aendert sich nie fuer andere und
+///     keinen neuen RPC. Ein Server-Feld wäre hier eine
+///     Überdimensionierung: es ändert sich nie für andere und
 ///     braucht Regeln, wer es setzen darf.
 ///
 /// Gespeichert wird die Liste der Match-IDs als JSON-Array.
@@ -31,8 +31,8 @@ class PinnedMatchesNotifier extends StateNotifier<Set<int>> {
 
   /// Setzt oder entfernt die Pinnung eines Funken.
   ///
-  /// Gibt zurueck, ob der Funke jetzt angepinnt ist (true) oder nicht
-  /// (false) - der Aufrufer kann das fuer eine Meldung nutzen.
+  /// Gibt zurück, ob der Funke jetzt angepinnt ist (true) oder nicht
+  /// (false) - der Aufrufer kann das für eine Meldung nutzen.
   Future<bool> umschalten(int matchId) async {
     final neu = {...state};
     if (!neu.remove(matchId)) {
@@ -43,7 +43,7 @@ class PinnedMatchesNotifier extends StateNotifier<Set<int>> {
     return neu.contains(matchId);
   }
 
-  /// Laedt die Liste aus der lokalen Speicherung.
+  /// Lädt die Liste aus der lokalen Speicherung.
   Future<void> _lade() async {
     try {
       final wert = await _ref

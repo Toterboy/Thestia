@@ -62,9 +62,9 @@ class GlobalRelayInbox with WidgetsBindingObserver {
 
   /// Gecachte Server-Funken: Partner-ID -> lokale Match-ID.
   ///
-  /// BEFUND (09.11.2026): Nur fuer die Zuordnung fremder Relay-Zeilen
+  /// BEFUND (09.11.2026): Nur für die Zuordnung fremder Relay-Zeilen
   /// (siehe [_route]). Der Cache verhindert, dass der RPC bei jedem
-  /// Poll-Takt erneut laeuft.
+  /// Poll-Takt erneut läuft.
   Map<String, String>? _serverMatchLookup;
   DateTime? _serverMatchLookupAt;
 
@@ -72,7 +72,7 @@ class GlobalRelayInbox with WidgetsBindingObserver {
   static const Duration _serverMatchLookupTtl = Duration(seconds: 30);
 
   /// Poll-Takt: Leerfall UND Fehlerfall strecken das Intervall bis 45 s,
-  /// erfolgreiche Zustellung geht sofort auf 6 s zurueck. Die Logik
+  /// erfolgreiche Zustellung geht sofort auf 6 s zurück. Die Logik
   /// liegt in [RelayPollBackoff] (dort testbar, ohne Widget-Binding).
   final RelayPollBackoff _backoff = RelayPollBackoff();
 
@@ -197,9 +197,9 @@ class GlobalRelayInbox with WidgetsBindingObserver {
   }
 
   /// Ein Poll-Durchlauf mit beliebigem Fetch-Ergebnis, ohne Supabase und
-  /// ohne Widget-Binding. Nur fuer Tests - ruft bewusst denselben
+  /// ohne Widget-Binding. Nur für Tests - ruft bewusst denselben
   /// Fehlerpfad wie [_tick], damit die Regression dort unten (Fehler
-  /// streckt das Intervall nicht) tatsaechlich auffällt.
+  /// streckt das Intervall nicht) tatsächlich auffällt.
   @visibleForTesting
   Future<int> debugPollOnce({
     required List<RelayMessage> pending,
@@ -214,7 +214,7 @@ class GlobalRelayInbox with WidgetsBindingObserver {
     return _backoff.step;
   }
 
-  /// Aktuelle Backoff-Stufe (0 = schnellstes Intervall). Nur fuer Tests.
+  /// Aktuelle Backoff-Stufe (0 = schnellstes Intervall). Nur für Tests.
   @visibleForTesting
   int get debugBackoffStep => _backoff.step;
 
@@ -237,13 +237,13 @@ class GlobalRelayInbox with WidgetsBindingObserver {
     // nicht."
     //
     // DER GRUND: Der lokale chatProvider kennt einen Server-Funke erst,
-    // wenn sein Chat geoeffnet wurde. Vorher fand die Zuordnung hier
+    // wenn sein Chat geöffnet wurde. Vorher fand die Zuordnung hier
     // nichts -> die Zeile blieb im Relay liegen und der Nutzer sah
     // NICHTS (die Benachrichtigung kam trotzdem, weil sie der Server
     // schickt).
     //
     // JETZT: Der Funke wird einmalig vom Server geholt und lokal
-    // wiederhergestellt. Danach ist die Zuordnung moeglich.
+    // wiederhergestellt. Danach ist die Zuordnung möglich.
     final restored = await _restoreServerMatchFor(r.senderId);
     if (restored != null) return restored;
     // 2) Aktive Zufallschat-Session (Partner == Absender).
@@ -266,11 +266,11 @@ class GlobalRelayInbox with WidgetsBindingObserver {
   /// Match-ID und Chat-Route zusammen.
   ///
   /// Best-Effort: Scheitert der RPC, bleibt null - die Zeile bleibt
-  /// liegen (kein Datenverlust) und wird beim naechsten Poll erneut
+  /// liegen (kein Datenverlust) und wird beim nächsten Poll erneut
   /// versucht.
   Future<String?> _restoreServerMatchFor(String partnerId) async {
     if (!SupabaseService.isInitialized) return null;
-    // Nicht bei jedem Poll neu laden: der Server-Funkensatz aendert
+    // Nicht bei jedem Poll neu laden: der Server-Funkensatz ändert
     // sich selten, und der RPC ist der teuerste Schritt hier.
     final now = DateTime.now();
     if (_serverMatchLookupAt != null &&

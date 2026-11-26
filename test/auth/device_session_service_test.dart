@@ -1,16 +1,16 @@
-// Unit-Tests fuer die Geraete-Verwaltung ("Wo bin ich eingeloggt?").
+// Unit-Tests für die Geräte-Verwaltung ("Wo bin ich eingeloggt?").
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die stabile Geraete-ID (lazy erzeugt, einmal gespeichert),
-//   * der lesbare Geraetename,
-//   * das Modell [DeviceSession] (Label, "aktuelles Geraet", Zeitstempel),
-//   * die Registrierung des Geraets beim Server,
-//   * die Liste der angemeldeten Geraete,
-//   * das "ueberall abmelden" und das Deregistrieren.
+// WAS HIER GEPRÜFT WIRD:
+//   * die stabile Geräte-ID (lazy erzeugt, einmal gespeichert),
+//   * der lesbare Gerätename,
+//   * das Modell [DeviceSession] (Label, "aktuelles Gerät", Zeitstempel),
+//   * die Registrierung des Geräts beim Server,
+//   * die Liste der angemeldeten Geräte,
+//   * das "überall abmelden" und das Deregistrieren.
 //
 // WIE DER SERVER ERSETZT WIRD:
-//   Der Service spricht mit Supabase ueber HTTP. Statt eines Servers
-//   laeuft ein handgeschriebener Fake ([_FakeServer]), der genau die
+//   Der Service spricht mit Supabase über HTTP. Statt eines Servers
+//   läuft ein handgeschriebener Fake ([_FakeServer]), der genau die
 //   Endpunkte beantwortet, die der Dienst braucht (auth_devices +
 //   Auth-Token). So bleibt der Test offline und deterministisch.
 import 'dart:convert';
@@ -21,8 +21,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// DER GRUND FUER "hide LocalStorage": supabase_flutter exportiert einen
-// gleichnamigen Storage - ohne "hide" waere der Name doppelt belegt.
+// DER GRUND FÜR "hide LocalStorage": supabase_flutter exportiert einen
+// gleichnamigen Storage - ohne "hide" wäre der Name doppelt belegt.
 import 'package:supabase_flutter/supabase_flutter.dart' hide LocalStorage;
 
 import 'package:thestia/services/server/device_session_service.dart';
@@ -30,7 +30,7 @@ import 'package:thestia/services/storage/local_storage.dart';
 
 import '../support/plugin_mocks.dart';
 
-/// Baut ein JWT (der Client braucht einen Access-Token fuer die
+/// Baut ein JWT (der Client braucht einen Access-Token für die
 /// Session).
 String _jwt({String sub = 'nutzer-1'}) {
   String teil(Map<String, dynamic> inhalt) =>
@@ -40,8 +40,8 @@ String _jwt({String sub = 'nutzer-1'}) {
       '${teil({'sub': sub, 'exp': jetzt + 3600, 'iat': jetzt})}.c2ln';
 }
 
-/// Der In-Memory-Speicher fuer die Geraete-ID (kein Keystore, kein
-/// Geraet).
+/// Der In-Memory-Speicher für die Geräte-ID (kein Keystore, kein
+/// Gerät).
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _daten = {};
 
@@ -72,26 +72,26 @@ class _FakeLocalStorage implements LocalStorage {
   Future<void> remove(String key) async => _daten.remove(key);
 }
 
-/// Der handgeschriebene Supabase-Server fuer die Geraete-Tabelle.
+/// Der handgeschriebene Supabase-Server für die Geräte-Tabelle.
 class _FakeServer {
   _FakeServer();
 
-  /// Die Zeilen der Geraete-Tabelle (so, wie der Server sie liefert).
+  /// Die Zeilen der Geräte-Tabelle (so, wie der Server sie liefert).
   List<Map<String, dynamic>> geraete = [];
 
   /// Alle Anfragen, die der Server gesehen hat (inkl. Query).
   final List<String> anfragen = [];
 
-  /// Die Koerper der Geraete-Upserts.
+  /// Die Körper der Geräte-Upserts.
   final List<Map<String, dynamic>> upserts = [];
 
-  /// Wenn true, liefert das Listen der Geraete einen Serverfehler.
+  /// Wenn true, liefert das Listen der Geräte einen Serverfehler.
   bool listenFehler = false;
 
-  /// Wenn true, schlaegt das Loeschen der Geraete fehl.
+  /// Wenn true, schlägt das Löschen der Geräte fehl.
   bool loeschenFehler = false;
 
-  /// Wenn true, schlaegt das serverseitige Abmelden fehl.
+  /// Wenn true, schlägt das serverseitige Abmelden fehl.
   bool logoutFehler = false;
 
   /// Wie oft und mit welchem Umfang abgemeldet wurde.
@@ -116,7 +116,7 @@ class _FakeServer {
     status,
     headers: {'content-type': 'application/json'},
     // DER GRUND: PostgREST liest die Methode aus "response.request" - ohne
-    // das Feld stuerzt der Client auf einem Null-Check ab.
+    // das Feld stürzt der Client auf einem Null-Check ab.
     request: _aktuell,
   );
 
@@ -183,12 +183,12 @@ void main() {
     server = _FakeServer();
     // DER GRUND: supabase_flutter legt beim Start einen PKCE-Speicher in
     // den SharedPreferences an. Im Test gibt es kein Plugin - die
-    // Mock-Werte sorgen dafuer, dass es nicht an einem
+    // Mock-Werte sorgen dafür, dass es nicht an einem
     // MissingPluginException scheitert.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
-    // Supabase ist ein Singleton: er wird genau einmal fuer den ganzen
-    // Testprozess eingerichtet. Der MockClient haengt daran.
+    // Supabase ist ein Singleton: er wird genau einmal für den ganzen
+    // Testprozess eingerichtet. Der MockClient hängt daran.
     // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
     // das echte Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
@@ -208,7 +208,7 @@ void main() {
       // sichtbar sein (und der Test soll schnell bleiben).
       postgrestOptions: const PostgrestClientOptions(retryEnabled: false),
     );
-    // Einloggen: die Geraete-Zeilen gehoeren zu einem eingeloggten Konto.
+    // Einloggen: die Geräte-Zeilen gehören zu einem eingeloggten Konto.
     await Supabase.instance.client.auth.setSession(
       'refresh-token',
       accessToken: _jwt(),
@@ -271,7 +271,7 @@ void main() {
 
     test('eine leere gespeicherte ID wird ersetzt', () async {
       // DER GRUND: Ein leerer Eintrag (z. B. aus einem abgebrochenen
-      // Schreibvorgang) ist keine gueltige ID - sonst waere das Geraet
+      // Schreibvorgang) ist keine gültige ID - sonst wäre das Gerät
       // nicht mehr vom anderen unterscheidbar.
       await storage.saveString('auth_device_id', '');
       final service = DeviceSessionService(storage);
@@ -303,7 +303,7 @@ void main() {
     test('das echte Geraetemodell gewinnt gegen den Geraetenamen', () {
       // DER GRUND: "Samsung SM-S921B" sagt mehr als "Android (SDK 34)" -
       // nach einer Neuinstallation ist nur so erkennbar, ob es das
-      // selbe Geraet ist.
+      // selbe Gerät ist.
       final sitzung = DeviceSession.fromMap({
         'device_id': 'dev-1',
         'device_name': 'Android (SDK 34)',
@@ -367,7 +367,7 @@ void main() {
     });
 
     test('ein kaputter Zeitstempel faellt auf "jetzt" zurueck', () {
-      // DER GRUND: Ein unlesbarer Zeitstempel darf die Geraete-Liste
+      // DER GRUND: Ein unlesbarer Zeitstempel darf die Geräte-Liste
       // nicht sprengen - der Nutzer sieht dann eben "gerade eben".
       final sitzung = DeviceSession.fromMap({
         'device_id': 'dev-1',
@@ -506,10 +506,10 @@ void main() {
     test(
       'schlaegt der Logout fehl, bleiben die Geraete-Zeilen stehen',
       () async {
-        // DER GRUND FUER DIE REIHENFOLGE: Erst die Server-Sessions
-        // invalidieren, dann die Liste aufräumen. Schlaegt der Logout fehl,
-        // sind die anderen Sitzungen noch aktiv - ihre Zeilen zu loeschen
-        // waere eine Luege in der Geraete-Liste.
+        // DER GRUND FÜR DIE REIHENFOLGE: Erst die Server-Sessions
+        // invalidieren, dann die Liste aufräumen. Schlägt der Logout fehl,
+        // sind die anderen Sitzungen noch aktiv - ihre Zeilen zu löschen
+        // wäre eine Luege in der Geräte-Liste.
         await storage.saveString('auth_device_id', 'dev-1');
         server.logoutFehler = true;
         final service = DeviceSessionService(storage);
@@ -548,7 +548,7 @@ void main() {
     test('ein Serverfehler wird geschluckt (best effort)', () async {
       // DER GRUND: Das Deregistrieren ist eine Nebenhandlung. Wenn es
       // scheitert (kein Netz), darf der Logout nicht hängen bleiben -
-      // der Eintrag verschwindet spaetestens mit der abgelaufenen
+      // der Eintrag verschwindet spätestens mit der abgelaufenen
       // Session.
       await storage.saveString('auth_device_id', 'dev-1');
       server.loeschenFehler = true;

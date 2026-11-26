@@ -129,17 +129,17 @@ class SettingsScreen extends ConsumerWidget {
           // zeigt sonst etwas, das es in der App nicht gibt.
           const PrivacySection(),
           const SizedBox(height: 16),
-          // Kinderschutz & Elternzugriff (v0.10.0). Sichtbar fuer alle:
+          // Kinderschutz & Elternzugriff (v0.10.0). Sichtbar für alle:
           // wer mit 18 geworden ist, hat die Freigabe aus der Zeit mit
-          // 16/17 noch und entscheidet hier ueber ihr Ende.
+          // 16/17 noch und entscheidet hier über ihr Ende.
           //
           // Die Einstellungen selbst liegen in einem EIGENEN Screen
           // (04.11.2026): hier stand der komplette Bereich mit
-          // PIN-Dialog, Rhythmus und Nutzungszeit als grosse Karte
+          // PIN-Dialog, Rhythmus und Nutzungszeit als große Karte
           // zwischen Datenschutz und Community-Regeln - der
           // Einstellungs-Screen war zugeballert und der Bereich schwer
           // auffindbar. Hier steht der Eintrag mit dem aktuellen
-          // Status, der Weg fuehrt in den Elternbereich.
+          // Status, der Weg fährt in den Elternbereich.
           const _GuardianSettingsEntry(),
           _SectionTitle(L10n.t(context, 'settings.communitySafety')),
           Card(
@@ -464,10 +464,10 @@ class SettingsScreen extends ConsumerWidget {
               if (context.mounted) context.go(AppRoutes.login);
             },
           ),
-          // DIE LOESCH-WEGE STEHEN GANZ UNTEN (06.11.2026, Betreiber:
-          // "Konto loeschen und Daten loeschen sollen die untersten
-          // Punkte sein"). Sie sind zerstoererisch - dafuer gehoeren sie
-          // nicht zwischen "Geraete" und "Datenschutz & Konto".
+          // DIE LÖSCH-WEGE STEHEN GANZ UNTEN (06.11.2026, Betreiber:
+          // "Konto löschen und Daten löschen sollen die untersten
+          // Punkte sein"). Sie sind zerstörerisch - dafür gehören sie
+          // nicht zwischen "Geräte" und "Datenschutz & Konto".
           const SizedBox(height: 32),
           _SectionTitle(L10n.t(context, 'privacy.dangerZone')),
           Card(
@@ -508,7 +508,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           FutureBuilder<PackageInfo>(
-            // Einmalig fuer die App-Lebenszeit. Im build() erzeugt,
+            // Einmalig für die App-Lebenszeit. Im build() erzeugt,
             // feuert jeder Schalter-Toggle einen neuen
             // Platform-Channel-Aufruf.
             future: _packageInfo,
@@ -527,7 +527,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  /// Einmalig: die Version aendert sich waehrend der Sitzung nicht.
+  /// Einmalig: die Version ändert sich während der Sitzung nicht.
   static final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
 }
 
@@ -587,10 +587,10 @@ Future<void> _createIdentityBackup(BuildContext context, WidgetRef ref) async {
         FilledButton(
           // BEFUND (15.11.2026, gefunden von einem Test): Vorher
           // schloss der Dialog IMMER - auch bei einem zu kurzen oder
-          // verschiedenen Passwort (`pop(validate())` schliesst, auch
+          // verschiedenen Passwort (`pop(validate())` schließt, auch
           // wenn `validate()` false ergibt). Der Nutzer tippte auf
           // "Backup erstellen", der Dialog war weg, der Fehlerhinweis
-          // (den die Pruefung zwar zeigt) verschwand mit ihm - und es
+          // (den die Prüfung zwar zeigt) verschwand mit ihm - und es
           // passierte gar nichts.
           //
           // JETZT: Der Dialog bleibt offen, solange die Angaben nicht

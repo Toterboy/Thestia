@@ -1,12 +1,12 @@
 // Der Zufallschat (zwei fremde Menschen, 1:1).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/parts/zufallchatverbindung.dart 103 offene Zeilen bei
 // 12 % Abdeckung. Das ist der Bildschirm, in dem man fremden Menschen
-// schreibt - und der Weg, auf dem die App in den Relay-Modus faellt, wenn
+// schreibt - und der Weg, auf dem die App in den Relay-Modus fällt, wenn
 // das Mobilfunknetz keine direkte Verbindung hinbekommt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne Partner kommt die Fehlerseite (kein endloses Warten),
 //   * mit Partner steht der Chat,
 //   * scheitert die Direktverbindung, schaltet die App in den
@@ -20,7 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-// webrtc_interface kommt als Transitivum ueber flutter_webrtc - der Test
+// webrtc_interface kommt als Transitivum über flutter_webrtc - der Test
 // braucht nur den ICE-Zustand.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -40,8 +40,8 @@ import '../support/plugin_mocks.dart';
 
 /// Der Zufallschat-Dienst als Ersatz.
 ///
-/// DER GRUND: Der echte Dienst fragt die Warteschlange ueber eine RPC ab.
-/// Der Fake haelt die Antwort im RAM - so kann der Test beide Faelle
+/// DER GRUND: Der echte Dienst fragt die Warteschlange über eine RPC ab.
+/// Der Fake hält die Antwort im RAM - so kann der Test beide Fülle
 /// stellen (Partner gefunden / niemand da).
 class _FakeRandomChatService extends RandomChatService {
   _FakeRandomChatService(super.client);
@@ -68,19 +68,19 @@ class _FakeRandomChatService extends RandomChatService {
 /// Der P2P-Dienst ohne WebRTC.
 ///
 /// DER GRUND: Die echte Direktverbindung braucht das WebRTC-Plugin - im
-/// Test gibt es kein Geraet. Der Fake meldet den ICE-Zustand, den der
-/// Test vorgibt - so laesst sich der Ausfall der Direktverbindung
+/// Test gibt es kein Gerät. Der Fake meldet den ICE-Zustand, den der
+/// Test vorgibt - so lässt sich der Ausfall der Direktverbindung
 /// stellen.
 class _FakeP2PChatService extends P2PChatService {
   _FakeP2PChatService(super.webrtc, super.prekey, {this.haengeConnect = false});
 
-  /// Bleibt der Verbindungsaufbau haengen?
+  /// Bleibt der Verbindungsaufbau hängen?
   ///
   /// DER GRUND: So bleibt der Bildschirm im Zustand "verbinde" stehen -
   /// genau den sieht der Nutzer, wenn die direkte Verbindung Zeit braucht.
   final bool haengeConnect;
 
-  /// Loest den haengenden Verbindungsaufbau.
+  /// Löst den hängenden Verbindungsaufbau.
   final Completer<void> haenger = Completer<void>();
 
   /// Der ICE-Zustand, den der Test meldet.
@@ -100,8 +100,8 @@ class _FakeP2PChatService extends P2PChatService {
   }) async {
     verbindungen++;
     if (haengeConnect) {
-      // Der Aufbau haengt - wie im Mobilfunknetz ohne TURN. Der Test
-      // loest ihn wieder (sonst steckt ein Timer im Test).
+      // Der Aufbau hängt - wie im Mobilfunknetz ohne TURN. Der Test
+      // löst ihn wieder (sonst steckt ein Timer im Test).
       await haenger.future;
     }
   }
@@ -170,7 +170,7 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
-    // HIVE: die verschluesselten Schluessel (Signal-Protokoll) liegen in
+    // HIVE: die verschlüsselten Schlüssel (Signal-Protokoll) liegen in
     // Hive-Boxen.
     await mockHive();
     server = FakeSupabaseServer(userId: 'ich');
@@ -249,7 +249,7 @@ void main() {
     for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 120));
     }
-    // DIE ECHTE EREIGNISSCHLEIFE: Das Profil des Partners kommt ueber den
+    // DIE ECHTE EREIGNISSCHLEIFE: Das Profil des Partners kommt über den
     // Server - ohne dieses Warten bleibt der Bildschirm im "verbinde"
     // stehen und der P2P-Aufbau kommt nie zu Ende.
     for (var i = 0; i < 8; i++) {
@@ -303,7 +303,7 @@ void main() {
     testWidgets('waehrend des Verbindens steht der Hinweis', (tester) async {
       // DER HANGENDE AUFBAU: Die direkte Verbindung kommt nicht - der
       // Bildschirm muss das zeigen (sonst denkt der Nutzer, die App
-      // haenge).
+      // hänge).
       final p2p = await zeige(
         tester,
         sitzung: const RandomChatSession(

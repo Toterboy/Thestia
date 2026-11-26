@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -86,7 +86,7 @@ extension _ProfilEditBilder on _ProfileEditScreenState {
       // gewähltes Bild per "Abbrechen" verworfen werden, ohne dass es
       // je den Server erreicht hat (NSFW-Check lief oben bereits).
       // Die Bildauswahl dauert real mehrere Hundert Millisekunden - der
-      // Nutzer kann in dieser Zeit zurueckgehen. Dann waere das
+      // Nutzer kann in dieser Zeit zurückgehen. Dann wäre das
       // setState ein Absturz ("_setzeState() called after dispose()").
       if (!mounted) return;
       _setzeState(() {

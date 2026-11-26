@@ -1,9 +1,9 @@
 // Der Teil '_MatchesTabState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -24,10 +24,10 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
 
   /// Wurde die Liste mindestens einmal geladen?
   ///
-  /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend fuer
+  /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist störend für
   /// die Animation dort". Der Kreis ersetzte beim Nachladen den GANZEN
-  /// Inhalt - die Liste verschwand fuer einen Moment und kam als
-  /// Kreis zurueck. Das ist kein Warten, das ist ein Schnitt.
+  /// Inhalt - die Liste verschwand für einen Moment und kam als
+  /// Kreis zurück. Das ist kein Warten, das ist ein Schnitt.
   ///
   /// Deshalb gilt: der Platzhalter steht nur beim ERSTEN Laden, wenn
   /// es noch nichts zu zeigen gibt. Ab dann bleibt der Inhalt
@@ -61,7 +61,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
   @override
   Future<void> reloadTab() => _load();
 
-  /// Laedt neu - vom Pull-to-Refresh der Seite aufgerufen.
+  /// Lädt neu - vom Pull-to-Refresh der Seite aufgerufen.
   Future<void> refresh() => _load();
 
   Future<void> _load() async {
@@ -319,11 +319,11 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
   }
 
   /// Funke direkt in der Liste entfernen (ausblenden, nur für mich).
-  /// Oeffnet den Chat zu einem Funken.
+  /// Öffnet den Chat zu einem Funken.
   ///
   /// Eigene Methode, weil der Ablauf jetzt an zwei Stellen gebraucht
-  /// wird (fixierte Funken und die uebrigen): als gelesen markieren,
-  /// als gesehen markieren, dann den Chat oeffnen. Push: Zurueck landet
+  /// wird (fixierte Funken und die übrigen): als gelesen markieren,
+  /// als gesehen markieren, dann den Chat öffnen. Push: Zurück landet
   /// wieder exakt hier (gleicher Tab).
   void _openMatch(BuildContext context, WidgetRef ref, MatchWithState m) {
     ref.read(chatProvider.notifier).markRead(m.matchId.toString());
@@ -331,17 +331,17 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     context.push(AppRoutes.chatDetailPath(m.matchId.toString()));
   }
 
-  /// Oeffnet einen Funken - bei einem automatisch entstandenen erst die
-  /// EINMALIGE Rueckfrage (Migration 177).
+  /// Öffnet einen Funken - bei einem automatisch entstandenen erst die
+  /// EINMALIGE Rückfrage (Migration 177).
   ///
   /// Der automatische Funke (Dating Hour nach 10 Minuten) ist nicht von
-  /// beiden Seiten bestaetigt worden. Bevor der Chat aufgeht, fragt die
+  /// beiden Seiten bestätigt worden. Bevor der Chat aufgeht, fragt die
   /// App deshalb einmal nach: behalten oder Person entfernen.
   ///
   /// Die "einmalig" merkt sich die DATENBANK (matches.auto_match): nach
-  /// "Behalten" setzt die RPC das Flag zurueck, nach "Person entfernen"
-  /// ist der Funke geloescht. Beides wird hier nur noch lokal
-  /// nachgezogen und beim naechsten Laden bestaetigt - eine zweite
+  /// "Behalten" setzt die RPC das Flag zurück, nach "Person entfernen"
+  /// ist der Funke gelöscht. Beides wird hier nur noch lokal
+  /// nachgezogen und beim nächsten Laden bestätigt - eine zweite
   /// (lokale) Wahrheit gibt es nicht.
   Future<void> _openFunke(
     BuildContext context,
@@ -354,7 +354,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     }
 
     final antwort = await _frageAutoMatch(context);
-    // Abgebrochen: weder der Chat geht auf noch aendert sich etwas.
+    // Abgebrochen: weder der Chat geht auf noch ändert sich etwas.
     if (antwort == null || !context.mounted) return;
 
     if (antwort) {
@@ -376,7 +376,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       return;
     }
 
-    // PERSON ENTFERNEN: der Funke wird geloescht, der Chat bleibt zu.
+    // PERSON ENTFERNEN: der Funke wird gelöscht, der Chat bleibt zu.
     final ok = await _loeseAutoMatch(context, m, behalten: false);
     if (!context.mounted) return;
     if (ok) {
@@ -392,7 +392,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     _openMatch(context, ref, m);
   }
 
-  /// Die einmalige Rueckfrage zum automatischen Funke (Migration 177).
+  /// Die einmalige Rückfrage zum automatischen Funke (Migration 177).
   ///
   /// true = behalten, false = Person entfernen, null = abgebrochen.
   Future<bool?> _frageAutoMatch(BuildContext context) {
@@ -422,12 +422,12 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     );
   }
 
-  /// Loest die Rueckfrage zum automatischen Funke auf (Migration 177).
+  /// Löst die Rückfrage zum automatischen Funke auf (Migration 177).
   ///
   /// p_keep = true: der Hinweis verschwindet, der Funke bleibt.
-  /// p_keep = false: der Funke wird geloescht, die Person verschwindet.
+  /// p_keep = false: der Funke wird gelöscht, die Person verschwindet.
   ///
-  /// Rueckgabe: true = die Datenbank hat es angenommen.
+  /// Rückgabe: true = die Datenbank hat es angenommen.
   Future<bool> _loeseAutoMatch(
     BuildContext context,
     MatchWithState m, {
@@ -457,9 +457,9 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     }
   }
 
-  /// Traegt die Entscheidung lokal nach (die Datenbank ist die Wahrheit).
+  /// Trägt die Entscheidung lokal nach (die Datenbank ist die Wahrheit).
   ///
-  /// Ohne das bliebe das Sternchen bis zum naechsten Laden stehen.
+  /// Ohne das bliebe das Sternchen bis zum nächsten Laden stehen.
   void _setzeAutoMatch(MatchWithState m, bool wert) {
     if (!mounted) return;
     setState(() {
@@ -489,7 +489,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
   /// Fixiert einen Funken (NUTZERWUNSCH, 28.10.2026: "fixieren").
   ///
   /// Lokal, nicht serverseitig: eine Fixierung ist eine Anordnung,
-  /// keine Beziehung. Sie gehört dem Geraet, auf dem man sie macht.
+  /// keine Beziehung. Sie gehört dem Gerät, auf dem man sie macht.
   Future<void> _pin(MatchWithState match) async {
     final an = await ref
         .read(pinnedMatchesProvider.notifier)
@@ -688,7 +688,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     // Fixierte Funken stehen oben (NUTZERWUNSCH, 28.10.2026:
     // "sowie Einstellungen haben, wie Funke löschen, fixieren,
     // archivieren"). Die Fixierung ist lokal - sie gehört dem
-    // Geraet, nicht dem Konto.
+    // Gerät, nicht dem Konto.
     final gepinnt = ref.watch(pinnedMatchesProvider);
     final fixierteFunken = activeMatches
         .where((m) => gepinnt.contains(m.matchId))
@@ -701,7 +701,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     //
     // Die ungelesenen Nachrichten stehen in der Chatliste (Match), nicht
     // in der Serverliste der Funken (MatchWithState) - der Abgleich
-    // laeuft deshalb ueber die Partner-ID.
+    // läuft deshalb über die Partner-ID.
     final chatListe = ref.watch(chatProvider);
     int ungelesenVon(String partnerId) {
       for (final c in chatListe) {
@@ -711,7 +711,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     }
 
     // Die Fixierten stehen ohnehin in ihrem eigenen Abschnitt ganz oben
-    // (NUTZERWUNSCH 28.10.2026). Innerhalb des uebrigen Abschnitts
+    // (NUTZERWUNSCH 28.10.2026). Innerhalb des übrigen Abschnitts
     // kommen jetzt die Chats mit ungelesenen Nachrichten nach oben -
     // bei gleichem Stand der neueste zuerst.
     uebrigeFunken.sort((a, b) {
@@ -942,7 +942,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
               // Push: Zurück landet wieder exakt hier (gleicher Tab).
               //
               // Bei einem automatisch entstandenen Funke kommt vorher
-              // die einmalige Rueckfrage (Migration 177).
+              // die einmalige Rückfrage (Migration 177).
               onTap: () => _openFunke(context, ref, m),
               onProfile: () =>
                   context.push(AppRoutes.profileDetailPath(m.partner.id)),
@@ -979,7 +979,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     );
 
     // Eingebettet zieht die Seite den RefreshIndicator - ein zweiter
-    // darin waere wirkungslos.
+    // darin wäre wirkungslos.
     if (widget.embedded) return liste;
     return RefreshIndicator(onRefresh: _load, child: liste);
   }

@@ -48,9 +48,9 @@ part 'parts/ownavatar.dart';
 /// den Profil Button drückt, das Popup mit Profil bearbeiten, Profil
 /// vorschau und Vorstellung vorschau auch unten abgerundet sein".
 ///
-/// Standardmaessig ist ein Bottom-Sheet nur OBEN abgerundet - unten
+/// Standardmässig ist ein Bottom-Sheet nur OBEN abgerundet - unten
 /// stossen die Ecken an den Bildschirmrand. Mit einem Radius an allen
-/// vier Ecken schliesst das Blatt sichtbar ab.
+/// vier Ecken schließt das Blatt sichtbar ab.
 ShapeBorder profilDialogForm() =>
     RoundedRectangleBorder(borderRadius: BorderRadius.circular(28));
 
@@ -60,7 +60,7 @@ ShapeBorder profilDialogForm() =>
 /// der zeigt, dass man das Pop up wie gerade auch schon, nach unten weg
 /// schieben kann".
 ///
-/// Ein dünner Balken in der Mitte - die uebliche Sprache fuer
+/// Ein dünner Balken in der Mitte - die übliche Sprache für
 /// "wegschieben".
 Widget profilGriffleiste(BuildContext context) => Center(
   child: Container(
@@ -79,10 +79,10 @@ Widget profilGriffleiste(BuildContext context) => Center(
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
-  /// Das Bundesland fuer die Kopfzeile, oder null wenn keines gesetzt ist.
+  /// Das Bundesland für die Kopfzeile, oder null wenn keines gesetzt ist.
   ///
   /// v0.10.0: Ersetzt den Ort in derselben Zeile. Bewusst eine kleine
-  /// Funktion statt zweier Inline-Ausdruecke: die Zeile stand zweimal im
+  /// Funktion statt zweier Inline-Ausdrücke: die Zeile stand zweimal im
   /// File, und bei zwei Kopien zeigt eine gern das Bundesland und die
   /// andere keines.
   static String? _stateLabel(UserProfile profile) {
@@ -91,8 +91,8 @@ class ProfileScreen extends ConsumerWidget {
     return st;
   }
 
-  /// Haelt den Bundesland-Teil der Kopfzeile zusammen - inklusive
-  /// fuehrendem Trennzeichen, damit die Zeile nicht mit einem "·" endet,
+  /// Hält den Bundesland-Teil der Kopfzeile zusammen - inklusive
+  /// führendem Trennzeichen, damit die Zeile nicht mit einem "·" endet,
   /// wenn es kein Bundesland gibt.
   static String stateSuffix(UserProfile profile) {
     final st = _stateLabel(profile);
@@ -144,7 +144,7 @@ class ProfileScreen extends ConsumerWidget {
                 Center(
                   child: GestureDetector(
                     // Versteckter Admin-Zugang: Long-Press auf den Namen
-                    // oeffnet nur fuer die konfigurierte Admin-ID den
+                    // öffnet nur für die konfigurierte Admin-ID den
                     // Admin-Bereich. Normale Nutzer erreichen ihn nicht.
                     onLongPress: isCurrentUserAdmin()
                         ? () => context.go(AppRoutes.admin)
@@ -166,7 +166,7 @@ class ProfileScreen extends ConsumerWidget {
                               color: Colors.lightBlue.shade400,
                             ),
                           ),
-                        // Konto juenger als 7 Tage. Auf dem eigenen Profil
+                        // Konto jünger als 7 Tage. Auf dem eigenen Profil
                         // sichtbar, damit man sieht, wie man bei anderen
                         // wirkt - die eigentliche Wirkung ist die Anzeige
                         // auf fremden Profilen.
@@ -252,12 +252,12 @@ class ProfileScreen extends ConsumerWidget {
                 // deaktivierbar sein, da meine App genau das ja
                 // ausmacht. Also einfach entfernen.").
                 //
-                // Das Verhalten ist trotzdem unveraendert: der Blind
+                // Das Verhalten ist trotzdem unverändert: der Blind
                 // Mode ist jetzt fest AN (app_settings.dart erzwingt
                 // das), die Fotos bleiben also bis zum ersten Funke
                 // verborgen. Der Unterschied ist nur, dass es keine
-                // Schaltflaeche mehr gibt, mit der man es abschalten
-                // koennte.
+                // Schaltfläche mehr gibt, mit der man es abschalten
+                // kännte.
                 const SizedBox(height: 16),
                 FilledButton.icon(
                   onPressed: () =>
@@ -274,8 +274,8 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 // Spenden-Button, wieder da (bis v0.4.0 entfernt, weil die
                 // Zahlung eine Attrappe war). Ohne hinterlegte Adresse sagt
-                // der Button das auch - es tut so, als waere gespendet
-                // worden, waere schlimmer als gar nichts.
+                // der Button das auch - es tut so, als wäre gespendet
+                // worden, wäre schlimmer als gar nichts.
                 const Center(child: DonateButton()),
                 const SizedBox(height: 12),
               ],
@@ -434,12 +434,12 @@ class ProfileScreen extends ConsumerWidget {
     //
     // NUTZERWUNSCH (28.10.2026): "Unter Profil Vorschau soll man
     // zwischen der normalen Profil Vorschau und der Profil Vorschau
-    // fuer den Geburtstag wechseln koennen."
+    // für den Geburtstag wechseln können."
     //
     // Ein ValueNotifier statt eines StatefulBuilder: der Dialog wird bei
-    // jeder Aenderung neu gebaut, ein StatefulBuilder wuerde den
-    // ganzen Blatt-Baum neu aufbauen - der Notifier hoert nur auf die
-    // Teile, die sich aendern.
+    // jeder Änderung neu gebaut, ein StatefulBuilder würde den
+    // ganzen Blatt-Baum neu aufbauen - der Notifier hört nur auf die
+    // Teile, die sich ändern.
     final geburtstag = ValueNotifier<bool>(false);
 
     showModalBottomSheet<void>(
@@ -474,7 +474,7 @@ class ProfileScreen extends ConsumerWidget {
                   profilGriffleiste(context),
                   // NUTZERWUNSCH (30.10.2026): Die Vorschau ist
                   // zentriert - Bild UND alle Angaben. Der Titel
-                  // steht mittig, das Schliessen-Icon bleibt oben
+                  // steht mittig, das Schließen-Icon bleibt oben
                   // rechts (Stack statt Row).
                   Stack(
                     alignment: Alignment.center,
@@ -525,7 +525,7 @@ class ProfileScreen extends ConsumerWidget {
                   //
                   // BEFUND (07.11.2026, Betreiber): "Die Profilvorschau soll
                   // dem entsprechen, was auch andere wirklich sehen
-                  // koennen." Hier stand ein KREIS (112 px) - das echte
+                  // können." Hier stand ein KREIS (112 px) - das echte
                   // Profil zeigt ein abgerundetes Rechteck. Beide benutzen
                   // jetzt denselben Baustein (ProfileAvatarBox), damit die
                   // Vorschau gar nicht abweichen kann.

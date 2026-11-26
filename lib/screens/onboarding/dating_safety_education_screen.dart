@@ -105,7 +105,7 @@ class _SafetyProgress {
     }
     return _SafetyProgress(
       step: step,
-      // BEFUND (22.11.2026, Fuzzing): Die Casts hier waren ungeschuetzt.
+      // BEFUND (22.11.2026, Fuzzing): Die Casts hier waren ungeschützt.
       usedBefore: boolOf(json, ['usedBefore']),
       awareOfDangers: boolOf(json, ['awareOfDangers']),
       page: page,
@@ -346,23 +346,23 @@ class _DatingSafetyEducationScreenState
     );
   }
 
-  /// Bestaetigungsseite: Der Text scrollt, der Knopf bleibt unten stehen.
+  /// Bestätigungsseite: Der Text scrollt, der Knopf bleibt unten stehen.
   ///
   /// NUTZERWUNSCH (31.10.2026, gefunden beim Rendern): Der Knopf lag auf
   /// einem 390x844-Telefon 108 Pixel UNTERhalb des Bildschirmrands - man
-  /// musste scrollen, um weiterzukommen. Bei grosser Schrift (die App
-  /// erlaubt bis 3,2x) waere das noch schlimmer. Deshalb liegt die
+  /// musste scrollen, um weiterzukommen. Bei großer Schrift (die App
+  /// erlaubt bis 3,2x) wäre das noch schlimmer. Deshalb liegt die
   /// Hauptaktion fest am unteren Rand und nur der Text scrollt.
-  /// Bestaetigungsseite: Der Text scrollt, der Knopf bleibt unten stehen.
+  /// Bestätigungsseite: Der Text scrollt, der Knopf bleibt unten stehen.
   ///
   /// NUTZERWUNSCH (31.10.2026, gefunden beim Rendern): Der Knopf lag auf
   /// einem 390x844-Telefon 108 Pixel UNTERhalb des Bildschirmrands - man
-  /// musste scrollen, um weiterzukommen. Bei grosser Schrift (die App
-  /// erlaubt bis 3,2x) waere das noch schlimmer. Deshalb liegt die
+  /// musste scrollen, um weiterzukommen. Bei großer Schrift (die App
+  /// erlaubt bis 3,2x) wäre das noch schlimmer. Deshalb liegt die
   /// Hauptaktion fest am unteren Rand und nur der Text scrollt.
   ///
-  /// Der Zeit-Hinweis gehoert in den scrollenden Teil: Bei 3,2x Schrift
-  /// waere er rund 840 Pixel hoch und wuerde den festen Bereich
+  /// Der Zeit-Hinweis gehört in den scrollenden Teil: Bei 3,2x Schrift
+  /// wäre er rund 840 Pixel hoch und würde den festen Bereich
   /// sprengen (RenderFlex-Overflow). Fest unten steht nur der Knopf.
   Widget _buildAck(BuildContext context) {
     return Column(

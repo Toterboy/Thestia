@@ -5,7 +5,7 @@
 ///
 /// JETZT: vier Themen mit je drei offenen Erzähl-Prompts. Angezeigt wird
 /// pro Thema eine Frage, die sich stündlich verschiebt. Dadurch bekommt
-/// jeder Nutzer bei jedem Oeffnen eine frische Mischung, ohne dass die Chip-Leiste
+/// jeder Nutzer bei jedem Öffnen eine frische Mischung, ohne dass die Chip-Leiste
 /// überladen wirkt.
 ///
 /// ZWEI EIGENTÜMLICHKEITEN, die absicht sind:

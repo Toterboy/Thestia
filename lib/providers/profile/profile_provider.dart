@@ -74,12 +74,12 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     //
     // BUG (Nutzerbefund): Nach der Admin-Freigabe blieb das eigene
     // Profil auf "nicht verifiziert". Ursache: Das Profil kommt
-    // ausschliesslich aus dem LOKALEN Secure-Store. `is_verified` wird
+    // ausschließlich aus dem LOKALEN Secure-Store. `is_verified` wird
     // aber serverseitig gesetzt (Admin-Freigabe), und nichts holte
-    // diesen Wert nach. Die lokale Kopie blieb fuer immer auf false.
+    // diesen Wert nach. Die lokale Kopie blieb für immer auf false.
     //
     // Betroffen ist nicht nur das Badge: auch die Modus-Sperren und
-    // die Anzeige "wird ueberprueft" lesen dieses Feld.
+    // die Anzeige "wird überprüft" lesen dieses Feld.
     unawaited(_refreshServerManagedFields());
   }
 
@@ -87,14 +87,14 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
   ///
   /// Bewusst als lokale Meldung und nicht als Push: die Freigabe
   /// entsteht, wenn der Admin sie im Backend setzt, und der Nutzer
-  /// bekommt den Wechsel beim naechsten Abgleich mit. Eine
-  /// Push-Benachrichtigung wuerde einen Server-Push-Kanal voraussetzen,
+  /// bekommt den Wechsel beim nächsten Abgleich mit. Eine
+  /// Push-Benachrichtigung würde einen Server-Push-Kanal voraussetzen,
   /// den es hier nicht gibt.
   Future<void> _notifyVerified() async {
     try {
       await NotificationService.instance.showSystemNotice(
         // Feste ID: Es gibt nur eine Verifizierungs-Meldung, und eine
-        // zweite wuerde die erste ersetzen statt daneben zu stehen.
+        // zweite würde die erste ersetzen statt daneben zu stehen.
         id: 90001,
         title: L10n.tWithoutContext('verify.autoTitle'),
         body: L10n.tWithoutContext('verify.autoBody'),
@@ -119,11 +119,11 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
   /// ohne erkennbaren Grund bestehen.
   ///
   /// Der Rest des Profils ist nutzereigen und kommt aus dem Secure-Store;
-  /// der Server ist fuer ihn nicht die Quelle.
+  /// der Server ist für ihn nicht die Quelle.
   ///
   /// Fehler werden verschluckt: ohne Server bleibt der lokale Stand
   /// stehen, und die App ist offline benutzbar.
-  /// Meldet die Zeitzone des Geraets dem Server.
+  /// Meldet die Zeitzone des Geräts dem Server.
   ///
   /// WARUM (Befund 07.11.2026, Betreiber: "Geburtstagsvorschau"): Der
   /// Server rechnet den Geburtstag in der Zeitzone des BETRACHTENDEN
@@ -131,9 +131,9 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
   /// Nutzer seinen eigenen Geburtstag, die andere Person aber nicht -
   /// der Server rechnete noch den Vortag.
   ///
-  /// Das Setzen der Zone ist harmlos: der Server prueft sie selbst
+  /// Das Setzen der Zone ist harmlos: der Server prüft sie selbst
   /// (pg_timezone_names) und verwirft einen unbekannten Namen
-  /// stillschweigend. Schlaegt der Aufruf fehl, rechnet der Server in
+  /// stillschweigend. Schlägt der Aufruf fehl, rechnet der Server in
   /// UTC - das ist der bisherige Zustand, kein Fehler.
   Future<void> _meldeZeitzone() async {
     try {
@@ -163,7 +163,7 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       // ihre Zeitzone kennen - bisher meldete sie nur der
       // Elternbereich seine.
       //
-      // Deshalb wird sie bei jedem Start gemeldet: sie aendert sich,
+      // Deshalb wird sie bei jedem Start gemeldet: sie ändert sich,
       // wenn jemand reist.
       unawaited(_meldeZeitzone());
 
@@ -189,10 +189,10 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       // steht, dass keine hinterlegt wurde (also bei Profil und dann
       // meine Vorstellung)."
       //
-      // DER GRUND: Das eigene Profil kam ausschliesslich aus dem
+      // DER GRUND: Das eigene Profil kam ausschließlich aus dem
       // Secure-Store. Vom Server holte die App nur den
       // Verifikationsstatus. Die Vorstellung wurde also nur angezeigt,
-      // wenn sie IM CACHE stand - auf dem zweiten Geraet war sie weg,
+      // wenn sie IM CACHE stand - auf dem zweiten Gerät war sie weg,
       // und nach einem Neustart war sie es auch (siehe
       // user_profile.dart: der Cache-Parser las eine andere
       // Schreibweise).
@@ -202,9 +202,9 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       // Das ist genau das, was ANDERE sehen - damit stimmt die
       // Profilvorschau.
       //
-      // Wichtig: Ein leerer Serverwert UEBERSCHREIBT den lokalen Wert
-      // nicht. Sonst wuerde ein fehlgeschlagener Server-Schreibvorgang
-      // (z. B. kein Netz beim Speichern) die Vorstellung loeschen, die
+      // Wichtig: Ein leerer Serverwert ÜBERSCHREIBT den lokalen Wert
+      // nicht. Sonst würde ein fehlgeschlagener Server-Schreibvorgang
+      // (z. B. kein Netz beim Speichern) die Vorstellung löschen, die
       // lokal noch da ist. Der Server darf nur vorhandene Werte
       // liefern.
       final serverIntroText = (res['intro_text'] as String?)?.trim();
@@ -266,13 +266,13 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       state = aenderung;
       await _persist();
 
-      // Benachrichtigung ueber die Freigabe (v0.10.0).
+      // Benachrichtigung über die Freigabe (v0.10.0).
       //
       // Die Freigabe passiert serverseitig durch einen Admin. Der
       // Nutzer sitzt derweil in der App und bekommt sonst nichts mit -
       // das Profil bleibt lokal auf "nicht verifiziert", bis die App
-      // neu startet. Der Uebergang unveraendert -> verifiziert ist
-      // deshalb das Signal fuer eine Meldung.
+      // neu startet. Der Übergang unverändert -> verifiziert ist
+      // deshalb das Signal für eine Meldung.
       if (!warVerifiziert && serverVerified) {
         unawaited(_notifyVerified());
       }

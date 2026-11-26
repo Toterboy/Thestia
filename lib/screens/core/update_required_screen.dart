@@ -4,18 +4,18 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 
-/// Screen fuer "dieses Build ist zu alt".
+/// Screen für "dieses Build ist zu alt".
 ///
 /// Wird gezeigt, wenn der installierte Build unter dem serverseitigen
 /// Mindest-Build liegt (`app_config.min_app_version_build`). Zwei
-/// Faelle:
+/// Fülle:
 ///
 ///   * **Beim Start** (main.dart): der Wert stand schon im lokalen
 ///     Cache. Der Screen blockiert dann - ein zu alter Build darf
 ///     nicht weiterlaufen.
-///   * **Waehrend der App** (app.dart): der Server ist strenger
-///     geworden, seitdem der Cache gefuellt wurde. Der Hinweis
-///     erscheint dann als Deckschicht ueber der laufenden App.
+///   * **Während der App** (app.dart): der Server ist strenger
+///     geworden, seitdem der Cache gefüllt wurde. Der Hinweis
+///     erscheint dann als Deckschicht über der laufenden App.
 ///
 /// [onDismiss] ist nur im zweiten Fall gesetzt: dort kann der Nutzer
 /// die Deckschicht wegtippen und weiterarbeiten. Beim Start ist der
@@ -24,7 +24,7 @@ import 'package:thestia/utils/common/best_effort.dart';
 class UpdateRequiredScreen extends StatelessWidget {
   const UpdateRequiredScreen({this.onDismiss, super.key});
 
-  /// Wird aufgerufen, wenn der Nutzer "Trotzdem fortfahren" waehlt.
+  /// Wird aufgerufen, wenn der Nutzer "Trotzdem fortfahren" wählt.
   /// `null` = der Bildschirm ist eine Sperre (Startfall).
   final VoidCallback? onDismiss;
 
@@ -82,11 +82,11 @@ class UpdateRequiredScreen extends StatelessWidget {
       ),
     ];
     for (final uri in uris) {
-      // naechste Option versuchen
+      // nächste Option versuchen
       final gestartet = await bestEffortOr('launchUrl', () async {
-        // Nur den ersten Eintrag versuchen, der ueberhaupt startbar
+        // Nur den ersten Eintrag versuchen, der überhaupt startbar
         // ist - sonst tappt der Nutzer auf einen Store, den es auf
-        // dem Geraet nicht gibt.
+        // dem Gerät nicht gibt.
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
           return true;

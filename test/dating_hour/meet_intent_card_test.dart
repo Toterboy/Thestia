@@ -1,17 +1,17 @@
 // Die Treffen-Vorschlags-Karte im Chat - bisher kaum getestet (9,2 %).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/profile/meet_intent_card.dart 89 offene Zeilen bei 98 Zeilen
 // gesamt. Die Karte ist das, was aus einem Funke ein echtes Treffen
-// machen soll - und sie hat fuenf Zustaende.
+// machen soll - und sie hat fünf Zustände.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ein zu frischer Funke zeigt gar nichts (das stoert nur),
+// WAS HIER GEPRÜFT WIRD:
+//   * ein zu frischer Funke zeigt gar nichts (das stört nur),
 //   * noch niemand will -> der sanfte Vorschlag,
 //   * der Partner will -> die Zustimmungs-Frage,
 //   * ich will, der Partner noch nicht -> der Warte-Hinweis,
 //   * beide wollen -> die Planungskarte mit den Date-Ideen,
-//   * "Später" blendet die Karte aus (nur fuer diese Sitzung).
+//   * "Später" blendet die Karte aus (nur für diese Sitzung).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,7 +62,7 @@ void main() {
   }) async {
     // DER TESTRAHMEN: 600 px breit. Die Testschrift (Ahem) ist rund
     // 1,7-mal breiter als Roboto - die beiden Knopfe der Karte laufen
-    // sonst ueber den Rand. Mit der echten Schrift passt es (der
+    // sonst über den Rand. Mit der echten Schrift passt es (der
     // Bildschirm wird in der App nie breiter als ~420 px).
     await tester.binding.setSurfaceSize(const Size(600, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -224,7 +224,7 @@ void main() {
       // Die Date-Ideen stehen zur Auswahl.
       expect(find.text(L10n.tWithoutContext('meet.idea.1')), findsOneWidget);
       expect(find.text(L10n.tWithoutContext('meet.idea.5')), findsOneWidget);
-      // Und der Treffen-Bestaetigungsknopf.
+      // Und der Treffen-Bestätigungsknopf.
       expect(find.text(L10n.tWithoutContext('meet.metBtn')), findsOneWidget);
     });
 

@@ -1,12 +1,12 @@
-// Die Schalter fuer das oeffentliche Profil (NUTZERWUNSCH 22.11.2026:
-// "Man soll diese Punkte und die Gewohnheiten einzeln fuer's oeffentliche
-// Profil an und aus machen koennen").
+// Die Schalter für das öffentliche Profil (NUTZERWUNSCH 22.11.2026:
+// "Man soll diese Punkte und die Gewohnheiten einzeln für's öffentliche
+// Profil an und aus machen können").
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Schalter aendern den Zustand und werden gespeichert,
+// WAS HIER GEPRÜFT WIRD:
+//   * die Schalter ändern den Zustand und werden gespeichert,
 //   * der Server bekommt die Spalte geschrieben (er entscheidet, was
 //     andere sehen - Migration 222),
-//   * der Serverstand gewinnt beim Zuruecklesen (zweites Geraet),
+//   * der Serverstand gewinnt beim Zurücklesen (zweites Gerät),
 //   * das Modell verliert die Schalter nicht (Cache!).
 import 'dart:convert';
 
@@ -82,7 +82,7 @@ void main() {
         showHabitsAlcohol: false,
         showHabitsDrugs: false,
       );
-      // Der Cache (JSON) muss sie behalten - sonst waeren sie nach
+      // Der Cache (JSON) muss sie behalten - sonst wären sie nach
       // einem Neustart wieder "an".
       final json =
           jsonDecode(jsonEncode(settings.toJson())) as Map<String, dynamic>;
@@ -136,7 +136,7 @@ void main() {
       expect(notifier.state.showMusicLiked, isFalse);
       expect(notifier.state.showFavoriteBand, isFalse);
       expect(notifier.state.showHabitsDrugs, isFalse);
-      // Die nicht genannten bleiben unberuehrt.
+      // Die nicht genannten bleiben unberührt.
       expect(notifier.state.showFavoriteSong, isTrue);
       expect(notifier.state.showHabitsSmoking, isTrue);
     });

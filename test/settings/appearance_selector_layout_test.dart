@@ -1,15 +1,15 @@
-// Regressionstest fuer die Zentrierung in AppearanceSelector.
+// Regressionstest für die Zentrierung in AppearanceSelector.
 //
 // Nutzerbefund: "Bei Erscheinung ist der Text bei System und Dunkel nicht
 // richtig mittig." Ursache war ein SizedBox(width: 16), der in ALLEN
-// Segmenten als Platz fuer den Auswahl-Haken stand. Bei "Hell" faellt das
-// nicht auf, weil der Haken den Platz fuellt - "System" und "Dunkel" hadten
+// Segmenten als Platz für den Auswahl-Haken stand. Bei "Hell" fällt das
+// nicht auf, weil der Haken den Platz füllt - "System" und "Dunkel" hadten
 // dadurch einen um 6 px nach links verschobenen Text.
 //
 // Der Test vergleicht die Textmitte mit der Iconmitte. Das Icon ist genau
 // mittig in seinem Segment (Column mit crossAxisAlignment.center), taugt
 // also als Bezugspunkt - anders als ein gemessener Abstand zum Nachbarn,
-// der von der Segmentbreite abhaengt.
+// der von der Segmentbreite abhängt.
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -76,14 +76,14 @@ void main() {
   testWidgets('Segmentbreite springt beim Wechsel nicht', (tester) async {
     // Der alte Aufbau reservierte 16 px in allen Segmenten, damit die
     // Zeile nicht springt. Mit dem Overlay-Haken ist dieser Platz
-    // ueberfluessig.
+    // überflüssig.
     //
     // Ganz genau 0 ist die Differenz trotzdem nicht: das aktive Segment
     // hat einen 2 px starken Rahmen, die anderen 1 px. Der Rahmen geht
     // in die Breite ein, das Segment wächst also um 2 px. Das ist der
     // Rest des Springens, das bleibt - sichtbar ist es nicht.
     //
-    // Vorher waeren es 16 px plus diese 2 px gewesen.
+    // Vorher wären es 16 px plus diese 2 px gewesen.
     double widthOf(String text) => tester
         .getRect(
           find.ancestor(
@@ -127,16 +127,16 @@ void main() {
   // Zweiter Befund, eigene Ursache.
   // ---------------------------------------------------------------------------
   // Der erste Test verglich Textmitte gegen ICONmitte. Beide lagen
-  // korrekt uebereinander - nur an der FALSCHEN Stelle: beide waren im
+  // korrekt übereinander - nur an der FALSCHEN Stelle: beide waren im
   // Segment nach links verschoben.
   //
   // Ursache: ein Stack richtet sein nicht positioniertes Kind standard-
-  // maessig oben links aus. Die Column ist schmal, der Kasten ist durch
+  // mäßig oben links aus. Die Column ist schmal, der Kasten ist durch
   // die Mindestbreite (92 px) breiter. Bei "Hell" ist der Unterschied am
-  // groessten.
+  // größten.
   //
   // Dieser Test misst deshalb gegen die Segmentkante, nicht gegen das
-  // Symbol: genau die Groesse, die ein Nutzer als "nicht mittig" sieht.
+  // Symbol: genau die Größe, die ein Nutzer als "nicht mittig" sieht.
   testWidgets('Symbol und Beschriftung sitzen mittig IM Segment', (
     tester,
   ) async {
@@ -152,7 +152,7 @@ void main() {
       final text = caption(entry.key);
 
       // Das Segment ist der Vorfahr mit dem AnimatedContainer. Gesucht
-      // wird der naechste Container, der breiter ist als der Inhalt -
+      // wird der nächste Container, der breiter ist als der Inhalt -
       // das ist genau der, der den sichtbaren Rahmen zeichnet.
       final box = find.ancestor(
         of: icon,

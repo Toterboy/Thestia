@@ -23,8 +23,8 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        // BEFUND (13.11.2026, Test): Bei der groessten Android-
-        // Schriftstufe (3,2x) lief der Zustand ueber - es gab keinen
+        // BEFUND (13.11.2026, Test): Bei der größten Android-
+        // Schriftstufe (3,2x) lief der Zustand über - es gab keinen
         // eigenen Scrollbereich. Die App verspricht aber, bis 3,2x
         // benutzbar zu bleiben (ROADMAP, Accessibility-Durchlauf).
         padding: const EdgeInsets.all(32),
@@ -90,7 +90,7 @@ class ErrorState extends StatelessWidget {
     return Center(
       child: SingleChildScrollView(
         // BEFUND (13.11.2026, Test): Bei 3,2x Schrift lief der
-        // Fehlerzustand ueber - siehe [EmptyState].
+        // Fehlerzustand über - siehe [EmptyState].
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

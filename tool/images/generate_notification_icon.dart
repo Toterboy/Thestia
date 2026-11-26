@@ -1,17 +1,17 @@
 // tool/images/generate_notification_icon.dart
 //
 // Erzeugt das Android-Benachrichtigungs-Icon als sauber gezeichnete
-// Herz-Silhouette (weiss auf transparent, 96x96).
+// Herz-Silhouette (weiß auf transparent, 96x96).
 //
-// Android verlangt fuer Statusleisten-Icons eine alpha-maskierte,
+// Android verlangt für Statusleisten-Icons eine alpha-maskierte,
 // einfarbige Form - das alte Icon war eine automatisch abgeleitete
 // Logo-Silhouette (inkl. Schriftzug-Resten). Das neue Herz ist eine
 // parametrische Kurve (16*sin^3, 13*cos - 5*cos2 - 2*cos3 - cos4),
-// symmetrisch, mit ruhigen Rundungen und gleichmaessigem Padding.
+// symmetrisch, mit ruhigen Rundungen und gleichmässigem Padding.
 //
 // Output: android/app/src/main/res/drawable/notification_icon.png
 //
-// Ausfuehren: dart run tool/images/generate_notification_icon.dart
+// Ausführen: dart run tool/images/generate_notification_icon.dart
 // Optional:   dart run tool/images/generate_notification_icon.dart <zielBreitePx>
 //             (nur zum Vergleich der Varianten, Standard ist 88)
 
@@ -31,29 +31,29 @@ void main(List<String> args) {
   //
   // Die Ursache: Das Herz belegte nur 60 von 96 px, also 62 % der
   // Leinwand. Android skaliert das Drawable auf 24 dp und maskiert es
-  // dann mit der Systemform. Ein Icon, das nur 62 % fuellt, erscheint
+  // dann mit der Systemform. Ein Icon, das nur 62 % füllt, erscheint
   // deshalb sichtbar kleiner als die System-Icone daneben (Batterie,
   // WLAN, Signal) - die sind fast randlos.
   //
-  // Ein Material-Heart (Icons.favorite) fuellt 20 x 18 von 24 dp, also
-  // 83 % x 75 %. Unser Ziel liegt bewusst etwas darueber, damit das
-  // Herz in der Statusleiste nicht als "klein" auffaellt.
+  // Ein Material-Heart (Icons.favorite) füllt 20 x 18 von 24 dp, also
+  // 83 % x 75 %. Unser Ziel liegt bewusst etwas darüber, damit das
+  // Herz in der Statusleiste nicht als "klein" auffällt.
   //
-  // Die Breite wird vorgegeben, die Hoehe folgt aus dem Seitenverhaelt-
+  // Die Breite wird vorgegeben, die Höhe folgt aus dem Seitenverhält-
   // nis der Kurve - das Herz bleibt dadurch unverzerrt. 84 px Breite
-  // ergeben rund 76 px Hoehe (79 % der Leinwand).
+  // ergeben rund 76 px Höhe (79 % der Leinwand).
   //
-  // Warum 84 und nicht 96: Manche Geraete legen eine runde oder
-  // abgerundete Systemmaske ueber das Statusleisten-Icon. Bei 96 px
+  // Warum 84 und nicht 96: Manche Geräte legen eine runde oder
+  // abgerundete Systemmaske über das Statusleisten-Icon. Bei 96 px
   // Breite ragten die oberen Lappen aus der Kreisform heraus und
-  // wuerden angeschnitten. 84 px lassen 6 px Rand - das Herz ist damit
-  // immer noch 88 % so breit wie vorher (60 px) und deutlich groesser
+  // würden angeschnitten. 84 px lassen 6 px Rand - das Herz ist damit
+  // immer noch 88 % so breit wie vorher (60 px) und deutlich größer
   // als die System-Icone daneben.
   final zielBreite = args.isNotEmpty
       ? double.tryParse(args.first) ?? 84.0
       : 84.0;
 
-  // 4-fach ueberabtastet und danach heruntergerechnet: nur so bekommt
+  // 4-fach überabtastet und danach heruntergerechnet: nur so bekommt
   // die Silhouette saubere, weiche Kanten. Ohne das hat das Icon
   // sichtbare Treppenstufen, wenn Android es auf 24 dp verkleinert.
   const ueberabtastung = 4;
@@ -70,7 +70,7 @@ void main(List<String> args) {
   // (Scheitel bei y = +11,6). Die Kerbe zwischen den Lappen ist der
   // Punkt (0, 5) bei t = 0.
   //
-  // Fuer den Bildschirm (y nach unten) wird deshalb umgekehrt.
+  // Für den Bildschirm (y nach unten) wird deshalb umgekehrt.
   const punkteAnzahl = 1440;
   final kurve = <List<double>>[];
   var xMin = double.infinity, xMax = -double.infinity;
@@ -130,7 +130,7 @@ void main(List<String> args) {
   final out = File('$outDir/notification_icon.png');
   out.writeAsBytesSync(img.encodePng(canvas));
 
-  // Kurzmeldung mit der tatsaechlichen Tinten-Box (Tinte = Pixel mit
+  // Kurzmeldung mit der tatsächlichen Tinten-Box (Tinte = Pixel mit
   // Alpha > 8). Sie zeigt, wie viel der Leinwand das Herz wirklich
   // belegt - daran erkennt man, ob es neben den System-Iconen klein
   // wirkt.

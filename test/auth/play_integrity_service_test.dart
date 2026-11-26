@@ -1,17 +1,17 @@
 // Die Play-Integrity-Attestierung.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/services/auth/play_integrity_service.dart nur 37,5 % Abdeckung.
 //
-// DER WEG: Der Aufruf geht ueber einen MethodChannel
+// DER WEG: Der Aufruf geht über einen MethodChannel
 // ('thestia/integrity') - der Test beantwortet ihn selbst.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * der Aufruf liefert das Token des Geraets,
-//   * die Nonce kommt beim Geraet an (sie bindet das Token an diesen
-//     einen Aufruf - sonst koennte ein Token wiederverwendet werden),
-//   * ein Fehler des Kanals ergibt null (der Aufrufer faellt dann auf
-//     die manuelle Pruefung zurueck - ein harter Fehler wuerde die
+// WAS HIER GEPRÜFT WIRD:
+//   * der Aufruf liefert das Token des Geräts,
+//   * die Nonce kommt beim Gerät an (sie bindet das Token an diesen
+//     einen Aufruf - sonst kännte ein Token wiederverwendet werden),
+//   * ein Fehler des Kanals ergibt null (der Aufrufer fällt dann auf
+//     die manuelle Prüfung zurück - ein harter Fehler würde die
 //     Verifizierung blockieren).
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,7 +21,7 @@ import 'package:thestia/services/auth/play_integrity_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  /// Der Kanal des Geraets.
+  /// Der Kanal des Geräts.
   const kanal = MethodChannel('thestia/integrity');
 
   tearDown(() {
@@ -75,7 +75,7 @@ void main() {
     });
 
     test('ein Fehler des Kanals gibt null', () async {
-      // DER FEHLER: Das Geraet hat die Play-Bibliothek nicht (der
+      // DER FEHLER: Das Gerät hat die Play-Bibliothek nicht (der
       // F-Droid-Build zum Beispiel).
       mockKanal(null, fehler: PlatformException(code: 'nicht_verfuegbar'));
 

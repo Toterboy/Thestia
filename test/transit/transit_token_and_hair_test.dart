@@ -3,16 +3,16 @@ import 'package:thestia/models/transit/transit_models.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/services/transit/transit_encounter_service.dart';
 
-/// Tests fuer die strenge Token-Pruefung und die Haarfarben.
+/// Tests für die strenge Token-Prüfung und die Haarfarben.
 ///
 /// WARUM (06.11.2026, Betreiber): "Android 16 erkennt praktisch
-/// unendlich Thestia-Geraete (Es gibt maximal 1 anderes). Es werden
-/// immer mehr (aktuell ueber 100 gefunden)."
+/// unendlich Thestia-Geräte (Es gibt maximal 1 anderes). Es werden
+/// immer mehr (aktuell über 100 gefunden)."
 ///
 /// Ursache: Die Hersteller-ID 0xFFFF ist die reservierte SIG-Nummer und
-/// wird von vielen echten Geraeten benutzt. Die alte Pruefung las "irgendetwas
+/// wird von vielen echten Geräten benutzt. Die alte Prüfung las "irgendetwas
 /// nach dem Marker" als Token - auf Android 16 kam deshalb jedes fremde
-/// Bluetooth-Geraet als Thestia-Geraet in den Cache.
+/// Bluetooth-Gerät als Thestia-Gerät in den Cache.
 void main() {
   group('Das Token', () {
     test('ein erzeugtes Token ist wohlgeformt', () {
@@ -52,8 +52,8 @@ void main() {
     });
 
     test('ein fremdes Geraet landet NICHT im Cache', () {
-      // Das ist der Kern des Befunds: die Zahl "Thestia-Geraete in
-      // Reichweite" darf nur echte Thestia-Tokens zaehlen.
+      // Das ist der Kern des Befunds: die Zahl "Thestia-Geräte in
+      // Reichweite" darf nur echte Thestia-Tokens zählen.
       final cache = TransitEncounterService(_Speicher());
       cache.recordEncounter('z' * 20);
       cache.recordEncounter('kurz');
@@ -95,8 +95,8 @@ void main() {
       // Die Merkmale sind eindeutig, weil der MERKMALS-Slug sie trennt:
       // "hair_color:purple" ist etwas anderes als "hemd:purple".
       //
-      // Der alte Kommentar behauptete, die Farbe selbst traege ein
-      // Praefix im Slug ("haar_black"). Das stimmt nicht (und stimmte
+      // Der alte Kommentar behauptete, die Farbe selbst tröge ein
+      // Präfix im Slug ("haar_black"). Das stimmt nicht (und stimmte
       // nie): die Farb-Slugs sind global und werden von mehreren
       // Merkmalen benutzt - lila ist bei den Haaren und bei der
       // Kleidung dieselbe Farbe.
@@ -144,7 +144,7 @@ void main() {
   });
 }
 
-/// Ein Speicher im Speicher (der echte waere der Keystore).
+/// Ein Speicher im Speicher (der echte wäre der Keystore).
 class _Speicher implements LocalStorage {
   final map = <String, String>{};
 

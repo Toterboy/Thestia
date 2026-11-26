@@ -1,20 +1,20 @@
 // Die Funken-Liste gegen den echten Server (BEFUND 20.11.2026,
-// Betreiber: "Die Funken beim Interessen-Screen koennen nicht geladen
+// Betreiber: "Die Funken beim Interessen-Screen können nicht geladen
 // werden").
 //
 // DIE URSACHE: Der Aufruf von list_my_matches_with_state() antwortete
 // mit HTTP 405 ("cannot execute INSERT in a read-only transaction").
-// Die Funktion war STABLE und schrieb dabei (ueber den Rate-Limit-
-// Zaehler) in die Datenbank - PostgREST fuehrt STABLE-Aufrufe in
+// Die Funktion war STABLE und schrieb dabei (über den Rate-Limit-
+// Zähler) in die Datenbank - PostgREST fährt STABLE-Aufrufe in
 // einer READ-ONLY-Transaktion aus.
 //
-// WARUM DIESER TEST LIVE LAEUFT: Der Fehler ist im Quelltext nicht zu
-// sehen. Die Funktion sah richtig aus, die Migrationen waren gruen,
+// WARUM DIESER TEST LIVE LÄUFT: Der Fehler ist im Quelltext nicht zu
+// sehen. Die Funktion sah richtig aus, die Migrationen waren grün,
 // die Unit-Tests kannten den Server nicht. Nur ein Aufruf gegen das
 // echte System zeigt ihn.
 //
 // DER TEST LIEFERT KEINE TESTDATEN: Er liest nur. Er braucht eine
-// echte Sitzung fuer ein Testkonto und ruft die RPC genau so auf, wie
+// echte Sitzung für ein Testkonto und ruft die RPC genau so auf, wie
 // die App es tut.
 import 'dart:convert';
 

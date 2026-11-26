@@ -1,25 +1,25 @@
-"""Prueft, dass die Store-Screenshots die System-UI korrekt zeigen.
+"""Prüft, dass die Store-Screenshots die System-UI korrekt zeigen.
 
 Der Screenshot-Render (test/screenshots/store_v091_shots_test.dart) ist
-gitignoriert. Damit koennen dort Fehler unbemerkt entstehen und beim
-naechsten Checkout wieder verschwinden. Diese Pruefung laeuft gegen das
-ERGEBNIS - die fertigen PNGs - und schlaegt an, wenn der Render nicht
-mehr wie ein echtes Geraet aussieht.
+gitignoriert. Damit können dort Fehler unbemerkt entstehen und beim
+nächsten Checkout wieder verschwinden. Diese Prüfung läuft gegen das
+ERGEBNIS - die fertigen PNGs - und schlägt an, wenn der Render nicht
+mehr wie ein echtes Gerät aussieht.
 
-Geprueft wird:
+Geprüft wird:
 
-  1. Seitenverhaeltnis der Quelle: 20:9 (1080x2400). Ein gerenderter
+  1. Seitenverhältnis der Quelle: 20:9 (1080x2400). Ein gerenderter
      Bildschirm, der auf 16:9 gequetscht wurde, sieht auf jedem
-     modernen Geraet falsch aus.
+     modernen Gerät falsch aus.
   2. Statusleisten-Reserve: im oberen Band von 24 dp darf KEIN
-     sichtbarer App-Inhalt liegen. Toleranz 12 physische Pixel fuer
+     sichtbarer App-Inhalt liegen. Toleranz 12 physische Pixel für
      den Antialiasing-Rand der AppBar-Icons.
   3. Die System-Indikatoren, die make_store_screenshots.py zeichnet,
-     muessen oben vorhanden sein: ohne sie wirkt der Screen wie ein
-     Bild, nicht wie ein Geraet.
+     müssen oben vorhanden sein: ohne sie wirkt der Screen wie ein
+     Bild, nicht wie ein Gerät.
 
 Die Werte kommen aus tool/store_screenshot_insets.dart - dieselbe
-Quelle, die der Render-Harness benutzt. Veraendert man die Insets dort,
+Quelle, die der Render-Harness benutzt. Verändert man die Insets dort,
 muss man sie hier nicht nachziehen.
 
 Aufruf:  python tool/checks/check_store_screenshots.py
@@ -33,10 +33,10 @@ from collections import Counter
 try:
     from PIL import Image
 except ImportError:  # pragma: no cover
-    # Pillow gehoert nach tool/requirements.txt. Ohne das Paket darf der
+    # Pillow gehört nach tool/requirements.txt. Ohne das Paket darf der
     # Lauf aber nicht mit ImportError abbrechen - das hat den
     # static-checks-Job rot gemacht, obwohl es nichts zu beanstanden
-    # gab. Lieber ehrlich "kann nicht pruefen" sagen und mit 0 raus.
+    # gab. Lieber ehrlich "kann nicht prüfen" sagen und mit 0 raus.
     print('Pillow nicht installiert - Pruefung nicht moeglich.')
     print('Installieren mit: pip install -r tool/requirements.txt')
     sys.exit(0)
@@ -44,8 +44,8 @@ except ImportError:  # pragma: no cover
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -61,23 +61,23 @@ def _projektwurzel() -> pathlib.Path:
 ROOT = _projektwurzel()
 
 
-# Die beiden Sprachlaeufe (03.11.2026).
+# Die beiden Sprachläufe (03.11.2026).
 #
-# BISHER wurde nur DE geprueft. Die englische Liste hatte keine Phone-
+# BISHER wurde nur DE geprüft. Die englische Liste hatte keine Phone-
 # Screenshots (die Tablet-Skripte kopierten die deutschen Bilder in
-# beide Sprachen) - ein Zustand, den diese Pruefung nicht sehen
+# beide Sprachen) - ein Zustand, den diese Prüfung nicht sehen
 # konnte, weil sie nur einen Ordner kannte.
 #
-# Beide Laeufe werden jetzt geprueft: gleiche Regeln, gleiche
+# Beide Läufe werden jetzt geprüft: gleiche Regeln, gleiche
 # Quellen, gleiche fertigen Bilder.
 SRC = ROOT / 'test' / 'screenshots' / 'store_v091' / 'phone'
 
-# Kompositionen OHNE Geraet und OHNE System-UI.
+# Kompositionen OHNE Gerät und OHNE System-UI.
 #
-# 03_entdecken zeigt seit v0.9.2 die fuenf Modus-Kacheln einzeln auf dem
+# 03_entdecken zeigt seit v0.9.2 die fünf Modus-Kacheln einzeln auf dem
 # Markenverlauf - kein Screen, kein Mockup. Eine Statusleiste gibt es
-# dort nicht, also waeren Reserve- und Indikator-Pruefung sinnlos und
-# meldeten faelschlich "Insets nicht angewendet".
+# dort nicht, also wären Reserve- und Indikator-Prüfung sinnlos und
+# meldeten fälschlich "Insets nicht angewendet".
 NO_STATUSBAR = {'03_entdecken.png'}
 FINAL = (ROOT / 'fastlane' / 'metadata' / 'android' / 'de-DE' /
          'images' / 'phoneScreenshots')
@@ -115,18 +115,18 @@ def read_insets():
 def find_screen(im):
     """Findet die abgerundete App-Kachel im fertigen Bild.
 
-    v0.9.2: Es gibt kein Geraet-Mockup mehr, sondern nur noch die
+    v0.9.2: Es gibt kein Gerät-Mockup mehr, sondern nur noch die
     abgerundete App-Kachel auf dem Markenverlauf.
 
-    Die Kachel ist NEUTRAL hell (Summe > 560), der Verlauf gesaettigt
-    (Summe deutlich niedriger) und der Text weiss (Summe sehr hoch,
+    Die Kachel ist NEUTRAL hell (Summe > 560), der Verlauf gesättigt
+    (Summe deutlich niedriger) und der Text weiß (Summe sehr hoch,
     aber nur in schmalen Zeilen).
 
     Ein reiner Schwellwert auf "helle Zeile" reicht nicht: bei
     04_anpassen ist die Subline zweizeilig, und die weisse Schrift
-    ueberschreitet die Schwelle, sobald genug Buchstaben in einer Zeile
+    überschreitet die Schwelle, sobald genug Buchstaben in einer Zeile
     stehen. Deshalb wird nach der ERSTEN Zeile gesucht, auf der ein
-    heller Lauf ueber mehr als 45% der Breite laeuft - Text erfasst
+    heller Lauf über mehr als 45% der Breite läuft - Text erfasst
     keine 45% contigu, die Kachel sehr wohl.
     """
     px = im.load()
@@ -136,7 +136,7 @@ def find_screen(im):
     for y in range(int(h * 0.15), int(h * 0.80)):
         light = sum(1 for x in cols if sum(px[x, y]) > 560)
         frac = light / len(cols)
-        # Erste breite helle Zeile, danach noch zwei bestaetigen: die
+        # Erste breite helle Zeile, danach noch zwei bestätigen: die
         # Kachel ist ein Block, Text ist es nicht.
         if frac > 0.45:
             if best is None:
@@ -158,20 +158,20 @@ def find_screen_x(im, top):
 
 
 def count_indicators(im, top, left, right):
-    """Prueft, ob die System-Symbole im Statusleisten-Band sichtbar sind.
+    """Prüft, ob die System-Symbole im Statusleisten-Band sichtbar sind.
 
-    Bewusst KEIN Zaehlen nach Seiten und KEINE Modalsuche. Die erste
-    Fassung versuchte, Uhr und Akku getrennt zu zaehlen und produzierte
+    Bewusst KEIN Zählen nach Seiten und KEINE Modalsuche. Die erste
+    Fassung versuchte, Uhr und Akku getrennt zu zählen und produzierte
     damit drei Wertegleichungen ohne Aussagekraft: die genaue Position
-    haengt an Kachelbreite, Radius und Bildhoehe, und jede Tabelle
+    hängt an Kachelbreite, Radius und Bildhöhe, und jede Tabelle
     darin war geraten statt gemessen - sieflagte korrekt gezeichnete
     Symbole als fehlend.
 
-    Stattdessen ein Nachweis, der wirklich etwas prueft: im Band muss
-    es DUNKLE Pixel geben. Die App-Oberflaeche ist hell (247,247,251),
-    die System-Symbole sind deckend dunkel (60,52,66). Zaehlt werden
+    Stattdessen ein Nachweis, der wirklich etwas prüft: im Band muss
+    es DUNKLE Pixel geben. Die App-Oberfläche ist hell (247,247,251),
+    die System-Symbole sind deckend dunkel (60,52,66). Zählt werden
     nur Pixel deutlich unterhalb der App-Helligkeit, in beiden
-    Randbereichen zusammen. Das ist unabhaengig davon, ob gerade die
+    Randbereichen zusammen. Das ist unabhängig davon, ob gerade die
     Uhr oder der Akku links steht.
     """
     px = im.load()
@@ -180,22 +180,22 @@ def count_indicators(im, top, left, right):
     band_bot = top + int(tile_h * 0.036)
 
 def count_indicators(im, top, left, right, status_dp):
-    """Zaehlt die System-Symbole im Statusleisten-Band.
+    """Zählt die System-Symbole im Statusleisten-Band.
 
-    Das Band wird aus der Statusleisten-Hoehe in dp BEREchnet, nicht
-    aus festen Prozentwerten der Bildhoehe. Die festen Prozente waren
+    Das Band wird aus der Statusleisten-Höhe in dp BEREchnet, nicht
+    aus festen Prozentwerten der Bildhöhe. Die festen Prozente waren
     falsch: sie nahmen an, die Icon-Zeile liege bei 2 bis 3,6 % der
-    Kachelhoehe, tatsaechlich liegt sie bei der Mitte der
-    Statusleiste. Bei 24 dp von 800 dp sind das 3 % der Screenhoehe und
+    Kachelhöhe, tatsächlich liegt sie bei der Mitte der
+    Statusleiste. Bei 24 dp von 800 dp sind das 3 % der Screenhöhe und
     damit 1,5 % der Mitte - die beiden Werte unterscheiden sich um
     fast das Doppelte, und die Symbole fielen gerade aus dem Suchband
-    heraus. Der Schwellwert 60 war zudem an die uebergrossen gezeichneten
+    heraus. Der Schwellwert 60 war zudem an die übergrossen gezeichneten
     Symbole angepasst; seit die Proportionen aus der Referenz
     gemessen sind, ist er zu hoch.
 
     Gezählt wird in den mittleren 70 % der Statusleiste, wo die Icon-
-    Zeile liegt. Schwellwert: 12 % der Flaeche, die die Symbole laut
-    gemessener Referenz einnehmen (19 % der Breite mal 2,3 % Hoehe
+    Zeile liegt. Schwellwert: 12 % der Fläche, die die Symbole laut
+    gemessener Referenz einnehmen (19 % der Breite mal 2,3 % Höhe
     mal 40 % Tinte in den Strichen).
     """
     px = im.load()
@@ -222,7 +222,7 @@ def count_indicators(im, top, left, right, status_dp):
 
 def main():
     # Das Insets-Modul ist committet und in CI IMMER vorhanden. Es wird
-    # deshalb vor allem anderen geprueft - wenn es fehlt oder keine
+    # deshalb vor allem anderen geprüft - wenn es fehlt oder keine
     # plausiblen Werte liefert, ist der Screenshot-Render kaputt, und das
     # ist auch ohne fertige Bilder feststellbar.
     status_dp, nav_dp = read_insets()
@@ -237,12 +237,12 @@ def main():
             f'(Erwartung 16..48)')
 
     # Die Screenshot-Ausgaben sind bewusst gitignoriert und in CI nicht
-    # vorhanden. Ohne sie ist der Realismus nicht pruefbar - der Check
+    # vorhanden. Ohne sie ist der Realismus nicht prüfbar - der Check
     # darf daran nicht scheitern, sonst ist die ganze CI rot und der
-    # Nutzen weg. Er meldet "uebersprungen" und beendet mit 0.
+    # Nutzen weg. Er meldet "übersprungen" und beendet mit 0.
     #
     # Das ist kein Wegsehen: sind die Dateien da (lokaler Release-Lauf),
-    # wird vollstaendig geprueft und ein Befund bricht hart ab.
+    # wird vollständig geprüft und ein Befund bricht hart ab.
     vorhanden = [(lang, src, fin) for lang, src, fin in LAEUFE
                  if src.exists() and any(src.glob('*.png'))]
     if not vorhanden:
@@ -291,16 +291,16 @@ def main():
           px = im.load()
           notes = []
 
-          # 1) Seitenverhaeltnis
+          # 1) Seitenverhältnis
           ratio = h / w
           if not (2.0 <= ratio <= 2.25):
               problems.append(
                   f'{f.name}: Seitenverhaeltnis {ratio:.2f}:1 ist nicht 20:9')
 
-          # 2) Statusleisten-Reserve - nur fuer die Kompositionen, die
-          #    ueberhaupt eine Statusleiste zeigen. 03_entdecken besteht
+          # 2) Statusleisten-Reserve - nur für die Kompositionen, die
+          #    überhaupt eine Statusleiste zeigen. 03_entdecken besteht
           #    seit v0.9.2 aus losen Modus-Kacheln auf dem Verlauf, ohne
-          #    Geraet und ohne System-UI: dort waere die Pruefung sinnlos.
+          #    Gerät und ohne System-UI: dort wäre die Prüfung sinnlos.
           has_statusbar = f.name not in NO_STATUSBAR
           if has_statusbar:
               bg = px[6, 6]
@@ -319,9 +319,9 @@ def main():
                       f'hat die System-Insets nicht angewendet')
               notes.append(f'Reserve {share*100:.2f}%')
 
-          # 3) System-Indikatoren im fertigen Bild. Nur wo ueberhaupt eine
+          # 3) System-Indikatoren im fertigen Bild. Nur wo überhaupt eine
           #    Statusleiste gezeichnet wird - 03_entdecken besteht aus losen
-          #    Kacheln auf dem Verlauf, ohne Geraet und ohne System-UI.
+          #    Kacheln auf dem Verlauf, ohne Gerät und ohne System-UI.
           final = final_dir / f.name
           if has_statusbar and final.exists():
               fim = Image.open(final).convert('RGB')

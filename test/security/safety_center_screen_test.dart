@@ -1,20 +1,20 @@
 // Das Sicherheitscenter - bisher ungetestet (2,8 %).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/safety/safety_center_screen.dart 140 offene Zeilen bei 144
 // Zeilen gesamt - der Bildschirm, auf dem ein Nutzer Hilfe bei
 // Belästigung findet, war komplett ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Hilfetelefone und die Schutz-Kacheln stehen da,
 //   * die beiden Listen (blockierte Nutzer, eigene Meldungen) haben je
 //     einen EIGENEN Screen - hier steht nur der Einstieg.
 //     Die Listen selbst werden in safety_lists_screens_test.dart
-//     geprueft.
+//     geprüft.
 //
 // NUTZERWUNSCH (22.11.2026): "Blockierte Nutzer und Meldungen sollen
 // beide als einzelne Screens, damit der Safety Center Screen nicht
-// ueberladen wird, wenn es viele blockierungen und oder Meldungen
+// überladen wird, wenn es viele blockierungen und oder Meldungen
 // gibt."
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -124,11 +124,11 @@ void main() {
     ) async {
       // NUTZERWUNSCH (22.11.2026): "Blockierte Nutzer und Meldungen
       // sollen beide als einzelne Screens, damit der Safety Center
-      // Screen nicht ueberladen wird, wenn es viele blockierungen
+      // Screen nicht überladen wird, wenn es viele blockierungen
       // und oder Meldungen gibt."
       //
       // Der Safety Center zeigt also nur die EINSTIEGE - die Listen
-      // selbst stehen in eigenen Screens (test dafuer:
+      // selbst stehen in eigenen Screens (test dafür:
       // safety_lists_screens_test.dart).
       await zeigeScreen(tester);
       await warteAufServer(tester);
@@ -171,7 +171,7 @@ void main() {
       await warteAufServer(tester);
 
       expect(tester.takeException(), isNull);
-      // Die Eintraege selbst duerfen hier NICHT mehr stehen.
+      // Die Einträge selbst dürfen hier NICHT mehr stehen.
       expect(find.text('Belästigung / Beleidigungen'), findsNothing);
       expect(find.text('Mira'), findsNothing);
     });

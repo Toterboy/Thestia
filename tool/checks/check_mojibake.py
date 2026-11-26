@@ -6,21 +6,21 @@ PowerShell 5.1 ist das der Normalfall bei
 
     (Get-Content -Raw) | Set-Content -Encoding UTF8
 
-Korrekt waere Get-Content -Raw -Encoding UTF8, oder man fasst die Datei
-gar nicht ueber die Shell an.
+Korrekt wäre Get-Content -Raw -Encoding UTF8, oder man fasst die Datei
+gar nicht über die Shell an.
 
-Warum ein eigener Checker noetig ist
+Warum ein eigener Checker nötig ist
 ------------------------------------
-Der Defekt faellt im Quelltext nicht auf. In tool/scripts/make_feature_graphic.py
-stand woertlich `E2E-verschlA-circumflex-one-quarter-sselt` in einem
-Python-String - der Code lief, die Tests waren gruen, nichts hat
+Der Defekt fällt im Quelltext nicht auf. In tool/scripts/make_feature_graphic.py
+stand wörtlich `E2E-verschlA-circumflex-one-quarter-sselt` in einem
+Python-String - der Code lief, die Tests waren grün, nichts hat
 gemeckelt. Sichtbar wurde es erst auf dem gerenderten Play-Banner, in
 dem plötzlich "verschlÃ¼sselt" stand. Eine Fehlerklasse, die nur im
-Artefakt auftaucht, braucht eine Pruefung an der Quelle.
+Artefakt auftaucht, braucht eine Prüfung an der Quelle.
 
 Alle gesuchten Zeichen sind als Codepoint notiert, nicht als Literal:
-sonst wuerde genau diese Datei beim Schreiben durch dieselbe Shell
-zerstoert, die sie diagnostizieren soll.
+sonst würde genau diese Datei beim Schreiben durch dieselbe Shell
+zerstört, die sie diagnostizieren soll.
 """
 from __future__ import annotations
 
@@ -31,8 +31,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -71,8 +71,8 @@ def inspect(text: str) -> list[tuple[int, str]]:
                 while k < len(line) and line[k] in CONT:
                     k += 1
                 run = line[j:k]
-                # Versuch der Rueckdekodierung: gelingt sie, war es
-                # Mojibake. Schlaegt sie fehl, ist es ein harmloses
+                # Versuch der Rückdekodierung: gelingt sie, war es
+                # Mojibake. Schlägt sie fehl, ist es ein harmloses
                 # Zeichen wie "a-circumflex" in spanischem Text.
                 try:
                     decoded = run.encode('cp1252').decode('utf-8')

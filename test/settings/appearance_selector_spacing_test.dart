@@ -1,18 +1,18 @@
-// Regressionstest fuer die GLEICHEN Abstaende in der
+// Regressionstest für die GLEICHEN Abstände in der
 // Erscheinungs-Auswahl (NUTZERWUNSCH 31.10.2026).
 //
-// "Die Abstaende bei Einstellungen Erscheinung sollen gleich links und
+// "Die Abstände bei Einstellungen Erscheinung sollen gleich links und
 // rechts sein."
 //
 // Vorher waren die drei Segmente unterschiedlich breit: "Hell" war
 // schmaler als "System" und "Dunkel", weil der Kasten nur eine
 // Mindestbreite hatte und der Text den Rest bestimmte. Die Folge:
-// links war kein Abstand, rechts ein grosser.
+// links war kein Abstand, rechts ein großer.
 //
 // Der Test vergleicht die drei Segmentbreiten MITTEINANDER (nicht mit
-// dem Rand) - so ist er unabhaengig von der Fensterbreite und vom
-// Text. Zusaetzlich wird der Abstand zwischen den Segmenten geprueft:
-// er muss ueberall derselbe sein.
+// dem Rand) - so ist er unabhängig von der Fensterbreite und vom
+// Text. Zusätzlich wird der Abstand zwischen den Segmenten geprüft:
+// er muss überall derselbe sein.
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,7 +78,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final rects = [for (final n in namen) _segmentRect(tester, n)];
-    // Zwei Abstaende: zwischen Segment 1 und 2, zwischen 2 und 3.
+    // Zwei Abstände: zwischen Segment 1 und 2, zwischen 2 und 3.
     final abstaende = [
       rects[1].left - rects[0].right,
       rects[2].left - rects[1].right,
@@ -102,12 +102,12 @@ void main() {
     // zwischen dem Rand des Containers und dem ersten Segment muss
     // gleich sein wie der zwischen dem letzten Segment und dem Rand.
     //
-    // Gemessen wird ueber die KANTEN der drei Kacheln: die erste
+    // Gemessen wird über die KANTEN der drei Kacheln: die erste
     // beginnt bei x1, die letzte endet bei x2. Der Container ist
     // 400 px breit (das SizedBox im Test) und liegt mittig im
-    // Fenster - die Kacheln muessen ihn also genau ausfuellen.
+    // Fenster - die Kacheln müssen ihn also genau ausfüllen.
     //
-    // Der Weg ueber die Kachelkanten statt ueber den Container:
+    // Der Weg über die Kachelkanten statt über den Container:
     // der Container ist ein Widget im Baum, die Kachelkanten sind
     // Pixel - und die sind das, was der Nutzer sieht.
     await tester.pumpWidget(_host('light'));
@@ -136,9 +136,9 @@ void main() {
     // Beim Wechsel des Modus darf sich die Zeile nicht verschieben -
     // sonst springt die Auswahl unter dem Finger weg.
     //
-    // Der Wert haengt vom Text ab ("System" ist breiter als "Hell"),
-    // der ist aber hier fuer alle drei dieselbe. Geprueft wird, dass
-    // sich die Breite beim Wechsel NICHT aendert.
+    // Der Wert hängt vom Text ab ("System" ist breiter als "Hell"),
+    // der ist aber hier für alle drei dieselbe. Geprüft wird, dass
+    // sich die Breite beim Wechsel NICHT ändert.
     final breiten = <double>[];
     for (final wert in ['light', 'system', 'dark']) {
       await tester.pumpWidget(_host(wert));

@@ -1,9 +1,9 @@
 // Der Teil '_MessageBubble'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -40,9 +40,9 @@ class _MessageBubble extends StatelessWidget {
       timeLabel = DateFormat.Hm().format(msg.timestamp.toLocal());
     });
 
-    // Der System-Hinweis (z. B. die Fuenf-Minuten-Marke) steht
+    // Der System-Hinweis (z. B. die Fünf-Minuten-Marke) steht
     // mittig in der Mitte - so wie die Eisbrecher-Fragen im normalen
-    // Chat. Er gehoert niemandem, also steht er auch nicht links
+    // Chat. Er gehört niemandem, also steht er auch nicht links
     // oder rechts bei einer Person.
     if (msg.type == MessageType.notice) {
       return Center(

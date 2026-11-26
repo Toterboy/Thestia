@@ -3,14 +3,14 @@
 // ANLASS (19.11.2026): Bei der Coverage-Messung war
 // `lib/models/dating_hour/dating_hour_models.dart` nur zu 54 % abgedeckt. Gerade
 // die Zeitlogik (5-Minuten-Fenster, automatischer Funke) entscheidet,
-// was der Nutzer im Chat sieht - sie gehoert geprueft.
+// was der Nutzer im Chat sieht - sie gehört geprüft.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * das Lesen einer Supabase-Zeile (inkl. der Migration-177-Felder),
 //   * die Entscheidungen der beiden Seiten,
 //   * der Timer rechnet mit der SERVERZEIT (eine verstellte Geräte-Uhr
 //     darf das Fenster nicht verschieben),
-//   * die Kopien (copyWith) aendern nur das, was man ihnen gibt.
+//   * die Kopien (copyWith) ändern nur das, was man ihnen gibt.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/dating_hour/dating_hour_models.dart';
 import 'package:thestia/services/server/server_time_service.dart';
@@ -46,7 +46,7 @@ DatingHourSession _session({
 }
 
 void main() {
-  // Die Serverzeit ist ein Singleton - nach jedem Test zuruecksetzen.
+  // Die Serverzeit ist ein Singleton - nach jedem Test zurücksetzen.
   tearDown(() => ServerTimeService.instance.resetForTesting());
 
   group('Die Session aus der Serverzeile', () {
@@ -175,7 +175,7 @@ void main() {
       );
       expect(session.remainingSeconds, inInclusiveRange(295, 300));
 
-      // Zwei Minuten spaeter (Offset) sind noch drei Minuten uebrig.
+      // Zwei Minuten später (Offset) sind noch drei Minuten übrig.
       ServerTimeService.instance.setOffsetForTesting(2 * 60 * 1000);
       expect(session.remainingSeconds, inInclusiveRange(175, 180));
     });
@@ -227,7 +227,7 @@ void main() {
       // Noch in der ersten Phase.
       expect(session.isDecisionPhase, isFalse);
 
-      // Sechs Minuten spaeter: das Fenster ist um, der Funke steht noch
+      // Sechs Minuten später: das Fenster ist um, der Funke steht noch
       // aus - genau die Phase, in der der Chat zur Ruhe auffordert.
       ServerTimeService.instance.setOffsetForTesting(6 * 60 * 1000);
       expect(session.isDecisionPhase, isTrue);
@@ -343,7 +343,7 @@ void main() {
       );
       expect(event.startTime, DateTime(2026, 11, 21, 20));
       expect(event.endTime, DateTime(2026, 11, 21, 21, 30));
-      // Der Beitritt ist 10 Minuten vor dem Start moeglich.
+      // Der Beitritt ist 10 Minuten vor dem Start möglich.
       expect(event.joinStartTime, DateTime(2026, 11, 21, 19, 50));
     });
 
@@ -386,7 +386,7 @@ void main() {
       expect(event.minutesUntilStart, inInclusiveRange(9, 10));
       expect(event.minutesUntilEnd, inInclusiveRange(69, 70));
 
-      // 20 Minuten spaeter laeuft das Event.
+      // 20 Minuten später läuft das Event.
       ServerTimeService.instance.setOffsetForTesting(20 * 60 * 1000);
       expect(event.isRunningNow, isTrue);
       expect(event.minutesUntilStart, 0);

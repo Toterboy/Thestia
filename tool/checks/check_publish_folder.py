@@ -1,29 +1,29 @@
-"""Vollpruefung des Netlify-Publish-Ordners vor dem Upload.
+"""Vollprüfung des Netlify-Publish-Ordners vor dem Upload.
 
 WARUM DIESES SKRIPT ES GIBT (04.11.2026):
 ==========================================
 
 Der Publish-Ordner wird per Drag-and-Drop hochgeladen - es gibt
-keinen Build-Schritt, der einen Fehler meldet. Was nicht geprueft
+keinen Build-Schritt, der einen Fehler meldet. Was nicht geprüft
 wird, landet live. Nach dem Upload sind die Dateien "da", aber:
 
   * eine Regel zeigt auf eine Datei, die es nicht gibt -> 404
   * eine Seite ist durch noindex gesperrt -> nicht auffindbar
   * ein Link zeigt ins Leere -> toter Link auf einer Pflichtseite
-  * die Sicherheits-Header fehlen -> Clickjacking moeglich
+  * die Sicherheits-Header fehlen -> Clickjacking möglich
 
-Deshalb wird der Ordner VOR dem Upload geprueft - und der Ordner
-wird nach jeder Aenderung an ihm wieder geprueft (der Aufruf steht
+Deshalb wird der Ordner VOR dem Upload geprüft - und der Ordner
+wird nach jeder Änderung an ihm wieder geprüft (der Aufruf steht
 in tool/checks/check_local_ci.ps1, also in der CI und im lokalen Spiegel).
 
-Prueft:
+Prüft:
   1. Dateien und verbotene Inhalte (.env, .sql, Schlüssel, ...)
   2. Jedes Ziel aus _redirects existiert
   3. Jeder Pfad aus _headers trifft eine Datei
   4. Die Sicherheits-Header (inkl. frame-ancestors im CSP)
-  5. canonical auf allen oeffentlichen Seiten, noindex nur dort, wo
+  5. canonical auf allen öffentlichen Seiten, noindex nur dort, wo
      es richtig ist
-  6. Jeder interne Link und jedes Asset loest auf
+  6. Jeder interne Link und jedes Asset löst auf
   7. robots.txt sperrt nicht alles, die Sitemap existiert
   8. Keine Platzhalter (REPLACE_, TODO, ...) im sichtbaren Text
 """
@@ -115,9 +115,9 @@ def main() -> int:
     # -----------------------------------------------------------------
     #
     # GEFUNDEN 05.11.2026: Hier stand ein [[redirects]]-Block ohne
-    # "from" und "to" - eine ungueltige Regel. Sie fiel nicht auf,
+    # "from" und "to" - eine ungültige Regel. Sie fiel nicht auf,
     # weil kein Gate die Datei gelesen hat (nur _redirects und
-    # _headers wurden geprueft). Jetzt wird sie es.
+    # _headers wurden geprüft). Jetzt wird sie es.
     print("\n2b) netlify.toml:")
     toml_pfad = A / "netlify.toml"
     toml_regeln = []
@@ -175,7 +175,7 @@ def main() -> int:
     #
     # BEFUND (08.11.2026, Hosterwechsel-Vorbereitung): Der Betreiber
     # sucht einen Hoster, weil die Netlify-Credits fast leer sind und
-    # er ofter deployen moechte. Der naheliegende Kandidat ist
+    # er ofter deployen mächte. Der naheliegende Kandidat ist
     # Cloudflare Pages: 0 Euro, unbegrenzte Bandbreite - und ein Deploy
     # ist dort ein ORDNER-UPLOAD, also ein Deploy OHNE Build-Minuten.
     #
@@ -188,30 +188,30 @@ def main() -> int:
     #     Quelladresse eine Datei liegt") wird nicht verstanden - die
     #     Regel wird ignoriert.
     #   * _redirects kennt KEINE domain-bezogenen Regeln ("Domain-level
-    #     redirects: nicht unterstuetzt"). Die Regel fuer die eigene
+    #     redirects: nicht unterstützt"). Die Regel für die eigene
     #     robots.txt des Auth-Hosts funktioniert dort also nicht.
     #
-    # Deshalb wird hier beides geprueft:
-    #   1) Regeln, die Cloudflare braucht, duerfen keine Netlify-
+    # Deshalb wird hier beides geprüft:
+    #   1) Regeln, die Cloudflare braucht, dürfen keine Netlify-
     #      Syntax tragen.
-    #   2) Fuer die eine Regel, die nur Netlify kann, muss der Ersatz
+    #   2) Für die eine Regel, die nur Netlify kann, muss der Ersatz
     #      vorhanden sein: der X-Robots-Tag-Header in _headers.
     #
-    # Ohne diese Pruefung faellt der Unterschied erst auf dem
+    # Ohne diese Prüfung fällt der Unterschied erst auf dem
     # Live-Host auf - bei der Datei, die am wichtigsten ist: ohne
     # /.well-known/assetlinks.json funktionieren die Passkeys auf
     # Android nicht mehr.
     print("\n2c) Hoster-Tauglichkeit (Infomaniak zuerst, Netlify als Fallback):")
     NETLIFY_ONLY = "https://auth.thestia.de/robots.txt"
-    # DIE ERLAUBTEN Netlify-SONDERFAELLE (beide mit "!" und beide
+    # DIE ERLAUBTEN Netlify-SONDERFÄLLE (beide mit "!" und beide
     # domain-bezogen):
     #   * die gesperrte robots.txt des Auth-Hosts - dort liegt
-    #     /robots.txt als Datei im Ordner, ohne "!" wuerde die Datei
-    #     ausgeliefert und der Auth-Host waere indexierbar,
+    #     /robots.txt als Datei im Ordner, ohne "!" würde die Datei
+    #     ausgeliefert und der Auth-Host wäre indexierbar,
     #   * die Weiterleitung von www auf thestia.de - dort liegen die
     #     Dateien ebenfalls (gleiches Verzeichnis), ohne "!" greift die
     #     Regel also nicht.
-    # FUER APACHE SIND BEIDE NICHT NOETIG: die .htaccess traegt sie
+    # FÜR APACHE SIND BEIDE NICHT NÖTIG: die .htaccess trägt sie
     # (siehe tool/web/make_htaccess.py, Abschnitt 2).
     erlaubt = {
         NETLIFY_ONLY: "die gesperrte robots.txt des Auth-Hosts",
@@ -235,8 +235,8 @@ def main() -> int:
         if quelle.startswith("http"):
             domains.append(quelle)
 
-    # (1) Das Ausrufezeichen: nur bei den Regeln erlaubt, fuer die es
-    #     noetig ist (siehe `erlaubt` oben).
+    # (1) Das Ausrufezeichen: nur bei den Regeln erlaubt, für die es
+    #     nötig ist (siehe `erlaubt` oben).
     for quelle, code in ausrufezeichen:
         if quelle in erlaubt:
             print("  OK  %s: Ausrufezeichen noetig (%s)"
@@ -251,9 +251,9 @@ def main() -> int:
     if not ausrufezeichen:
         print("  OK  keine Regel mit Netlify-Ausrufezeichen")
 
-    # (2) Domain-bezogene Regeln: nur die erlaubten. Fuer die
-    #     robots.txt des Auth-Hosts muss zusaetzlich der Ersatz in
-    #     _headers stehen (der Header gilt fuer JEDEN Hoster).
+    # (2) Domain-bezogene Regeln: nur die erlaubten. Für die
+    #     robots.txt des Auth-Hosts muss zusätzlich der Ersatz in
+    #     _headers stehen (der Header gilt für JEDEN Hoster).
     headers_inhalt = (A / "_headers").read_text(encoding="utf-8")
     for quelle in domains:
         if quelle not in erlaubt:
@@ -267,7 +267,7 @@ def main() -> int:
         print("  OK  %s: domain-bezogen (%s - bei Apache steht die "
               "Regel in der .htaccess)" % (quelle, erlaubt[quelle]))
         if quelle != NETLIFY_ONLY:
-            # Nur fuer die robots.txt des Auth-Hosts wird der Ersatz
+            # Nur für die robots.txt des Auth-Hosts wird der Ersatz
             # gebraucht (der Header muss den Host sperren).
             continue
         ersatz = False
@@ -294,19 +294,19 @@ def main() -> int:
             print("  OK  %s: X-Robots-Tag: noindex ist gesetzt" % host)
 
     # -----------------------------------------------------------------
-    # 2d) Die .htaccess fuer das Webhosting
+    # 2d) Die .htaccess für das Webhosting
     # -----------------------------------------------------------------
     #
     # BEFUND (08.11.2026): Der Betreiber hostet auf Infomaniak (CH) -
-    # im Studentenprogramm ist das Webhosting kostenlos. Dort laeuft
-    # Apache; die 40 Rewrite-Regeln und die 41 Header-Bloecke aus
-    # _redirects und _headers muessen als .htaccess dastehen.
+    # im Studentenprogramm ist das Webhosting kostenlos. Dort läuft
+    # Apache; die 40 Rewrite-Regeln und die 41 Header-Blöcke aus
+    # _redirects und _headers müssen als .htaccess dastehen.
     #
     # Die Datei wird von tool/web/make_htaccess.py ERZEUGT. Ohne diese
-    # Pruefung koennte sie veralten: eine Aenderung an _headers (etwa
-    # ein neuer Sicherheits-Header) waere auf dem Server nicht
+    # Prüfung kännte sie veralten: eine Änderung an _headers (etwa
+    # ein neuer Sicherheits-Header) wäre auf dem Server nicht
     # angekommen - und niemand merkt es, weil die Seite trotzdem
-    # laeuft (nur ohne den Schutz).
+    # läuft (nur ohne den Schutz).
     print("\n2d) Die .htaccess (Webhosting):")
     htaccess = pathlib.Path(A.parent / "webhosting" / ".htaccess")
     if not htaccess.exists():
@@ -381,7 +381,7 @@ def main() -> int:
         t = p.read_text(encoding="utf-8")
         m = re.search(r'<link rel="canonical" href="([^"]+)"', t)
         n = re.search(r'<meta name="robots" content="([^"]+)"', t)
-                # DER GRUND: Die Seiten heissen auf Deutsch ('einstellungen.html').
+                # DER GRUND: Die Seiten heißen auf Deutsch ('einstellungen.html').
         transient = ("einstellungen" in rel(p)
                      or "settings" in rel(p)
                      or rel(p).endswith("bestaetigt.html"))
@@ -417,7 +417,7 @@ def main() -> int:
                     continue
                 if (A / (kandidat + ".html")).exists():
                     continue
-                # ueber eine Rewrite-Regel?
+                # über eine Rewrite-Regel?
                 if kandidat in rewrite_quellen:
                     continue
                 if kandidat.rstrip("/") in rewrite_quellen:
@@ -462,9 +462,9 @@ def main() -> int:
     # -----------------------------------------------------------------
     #
     # BEFUND (05.11.2026): Die Datei begann mit einem Python-Docstring
-    # statt mit Kommentaren - kein gueltiges robots.txt (Lighthouse:
+    # statt mit Kommentaren - kein gültiges robots.txt (Lighthouse:
     # "robots.txt is not valid", SEO-Score 80 statt 100). Die interne
-    # Betriebsnotiz stand dabei oeffentlich im Netz.
+    # Betriebsnotiz stand dabei öffentlich im Netz.
     print("\n7b) robots.txt (Syntax):")
     ERLAUBT = {"user-agent", "allow", "disallow", "crawl-delay",
                "sitemap", "host", "noindex"}
@@ -517,10 +517,10 @@ def main() -> int:
     #
     # NUTZERWUNSCH 04.11.2026: "Alle sollen Englische Versionen haben."
     #
-    # Bis hierher galt das nur fuer die Seiten, die man beim Bauen
-    # bemerkt hat. Die Bestaetigungsseite war die Ausnahme - und genau
+    # Bis hierher galt das nur für die Seiten, die man beim Bauen
+    # bemerkt hat. Die Bestätigungsseite war die Ausnahme - und genau
     # die fiel auf, weil niemand sie im Alltag besucht. Deshalb wird
-    # es jetzt geprueft: Jede Seite braucht die andere Fassung, und
+    # es jetzt geprüft: Jede Seite braucht die andere Fassung, und
     # jede Seite verlinkt auf sie.
     print("\n9) Sprachfassungen:")
 
@@ -531,14 +531,14 @@ def main() -> int:
             # Die Ordnerstruktur bildet die Adresse ab: die englische
             # Eltern-Einstellungen-Seite liegt flach in
             # en/eltern-einstellungen.html (die Adresse /en/eltern/
-            # einstellungen kommt aus der Rewrite-Regel) - sonst waere
+            # einstellungen kommt aus der Rewrite-Regel) - sonst wäre
             # es en/eltern/einstellungen.html und der Ordner en/eltern/
-            # wuerde auf dem Server wieder am Schraegstrich drehen.
+            # würde auf dem Server wieder am Schrägstrich drehen.
             return pathlib.Path(r[3:])
         return pathlib.Path("en") / r
 
     def adresse(p: pathlib.Path) -> str:
-        """Die oeffentliche Adresse einer Seite (ohne .html).
+        """Die öffentliche Adresse einer Seite (ohne .html).
 
         [p] ist relativ zu passkey-assets/ - wie der Zwilling oben.
         """
@@ -593,8 +593,8 @@ def main() -> int:
     #
     # RECHERCHE 05.11.2026: Die EU-ODR-Plattform ist seit dem 20.07.2025
     # abgeschaltet (VO (EU) 2024/3228). Ein Impressum, das sie noch
-    # erwaehnt, behauptet etwas Falsches - und der Absatz war auch vor
-    # der Abschaltung irrefuehrend, weil er eine Teilnahme ablehnte,
+    # erwähnt, behauptet etwas Falsches - und der Absatz war auch vor
+    # der Abschaltung irreführend, weil er eine Teilnahme ablehnte,
     # ohne zu sagen, dass es keine Plattform mehr gibt.
     print("\n10) Impressum und Meldestelle:")
     impressum_de = (A / "impressum.html").read_text(encoding="utf-8")
@@ -614,17 +614,17 @@ def main() -> int:
         else:
             print("  OK: %s nennt keine ODR-Plattform" % name)
 
-    # Die Anschrift: § 5 Abs. 1 Nr. 1 DDG verlangt eine ladungsfaehige
-    # Anschrift - Straße, Hausnummer, PLZ und Ort. Ein Postfach genuegt
+    # Die Anschrift: § 5 Abs. 1 Nr. 1 DDG verlangt eine ladungsfähige
+    # Anschrift - Straße, Hausnummer, PLZ und Ort. Ein Postfach genügt
     # nicht.
     #
-    # Drei Faelle (siehe Kommentar im Skript):
+    # Drei Fülle (siehe Kommentar im Skript):
     #   1) Platzhalter noch drin  -> HINWEIS
     #   2) Anschrift erkennbar     -> OK
     #   3) nichts davon            -> FEHLER
     #
-    # Erkannt wird PLZ + Ort; die Hausnummer wird zusaetzlich geprueft,
-    # weil sie das Gesetz ausdruecklich verlangt.
+    # Erkannt wird PLZ + Ort; die Hausnummer wird zusätzlich geprüft,
+    # weil sie das Gesetz ausdrücklich verlangt.
     adress_muster = re.compile(r"\b\d{5}\s+[A-Za-zÄÖÜäöüß][^<\n]{2,40}")
     hausnummer_muster = re.compile(r"\b\w+stra(?:ß|ss)e?\s+\d+"
                                    r"|\b\d+\s*,?\s*\d{5}\s")
@@ -648,7 +648,7 @@ def main() -> int:
                 "Seite selbst" % name)
             print("  FEHLER: %s nennt keine Anschrift" % name)
 
-    # Die Meldestelle muss den Meldeweg fuer rechtswidrige Inhalte
+    # Die Meldestelle muss den Meldeweg für rechtswidrige Inhalte
     # nennen (DSA Art. 18 - die Bundesnetzagentur).
     for name in ("kinderschutz.html", "en/kinderschutz.html"):
         inhalt = (A / name).read_text(encoding="utf-8")

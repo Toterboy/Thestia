@@ -1,12 +1,12 @@
-// Die Pfadpruefung des eigenen Chat-Hintergrunds.
+// Die Pfadprüfung des eigenen Chat-Hintergrunds.
 //
 // ANLASS (19.11.2026): `lib/utils/chat/chat_backgrounds.dart` war nur zu 82 %
-// abgedeckt. Die Pruefung ist eine SICHERHEITSgrenze: ein manipulierter
+// abgedeckt. Die Prüfung ist eine SICHERHEITSgrenze: ein manipulierter
 // Einstellungs-Import darf nicht jeden beliebigen Dateipfad als
 // Hintergrund einschleusen (sonst zeigt die App eine Datei aus fremden
 // Bereichen an).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * nur die Datei im App-Dokumentenverzeichnis mit dem EXAKTEN Namen
 //     wird akzeptiert,
 //   * alles andere wird abgelehnt,
@@ -66,7 +66,7 @@ void main() {
 
     test('ein Unterordner mit dem richtigen Namen wird abgelehnt', () {
       // DER GRUND: Der Pfad muss DIREKT im Dokumentenverzeichnis liegen -
-      // ein Unterordner waere ein fremder Bereich.
+      // ein Unterordner wäre ein fremder Bereich.
       ChatBackgrounds.bindAppDocsDir('/app/documents');
       expect(
         ChatBackgrounds.isOwnBackgroundFile(

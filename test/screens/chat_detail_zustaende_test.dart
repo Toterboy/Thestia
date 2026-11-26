@@ -1,24 +1,24 @@
-// Die Zustaende des Chat-Bildschirms (der direkte Kanal und der Aufbau).
+// Die Zustände des Chat-Bildschirms (der direkte Kanal und der Aufbau).
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
-// lib/screens/chat/parts/chatp2p.dart 73 offene Zeilen und fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
+// lib/screens/chat/parts/chatp2p.dart 73 offene Zeilen und für
 // lib/screens/chat/parts/chatdetailaufbau.dart 70 offene Zeilen. Das
 // sind genau die Wege, die im Alltag passieren, aber nie getestet waren:
-// ein Bild oder eine Sprachnachricht ueber den direkten Kanal, ein
+// ein Bild oder eine Sprachnachricht über den direkten Kanal, ein
 // eingehender Anruf, ein Wechsel des Identity-Keys (Sicherheit!) und die
-// Karten, die der Bildschirm ueber dem Verlauf zeigt.
+// Karten, die der Bildschirm über dem Verlauf zeigt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ein Bild und eine Sprachnachricht aus dem direkten Kanal landen im
 //     Verlauf,
-//   * ein eingehender Anruf oeffnet den Anruf-Screen,
+//   * ein eingehender Anruf öffnet den Anruf-Screen,
 //   * ein Wechsel des Identity-Keys wird NICHT still akzeptiert, sondern
-//     muss bestaetigt werden,
+//     muss bestätigt werden,
 //   * die Probleme beim Verbindungsaufbau stehen in der Diagnose,
 //   * das Partnerprofil wird vom Server nachgeladen,
 //   * die Erinnerungs-Karte und der Freunde-Badge stehen da.
 //
-// OHNE ECHTE GERAETE: Der P2P-Dienst ist eine Hand-Attrappe, die dem
+// OHNE ECHTE GERÄTE: Der P2P-Dienst ist eine Hand-Attrappe, die dem
 // Test die eingehenden Nachrichten schiebt. Es geht keine Anfrage ins
 // Netz (der Server ist ein Ersatz im RAM).
 import 'dart:async';
@@ -28,8 +28,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-// webrtc_interface kommt als Transitivum ueber flutter_webrtc - der Test
-// braucht nur die Zustaende des Datenkanals. `MessageType` liefert
+// webrtc_interface kommt als Transitivum über flutter_webrtc - der Test
+// braucht nur die Zustände des Datenkanals. `MessageType` liefert
 // webrtc_interface auch - das eigene des Chat-Modells gewinnt.
 import 'package:flutter_webrtc/flutter_webrtc.dart' hide MessageType;
 import 'package:go_router/go_router.dart';
@@ -103,8 +103,8 @@ class _SpeicherFuerProfile extends SecureProfileStore {
 /// Hand-Fake des P2P-Dienstes.
 ///
 /// DER GRUND: Der echte Dienst braucht das WebRTC-Plugin - im Test gibt
-/// es kein Geraet. Der Fake nimmt die eingehenden Nachrichten, Bilder,
-/// Anrufe und Probleme entgegen und zaehlt die Verbindungsversuche.
+/// es kein Gerät. Der Fake nimmt die eingehenden Nachrichten, Bilder,
+/// Anrufe und Probleme entgegen und zählt die Verbindungsversuche.
 class _FakeP2PChatService extends P2PChatService {
   _FakeP2PChatService(super.webrtc, super.prekey);
 
@@ -252,7 +252,7 @@ void main() {
     server.rpcAufrufe.clear();
     server.zeilen.clear();
     // DER STIMMUNGS-DIENST: Der Chat zeigt die Stimmungskarte - ohne den
-    // Client schlaegt der Aufbau fehl.
+    // Client schlägt der Aufbau fehl.
     stimmungsClient = supabase.SupabaseClient(
       'https://example.supabase.co',
       'test-key',
@@ -267,7 +267,7 @@ void main() {
   ///
   /// [serverMatch] ist der Funke, den der Server kennt (null = der
   /// Server kennt keinen). [vorstellung] ist die Vorstellung des
-  /// Partners. [verbindungsFehler] laesst den Verbindungsaufbau
+  /// Partners. [verbindungsFehler] lässt den Verbindungsaufbau
   /// scheitern.
   Future<_Aufbau> baue(
     WidgetTester tester, {
@@ -277,14 +277,14 @@ void main() {
     String? vorstellung,
     String? verbindungsFehler,
   }) async {
-    // GROSS GENUG: Das komplette "mehr"-Menue hat viele Eintraege - bei
-    // kleiner Hoehe liegt der letzte ausserhalb des Bildschirms.
+    // GROSS GENUG: Das komplette "mehr"-Menü hat viele Einträge - bei
+    // kleiner Höhe liegt der letzte außerhalb des Bildschirms.
     await tester.binding.setSurfaceSize(const Size(430, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final speicher = _Speicher();
     // Der Hinweis auf den Chat-Hintergrund kommt beim ersten Chat - im
-    // Test stoert er nur, also ist er als "gesehen" markiert.
+    // Test stört er nur, also ist er als "gesehen" markiert.
     speicher.saveString(
       AppConstants.prefsSettingsKey,
       jsonEncode(<String, dynamic>{'chatBackgroundSeen': true}),
@@ -292,7 +292,7 @@ void main() {
 
     // DER SERVER-FUNKE: Die Antwort muss VOR dem Aufbau da sein - der
     // Bildschirm holt sie beim Start (das Match wiederherstellen, die
-    // Herzensstaerken, die Loeschungen).
+    // Herzensstärken, die Löschungen).
     if (serverMatch != null) {
       server.rpcAntworten['list_my_matches_with_state'] = <dynamic>[
         serverMatch,
@@ -386,15 +386,15 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     // Die echte Ereignisschleife: der Server liefert das Profil, den
-    // Server-Funke und die Loeschungen.
+    // Server-Funke und die Löschungen.
     for (var i = 0; i < 6; i++) {
       await tester.runAsync(() async {
         await Future<void>.delayed(const Duration(milliseconds: 60));
       });
       await tester.pump(const Duration(milliseconds: 100));
     }
-    // NOCH EIN FRAME: Ein Dialog oder eine neue Seite liegt fuer einen
-    // Frame auf der Seite (der Hero-Controller misst erst die Groessen) -
+    // NOCH EIN FRAME: Ein Dialog oder eine neue Seite liegt für einen
+    // Frame auf der Seite (der Hero-Controller misst erst die Größen) -
     // erst danach ist sie sichtbar.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -424,7 +424,7 @@ void main() {
     testWidgets('ein Bild aus dem Kanal landet im Verlauf', (tester) async {
       final aufbau = await baue(tester);
 
-      // DER PARTNER schickt ein Bild (ueber den direkten Kanal).
+      // DER PARTNER schickt ein Bild (über den direkten Kanal).
       aufbau.p2p.binaer.add((
         data: Uint8List.fromList(_kleinesPng),
         contentType: 'image/jpeg',
@@ -463,7 +463,7 @@ void main() {
         metadata: <String, dynamic>{'durationSeconds': 7},
       ));
       // DER ECHTE DATEIZUGRIFF: Die Sprachbytes werden in eine Datei
-      // geschrieben - das geht nur ausserhalb der Test-Uhr.
+      // geschrieben - das geht nur außerhalb der Test-Uhr.
       for (var i = 0; i < 4; i++) {
         await tester.runAsync(() async {
           await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -503,8 +503,8 @@ void main() {
       });
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      // NOCH EIN FRAME: Der Hero-Controller legt die neue Route fuer
-      // einen Frame auf die Seite (bis er die Groessen kennt) - erst
+      // NOCH EIN FRAME: Der Hero-Controller legt die neue Route für
+      // einen Frame auf die Seite (bis er die Größen kennt) - erst
       // danach ist der Anruf-Screen sichtbar.
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -526,7 +526,7 @@ void main() {
       final aufbau = await baue(tester);
 
       // Eine kaputte Einladung (ohne callId) darf keinen "Geister-Anruf"
-      // oeffnen.
+      // öffnen.
       aufbau.p2p.anruf.add(<String, dynamic>{'type': 'invite'});
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -543,7 +543,7 @@ void main() {
     testWidgets('die App fragt nach, statt es still zu akzeptieren', (
       tester,
     ) async {
-      // Der Peer hat seinen Schluessel gewechselt.
+      // Der Peer hat seinen Schlüssel gewechselt.
       await baue(
         tester,
         serverMatch: serverFunke(),
@@ -559,8 +559,8 @@ void main() {
             'Akzeptieren waere ein Mittelaengriff.',
       );
 
-      // Und der Dialog laesst sich ablehnen (der Nutzer will erst
-      // vergleichen, nicht einfach bestaetigen).
+      // Und der Dialog lässt sich ablehnen (der Nutzer will erst
+      // vergleichen, nicht einfach bestätigen).
       await tester.tap(
         find.text(L10n.tWithoutContext('chat.safetyChangedCancel')),
       );
@@ -575,7 +575,7 @@ void main() {
     });
 
     testWidgets('das Bestaetigen baut die Verbindung neu auf', (tester) async {
-      // Der Peer hat seinen Schluessel gewechselt.
+      // Der Peer hat seinen Schlüssel gewechselt.
       await baue(
         tester,
         serverMatch: serverFunke(),
@@ -587,7 +587,7 @@ void main() {
         findsOneWidget,
       );
 
-      // Der Nutzer bestaetigt den neuen Schluessel.
+      // Der Nutzer bestätigt den neuen Schlüssel.
       await tester.tap(
         find.text(L10n.tWithoutContext('chat.safetyChangedAccept')),
       );
@@ -686,7 +686,7 @@ void main() {
             'erinnert an den Tag, an dem der Funke entstand.',
       );
 
-      // Und er laesst sich wegklicken (der Hinweis ist nicht aufdringlich).
+      // Und er lässt sich wegklicken (der Hinweis ist nicht aufdringlich).
       final karte = find.ancestor(
         of: find.textContaining(L10n.tWithoutContext('milestone.title')),
         matching: find.byType(Card),
@@ -768,8 +768,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(tester.takeException(), isNull);
-      // Und danach bietet das Menue das Anschalten an (das Menue wird
-      // nach der Auswahl geschlossen - also wieder oeffnen).
+      // Und danach bietet das Menü das Anschalten an (das Menü wird
+      // nach der Auswahl geschlossen - also wieder öffnen).
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

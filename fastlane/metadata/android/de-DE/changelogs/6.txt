@@ -1,6 +1,6 @@
 Neu:
-- Angemeldete Geraete einsehen und sich ueberall ausloggen (Einstellungen)
-- Themefarbe bleibt am Konto gespeichert (ueberlebt Neuinstallation)
+- Angemeldete Geräte einsehen und sich überall ausloggen (Einstellungen)
+- Themefarbe bleibt am Konto gespeichert (überlebt Neuinstallation)
 - Entfernung und Altersspanne werden nach Login/Neuinstallation wiederhergestellt
 
 Behoben:

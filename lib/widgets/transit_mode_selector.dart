@@ -4,24 +4,24 @@ import 'package:flutter/services.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/transit/transit_models.dart';
 
-/// Reichweiten-Auswahl fuer Transit Spark.
+/// Reichweiten-Auswahl für Transit Spark.
 ///
 /// Zwei Modi, und sie unterscheiden sich nicht kosmetisch: `transit`
-/// nimmt alles bis -100 dBm auf, `convention` nur Signale staerker als
+/// nimmt alles bis -100 dBm auf, `convention` nur Signale stärker als
 /// -75 dBm. Genau DAS ist die Entscheidung, die der Nutzer trifft -
 /// "im Vorbeigehen" gegen "nur die Person direkt neben mir".
 ///
-/// Deshalb ist die Signalschwelle das fuehrende Element der Kachel und
-/// nicht eine Zeile Kleingedrucktes: fuenf Balken zeigen, wie stark ein
-/// Signal sein muss, damit es diese Kachel zaehlt. Die beiden Modi
+/// Deshalb ist die Signalschwelle das führende Element der Kachel und
+/// nicht eine Zeile Kleingedrucktes: fünf Balken zeigen, wie stark ein
+/// Signal sein muss, damit es diese Kachel zählt. Die beiden Modi
 /// liefern 1 und 4 von 5 Balken - der Unterschied ist damit optisch
-/// sofort da, ohne einen Zahlenwert vergleichen zu muessen.
+/// sofort da, ohne einen Zahlenwert vergleichen zu müssen.
 ///
-/// Das frueherige Layout hatte den Wert als kleinen Chip unter dem
-/// Erklaerungstext und markierte die Auswahl fuenffach (2-px-Rand,
-/// Hintergrund, Titelfarbe, gefuelltes Icon-Feld, Haken). Fuenf
-/// Signale fuer eine binaere Entscheidung sind zwei zuviel; jetzt
-/// sind es Rand und Fuellung.
+/// Das früherige Layout hatte den Wert als kleinen Chip unter dem
+/// Erklärungstext und markierte die Auswahl fünffach (2-px-Rand,
+/// Hintergrund, Titelfarbe, gefülltes Icon-Feld, Haken). Fünf
+/// Signale für eine binäre Entscheidung sind zwei zuviel; jetzt
+/// sind es Rand und Füllung.
 class TransitModeSelector extends StatelessWidget {
   const TransitModeSelector({
     super.key,
@@ -39,13 +39,13 @@ class TransitModeSelector extends StatelessWidget {
   /// vorherigen 14 waren die einzige Stelle im Projekt mit diesem Wert.
   static const double _radius = 24;
 
-  /// Anzahl der gefuellten Balken (von [bars]) fuer eine RSSI-Schwelle.
+  /// Anzahl der gefüllten Balken (von [bars]) für eine RSSI-Schwelle.
   ///
-  /// Oeffentlich, weil das der eigentliche Inhalt des Widgets ist: die
-  /// beiden Modi unterscheiden sich fuer den Nutzer nur dadurch, dass
+  /// Öffentlich, weil das der eigentliche Inhalt des Widgets ist: die
+  /// beiden Modi unterscheiden sich für den Nutzer nur dadurch, dass
   /// hier unterschiedlich viele Balken stehen. Die Abbildung ist aus der
   /// Schwelle abgeleitet und nicht fest verdrahtet, damit ein
-  /// geaenderter Grenzwert die Anzeige mitzieht.
+  /// geänderter Grenzwert die Anzeige mitzieht.
   ///
   /// DIE LOGIK (Nutzerwunsch, 27.10.2026): die Balken zeigen die
   /// **REICHWEITE** des Modus - nicht, wie hart die Schwelle steht.
@@ -54,9 +54,9 @@ class TransitModeSelector extends StatelessWidget {
   /// der Modus mit der NIEDRIGEN Schwelle (-100 dBm, normale
   /// Reichweite, nimmt auch schwache Signale an) zeigte nur **1 von 5**
   /// Balken, der mit der HOHEN Schwelle (-75 dBm, im Messbetrieb werden
-  /// nur ganz nah dran erkennbare Geraete genommen) **4 von 5**.
+  /// nur ganz nah dran erkennbare Geräte genommen) **4 von 5**.
   ///
-  /// Ein Nutzer liest "mehr Balken" aber als "empfaengt mehr" - und die
+  /// Ein Nutzer liest "mehr Balken" aber als "empfängt mehr" - und die
   /// Rechnung sagt genau das Gegenteil. Die Abbildung ist deshalb
   /// invertiert:
   ///
@@ -72,8 +72,8 @@ class TransitModeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Eine Option je Zeile: die Erklaerungstexte sind zwei bis drei
-    // Zeilen lang und wuerden nebeneinander abgeschnitten.
+    // Eine Option je Zeile: die Erklärungstexte sind zwei bis drei
+    // Zeilen lang und würden nebeneinander abgeschnitten.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -123,7 +123,7 @@ class _RangeCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    // Auswahl: Rand + Fuellung. Beide aus dem Theme, keine
+    // Auswahl: Rand + Füllung. Beide aus dem Theme, keine
     // Markenfarben im Widget.
     final borderColor = selected
         ? scheme.primary
@@ -150,13 +150,13 @@ class _RangeCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(radius),
               border: Border.all(
                 color: borderColor,
-                // Konstante Breite: Flutter zaehlt den Rahmen zum
+                // Konstante Breite: Flutter zählt den Rahmen zum
                 // Innenabstand der BoxDecoration (border.dimensions).
                 // Ein wachsender Rahmen verschiebt den Text deshalb um
                 // einen Pixel (NUTZERWUNSCH 31.10.2026: "der Text
-                // verschiebt sich"). Die Auswahl traegt jetzt Farbe und
-                // Fuellung - wie es die Vorgabe des Widgets ohnehin
-                // sagt ("Auswahl: Rand + Fuellung").
+                // verschiebt sich"). Die Auswahl trägt jetzt Farbe und
+                // Füllung - wie es die Vorgabe des Widgets ohnehin
+                // sagt ("Auswahl: Rand + Füllung").
                 width: 2,
               ),
             ),
@@ -165,9 +165,9 @@ class _RangeCard extends StatelessWidget {
               child: InkWell(
                 onTap: enabled
                     ? () {
-                        // Gleiches Optionstipp bleibt ohne Rueckmeldung
+                        // Gleiches Optionstipp bleibt ohne Rückmeldung
                         // und ohne Haptik - nur ein echter Wechsel
-                        // bestaetigt die Auswahl.
+                        // bestätigt die Auswahl.
                         if (!selected) HapticFeedback.selectionClick();
                         onTap();
                       }
@@ -229,7 +229,7 @@ class _RangeCard extends StatelessWidget {
   }
 }
 
-/// Icon in einem abgerundeten Feld, das den gewaehlten Zustand traegt.
+/// Icon in einem abgerundeten Feld, das den gewählten Zustand trägt.
 class _ModeBadge extends StatelessWidget {
   const _ModeBadge({
     required this.icon,
@@ -250,7 +250,7 @@ class _ModeBadge extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         color: selected ? scheme.primary : scheme.surfaceContainerHighest,
-        // 16 ist der Innenradius der App (Snackbars, Menues, Textfelder).
+        // 16 ist der Innenradius der App (Snackbars, Menüs, Textfelder).
         borderRadius: BorderRadius.circular(16),
       ),
       child: Icon(
@@ -262,18 +262,18 @@ class _ModeBadge extends StatelessWidget {
   }
 }
 
-/// Die Signalschwelle als fuenfstufiger Balken plus Zahl.
+/// Die Signalschwelle als fünfstufiger Balken plus Zahl.
 ///
-/// Der Zahlenwert bleibt ein eigener Text, damit er fuer Screenreader
+/// Der Zahlenwert bleibt ein eigener Text, damit er für Screenreader
 /// und Tests als Text auffindbar bleibt - der Zahler ist aber nicht
 /// mehr in einem Chip versteckt, sondern steht als Klartext neben den
 /// Balken.
-/// Die gefuellten Balken einer Schwelle.
+/// Die gefüllten Balken einer Schwelle.
 ///
 /// Ohne Zahlenwert. "Signal ab -100 dBm" sagt einem Nutzer nichts -
-/// die Einheit gehoert zu Funktechnik, nicht zu einer Dating-App. Die
-/// Balken zeigen dasselbe Verhaeltnis und brauchen keine Uebersetzung:
-/// mehr Balken = staerkeres Signal noetig = weniger Reichweite.
+/// die Einheit gehört zu Funktechnik, nicht zu einer Dating-App. Die
+/// Balken zeigen dasselbe Verhältnis und brauchen keine Übersetzung:
+/// mehr Balken = stärkeres Signal nötig = weniger Reichweite.
 ///
 /// Der Wert bleibt in der Semantics-Beschreibung der Kachel (oben im
 /// `Semantics(... label: ...)`), damit Screenreader ihn vorlesen. Er
@@ -295,7 +295,7 @@ class _Threshold extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4),
             child: Container(
               width: 6,
-              // Aufsteigend: die unteren Baenke kurz, der oberste lang.
+              // Aufsteigend: die unteren Bänke kurz, der oberste lang.
               height: 7.0 + i * 3.0,
               decoration: BoxDecoration(
                 color: i < filled

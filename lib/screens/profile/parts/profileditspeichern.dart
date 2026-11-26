@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -60,8 +60,8 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
         return;
       }
 
-      // Plausibilitaets-Check gegen die BISHERIGEN Standorte dieses
-      // Geraets (lokal) - keine Cross-Account-Erkennung.
+      // Plausibilitäts-Check gegen die BISHERIGEN Standorte dieses
+      // Geräts (lokal) - keine Cross-Account-Erkennung.
       // isLocationSuspicious liest den Secure Storage (async) - in dieser
       // Zeit kann der Screen verlassen worden sein.
       final suspicious = await locationService.isLocationSuspicious(position);
@@ -76,7 +76,7 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
 
       // v0.10.0: Nur noch das Bundesland, keine Ortsangabe. Vorher stand
       // hier der Ortsname aus dem Reverse-Geocoder und landete in
-      // profiles.city - fuer jeden angemeldeten Nutzer lesbar.
+      // profiles.city - für jeden angemeldeten Nutzer lesbar.
       //
       // Die Koordinaten werden auf 5-km-Raster gerundet, BEVOR sie
       // gespeichert werden. Der Server rastet ebenfalls; identisch zu
@@ -97,14 +97,14 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
             locationLng: snapped.lng,
           );
 
-      // Koordinaten serverseitig persistieren (Basis fuer die
+      // Koordinaten serverseitig persistieren (Basis für die
       // Distanzberechnung zu anderen Nutzern).
       if (SupabaseService.isInitialized) {
         // v0.10.0: In profiles landen nur noch das Bundesland und die
         // Flags. Die Koordinaten gehen in profile_locations - dort ist
-        // die RLS auf den Eigentuemer begrenzt, in profiles kann sie
-        // das nicht (die Spalte waere fuer jeden angemeldeten Nutzer
-        // ueber PostgREST lesbar).
+        // die RLS auf den Eigentümer begrenzt, in profiles kann sie
+        // das nicht (die Spalte wäre für jeden angemeldeten Nutzer
+        // über PostgREST lesbar).
         try {
           await SupabaseDatabaseService(
             SupabaseService.client,
@@ -113,7 +113,7 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
           debugPrint('[ProfileEdit] Bundesland-Sync fehlgeschlagen: $e');
         }
 
-        // Der eigentliche Ort fuer die Koordinaten.
+        // Der eigentliche Ort für die Koordinaten.
         try {
           await SupabaseDatabaseService(
             SupabaseService.client,
@@ -137,7 +137,7 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
         );
       }
 
-      // Der Nutzer kann inzwischen zurueckgegangen sein - dann waere
+      // Der Nutzer kann inzwischen zurückgegangen sein - dann wäre
       // das setState ein Absturz.
       if (!mounted) return;
       _setzeState(() {
@@ -164,9 +164,9 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
 
   // v0.10.0: _validateLocationAgainstGps ist entfallen. Die Methode
   // verglich einen von Hand getippten Ortsnamen mit der GPS-Position
-  // und meldete Abweichungen ueber 15 km. Mit dem Wegfall der
+  // und meldete Abweichungen über 15 km. Mit dem Wegfall der
   // Ortsangabe gibt es nichts mehr zu vergleichen; sinnvollerweise
-  // bleibt stattdessen die Abweichung zum Bundesland, und die faellt
+  // bleibt stattdessen die Abweichung zum Bundesland, und die fällt
   // ohnehin weg, weil _detectLocation das Bundesland selbst setzt.
   Widget _field({required Widget child, String? Function()? validate}) {
     return Column(
@@ -206,7 +206,7 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
     final prefs = ref.read(userPreferencesProvider);
     final settings = ref.read(settingsProvider);
     // v0.10.0: Die Ortsangabe ist entfallen, damit auch kein Dirty-Vergleich
-    // mehr noetig ist. Das Bundesland wird weiterhin verglichen.
+    // mehr nötig ist. Das Bundesland wird weiterhin verglichen.
     return _pendingAvatarBytes != null ||
         _pendingExtraBytes.isNotEmpty ||
         _removedPhotoSlots.isNotEmpty ||
@@ -331,15 +331,15 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
         // 1) DIE ALTEN DATEIEN LAGEN ALS WRACK IM SPEICHER. Wird ein
         //    Bild ersetzt (nicht nur entfernt), blieb die alte Datei
         //    liegen. Das passiert, weil die Liste in profiles.photos
-        //    eine GALERIE ist: sie ist lueckenlos. Wird die mittlere
-        //    Kachel entfernt, ruecken die hinteren eine Position nach
+        //    eine GALERIE ist: sie ist lückenlos. Wird die mittlere
+        //    Kachel entfernt, rücken die hinteren eine Position nach
         //    vorn - und der Pfad der Datei passt dann nicht mehr zum
         //    Kachel-Index. Genau dann trifft der Pfad des neuen Uploads
         //    nicht mehr den der ersetzten Datei.
         //
-        //    Deshalb wird die alte Datei jetzt GELOESCHT, wenn ihr Pfad
+        //    Deshalb wird die alte Datei jetzt GELÖSCHT, wenn ihr Pfad
         //    nicht der des neuen Uploads ist. Ist er derselbe, wurde
-        //    die Datei gerade ueberschrieben - dann waere ein Loeschen
+        //    die Datei gerade überschrieben - dann wäre ein Löschen
         //    ein Datenverlust.
         final zuLoeschen = <String>{};
         for (final i in _removedPhotoSlots) {
@@ -362,17 +362,17 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
 
         if (!mounted) return false;
         // BEFUND (14.11.2026, gefunden von einem Test): Vorher stand hier
-        // ein Update NUR fuer die Fotos und weiter unten ein zweites fuer
-        // die Texte. Das erste Update loeste im Screen den "Profil
-        // nachziehen"-Zuhoerer aus - der setzt die Textfelder auf den
-        // Serverstand zurueck (siehe _profileSub). Der Name, den der
+        // ein Update NUR für die Fotos und weiter unten ein zweites für
+        // die Texte. Das erste Update lüste im Screen den "Profil
+        // nachziehen"-Zuhörer aus - der setzt die Textfelder auf den
+        // Serverstand zurück (siehe _profileSub). Der Name, den der
         // Nutzer gerade getippt hatte, war damit weg, BEVOR er
         // gespeichert wurde: das Speichern meldete "Profil gespeichert"
-        // und speicherte den ALTEN Namen. Das Gleiche galt fuer Bio,
+        // und speicherte den ALTEN Namen. Das Gleiche galt für Bio,
         // Bundesland und Geburtsdatum.
         //
         // DESHALB: Es gibt jetzt nur noch EIN Update - weiter unten -
-        // das Fotos und Texte zusammen schreibt. Der Zuhoerer sieht dann
+        // das Fotos und Texte zusammen schreibt. Der Zuhörer sieht dann
         // den neuen Stand und fasst die Felder nicht an.
         //
         // Server-Write (v0.8.1-Fix): Der photos-Pfad MUSSTE vorher immer
@@ -395,10 +395,10 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
           // UND DIE WEITEREN BILDER NEU LADEN (BEFUND 09.11.2026:
           // "Die Bilder sind nicht sichtbar, wenn hochgeladen.").
           //
-          // DER GRUND: `_extraBytesFutures.clear()` loeschte die Future
+          // DER GRUND: `_extraBytesFutures.clear()` löschte die Future
           // der Kacheln 1 und 2. Die Kachel zeichnet aber genau diesen
           // Future - ohne ihn fiel sie auf das Platzhalter-Symbol
-          // zurueck. Das erste Bild (Slot 0) wurde oben neu geladen,
+          // zurück. Das erste Bild (Slot 0) wurde oben neu geladen,
           // die beiden weiteren wurden es nicht: sie waren nach dem
           // Speichern unsichtbar, bis die App neu gestartet wurde.
           for (
@@ -428,10 +428,10 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
         // Nicht abbrechen: die Textänderungen trotzdem speichern.
       }
 
-      // v0.10.0: Die GPS-Gegenpruefung des Ortsnamens ist entfallen. Sie
+      // v0.10.0: Die GPS-Gegenprüfung des Ortsnamens ist entfallen. Sie
       // verglich den getippten Ort mit der GPS-Position - ohne Ortseingabe
-      // gibt es nichts zu vergleichen. Die Plausibilitaet wird jetzt beim
-      // Ermitteln des Standorts selbst geprueft (isLocationSuspicious in
+      // gibt es nichts zu vergleichen. Die Plausibilität wird jetzt beim
+      // Ermitteln des Standorts selbst geprüft (isLocationSuspicious in
       // _detectLocation).
 
       // Intro-Guard (v0.9.0-Fix): Intro-Felder nur übernehmen/schreiben,
@@ -445,10 +445,10 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
       await ref
           .read(profileProvider.notifier)
           .update(
-            // Die Fotos gehoeren in DIESES Update (siehe den Kommentar
-            // weiter oben): zwei Updates wuerden den "Profil
-            // nachziehen"-Zuhoerer ausloesen und die Textfelder auf den
-            // alten Stand zurueckersetzen.
+            // Die Fotos gehören in DIESES Update (siehe den Kommentar
+            // weiter oben): zwei Updates würden den "Profil
+            // nachziehen"-Zuhörer auslösen und die Textfelder auf den
+            // alten Stand zurückersetzen.
             photos: finalPhotos,
             name: _nameCtrl.text.trim(),
             birthDate: _birthDate,
@@ -517,7 +517,7 @@ extension _ProfilEditSpeichern on _ProfileEditScreenState {
             // 'distance_km', 'state' oder 'germany' (CHECK-Constraint).
             // Ein PostgREST-UPDATE ist atomar: EIN verletztes Feld hat das
             // GANZE Update gekippt - der Betreiber sah "Server-Sync
-            // fehlgeschlagen" und KEINE seiner Profilaenderungen wurde
+            // fehlgeschlagen" und KEINE seiner Profiländerungen wurde
             // gespeichert. Die Abbildung liegt jetzt an EINER Stelle:
             // [DistanceFilterModeLabel.dbValue].
             'distance_filter_mode': ref

@@ -1,9 +1,9 @@
 // Der Teil '_EmptyChatState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -24,12 +24,12 @@ class _EmptyChatState extends StatelessWidget {
     // BEFUND (22.11.2026, Fuzzing): Der Leer-Zustand ist 228 Pixel hoch
     // (Symbol, zwei Texte, Knopf). Ist der Chatbereich kleiner - im
     // Entscheidungsfenster stehen unten die Frage-Chips, das
-    // Eingabefeld UND die Entscheidungs-Knoepfe -, lief der Inhalt
+    // Eingabefeld UND die Entscheidungs-Knöpfe -, lief der Inhalt
     // aus dem Bild: "A RenderFlex overflowed by 48 pixels".
     //
     // DER WEG: Der Inhalt darf scrollen. Mit dem ConstrainedBox bleibt
     // er mittig, solange er passt; passt er nicht, wird gescrollt statt
-    // zu ueberlaufen.
+    // zu überlaufen.
     return LayoutBuilder(
       builder: (context, grenzen) => SingleChildScrollView(
         child: ConstrainedBox(

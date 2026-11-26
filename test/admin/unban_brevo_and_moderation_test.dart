@@ -1,18 +1,18 @@
 // Die bisher ungetesteten Dienste und Modelle.
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/services/verification/unban_request_service.dart, lib/services/
 // brevo_bug_report_service.dart und lib/models/
 // photo_moderation_models.dart je 0 %.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Entsperrungsantrag: der Server nimmt ihn an, oder er lehnt
-//     ihn ab (mit der Begruendung des Servers im Fehler),
+//     ihn ab (mit der Begründung des Servers im Fehler),
 //   * der Bug-Report: die zu lange Beschreibung wird abgewiesen (ohne
 //     den Server zu fragen), die Bilder werden begrenzt,
-//   * die Foto-Moderation: das Modell laesst sich in Hive speichern
+//   * die Foto-Moderation: das Modell lässt sich in Hive speichern
 //     und wieder lesen (die erzeugten Adapter sind damit benutzt) und
-//     copyWith aendert nur das, was genannt ist.
+//     copyWith ändert nur das, was genannt ist.
 //
 // OHNE NETZ: Der Supabase-Client bekommt den Fake-Server aus
 // test/support/fake_supabase_server.dart.
@@ -91,7 +91,7 @@ void main() {
       () async {
         // DER GRUND: Der Server entscheidet, ob eine Adresse gesperrt ist -
         // der Dienst schickt sie auch dann hin, wenn sie leer ist. Er darf
-        // dabei aber nicht abstuerzen.
+        // dabei aber nicht abstürzen.
         final service = container.read(unbanRequestServiceProvider);
 
         try {
@@ -139,7 +139,7 @@ void main() {
       );
 
       expect(ok, isTrue);
-      // Der Server hat den Body bekommen - mit hoechstens fuenf Bildern.
+      // Der Server hat den Body bekommen - mit höchstens fünf Bildern.
       expect(
         server.pfade.where((a) => a.contains('send-bug-report')),
         isNotEmpty,
@@ -155,7 +155,7 @@ void main() {
       Hive.init(tempDir.path);
       // Die Adapter anmelden - ohne sie kennt Hive den Typ nicht
       // (das macht sonst lib/main.dart). Die IDs stehen in der
-      // Modell-Datei: 20/21 die Aufzaehlungen, 22 die Meldung, 23 die
+      // Modell-Datei: 20/21 die Aufzählungen, 22 die Meldung, 23 die
       // Verwarnungen.
       if (!Hive.isAdapterRegistered(20)) {
         Hive.registerAdapter(PhotoModerationTypeAdapter());

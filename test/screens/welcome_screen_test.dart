@@ -1,16 +1,16 @@
-// Der Willkommens-Screen (die Einfuehrung) - bisher ungetestet (1,2 %).
+// Der Willkommens-Screen (die Einführung) - bisher ungetestet (1,2 %).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/welcome/welcome_screen.dart 82 offene Zeilen bei 83 Zeilen
-// gesamt. Der Screen erklaert das Grundprinzip der App - und markiert
-// die Einfuehrung als gesehen (der Flag darf danach nie wieder kommen).
+// gesamt. Der Screen erklärt das Grundprinzip der App - und markiert
+// die Einführung als gesehen (der Flag darf danach nie wieder kommen).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die drei Seiten stehen da (mit Text, nicht nur mit Logo),
-//   * die Einfuehrung gilt ab dem ANZEIGEN als gesehen (sonst sieht der
+//   * die Einführung gilt ab dem ANZEIGEN als gesehen (sonst sieht der
 //     Nutzer sie nach jedem Neustart wieder),
-//   * "Weiter" blattert, "Zurueck" geht zurueck,
-//   * am Ende und beim Ueberspringen kommt der Login.
+//   * "Weiter" blattert, "Zurück" geht zurück,
+//   * am Ende und beim Überspringen kommt der Login.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,7 +54,7 @@ class _Speicher implements LocalStorage {
 }
 
 void main() {
-  /// Der Speicher (dort steht der Flag "Einfuehrung gesehen").
+  /// Der Speicher (dort steht der Flag "Einführung gesehen").
   late _Speicher speicher;
 
   setUp(() {
@@ -65,8 +65,8 @@ void main() {
   /// Baut den Screen.
   Future<void> zeigeScreen(WidgetTester tester) async {
     // DER TESTRAHMEN: 1200 px hoch. Die Testschrift (Ahem) ist rund
-    // 1,7-mal breiter als Roboto - der lange Erklaerungstext laeuft
-    // sonst ueber den Rand. Das ist ein Artefakt der Testschrift, kein
+    // 1,7-mal breiter als Roboto - der lange Erklärungstext läuft
+    // sonst über den Rand. Das ist ein Artefakt der Testschrift, kein
     // Fehler des Bildschirms (mit der echten Schrift passt es).
     await tester.binding.setSurfaceSize(const Size(390, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -98,7 +98,7 @@ void main() {
     );
     await tester.pump();
     // DAS LOGO: Das Bild wird von der Platte gelesen - das braucht die
-    // echte Schleife (mit der Test-Uhr wuerde der Bildschirm leer
+    // echte Schleife (mit der Test-Uhr würde der Bildschirm leer
     // bleiben).
     await tester.runAsync(() async {
       await Future<void>.delayed(const Duration(milliseconds: 300));
@@ -114,7 +114,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text(L10n.tWithoutContext('welcome.t1')), findsOneWidget);
       expect(find.text(L10n.tWithoutContext('welcome.b1')), findsOneWidget);
-      // Das Ueberspringen steht oben.
+      // Das Überspringen steht oben.
       expect(find.text(L10n.tWithoutContext('common.skip')), findsOneWidget);
       // Und es geht erst mit "Weiter" weiter.
       expect(
@@ -129,7 +129,7 @@ void main() {
       await zeigeScreen(tester);
 
       // DER FLAG: Er wird beim ANZEIGEN gesetzt - sonst sieht der
-      // Nutzer die Einfuehrung nach jedem Neustart wieder.
+      // Nutzer die Einführung nach jedem Neustart wieder.
       expect(
         speicher._daten.values.any((v) => v.contains('introSeen')),
         isTrue,
@@ -148,7 +148,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text(L10n.tWithoutContext('welcome.t2')), findsOneWidget);
-      // Und jetzt gibt es ein "Zurueck".
+      // Und jetzt gibt es ein "Zurück".
       expect(find.text(L10n.tWithoutContext('common.back')), findsOneWidget);
     });
 

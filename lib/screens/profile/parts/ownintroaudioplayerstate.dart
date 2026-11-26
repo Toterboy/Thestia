@@ -1,9 +1,9 @@
 // Der Teil '_OwnIntroAudioPlayerState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -16,7 +16,7 @@ class _OwnIntroAudioPlayerState extends ConsumerState<_OwnIntroAudioPlayer> {
   bool _loading = false;
 
   /// Zustands-Listener. Ohne das Feld wurde bei JEDEM Klick auf Play ein
-  /// weiterer Listener auf denselben Player gehaengt - nach 20 Klicks liefen
+  /// weiterer Listener auf denselben Player gehängt - nach 20 Klicks liefen
   /// 20 Closures, alle mit setState.
   StreamSubscription<PlayerState>? _stateSub;
 
@@ -64,7 +64,7 @@ class _OwnIntroAudioPlayerState extends ConsumerState<_OwnIntroAudioPlayer> {
       // WICHTIG: `play()` NICHT abwarten. just_audio liefert das
       // Future erst fertig, wenn die Aufnahme ZU ENDE ist - während
       // der ganzen Abspielzeit stand hier der Lade-Spinner. Genau das
-      // war die Meldung "die Vorstellung laedt nicht oder braucht
+      // war die Meldung "die Vorstellung lädt nicht oder braucht
       // seeeeeeehr lange".
       unawaited(_player.play());
       if (mounted) setState(() => _playing = true);

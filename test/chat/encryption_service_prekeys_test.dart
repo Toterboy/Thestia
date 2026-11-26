@@ -1,19 +1,19 @@
-// Der PreKey-Vorrat des Verschluesselungs-Dienstes.
+// Der PreKey-Vorrat des Verschlüsselungs-Dienstes.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/encryption_service.dart 58 offene Zeilen. Der
 // Vorrat an PreKeys war ungetestet - und er ist der Grund, warum ein
-// Chat ueberhaupt funktioniert: ohne PreKeys kann der Empfaenger die
+// Chat überhaupt funktioniert: ohne PreKeys kann der Empfänger die
 // erste Nachricht des Absenders nicht lesen.
 //
 // DER WEG: Der Dienst wird wie in den anderen Encryption-Tests
 // aufgebaut (Hive mit den Adaptern, der Keystore als Attrappe).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * der Dienst fuellt den Vorrat beim Start,
-//   * zwei Kontakte bekommen nie denselben PreKey (sonst koennte die
+// WAS HIER GEPRÜFT WIRD:
+//   * der Dienst füllt den Vorrat beim Start,
+//   * zwei Kontakte bekommen nie denselben PreKey (sonst kännte die
 //     Nachricht des zweiten nicht gelesen werden),
-//   * ein grosser Vorrat wird nicht unnoetig neu erzeugt.
+//   * ein großer Vorrat wird nicht unnötig neu erzeugt.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -29,7 +29,7 @@ void main() {
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // DER KEYSTORE: die Boxen sind AES-256-verschluesselt.
+    // DER KEYSTORE: die Boxen sind AES-256-verschlüsselt.
     mockKeystore();
     // DIE ADAPTER: die Boxen halten Signal-Objekte.
     Hive.registerAdapter(SignalIdentityKeyPairAdapterAdapter());

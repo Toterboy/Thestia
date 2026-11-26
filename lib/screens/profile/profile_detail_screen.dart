@@ -72,7 +72,7 @@ class ProfileDetailScreen extends ConsumerStatefulWidget {
 class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
   UserProfile? _profile;
 
-  /// Fertiger Anzeigetext fuer die Entfernung (v0.10.0).
+  /// Fertiger Anzeigetext für die Entfernung (v0.10.0).
   ///
   /// Gespeichert wird der TEXT, nicht die Kilometerzahl: die Umrechnung
   /// in eine 10-km-Stufe soll genau einmal passieren, direkt nach dem
@@ -303,7 +303,7 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                   // hier ein Fallback "Stadt, wenn kein Bundesland
                   // gesetzt war" - damit stand der genauere Ort genau
                   // dann im Profil, wenn die grobe Angabe fehlte. Das
-                  // war die unguenstigste Reihenfolge.
+                  // war die ungünstigste Reihenfolge.
                   style: Theme.of(context).textTheme.titleMedium,
                   badges: [
                     // Verifiziert-Badge direkt neben dem Namen
@@ -317,18 +317,18 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                           color: Colors.lightBlue.shade400,
                         ),
                       ),
-                    // Konto juenger als 7 Tage. Hier ist der Hinweis
+                    // Konto jünger als 7 Tage. Hier ist der Hinweis
                     // wertvoll: bei einem neuen Account ist eine
                     // ungefragte Nachricht mit hoher Wahrscheinlichkeit
                     // Missbrauch. Die RPC liefert created_at bereits mit.
                     // Verifikations-Hinweis bei ANDEREN Personen
                     // (v0.10.0). Nur wenn die Person NICHT verifiziert
-                    // ist - ein "wird geprueft" ist eine Information, ein
+                    // ist - ein "wird geprüft" ist eine Information, ein
                     // "verifiziert" hat bereits das Abzeichen.
                     //
-                    // Drei Zustaende, bewusst getrennt: wer sich geprueft
+                    // Drei Zustände, bewusst getrennt: wer sich geprüft
                     // hat, aber die Freigabe noch nicht hat, ist nicht
-                    // "nicht verifiziert", sondern "wird geprueft".
+                    // "nicht verifiziert", sondern "wird geprüft".
                     if (!profile.isVerified &&
                         profile.verificationState ==
                             VerificationState.underReview)
@@ -345,7 +345,7 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                   ],
                 ),
               ),
-              // v0.10.0: Nur anzeigen, wenn der Wert ueberhaupt eine
+              // v0.10.0: Nur anzeigen, wenn der Wert überhaupt eine
               // sichtbare Stufe ergibt. Unterhalb von 5 km liefert
               // labelForKm null - das ist Absicht: der Unterschied zwischen
               // 2 und 4 km verrate sonst den Nachbarn. Bei fehlendem
@@ -540,9 +540,9 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
               //
               // BEFUND (22.11.2026, Betreiber): "Musik Genres, die man
               // mag und Lieblings-Song und Künstler werden alle nicht im
-              // Profil angezeigt (öffentlich)." Der Lieblings-Kuenstler
+              // Profil angezeigt (öffentlich)." Der Lieblings-Künstler
               // (Lieblingsband) fehlte in der Bedingung - stand nur der
-              // Lieblings-Kuenstler im Profil, war die ganze Karte weg.
+              // Lieblings-Künstler im Profil, war die ganze Karte weg.
               if (profile.musicLiked.isNotEmpty ||
                   profile.musicDisliked.isNotEmpty ||
                   (profile.favoriteSong?.isNotEmpty == true) ||
@@ -757,7 +757,7 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
 }
 
 /// Der Text einer Gewohnheit (NUTZERWUNSCH 22.11.2026: die Gewohnheiten
-/// stehen im oeffentlichen Profil).
+/// stehen im öffentlichen Profil).
 String _habitudeLabel(BuildContext context, HabitudeLevel stufe) {
   switch (stufe) {
     case HabitudeLevel.never:

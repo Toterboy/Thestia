@@ -1,9 +1,9 @@
 // Der Teil '_VoiceMessageState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -16,7 +16,7 @@ class _VoiceMessageState extends State<_VoiceMessage> {
   bool _sourceLoaded = false;
   Duration _position = Duration.zero;
 
-  /// Die Laenge der Aufnahme. Sie kommt aus den Metadaten der Nachricht
+  /// Die Länge der Aufnahme. Sie kommt aus den Metadaten der Nachricht
   /// - fehlen die, wird sie beim Laden aus der Datei gelesen (damit
   /// immer eine Dauer angezeigt wird).
   Duration _length = Duration.zero;
@@ -72,8 +72,8 @@ class _VoiceMessageState extends State<_VoiceMessage> {
         //
         // BEFUND (07.11.2026, Betreiber): "Dauer der Sprachnachricht
         // anzeigen." Die Dauer kam nur aus den Metadaten der Nachricht.
-        // Kamen die nicht an (aeltere Geraete, ein Weg ohne Metadaten),
-        // stand da "0:00" - obwohl die Datei eine echte Laenge hat.
+        // Kamen die nicht an (ältere Geräte, ein Weg ohne Metadaten),
+        // stand da "0:00" - obwohl die Datei eine echte Länge hat.
         // Der Player kennt sie: nach dem Laden auslesen.
         final laenge = player.duration;
         if (laenge != null && laenge > Duration.zero) {
@@ -99,9 +99,9 @@ class _VoiceMessageState extends State<_VoiceMessage> {
         });
       }
       // WICHTIG: `play()` NICHT abwarten. just_audio liefert das Future
-      // erst fertig, wenn die Aufnahme ZU ENDE ist - waehrend der
+      // erst fertig, wenn die Aufnahme ZU ENDE ist - während der
       // ganzen Abspielzeit war der Zustand "nicht playing", der
-      // Pause-Knopf kam nicht und die Oberflaeche tat, als sei nichts
+      // Pause-Knopf kam nicht und die Oberfläche tat, als sei nichts
       // passiert.
       unawaited(player.play());
       if (mounted) setState(() => _playing = true);

@@ -5,11 +5,11 @@ import 'package:qr_flutter/qr_flutter.dart';
 ///
 /// Inhalt des QR-Codes (Deep Link): `thestia://user/<userId>`
 ///
-/// Fallback (fuer Nutzer ohne App): `https://thestia.de/invite/<userId>`
+/// Fallback (für Nutzer ohne App): `https://thestia.de/invite/<userId>`
 ///
 /// Beim Scannen:
-/// - App installiert → App oeffnet, Profil wird geladen, Chat startbar
-/// - App nicht installiert → Fallback-Link oeffnet Browser
+/// - App installiert → App öffnet, Profil wird geladen, Chat startbar
+/// - App nicht installiert → Fallback-Link öffnet Browser
 class QrProfileWidget extends StatelessWidget {
   const QrProfileWidget({
     super.key,
@@ -26,7 +26,7 @@ class QrProfileWidget extends StatelessWidget {
   // Fallback für Nutzer ohne App:
   // String get _fallbackUrl => 'https://thestia.de/invite/$userId';
 
-  /// QR enthaelt NUR den Deep-Link.
+  /// QR enthält NUR den Deep-Link.
   String get _qrContent => _deepLink;
 
   @override

@@ -32,11 +32,11 @@ class BirthdayStyle {
   /// NUTZERWUNSCH (22.11.2026): "Die Geburtstagsvorschau ist noch immer
   /// komplett falsch, da der Hintergrund nicht der des
   /// Geburtstagsthemes ist." Der Hintergrund lag vorher PRIVAT in der
-  /// Vorschaukarte - die Profilflaeche ([BirthdayStyleSurface]) hatte
+  /// Vorschaukarte - die Profilfläche ([BirthdayStyleSurface]) hatte
   /// deshalb eine eigene, schwache Tönung und zeigte nie den Verlauf,
   /// den der Nutzer gewählt hat (und den er in der Auswahl sieht).
   ///
-  /// Es ist derselbe Verlauf fuer Auswahl, Profil und Vorschau - so
+  /// Es ist derselbe Verlauf für Auswahl, Profil und Vorschau - so
   /// kann die Vorschau nicht vom echten Profil abweichen.
   static LinearGradient gradientFor(String style, BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -79,7 +79,7 @@ class BirthdayStyle {
   /// Die Textfarbe, die auf dem Hintergrund des Stils lesbar ist.
   ///
   /// Bei den dunklen Stilen (midnight, mono) muss der Text hell sein -
-  /// sonst steht schwarzer Text auf dunkelblauem Grund.
+  /// sonst steht schwarzer Text auf dunkelblaüm Grund.
   static Color foregroundFor(String style, BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     switch (style) {
@@ -103,7 +103,7 @@ class BirthdayStyle {
 /// v0.10.0: War eine Mini-Kachel (128 px) mit gestauchten Profilbalken.
 /// Nutzerfeedback: "zeigt kein Vollbild, nur das kleine Bild". Jetzt
 /// eine echte Profil-Vorschau in Phone-Breite, mit frei wählbarer
-/// Groesse ([large]) und optional echtem Profilbild ([avatarPath]) statt
+/// Größe ([large]) und optional echtem Profilbild ([avatarPath]) statt
 /// eines Platzhalter-Symbols.
 ///
 /// Zwei Betriebsarten, beide mit demselben Aufbau:
@@ -130,9 +130,9 @@ class BirthdayStylePreview extends StatelessWidget {
 
   /// Pfad des Profilbilds. `null` = Platzhalter-Symbol.
   ///
-  /// Bewusst ein Pfad und kein Bild-Provider: die Aufloesung gehoert in
-  /// den Aufrufer, der die Signierlogik kennt. So haelt dieses Widget
-  /// keine Abhaengigkeit vom Storage.
+  /// Bewusst ein Pfad und kein Bild-Provider: die Auflösung gehört in
+  /// den Aufrufer, der die Signierlogik kennt. So hält dieses Widget
+  /// keine Abhängigkeit vom Storage.
   final String? avatarPath;
 
   @override
@@ -276,20 +276,20 @@ class BirthdayStylePreview extends StatelessWidget {
       return _placeholder(fg);
     }
     // Ein Klartext-Signed-Storage-Pfad (drei Teile durch '|') kann
-    // hier nicht aufgeloest werden - das Aufloesen gehoert in den
+    // hier nicht aufgelöst werden - das Auflösen gehört in den
     // Aufrufer mit Storage-Zugriff. Dann bleibt das Symbol, statt ein
     // kaputtes Bild zu zeigen.
     if (path.contains('|')) {
       return _placeholder(fg);
     }
-    // SICHERHEIT (Audit 16.11.2026): Das Bild laedt ueber den gepinnten
-    // Client - `Image.network` haengt am System-Trust-Store und wuerde
+    // SICHERHEIT (Audit 16.11.2026): Das Bild lädt über den gepinnten
+    // Client - `Image.network` hängt am System-Trust-Store und würde
     // eine nachinstallierte Fremd-CA durchlassen.
     return PinnedNetworkImage(
       url: path,
       fit: BoxFit.cover,
       // Das Bild ist hier Andeutung, nicht Inhalt: wenige Pixel reichen
-      // und der Decode kostet auf schwachen Geraeten nichts.
+      // und der Decode kostet auf schwachen Geräten nichts.
       cacheWidth: (large ? 64 : 30) * 3,
       errorBuilder: (_, _, _) => _placeholder(fg),
     );
@@ -442,11 +442,11 @@ class BirthdayStylePreview extends StatelessWidget {
 /// Zwei Betriebsarten:
 ///
 ///  * [large] = false (Standard) - fünf 128-px-Kacheln im Wrap.
-///    fuer Nebenschauplätze (Profil bearbeiten, Was ist neu).
+///    für Nebenschauplätze (Profil bearbeiten, Was ist neu).
 ///  * [large] = true - EINE Vorschau in voller Breite mit den Styles
-///    als Segment-Reihe darunter. fuer die Einrichtung: dort ist der
+///    als Segment-Reihe darunter. für die Einrichtung: dort ist der
 ///    Stil eine Entscheidung, und 128 px waren die Ursache der
-///    Rueckmeldung "das ist nur ein kleines Bild".
+///    Rückmeldung "das ist nur ein kleines Bild".
 class BirthdayStylePicker extends StatelessWidget {
   const BirthdayStylePicker({
     required this.selected,
@@ -462,7 +462,7 @@ class BirthdayStylePicker extends StatelessWidget {
   /// Volle Breite statt Kachel-Wrap.
   final bool large;
 
-  /// Pfad des Profilbilds fuer die Vorschau (nur bei [large] genutzt).
+  /// Pfad des Profilbilds für die Vorschau (nur bei [large] genutzt).
   final String? avatarPath;
 
   @override
@@ -497,7 +497,7 @@ class BirthdayStylePicker extends StatelessWidget {
         ] else ...[
           // Eine breite Vorschau des AKTUELLEN Stils. Wechseln tut die
           // Segment-Reihe darunter - nicht durch Antippen der Vorschau.
-          // Bei 5 Stilen nebeneinander wuerde die Vorschau sonst selbst
+          // Bei 5 Stilen nebeneinander würde die Vorschau sonst selbst
           // zur Kachelreihe schrumpfen.
           BirthdayStylePreview(
             style: current,
@@ -508,7 +508,7 @@ class BirthdayStylePicker extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           // Segment-Reihe: Wrap statt Row, weil die deutschen Stilnamen
-          // bei 1,5-facher Schrift sonst ueberlaufen wuerden.
+          // bei 1,5-facher Schrift sonst überlaufen würden.
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -527,7 +527,7 @@ class BirthdayStylePicker extends StatelessWidget {
   }
 }
 
-/// Stil-Chip fuer die grosse Vorschau. Radius 24 wie die Kacheln der App.
+/// Stil-Chip für die große Vorschau. Radius 24 wie die Kacheln der App.
 class _LargeStyleChip extends StatelessWidget {
   const _LargeStyleChip({
     required this.label,
@@ -588,8 +588,8 @@ class BirthdayChip extends StatelessWidget {
             color: scheme.onTertiaryContainer,
           ),
           const SizedBox(width: 6),
-          // Flexible: der Text darf umbrechen. Ohne das waere der Chip
-          // bei grosser Schrift (bis 3,2x) breiter als der Bildschirm -
+          // Flexible: der Text darf umbrechen. Ohne das wäre der Chip
+          // bei großer Schrift (bis 3,2x) breiter als der Bildschirm -
           // er lief dann seitlich aus dem Rand (RenderFlex-Overflow).
           Flexible(
             child: Text(
@@ -651,10 +651,10 @@ class BirthdayStyleSurface extends StatelessWidget {
         gradient: BirthdayStyle.gradientFor(style, context),
         borderRadius: borderRadius,
       ),
-      // Die runden Ecken duerfen das Kind nicht ueberragen.
+      // Die runden Ecken dürfen das Kind nicht überragen.
       clipBehavior: Clip.antiAlias,
       child: DefaultTextStyle.merge(
-        // NUR die Farbe - Groesse und Schriftart kommen aus dem Theme.
+        // NUR die Farbe - Größe und Schriftart kommen aus dem Theme.
         style: TextStyle(color: BirthdayStyle.foregroundFor(style, context)),
         child: child,
       ),

@@ -7,18 +7,18 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/verification/guardian_status.dart';
 import 'package:thestia/providers/settings/guardian_provider.dart';
 
-/// Sperrt die App ausserhalb der von den Elternteilen erlaubten Zeit.
+/// Sperrt die App außerhalb der von den Elternteilen erlaubten Zeit.
 ///
 /// WICHTIG - und das muss man ehrlich sagen: Das ist eine HAUSREGEL, kein
-/// Sicherheitsmerkmal. Sie laeuft auf dem Geraet des Jugendlichen. Wer
-/// ein gerootetes Geraet hat oder die APK selbst baut, kommt an ihr
+/// Sicherheitsmerkmal. Sie läuft auf dem Gerät des Jugendlichen. Wer
+/// ein gerootetes Gerät hat oder die APK selbst baut, kommt an ihr
 /// vorbei - genau wie an jeder anderen Einstellung der App.
 ///
 /// Der Weg, den die App geht, ist trotzdem der richtige: Die PIN des
-/// Elternteils schuetzt die Einstellung VOR dem Jugendlichen (die
-/// Pruefung laeuft serverseitig, Migration 167), und die Sperre selbst
-/// verhindert dieversehentliche Ueberschreitung. Wer sie wirklich
-/// umgehen will, kann das - das weiss der Betreiber und sollte es auch
+/// Elternteils schützt die Einstellung VOR dem Jugendlichen (die
+/// Prüfung läuft serverseitig, Migration 167), und die Sperre selbst
+/// verhindert dieversehentliche Überschreitung. Wer sie wirklich
+/// umgehen will, kann das - das weiß der Betreiber und sollte es auch
 /// wissen.
 class UsageTimeGate extends ConsumerStatefulWidget {
   const UsageTimeGate({super.key, required this.child});
@@ -27,14 +27,14 @@ class UsageTimeGate extends ConsumerStatefulWidget {
 
   /// Liegt die aktuelle Uhrzeit im erlaubten Fenster?
   ///
-  /// Der Vergleich laeuft in der Zeitzone des Geraets - die Eltern
+  /// Der Vergleich läuft in der Zeitzone des Geräts - die Eltern
   /// stellen die Zeiten in der Zeit ein, in der das Kind sie erlebt.
   ///
-  /// Sonderfaelle:
+  /// Sonderfälle:
   ///   * start == end: eine leere Spanne. Das ist eine Fehlgabe, keine
-  ///     Sperre - sonst waere die App unbenutzbar und niemand wuesste
+  ///     Sperre - sonst wäre die App unbenutzbar und niemand wüsste
   ///     warum. Also: keine Begrenzung.
-  ///   * start > end: das Fenster laeuft ueber Mitternacht (z. B. 20:00
+  ///   * start > end: das Fenster läuft über Mitternacht (z. B. 20:00
   ///     bis 06:00).
   static bool isWithinWindow({
     required int nowMinutes,
@@ -56,7 +56,7 @@ class _UsageTimeGateState extends ConsumerState<UsageTimeGate>
     with WidgetsBindingObserver {
   Timer? _ticker;
 
-  /// Laeuft die App im Vordergrund? Im Hintergrund wird der Ticker
+  /// Läuft die App im Vordergrund? Im Hintergrund wird der Ticker
   /// angehalten - ein Dart-Isolate arbeitet im Hintergrund weiter, und
   /// jeder Weckruf kostet Akku.
   bool _imVordergrund = true;
@@ -65,9 +65,9 @@ class _UsageTimeGateState extends ConsumerState<UsageTimeGate>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Der Ticker haengt an der Sperre: er laeuft nur, wenn ueberhaupt
+    // Der Ticker hängt an der Sperre: er läuft nur, wenn überhaupt
     // eine Nutzungszeit begrenzt ist. Sonst weckt er 2880 Mal am Tag
-    // einen Nutzer, der gar keine Beschraenkung hat.
+    // einen Nutzer, der gar keine Beschränkung hat.
     ref.listenManual<GuardianStatus>(guardianProvider, (prev, next) {
       _tickerAnpassen(next);
     });
@@ -104,8 +104,8 @@ class _UsageTimeGateState extends ConsumerState<UsageTimeGate>
     }
     if (_ticker != null) return;
     // Alle 30 Sekunden nachsehen: sonst bleibt die App offen, wenn die
-    // erlaubte Zeit ablaeuft, und der Jugendliche merkt es erst beim
-    // naechsten Bildschirmwechsel.
+    // erlaubte Zeit abläuft, und der Jugendliche merkt es erst beim
+    // nächsten Bildschirmwechsel.
     _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) setState(() {});
     });

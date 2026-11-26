@@ -1,14 +1,14 @@
-// Unit-Tests fuer den MFA-Service (TOTP mit Authenticator-App).
+// Unit-Tests für den MFA-Service (TOTP mit Authenticator-App).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der MFA-Status (AAL, verifizierte Faktoren) inklusive Fail-closed,
 //   * der Start einer TOTP-Einrichtung (Aufräumen, Enroll, otpauth-URI),
-//   * die Pruefung des Codes (Challenge + Verify),
-//   * die Fehlerfaelle: kaputte Serverantwort, Serverfehler, Timeout.
+//   * die Prüfung des Codes (Challenge + Verify),
+//   * die Fehlerfälle: kaputte Serverantwort, Serverfehler, Timeout.
 //
 // WIE DER SERVER ERSETZT WIRD:
-//   Der Service spricht mit Supabase ueber HTTP. Statt eines Servers
-//   laeuft ein handgeschriebener Fake ([_FakeAuthServer]), der genau die
+//   Der Service spricht mit Supabase über HTTP. Statt eines Servers
+//   läuft ein handgeschriebener Fake ([_FakeAuthServer]), der genau die
 //   Auth-Endpunkte beantwortet, die der Service braucht. So bleibt der
 //   Test offline und deterministisch - und der echte Supabase-Client
 //   (inklusive seiner echten Fehlerbehandlung) wird mitgetestet.
@@ -21,12 +21,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:thestia/services/auth/mfa_service.dart';
 
-/// Baut ein JWT mit einem gewuenschten Assurance-Level.
+/// Baut ein JWT mit einem gewünschten Assurance-Level.
 ///
 /// DER GRUND: Das AAL steht NICHT in der User-Zeile, sondern im
 /// Access-Token (`aal`-Claim). Der Service liest es mit
 /// `decodeJwtPayload` - also braucht der Test einen echten (wenn auch
-/// nicht signierten) JWT, sonst kaeme `aal1` heraus.
+/// nicht signierten) JWT, sonst käme `aal1` heraus.
 String _jwt({String aal = 'aal1'}) {
   String teil(Map<String, dynamic> inhalt) =>
       base64Url.encode(utf8.encode(jsonEncode(inhalt))).replaceAll('=', '');
@@ -41,9 +41,9 @@ String _jwt({String aal = 'aal1'}) {
   return '$kopf.$nutzlast.c2ln';
 }
 
-/// Ein handgeschriebener Supabase-Auth-Server fuer die Tests.
+/// Ein handgeschriebener Supabase-Auth-Server für die Tests.
 ///
-/// DER GRUND FUER DEN EIGENEN FAKE: Der MFA-Service nutzt den echten
+/// DER GRUND FÜR DEN EIGENEN FAKE: Der MFA-Service nutzt den echten
 /// Supabase-Client. Nur so kann der Test beweisen, dass der Service mit
 /// den echten Antworten des Servers umgeht (Faktor-Liste, Enroll,
 /// Challenge/Verify) - und nicht mit einer Wunschvorstellung davon.
@@ -56,20 +56,20 @@ class _FakeAuthServer {
   /// Die Faktoren, die der Server kennt (unverified/verified).
   List<Map<String, dynamic>> faktoren = [];
 
-  /// Das Secret, das der Server beim Enroll zurueckgibt.
+  /// Das Secret, das der Server beim Enroll zurückgibt.
   String secret = 'JBSWY3DPEHPK3PXP';
 
   /// Das Assurance-Level im Access-Token ('aal1' oder 'aal2').
   String aal = 'aal1';
 
-  /// Wenn true, liefert der naechste Refresh eine kaputte Antwort
+  /// Wenn true, liefert der nächste Refresh eine kaputte Antwort
   /// (User ohne 'id'). Der Service darf daran nicht zerbrechen.
   bool refreshKaputt = false;
 
   /// HTTP-Status beim Token-Refresh (0 = Erfolg).
   ///
   /// WICHTIG: Ein 4xx-Fehler wird vom Supabase-Client NICHT intern
-  /// wiederholt - ein 5xx wuerde bis zu einer Minute lang probieren.
+  /// wiederholt - ein 5xx würde bis zu einer Minute lang probieren.
   /// Deshalb wird hier der "echte" Serverfehler simuliert.
   int refreshStatus = 0;
 
@@ -95,13 +95,13 @@ class _FakeAuthServer {
   /// Alle Anfragen, die der Server gesehen hat (z. B. 'POST /factors').
   final List<String> anfragen = [];
 
-  /// Die Koerper der Enroll-Aufrufe.
+  /// Die Körper der Enroll-Aufrufe.
   final List<Map<String, dynamic>> enrollKoerper = [];
 
   /// Die Codes, mit denen verifiziert wurde.
   final List<String> verifizierteCodes = [];
 
-  /// Anzahl der Token-Refreshes (der Client holt die Faktoren immer ueber
+  /// Anzahl der Token-Refreshes (der Client holt die Faktoren immer über
   /// einen frischen Session-Stand).
   int refreshAnzahl = 0;
 
@@ -188,7 +188,7 @@ class _FakeAuthServer {
     // POST /auth/v1/factors - die Einrichtung starten.
     if (anfrage.method == 'POST' && pfad.endsWith('/auth/v1/factors')) {
       if (enrollTimeout) {
-        // Ein Netzwerkfehler sieht fuer den Client aus wie ein Timeout.
+        // Ein Netzwerkfehler sieht für den Client aus wie ein Timeout.
         throw http.ClientException('Timeout beim Enroll');
       }
       if (enrollStatus != 0) {
@@ -219,12 +219,12 @@ class _FakeAuthServer {
       return _json({'id': id});
     }
 
-    // POST /auth/v1/factors/{id}/challenge - die Challenge fuer den Code.
+    // POST /auth/v1/factors/{id}/challenge - die Challenge für den Code.
     if (anfrage.method == 'POST' && pfad.endsWith('/challenge')) {
       return _json({'id': 'challenge-1', 'expires_at': 1900000000});
     }
 
-    // POST /auth/v1/factors/{id}/verify - der Code wird geprueft.
+    // POST /auth/v1/factors/{id}/verify - der Code wird geprüft.
     if (anfrage.method == 'POST' && pfad.endsWith('/verify')) {
       final koerper = jsonDecode(anfrage.body) as Map<String, dynamic>;
       verifizierteCodes.add(koerper['code'] as String);
@@ -240,9 +240,9 @@ class _FakeAuthServer {
 
 /// Baut einen eingeloggten Client gegen den Fake-Server.
 ///
-/// DER GRUND FUER `setSession`: Der Service liest den Status aus der
+/// DER GRUND FÜR `setSession`: Der Service liest den Status aus der
 /// aktuellen Session (`currentSession`/`currentUser`). Ohne Session
-/// wuerde der Test nur den "nicht eingeloggt"-Zweig sehen.
+/// würde der Test nur den "nicht eingeloggt"-Zweig sehen.
 Future<SupabaseClient> _eingeloggt(
   _FakeAuthServer server, {
   bool mitSession = true,
@@ -392,10 +392,10 @@ void main() {
         final client = await _eingeloggt(server);
         addTearDown(client.dispose);
 
-        // DER GRUND FUER DIESEN FALL: Das Aufraeumen der alten Faktoren ist
+        // DER GRUND FÜR DIESEN FALL: Das Aufräumen der alten Faktoren ist
         // "best effort" - ein Fehler dabei ist kein Grund, den Nutzer ohne
         // Secret dastehen zu lassen. Die Serverantwort ist kaputt (der User
-        // hat keine 'id'), der Enroll selbst laeuft normal.
+        // hat keine 'id'), der Enroll selbst läuft normal.
         final ergebnis = await MfaService(client).startTotpEnroll();
 
         expect(
@@ -411,7 +411,7 @@ void main() {
     test('raeumt unbestatigte Faktoren auf und liefert Secret + URI', () async {
       final server = _FakeAuthServer();
       // Ein verwaistes, unbestatigtes TOTP (abgebrochene Einrichtung) und
-      // ein bestaetigtes Telefon-Faktor.
+      // ein bestätigtes Telefon-Faktor.
       server.faktoren.add(server.faktor('alt-1', status: 'unverified'));
       server.faktoren.add(server.faktor('tel-1', typ: 'phone'));
       final client = await _eingeloggt(server);

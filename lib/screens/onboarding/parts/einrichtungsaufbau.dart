@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Der Aufbau
 // liegt in einer ERWEITERUNG auf dieselbe Klasse - die lokalen
 // Variablen des Aufbaus wandern mit, das Verhalten bleibt also
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -61,7 +61,7 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
     // plötzlich auf 25 km springt.
     final radiusGesperrt = AgeSafetyRules.isDiscoveryRadiusCapped(effectiveAge);
     final radiusMaxKm = AgeSafetyRules.maxDiscoveryRadiusKm(effectiveAge);
-    // Der Slider darf keinen Wert ausserhalb [min, max] bekommen - sonst
+    // Der Slider darf keinen Wert außerhalb [min, max] bekommen - sonst
     // wirft die Flutter-Assertion. Deshalb wird geklemmt angezeigt.
     final radiusWert = userPrefs.maxDistanceKm.clamp(1, radiusMaxKm);
 
@@ -172,11 +172,11 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
                             // BREITES FELD (14.11.2026, gefunden von einem
                             // Test): Ohne `isExpanded` misst das Feld das
                             // breiteste Label ("Lockere Bekanntschaft") -
-                            // bei grosser Schrift (oder schmalem Geraet)
-                            // laeuft der Text rechts aus der Karte
+                            // bei großer Schrift (oder schmalem Gerät)
+                            // läuft der Text rechts aus der Karte
                             // ("RenderFlex overflowed by 25 pixels").
                             // Mit `isExpanded` nimmt das Feld die volle
-                            // Breite und der Text wird gekuerzt.
+                            // Breite und der Text wird gekürzt.
                             isExpanded: true,
                             borderRadius: BorderRadius.circular(16),
                             decoration: InputDecoration(
@@ -312,7 +312,7 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
                             // Tippfehler produzieren. Und sie ist neben der
                             // Dropdown-Auswahl auf der Profilseite derselbe
                             // Katalog - vorher standen hier Vollnamen
-                            // ("Bayern") und im Profil-Edit Kuerzel ("BY"),
+                            // ("Bayern") und im Profil-Edit Kürzel ("BY"),
                             // was die Filterung ebenfalls aushebte.
                             // v0.10.0: Der Wert ist das Bundesland des
                             // Profils (_selectedState) - es wird beim
@@ -322,16 +322,16 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
                             //
                             // Vorher stand hier preferredState - eine Spalte
                             // mit CHECK-Constraint, der das Bundesland gar
-                            // nicht zulaesst. Die Auswahl wurde also
+                            // nicht zulässt. Die Auswahl wurde also
                             // stillschweigend verworfen, und der Modus
-                            // "Bundesland" filterte ueberhaupt nichts.
+                            // "Bundesland" filterte überhaupt nichts.
                             DropdownButtonFormField<String>(
                               initialValue:
                                   _selectedState?.trim().isEmpty ?? true
                                   ? null
                                   : _selectedState!.trim(),
                               // isExpanded: siehe Kommentar beim
-                              // Geschlecht-Feld - ohne das laeuft der
+                              // Geschlecht-Feld - ohne das läuft der
                               // Text des Bundeslands aus dem Feld
                               // heraus (BEFUND 24.11.2026: 41 Pixel
                               // auf einem 390-px-Bildschirm).
@@ -350,7 +350,7 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
                                   )
                                   .toList(),
                               onChanged: (v) async {
-                                // Kein Fehlerhinweis mehr noetig: eine
+                                // Kein Fehlerhinweis mehr nötig: eine
                                 // Liste kann nicht falsch getippt werden.
                                 //
                                 // v0.10.0: Der Wert geht in das Bundesland
@@ -375,17 +375,17 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
                           ],
                           // v0.10.0: Standort. Kein Ort-Textfeld mehr.
                           //
-                          // Vorher stand hier ein Freitextfeld fuer die
+                          // Vorher stand hier ein Freitextfeld für die
                           // Stadt, mit 600-ms-Debounce, Geokodierung und
                           // 15-km-Abgleich zur GPS-Position. Das ergab einen
-                          // Ort mit ~11 km Genauigkeit - oeffentlich, weil
-                          // profiles.city fuer jeden angemeldeten Nutzer
+                          // Ort mit ~11 km Genauigkeit - öffentlich, weil
+                          // profiles.city für jeden angemeldeten Nutzer
                           // lesbar war (Migration 135).
                           //
                           // Jetzt gibt es nur noch die GPS-Erkennung, und
-                          // die liefert ausschliesslich das Bundesland. Das
-                          // Bundesland steht bereits auf der naechsten Seite
-                          // (Profil) zur Auswahl - doppelt fragen waere
+                          // die liefert ausschließlich das Bundesland. Das
+                          // Bundesland steht bereits auf der nächsten Seite
+                          // (Profil) zur Auswahl - doppelt fragen wäre
                           // nur eine weitere Pflichtangabe.
                           OutlinedButton.icon(
                             onPressed: _isDetectingLocation
@@ -521,9 +521,9 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
                           // ---- Land ----
                           // Das Land war bisher nirgends in der
                           // Einrichtung erfragt - nur im Profil-Edit.
-                          // Fuer neue Konten blieb es damit fest auf
-                          // 'Deutschland', obwohl die App 23 Laender
-                          // anbietet. Die Erklaerung nennt das Land
+                          // Für neue Konten blieb es damit fest auf
+                          // 'Deutschland', obwohl die App 23 Länder
+                          // anbietet. Die Erklärung nennt das Land
                           // als erhobene Daten, also wird es hier
                           // erfragt.
                           DropdownButtonFormField<String>(
@@ -555,7 +555,7 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
                             // BREITES FELD (14.11.2026, gefunden von einem
                             // Test): Ohne `isExpanded` misst das Feld das
                             // breiteste Bundesland ("Nordrhein-Westfalen")
-                            // - bei grosser Schrift laeuft der Text rechts
+                            // - bei großer Schrift läuft der Text rechts
                             // aus der Karte. Mit `isExpanded` nimmt das
                             // Feld die volle Breite.
                             isExpanded: true,
@@ -629,12 +629,12 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
                           selected: _birthdayStyle,
                           large: true,
                           // Kein echtes Profilbild in der Vorschau:
-                          // das Bild liegt verschluesselt als
-                          // "pfad|key|iv" im Storage und laesst sich ohne
+                          // das Bild liegt verschlüsselt als
+                          // "pfad|key|iv" im Storage und lässt sich ohne
                           // Signier-URL hier nicht laden. Die Vorschau
                           // zeigt deshalb das Person-Symbol. Die Ausgabe
                           // "nur ein kleines Bild" bezog sich auf die
-                          // Groesse der Kachel, nicht aufs Motiv.
+                          // Größe der Kachel, nicht aufs Motiv.
                           avatarPath: null,
                           onSelected: (v) => _setzeState(() {
                             _birthdayStyle = v;

@@ -135,7 +135,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   final _songCtrl = TextEditingController();
   final _bandCtrl = TextEditingController();
 
-  /// true, waehrend _save() laeuft (Spinner im Speichern-Button).
+  /// true, während _save() läuft (Spinner im Speichern-Button).
   bool _saving = false;
 
   /// true, nachdem ein Speichern-Versuch an Validierung gescheitert ist
@@ -175,7 +175,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   /// Ladefutures für BESTEHENDE Extra-Bilder (Slot 1/2).
   final Map<int, Future<Uint8List?>?> _extraBytesFutures = {};
 
-  /// Verzoegerter NSFW-Modell-Warm-up (abbrechbar, siehe initState).
+  /// Verzögerter NSFW-Modell-Warm-up (abbrechbar, siehe initState).
   Timer? _nsfwWarmupTimer;
 
   // Vorstellung (Find your Match): Zustand wird vom IntroEditor gemeldet.
@@ -279,8 +279,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     // NSFW-Modell VORAB laden (v0.8.1) - aber NACH dem ersten Frame und
     // mit kleinem, ABBRECHBAREM Delay: OrtSession.fromBuffer parst 12 MB
-    // synchron im UI-Thread und wuerde sonst direkt beim Screen-Oeffnen
-    // janken. Cancel im dispose (sonst haengender Timer in Tests/ANR).
+    // synchron im UI-Thread und würde sonst direkt beim Screen-Öffnen
+    // janken. Cancel im dispose (sonst hängender Timer in Tests/ANR).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _nsfwWarmupTimer = Timer(const Duration(milliseconds: 600), () {
@@ -289,7 +289,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     });
 
     // Einspruchs-Entscheidung abholen (v0.8.1): approved -> Bild aus dem
-    // Pruefungsort uebernehmen (clientseitig verschluesselt hochladen);
+    // Prüfungsort übernehmen (clientseitig verschlüsselt hochladen);
     // rejected -> Aufräumen + Meldung. Danach als 'notified' quittiert.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _resolvePendingAppeal();
@@ -389,7 +389,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   ///
   /// DER GRUND: In einer Erweiterung darf `setState` nicht aufgerufen
   /// werden (der Analyser erlaubt es nur in Instanzmitgliedern einer
-  /// State-Klasse). Diese Methode gehoert zur Klasse - die Erweiterung
+  /// State-Klasse). Diese Methode gehört zur Klasse - die Erweiterung
   /// ruft sie auf.
   void _setzeState(VoidCallback fn) => setState(fn);
 }

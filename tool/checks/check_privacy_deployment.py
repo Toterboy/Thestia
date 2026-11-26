@@ -1,8 +1,8 @@
 # tool/checks/check_privacy_deployment.py
 """
-Prueft, ob der PUBLISH-ORDNER (passkey-assets/) mit dem live
-ausgelieferten Stand uebereinstimmt - und vor allem: WELCHE Dateien
-hochgeladen werden muessen.
+Prüft, ob der PUBLISH-ORDNER (passkey-assets/) mit dem live
+ausgelieferten Stand übereinstimmt - und vor allem: WELCHE Dateien
+hochgeladen werden müssen.
 
 WARUM ES DAS GIBT
 -----------------
@@ -10,39 +10,39 @@ WARUM ES DAS GIBT
 aus dem Repo deployed. Zwei Kopien, keine Kopplung - und das ist bereits
 zweimal schiefgegangen:
 
-  1) Die live ausgelieferte Datenschutzerklaerung war aelter als das
-     Repo (Version 5 gegen Version 6). Die veroeffentlichte Fassung
+  1) Die live ausgelieferte Datenschutzerklärung war älter als das
+     Repo (Version 5 gegen Version 6). Die veröffentlichte Fassung
      beschrieb eine App, die es nicht mehr gibt.
   2) Das Impressum stand wochenlang mit offenen Platzhaltern
      ("[ANBIETER]") online.
 
-Zusaetzlich zur Pruefung: WELCHE Dateien abweichen. Vorher stand am
+Zusätzlich zur Prüfung: WELCHE Dateien abweichen. Vorher stand am
 Ende nur "Netlify: passkey-assets/ neu hochladen" - das hiess: den
-GANZEN Ordner. Das war bei jeder kleinen Aenderung Arbeit ohne Anlass.
+GANZEN Ordner. Das war bei jeder kleinen Änderung Arbeit ohne Anlass.
 
-HINWEIS (02.11.2026): Fuer diesen Ordner gibt es ZWEI Wege, und
+HINWEIS (02.11.2026): Für diesen Ordner gibt es ZWEI Wege, und
 die Dokumentation widerspricht sich (docs/technik/PLAY-REGELN-CHECK.md sagt
-"haengt am Repository", der Kommentar in .github/workflows/ci.yml
+"hängt am Repository", der Kommentar in .github/workflows/ci.yml
 sagt "per Drag & Drop"). Die Praxis: ein Push aus dem Repository wird
-uebernommen, der Deploy kann aber etliche Minuten dauern (Netlify
+übernommen, der Deploy kann aber etliche Minuten dauern (Netlify
 reiht Builds ein). Deshalb nennt dieser Check die Dateien einzeln -
-damit klar ist, was zurueckbleibt, egal welcher Weg genutzt wird.
+damit klar ist, was zurückbleibt, egal welcher Weg genutzt wird.
 
 Die Werkzeuge, die den Ordner erzeugen (tool/web/make_web_screenshots.py,
 tool/web/apply_web_theme.py), sind inzwischen WIEDERHOLBAR: ein zweiter
-Durchlauf aendert nichts (geprueft von
+Durchlauf ändert nichts (geprüft von
 tool/checks/check_web_theme_idempotenz.py). Deshalb weicht der Ordner jetzt nur
-dort von live ab, wo sich wirklich etwas geaendert hat - und genau diese
+dort von live ab, wo sich wirklich etwas geändert hat - und genau diese
 Dateien werden hier benannt.
 
     python tool/checks/check_privacy_deployment.py
 
-Exit-Code 1 bei Abweichung. Ohne Netz (offline) wird die Pruefung
-uebersprungen, nicht als Fehler gewertet - ein Offline-Lauf soll den
+Exit-Code 1 bei Abweichung. Ohne Netz (offline) wird die Prüfung
+übersprungen, nicht als Fehler gewertet - ein Offline-Lauf soll den
 Build nicht blockieren.
 
-Die Live-Adresse ist ueber THESTIA_PRIVACY_URL (Datenschutz) und
-THESTIA_SITE_URL (Basis) ueberschreibbar.
+Die Live-Adresse ist über THESTIA_PRIVACY_URL (Datenschutz) und
+THESTIA_SITE_URL (Basis) überschreibbar.
 """
 
 import os
@@ -55,8 +55,8 @@ import urllib.request
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -76,14 +76,14 @@ LOCAL = os.path.join(ASSETS, 'datenschutz.html')
 DEFAULT_URL = 'https://auth.thestia.de/datenschutz.html'
 BASIS_DEFAULT = 'https://auth.thestia.de'
 
-# Der oeffentliche Host. thestia.de und auth.thestia.de sind EIN
+# Der öffentliche Host. thestia.de und auth.thestia.de sind EIN
 # Netlify-Projekt, aber mit unterschiedlichen robots.txt: der
-# oeffentliche Host ist indexierbar, der Auth-Host gesperrt (dort
+# öffentliche Host ist indexierbar, der Auth-Host gesperrt (dort
 # liegt der Sicherheitscheck).
 #
-# WARUM (06.11.2026): Der Pruefer verglich robots.txt gegen den
+# WARUM (06.11.2026): Der Prüfer verglich robots.txt gegen den
 # Auth-Host - und meldete dadurch IMMER eine Abweichung, obwohl alles
-# stimmte. Die Datei gehoert gegen den Host geprueft, auf dem sie
+# stimmte. Die Datei gehört gegen den Host geprüft, auf dem sie
 # ausgeliefert wird.
 OEFFENTLICH_DEFAULT = 'https://thestia.de'
 
@@ -95,11 +95,11 @@ HOST_PRO_DATEI = {
 }
 
 # Dateien, die Netlify NICHT ausliefert, sondern beim Deploy liest.
-# Sie koennen nicht gegen live geprueft werden (404) - sie gehoeren
-# aber trotzdem in jeden Upload, wenn sie sich geaendert haben.
+# Sie können nicht gegen live geprüft werden (404) - sie gehören
+# aber trotzdem in jeden Upload, wenn sie sich geändert haben.
 KONFIGURATION = {'_headers', '_redirects', 'netlify.toml'}
 
-# Woerter, die nur in einer Version vorkommen. Sie machen den Unterschied
+# Wörter, die nur in einer Version vorkommen. Sie machen den Unterschied
 # lesbar, statt nur "Hash weicht ab" zu sagen.
 MARKERS = [
     ('Version 6 (v0.10.0)', 'neuer Stand: Ort/Stadt wird nicht erhoben'),
@@ -117,22 +117,22 @@ PFLICHTSEITEN = [
 
 
 def norm(text: str) -> str:
-    """Vereinheitlicht fuer den Vergleich.
+    """Vereinheitlicht für den Vergleich.
 
-    WICHTIG (01.11.2026): Die Script- und Style-Bloecke werden
+    WICHTIG (01.11.2026): Die Script- und Style-Blöcke werden
     NICHT mehr weggeworfen. Vorher geschah das - und damit blieb jede
-    Verhaltensaenderung im JavaScript unsichtbar: die Aenderung an
+    Verhaltensänderung im JavaScript unsichtbar: die Änderung an
     index.html (der Turnstile-Token wird nicht mehr angezeigt) wurde
     als "nur Formatierung" eingestuft, obwohl sich die Seite sichtbar
-    anders verhaelt.
+    anders verhält.
 
     Weggeworfen werden nur die TAGS; der Inhalt bleibt, der
     Leerraum wird vereinheitlicht. Damit bleibt der Vergleich
-    unempfindlich gegenueber Zeilenumbruechen - erkennt aber
-    Aenderungen im Text, im CSS und im JavaScript.
+    unempfindlich gegenüber Zeilenumbrüchen - erkennt aber
+    Änderungen im Text, im CSS und im JavaScript.
     """
     # Die VERWEISE der Tags mitnehmen. Ein href ist eine echte
-    # Aenderung, auch wenn der Linktext gleich bleibt - so ist der
+    # Änderung, auch wenn der Linktext gleich bleibt - so ist der
     # Wechsel von auth.thestia.de auf thestia.de sichtbar geworden.
     verweise = re.findall(
         r'(?:href|src)\s*=\s*["\']([^"\']*)["\']', text, re.I)
@@ -156,7 +156,7 @@ def hole(url: str):
 
 
 def veroeffentlichte_dateien():
-    """Alle Dateien im Publish-Ordner, die tatsaechlich ausgeliefert werden."""
+    """Alle Dateien im Publish-Ordner, die tatsächlich ausgeliefert werden."""
     ergebnis = []
     for wurzel, _dirs, dateien in os.walk(ASSETS):
         for name in sorted(dateien):
@@ -169,7 +169,7 @@ def veroeffentlichte_dateien():
 
 
 # Verweise in den Seiten. Ein Link auf ../SECURITY.md sieht im
-# Repository richtig aus - auf der Website fuehrt er ins Leere,
+# Repository richtig aus - auf der Website fährt er ins Leere,
 # weil die Datei nicht im Publish-Ordner liegt.
 LINK_HTML = re.compile(r'(?:href|src)\s*=\s*["\']([^"\']+)["\']', re.I)
 LINK_MD = re.compile(r'\]\(([^)]+)\)')
@@ -202,7 +202,7 @@ def tote_verweise(basis: str) -> list:
 def main() -> int:
     url = os.environ.get('THESTIA_PRIVACY_URL', DEFAULT_URL)
     basis = os.environ.get('THESTIA_SITE_URL', BASIS_DEFAULT)
-    # Der oeffentliche Host (fuer die indexierbare robots.txt).
+    # Der öffentliche Host (für die indexierbare robots.txt).
     offen = os.environ.get('THESTIA_PUBLIC_URL', OEFFENTLICH_DEFAULT)
 
     if not os.path.exists(LOCAL):
@@ -234,9 +234,9 @@ def main() -> int:
         with open(pfad, 'rb') as f:
             lokal = f.read()
         # Je Datei der Host, auf dem sie ausgeliefert wird: der
-        # oeffentliche Host traegt die indexierbare robots.txt, der
+        # öffentliche Host trägt die indexierbare robots.txt, der
         # Auth-Host die sperrende (robots-auth.txt). Beides gegen
-        # denselben Host zu pruefen ergaebe IMMER eine Abweichung
+        # denselben Host zu prüfen ergäbe IMMER eine Abweichung
         # (BEFUND 06.11.2026).
         if HOST_PRO_DATEI.get(rel) == 'oeffentlich':
             ziel_basis = offen
@@ -262,7 +262,7 @@ def main() -> int:
             print(f'{rel:<34} {len(lokal):>9} {len(live):>9}  identisch')
             continue
 
-        # Textseiten: nur Formatierung (Zeilenumbrueche) oder Inhalt?
+        # Textseiten: nur Formatierung (Zeilenumbrüche) oder Inhalt?
         if rel.endswith(('.html', '.txt', '.md', '.json')):
             n_lokal = norm(lokal.decode('utf-8', 'replace'))
             n_live = norm(live.decode('utf-8', 'replace'))
@@ -276,7 +276,7 @@ def main() -> int:
         print(f'{rel:<34} {len(lokal):>9} {len(live):>9}  ABWEICHUNG')
 
     # ------------------------------------------------------------------
-    # Die Datenschutzerklaerung im Detail: welche Woerter fehlen live?
+    # Die Datenschutzerklärung im Detail: welche Wörter fehlen live?
     # ------------------------------------------------------------------
     print()
     print('=' * 74)
@@ -348,7 +348,7 @@ def main() -> int:
         print(f'   OK    {was}')
 
     # ------------------------------------------------------------------
-    # Tote Verweise: sie sehen im Repository richtig aus und fuehren
+    # Tote Verweise: sie sehen im Repository richtig aus und führen
     # auf der Website ins Leere.
     # ------------------------------------------------------------------
     print()

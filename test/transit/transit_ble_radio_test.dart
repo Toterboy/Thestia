@@ -1,6 +1,6 @@
 // Das Funk-Radio hinter Transit Spark.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/services/transit/transit_ble_service.dart 76 offene Zeilen. Die
 // Berechtigungswege sind schon getestet
 // (test/transit/transit_ble_berechtigungen_test.dart) - offen war das
@@ -8,19 +8,19 @@
 // pausieren und wieder aufnehmen.
 //
 // DER WEG: Der Dienst hat eine Test-Naht (`TransitPlattform`), und im
-// Test gibt es den Ersatz fuer das Bluetooth
-// (test/support/ble_mocks.dart) - der zaehlt, wie oft das Advertising
+// Test gibt es den Ersatz für das Bluetooth
+// (test/support/ble_mocks.dart) - der zählt, wie oft das Advertising
 // wirklich gestartet wurde.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * das Advertising startet wirklich (nicht nur "die Anzeige sagt
 //     aktiv"),
-//   * ein zu langes Token startet das Radio nicht (es wuerde nativ mit
+//   * ein zu langes Token startet das Radio nicht (es würde nativ mit
 //     ADVERTISE_FAILED_DATA_TOO_LARGE scheitern - eine stille
 //     Funkstille),
-//   * lehnt das Geraet das Advertising ab, wird das gemeldet (und das
+//   * lehnt das Gerät das Advertising ab, wird das gemeldet (und das
 //     Radio sauber beendet),
-//   * das Token wird auch dann gemerkt, wenn gar kein Funk laeuft (die
+//   * das Token wird auch dann gemerkt, wenn gar kein Funk läuft (die
 //     Rotation darf nicht verloren gehen),
 //   * mit laufendem Funk wird das neue Token gesendet,
 //   * suspendieren beendet den Funk, resume startet ihn wieder,
@@ -33,7 +33,7 @@ import 'package:thestia/services/transit/transit_ble_service.dart';
 
 import '../support/ble_mocks.dart';
 
-/// Der Ersatz fuer die Plattform (Android 13 - die Berechtigungswege
+/// Der Ersatz für die Plattform (Android 13 - die Berechtigungswege
 /// stehen in `transit_ble_berechtigungen_test.dart`).
 class _FakePlattform extends TransitPlattform {
   @override
@@ -53,7 +53,7 @@ void main() {
   /// Der Dienst (der Singleton - der Test spricht ihn direkt an).
   final dienst = TransitBleService.instance;
 
-  /// Ein gueltiges Token (20 Hexzeichen).
+  /// Ein gültiges Token (20 Hexzeichen).
   final token = TransitEncounterService.generateToken();
 
   setUp(() {
@@ -114,7 +114,7 @@ void main() {
 
     test('lehnt das Geraet das Advertising ab, wird das gemeldet', () async {
       await dienst.stop();
-      // Das Geraet verweigert das Advertising (z. B. zu viele
+      // Das Gerät verweigert das Advertising (z. B. zu viele
       // Sende-Slots belegt).
       mockBluetooth(advertisingMoeglich: false);
 
@@ -216,8 +216,8 @@ void main() {
       await dienst.suspend();
 
       // DER NEUE TOKEN: Nach dem Hintergrund muss ein FRISCHES Token
-      // gesendet werden (Wer das Geraet eine Stunde aus hatte, sendet
-      // sonst wieder dasselbe - genau die Kontinuitaet, die ein
+      // gesendet werden (Wer das Gerät eine Stunde aus hatte, sendet
+      // sonst wieder dasselbe - genau die Kontinuität, die ein
       // Beobachter sucht).
       final neuesToken = 'x' * TransitEncounterService.tokenLaenge;
       final ok = await dienst.resume(token: neuesToken);

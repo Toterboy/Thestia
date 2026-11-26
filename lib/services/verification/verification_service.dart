@@ -582,16 +582,16 @@ class VerificationService {
       }
       final bytes = await file.readAsBytes();
 
-      // v0.10.0: Das Video wird VOR dem Upload verschluesselt.
+      // v0.10.0: Das Video wird VOR dem Upload verschlüsselt.
       //
-      // Ohne Verschluesselung liegt das Rohvideo (Gesicht und Stimme)
-      // im Bucket. "Privater Bucket" heisst nicht "verschluesselt" -
+      // Ohne Verschlüsselung liegt das Rohvideo (Gesicht und Stimme)
+      // im Bucket. "Privater Bucket" heißt nicht "verschlüsselt" -
       // wer den Bucket lesen kann, hat die biometrischen Daten. Der
-      // Chiffrat kommt hochgeladen, der Schluessel getrennt in die
-      // Schluesseltabelle, auf die der Client keinen Zugriff hat.
-      // Im Hintergrund-Isolate: sonst friert die App fuer mehrere
+      // Chiffrat kommt hochgeladen, der Schlüssel getrennt in die
+      // Schlüsseltabelle, auf die der Client keinen Zugriff hat.
+      // Im Hintergrund-Isolate: sonst friert die App für mehrere
       // Sekunden ein (NUTZERWUNSCH 01.11.2026: "Die App laggt extrem,
-      // wenn ich die Videoerifizierung mache").
+      // wenn ich die Videörifizierung mache").
       final encrypted = await VerificationCrypto.encryptAsync(bytes);
 
       final storage = SupabaseStorageService(SupabaseService.client);
@@ -602,8 +602,8 @@ class VerificationService {
       // 2) Serverseitige Einreichung vermerken (KI-Schätzung optional).
       final submitBody = <String, dynamic>{
         'action': 'submit',
-        // Der Schluessel reist getrennt vom Chiffrat: der Chiffrat
-        // liegt im Bucket, der Schluessel in der Tabelle, die nur die
+        // Der Schlüssel reist getrennt vom Chiffrat: der Chiffrat
+        // liegt im Bucket, der Schlüssel in der Tabelle, die nur die
         // Edge Function liest.
         'videoKey': encrypted.keyB64,
         'videoIv': encrypted.ivB64,
@@ -619,10 +619,10 @@ class VerificationService {
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
         // 'pending_minor' ist eine ANGENOMMENE Einreichung: Der Server
-        // legt sie in die manuelle Pruefung (Altersgrenze 21). Vorher
-        // pruefte der Client nur auf 'pending' - und meldete fuer
+        // legt sie in die manuelle Prüfung (Altersgrenze 21). Vorher
+        // prüfte der Client nur auf 'pending' - und meldete für
         // JEDE Person unter 21 "Server lehnte die Einreichung ab",
-        // obwohl Video und Schluessel korrekt gespeichert waren.
+        // obwohl Video und Schlüssel korrekt gespeichert waren.
         final status = data['status'];
         final accepted = status == 'pending' || status == 'pending_minor';
         if (accepted) {
@@ -642,13 +642,13 @@ class VerificationService {
       // "erfolgreich" gemeldet. Ein vom Storage-Server ABGELEHNTER
       // Upload (falscher Content-Type, fehlende Berechtigung) ist aber
       // kein Netzausfall: das Video liegt dann nirgends, in
-      // verification_video_keys steht kein Schluessel, und der Fall
+      // verification_video_keys steht kein Schlüssel, und der Fall
       // erscheint NIE im Adminbereich - bei der App aber "Video
       // eingereicht!". Das war die Ursache von "Die Videoverifizierung
       // kommt im Adminbereich irgendwie nicht an".
       //
       // Nur ein echter Netzausfall darf als "lokal pending"
-      // durchgehen - dann ist der Retry beim naechsten Start sinnvoll.
+      // durchgehen - dann ist der Retry beim nächsten Start sinnvoll.
       final netzausfall = _istNetzausfall(e);
       if (kDebugMode) {
         debugPrint(
@@ -726,18 +726,18 @@ class VerificationService {
       if (!await file.exists()) return false;
       final storage = SupabaseStorageService(SupabaseService.client);
 
-      // Das Video wird auch hier VERSCHLUESSELT hochgeladen.
+      // Das Video wird auch hier VERSCHLÜSSELT hochgeladen.
       //
       // BUG (Security-Audit 31.10.2026): nur der Submit-Pfad
-      // verschluesselte (Zeile 563), der Auto-Pfad lagerte das
+      // verschlüsselte (Zeile 563), der Auto-Pfad lagerte das
       // ROHVIDEO ab - unter dem Dateinamen 'video.mp4.enc', der
-      // Verschluesselung suggeriert, aber ohne Chiffrat. Zwei Folgen:
-      // die Zusage der Datenschutzerklaerung ("der Bucket enthaelt
-      // ausschliesslich Chiffrat") stimmte nicht, und die Admin-
-      // Sichtung brach ab, weil der Schluessel fehlte.
+      // Verschlüsselung suggeriert, aber ohne Chiffrat. Zwei Folgen:
+      // die Zusage der Datenschutzerklärung ("der Bucket enthält
+      // ausschließlich Chiffrat") stimmte nicht, und die Admin-
+      // Sichtung brach ab, weil der Schlüssel fehlte.
       //
-      // Verschluesselt wird jetzt in beiden Pfaden gleich - der
-      // Schluessel reist getrennt vom Chiffrat (Tabelle
+      // Verschlüsselt wird jetzt in beiden Pfaden gleich - der
+      // Schlüssel reist getrennt vom Chiffrat (Tabelle
       // verification_video_keys, auf die der Client keinen Zugriff
       // hat).
       final encrypted = await VerificationCrypto.encryptAsync(
@@ -748,13 +748,13 @@ class VerificationService {
           .uploadVerificationVideo(encrypted.cipher)
           .timeout(const Duration(seconds: 60));
 
-      // 2) Serverseitige Pruefung (Regel "auto").
+      // 2) Serverseitige Prüfung (Regel "auto").
       //
-      // Der Schluessel wird mitgeschickt (wie im Submit-Pfad), damit
+      // Der Schlüssel wird mitgeschickt (wie im Submit-Pfad), damit
       // die Edge Function ihn ablegen kann. Ohne ihn kann die
-      // Admin-Sichtung das Video nicht entschluesseln - die
-      // Stichprobe der automatisch freigegebenen Faelle waere
-      // unmoeglich.
+      // Admin-Sichtung das Video nicht entschlüsseln - die
+      // Stichprobe der automatisch freigegebenen Fülle wäre
+      // unmöglich.
       final response = await SupabaseService.client.functions
           .invoke(
             'verify-account',
@@ -793,7 +793,7 @@ class VerificationService {
   void dispose() {
     // Gleiches Problem wie in EncryptionService.dispose(): _box ist ein
     // late-Feld und existiert erst nach initialize(). Wurde der Dienst
-    // abgebaut, bevor initialize() durchlief, waere _box.close() ein
+    // abgebaut, bevor initialize() durchlief, wäre _box.close() ein
     // LateInitializationError - und zwar beim Abbau. Damit der
     // Aufrufer die eigentliche Ausnahme sieht und nicht einen
     // Folgefehler aus dem Shutdown.

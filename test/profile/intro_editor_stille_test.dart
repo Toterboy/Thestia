@@ -1,17 +1,17 @@
-// Die Aufnahme im Vorstellungs-Editor: still, anhoeren, verwenden.
+// Die Aufnahme im Vorstellungs-Editor: still, anhören, verwenden.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/profile/intro_editor.dart 86 offene Zeilen. Der Weg nach
-// der Aufnahme - aufnehmen, anhoeren, uebernehmen oder verwerfen - war
+// der Aufnahme - aufnehmen, anhören, übernehmen oder verwerfen - war
 // ungetestet. Das sind genau die Wege, an denen eine Aufnahme verloren
 // geht (oder eine schlechte gespeichert wird).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * eine stille Aufnahme wird verworfen und nachgefragt (der Nutzer
 //     soll neu aufnehmen, nicht eine stille Datei speichern),
-//   * die Aufnahme wird erst nach dem Anhoeren verwendet ("Verwerfen"
-//     loescht die Datei und speichert nichts),
-//   * nach dem Bestaetigen wird die Datei hochgeladen und gemeldet.
+//   * die Aufnahme wird erst nach dem Anhören verwendet ("Verwerfen"
+//     löscht die Datei und speichert nichts),
+//   * nach dem Bestätigen wird die Datei hochgeladen und gemeldet.
 import 'dart:async';
 import 'dart:io';
 
@@ -31,11 +31,11 @@ import '../support/plugin_mocks.dart';
 ///
 /// DER GRUND: Der echte Dienst braucht eine Anmeldung und den
 /// Supabase-Client. Im Test reicht der Ersatz: er meldet das
-/// Hochladen zurueck.
+/// Hochladen zurück.
 class _FakeStorage extends SupabaseStorageService {
   _FakeStorage() : super(_dummyClient);
 
-  /// Der Client wird nie benutzt (alle Methoden sind ueberschrieben).
+  /// Der Client wird nie benutzt (alle Methoden sind überschrieben).
   static final _dummyClient = supabase.Supabase.instance.client;
 
   /// Wie oft wurde hochgeladen?
@@ -49,7 +49,7 @@ class _FakeStorage extends SupabaseStorageService {
 
   @override
   Future<void> deleteIntroAudio() async {
-    // Der Test loescht keine Aufnahme vom Server.
+    // Der Test löscht keine Aufnahme vom Server.
   }
 }
 
@@ -71,7 +71,7 @@ void main() {
       ),
     );
     // DIE AUFNAHMEDATEIEN: Echtes Datei-Work - es muss VOR dem Test
-    // passieren (im Test-Bereich haengt die Datei-Arbeit).
+    // passieren (im Test-Bereich hängt die Datei-Arbeit).
     final ordner = await Directory.systemTemp.createTemp('thesia_intro');
     aufnahmeDateien = <String>[];
     for (var i = 0; i < 3; i++) {
@@ -85,12 +85,12 @@ void main() {
     storage = _FakeStorage();
     // DER STANDARD: Erlaubt, mit Pegel (also "Sprache").
     mockAufnahme();
-    // DER AUDIO-PLAYER: Das Anhoeren-Blatt nutzt ihn - ohne den
-    // Ersatz schlaegt der Aufbau des Blattes fehl.
+    // DER AUDIO-PLAYER: Das Anhören-Blatt nutzt ihn - ohne den
+    // Ersatz schlägt der Aufbau des Blattes fehl.
     mockAudioPlayer();
   });
 
-  /// Baut den Editor und meldet jede Aenderung.
+  /// Baut den Editor und meldet jede Änderung.
   Future<void> baueEditor(
     WidgetTester tester, {
     void Function(String text, String? pfad)? onChanged,
@@ -128,10 +128,10 @@ void main() {
 
   /// Nimmt auf und beendet die Aufnahme wieder.
   ///
-  /// DER GRUND FUER DIE KLEINEN SCHRITTE: Das Plugin fragt den Pegel
-  /// alle 100 ms ab (10 Hz). Ein grosser Zeitsprung laesst den Timer nur
-  /// einmal feuern - die Messungen kaemen dann nicht an, und die App
-  /// haelt die Aufnahme fuer "still".
+  /// DER GRUND FÜR DIE KLEINEN SCHRITTE: Das Plugin fragt den Pegel
+  /// alle 100 ms ab (10 Hz). Ein großer Zeitsprung lässt den Timer nur
+  /// einmal feuern - die Messungen kämen dann nicht an, und die App
+  /// hält die Aufnahme für "still".
   Future<void> aufnehmenUndStoppen(
     WidgetTester tester, {
     int sekunden = 0,
@@ -235,10 +235,10 @@ void main() {
       mockAufnahme(dateiBeimStoppen: aufnahmeDateien[1]);
 
       // DER PLAYER: Der Test-Ersatz kann den Audio-Player nicht sauber
-      // schliessen - beim Schliessen meldet der Player noch einen offenen
+      // schließen - beim Schließen meldet der Player noch einen offenen
       // Datenstrom ("cannot close the subject while items are being added").
       // Das ist ein Fehler des Ersatzes, nicht der App: die Aussagen
-      // unten pruefen den Weg der App, nicht den des Players.
+      // unten prüfen den Weg der App, nicht den des Players.
       Object? unerwartet;
       await runZonedGuarded(
         () async {
@@ -254,7 +254,7 @@ void main() {
             findsOneWidget,
           );
 
-          // BESTAETIGEN:
+          // BESTÄTIGEN:
           await knopfTippen(
             tester,
             L10n.tWithoutContext('intro.review.confirm'),

@@ -1,21 +1,21 @@
 // Das lokale Crash-Journal.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/services/server/crash_journal.dart nur 38 % Abdeckung. Das
 // Journal ist der einzige Ort, an dem ein Absturz landet - und es wird
 // dem Nutzer als Bug-Report angeboten.
 //
-// DER WEG: Die Redigierregeln sind oeffentlich (`redact`), damit sie
+// DER WEG: Die Redigierregeln sind öffentlich (`redact`), damit sie
 // testbar sind - "eine Redigierregel, die nicht getestet wird, ist eine
 // Regel, die irgendwann nicht mehr greift" (so der Kommentar im Code).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * eine E-Mail-Adresse wird entfernt (der haeufigste PII-Weg),
+// WAS HIER GEPRÜFT WIRD:
+//   * eine E-Mail-Adresse wird entfernt (der häufigste PII-Weg),
 //   * ein Token (Bearer und JWT) wird entfernt,
-//   * ein langer Schluessel wird entfernt,
+//   * ein langer Schlüssel wird entfernt,
 //   * die eigene User-ID (UUID) BLEIBT stehen - der Nutzer soll sie
-//     beim Bug-Report nennen koennen,
-//   * der Absturz wird gespeichert, gelesen und wieder geloescht.
+//     beim Bug-Report nennen können,
+//   * der Absturz wird gespeichert, gelesen und wieder gelöscht.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -87,7 +87,7 @@ void main() {
     });
 
     test('die eigene User-ID bleibt stehen', () {
-      // DIE UUID: Der Nutzer soll sie beim Bug-Report nennen koennen -
+      // DIE UUID: Der Nutzer soll sie beim Bug-Report nennen können -
       // ohne sie kann der Support den Fall nicht zuordnen.
       const text = 'User 11111111-2222-3333-4444-555555555555 hat geknallt';
 

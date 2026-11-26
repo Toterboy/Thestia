@@ -20,20 +20,20 @@ pats = [
 ]
 
 # DIE TEXTDATEIEN: Sie enthalten die Texte selbst (in Kartenform) -
-# dort steht kein unuebersetzter UI-Text. Sie werden von den
-# L10n-Pruefungen (check_umlauts, check_parity) geprueft.
+# dort steht kein unübersetzter UI-Text. Sie werden von den
+# L10n-Prüfungen (check_umlauts, check_parity) geprüft.
 skip_files = {"app_strings.dart"}
 skip_dirs = {os.path.join("lib", "l10n", "strings")}
 
-# Ausnahmen: Texte, die bewusst NICHT uebersetzt werden.
+# Ausnahmen: Texte, die bewusst NICHT übersetzt werden.
 #
-# Drei Faenge, alle mit Begründung - sonst wird die Ausnahme stillschweigend
+# Drei Fänge, alle mit Begründung - sonst wird die Ausnahme stillschweigend
 # zur Regel:
 #   1. Eigennamen von Firmen und Diensten ("Supabase Inc.", "Brevo"):
 #      die bleiben in jeder Sprache gleich.
 #   2. Fehlercodes aus dem Backend ("moderation_disabled"): das sind
-#      Schluessel, keine Woert fuer die Anzeige.
-#   3. Aufzaehlungszeichen ("•"): das ist ein Glyph, kein Text.
+#      Schlüssel, keine Wört für die Anzeige.
+#   3. Aufzählungszeichen ("•"): das ist ein Glyph, kein Text.
 ALLOWED = {
     "Supabase Inc.",
     "Google LLC (Firebase)",
@@ -53,7 +53,7 @@ for root, dirs, files in os.walk("lib"):
             continue
         p = os.path.join(root, f)
         # DIE TEXTDATEIEN (lib/l10n/strings/): Sie enthalten die Texte
-        # selbst - dort steht kein unuebersetzter UI-Text.
+        # selbst - dort steht kein unübersetzter UI-Text.
         if any(
             os.path.normpath(d) in os.path.normpath(p) for d in skip_dirs
         ):
@@ -76,7 +76,7 @@ for root, dirs, files in os.walk("lib"):
                     # Wortlaut im Code.
                     if "$" in t:
                         break
-                    # Reine Glyphen (Aufzaehlungszeichen) sind keine Texte.
+                    # Reine Glyphen (Aufzählungszeichen) sind keine Texte.
                     if all(ord(ch) > 0x2000 or ch in " \t" for ch in t):
                         break
                     if t.strip() and t not in ("…", "...", "000000") \
@@ -88,6 +88,6 @@ print("\n".join(findings) if findings else "KEINE festen Texte ohne L10n")
 print("TOTAL:", len(findings))
 
 # BUG (gefunden am 22.10.2026): dieses Skript hatte keinen Exit-Code.
-# Ein Treffer hat die CI nicht rot werden lassen - die Pruefung hat
+# Ein Treffer hat die CI nicht rot werden lassen - die Prüfung hat
 # nichts gemeldet und nichts verhindert.
 sys.exit(1 if findings else 0)

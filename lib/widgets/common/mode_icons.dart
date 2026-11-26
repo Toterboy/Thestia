@@ -48,13 +48,13 @@ const double _viewport = 24.0;
 /// ihre Tinte. Nachgemessen ist `Icons.event` bei 40 dp nur 30 dp breit,
 /// und die Nachbarn wirken in der Liste trotzdem kleiner als die eigenen
 /// Symbole. Der Unterschied ist die **Fläche**: Kalender und QR-Code
-/// sind Umrisse mit viel Weiss darin, ein gefuellter Zugkoerper ist eine
+/// sind Umrisse mit viel Weiß darin, ein gefüllter Zugkörper ist eine
 /// kompakte schwarze Masse und wiegt optisch schwerer als dieselbe
 /// Ausdehnung in Strichzeichnung.
 ///
 /// Darum zwei Eingriffe statt einer Zahl: das Feld auf 17 verkleinert
 /// (Innenabstand von 3.3 auf jeder Seite) UND alle drei Symbole als
-/// Umriss gezeichnet, nicht gefuellt.
+/// Umriss gezeichnet, nicht gefüllt.
 const double inhalt = 17.0;
 
 /// Versatz des Inhaltsfelds im Viewport.
@@ -152,7 +152,7 @@ Paint flaeche(Color color) => Paint()..color = color;
 ///
 /// Gezeichnet wird der Schleier von hinten nach vorn: erst der
 /// kleinste, dann der mittlere, zuletzt der Hauptstern. Wer die
-/// Reihenfolge umkehrt, überlagert die grossen Flächen die kleinen und
+/// Reihenfolge umkehrt, überlagert die großen Flächen die kleinen und
 /// die Spur zerfällt zu einem Klecks.
 ///
 /// [richtung] ist die Flugrichtung; der Schleier liegt auf der
@@ -166,15 +166,15 @@ void funkeMitSchleier(
   double mager = 0.34,
 }) {
   final d = Offset(math.cos(richtung), math.sin(richtung));
-  // Spur als feste Groessen, NICHT aus r abgeleitet.
+  // Spur als feste Größen, NICHT aus r abgeleitet.
   //
-  // Die erste Fassung rechnete die Spurgroesse als r * (1.45 - anteil)
-  // * 0.42 und lief dabei ueber zwei Stuetzstellen. Bei der zweiten
+  // Die erste Fassung rechnete die Spurgrösse als r * (1.45 - anteil)
+  // * 0.42 und lief dabei über zwei Stützstellen. Bei der zweiten
   // Stufe ergab das r * 0.03 * 0.42 - praktisch null. Ein Stern mit
   // Nichts am Schweif ist ein Stern, und genau so ist es angekommen:
   // "der Schleier hat nicht funktioniert".
   //
-  // Abstand und Groesse stehen deshalb jetzt nebeneinander: der
+  // Abstand und Größe stehen deshalb jetzt nebeneinander: der
   // hintere Stern muss sichtbar bleiben, sonst ist es wieder kein
   // Schleier, sondern ein Punkt.
   const spur = [(abstand: 1.50, groesse: 0.28), (abstand: 0.82, groesse: 0.46)];
@@ -201,11 +201,11 @@ void funkeMitSchleier(
 ///
 /// FEINJUSTIERUNG (Nutzerwunsch, 27.10.2026): der Bogen war zu dick
 /// und der Punkt zu klein und zu nah. Der Bogen bekommt deshalb eine
-/// eigene, duennere Strichstaerke ([fragezeichenBogenStaerke]) und
-/// laeuft flacher: die Hoehe der Oberschleife ist von 0.88 auf 0.82
+/// eigene, dünnere Strichstärke ([fragezeichenBogenStaerke]) und
+/// läuft flacher: die Höhe der Oberschleife ist von 0.88 auf 0.82
 /// gesenkt, damit der Bogen nicht wie ein dicker Haken wirkt.
 /// Der Punkt sitzt jetzt weiter unten (0.94 statt 0.82) und hat
-/// dieselbe optische Staerke wie der Bogen - er ist der
+/// dieselbe optische Stärke wie der Bogen - er ist der
 /// Gegenstrich des Fragezeichens, kein Punkt.
 Path fragezeichenBogen(Offset c, double s) {
   return Path()
@@ -230,20 +230,20 @@ Path fragezeichenBogen(Offset c, double s) {
     );
 }
 
-/// Strichstaerke des Fragezeichen-Bogens.
+/// Strichstärke des Fragezeichen-Bogens.
 ///
-/// Getrennt von der uebrigen Zeichenstaerke (1.35), weil ein Fragezeichen
-/// als geschlossene Kurve mehr Tinte pro Laenge traegt als ein offener
-/// Strich. Mit 1.35 wirkte es fett; 0.92 liegt zwischen der uebrigen
-/// Konturstaerke und einem Haarlinienstrich.
+/// Getrennt von der übrigen Zeichenstärke (1.35), weil ein Fragezeichen
+/// als geschlossene Kurve mehr Tinte pro Länge trägt als ein offener
+/// Strich. Mit 1.35 wirkte es fett; 0.92 liegt zwischen der übrigen
+/// Konturstärke und einem Haarlinienstrich.
 const double fragezeichenBogenStaerke = 0.92;
 
 /// Transit Spark — Zug mit echtem Funken.
 ///
 /// Der Zug ist die Material-Glyphe `Icons.train` (Frontansicht eines
-/// Triebwagens). Die selbst gezeichneten Entwuerfe — gefuellt, dann im
+/// Triebwagens). Die selbst gezeichneten Entwürfe — gefüllt, dann im
 /// Umriss mit zwei Fenstern, dann mit drei und 3:1-Proportion, dann
-/// mit Dach und Fahrwerk — waren fuenfmal ueberarbeitet worden und
+/// mit Dach und Fahrwerk — waren fünfmal überarbeitet worden und
 /// lauteten jedes Mal "sieht komisch aus" bzw. "keine wirkliche Bahn".
 /// Die Material-Glyphe liest sich sofort als Zug, deshalb blieb sie.
 ///
@@ -256,7 +256,7 @@ const double fragezeichenBogenStaerke = 0.92;
 /// auch mittig sein, also der Zug mittig".
 ///
 /// Die Zahlen in diesem Zeichner sind GEMESSEN, nicht geraten: die
-/// echte Material-Schrift laesst sich in `flutter_test` mit dem
+/// echte Material-Schrift lässt sich in `flutter_test` mit dem
 /// FontLoader nachladen (siehe
 /// test/mode_symbol_realfont_preview_test.dart), danach stimmt die
 /// Geometrie der Glyphe und damit auch die Platzierung von Zug und
@@ -264,7 +264,7 @@ const double fragezeichenBogenStaerke = 0.92;
 class TransitSparkPainter extends _ModeSymbolPainter {
   TransitSparkPainter(super.color);
 
-  /// Groesse der Zug-Glyphe im 17er-Feld.
+  /// Größe der Zug-Glyphe im 17er-Feld.
   ///
   /// GEMESSEN (27.10.2026, mit der echten Material-Schrift nachgeladen
   /// und der Glyphe vermessen): `Icons.train` hat eine Tinte von
@@ -272,14 +272,14 @@ class TransitSparkPainter extends _ModeSymbolPainter {
   /// 0,79 em hoch, und sie liegt MITTIG auf der Em (Mitte der Tinte:
   /// x = 49,5 von 100).
   ///
-  /// Bei Groesse 13,0 ist die Tinte 8,6 Einheiten breit und 10,3 hoch.
+  /// Bei Größe 13,0 ist die Tinte 8,6 Einheiten breit und 10,3 hoch.
   static const double zugGroesse = 13.0;
 
   /// Mittelpunkt des Zuges im 17er-Feld.
   ///
-  /// Die Tinte der Glyphe sitzt nicht mittig auf der uebergebenen
+  /// Die Tinte der Glyphe sitzt nicht mittig auf der übergebenen
   /// Mitte: bei y = 8..86 (je 100er-Em) liegt der Tinkenmittelpunkt
-  /// 0,42 Einheiten OEBER dem Mittelpunkt des Kastens. Fuer einen
+  /// 0,42 Einheiten ÜBER dem Mittelpunkt des Kastens. Für einen
   /// wirklich mittigen Zug (NUTZERWUNSCH 29.10.2026: "Der Zug selbst
   /// soll mittig zentriert sein") liegt er deshalb bei 8,9.
   static const double zugMitteX = 8.5;
@@ -288,20 +288,20 @@ class TransitSparkPainter extends _ModeSymbolPainter {
   @override
   void draw(Canvas canvas) {
     // --- Zug (Frontansicht) -------------------------------------------------
-    // GEAENDERT (Nutzerwunsch, 29.10.2026): der Zug stand zu tief.
-    // Durch den Funken ueber ihm war die ganze Komposition nach oben
+    // GEÄNDERT (Nutzerwunsch, 29.10.2026): der Zug stand zu tief.
+    // Durch den Funken über ihm war die ganze Komposition nach oben
     // geschoben - der Zug selbst war damit NICHT mittig, obwohl er
     // rechnerisch auf der Feldmitte stand. Jetzt sitzt die Tinte des
     // Zuges genau in der Mitte des Feldes (siehe [zugMitteY]).
     //
     // GLYPHE per TextPainter, weil in einem CustomPainter kein
-    // Icon-Widget zur Verfuegung steht.
+    // Icon-Widget zur Verfügung steht.
     //
-    // Die Groesse ist so gewaehlt, dass die Strichstaerke der Glyphe
+    // Die Größe ist so gewählt, dass die Strichstärke der Glyphe
     // zur der der Nachbarn passt: Material zeichnet mit 2 Einheiten auf
-    // 24. Fuer 1.35 im 17er-Feld braucht es 1.35/2*24 = 16.2
-    // Einheiten. Genau so gross wird gezeichnet - und damit ist die
-    // Strichstaerke deckungsgleich mit den anderen Symbolen.
+    // 24. Für 1.35 im 17er-Feld braucht es 1.35/2*24 = 16.2
+    // Einheiten. Genau so groß wird gezeichnet - und damit ist die
+    // Strichstärke deckungsgleich mit den anderen Symbolen.
     final zug = Icons.train;
     _glyphe(
       canvas,
@@ -314,15 +314,15 @@ class TransitSparkPainter extends _ModeSymbolPainter {
 
     // --- Funke (oben rechts neben dem Zug) ---------------------------------
     //
-    // GEAENDERT (Nutzerwunsch, 30.10.2026): "Der Funke soll derselbe sein
+    // GEÄNDERT (Nutzerwunsch, 30.10.2026): "Der Funke soll derselbe sein
     // wie bei Find your Spark" - also der Stern MIT SCHLEIER, nicht der
-    // Sonderstern mit gekuerzter Unterspitze. Der Zug bleibt unveraendert
-    // mittig; der Funke sitzt jetzt oben rechts im freien Feld ueber dem
-    // Dach. Die Spur laeuft nach links oben aus und beruehrt den Zug
+    // Sonderstern mit gekürzter Unterspitze. Der Zug bleibt unverändert
+    // mittig; der Funke sitzt jetzt oben rechts im freien Feld über dem
+    // Dach. Die Spur läuft nach links oben aus und berührt den Zug
     // nicht.
     //
-    // Der Mittelpunkt ist so gewaehlt, dass die untere Spitze des
-    // Hauptsterns knapp ueber dem Zugdach (y = 3,83) endet:
+    // Der Mittelpunkt ist so gewählt, dass die untere Spitze des
+    // Hauptsterns knapp über dem Zugdach (y = 3,83) endet:
     // 2,35 + 1,45 = 3,80.
     funkeMitSchleier(canvas, const Offset(14.15, 2.35), 1.45, color);
   }
@@ -332,7 +332,7 @@ class TransitSparkPainter extends _ModeSymbolPainter {
   /// `fontPackage` ist nicht optional: die Material-Schrift liegt im
   /// Paket `flutter`, und ein [TextPainter] ohne dieses Paket findet
   /// sie nicht. Es wird dann kein Zug gezeichnet, sondern ein
-  /// Ersatzkaestchen - im Test sichtbar, in der App genauso.
+  /// Ersatzkästchen - im Test sichtbar, in der App genauso.
   void _glyphe(
     Canvas canvas,
     int codePoint,
@@ -346,10 +346,10 @@ class TransitSparkPainter extends _ModeSymbolPainter {
         text: String.fromCharCode(codePoint),
         style: TextStyle(
           fontFamily: family,
-          // Der Parameter heisst hier `package`, nicht `fontPackage` -
+          // Der Parameter heißt hier `package`, nicht `fontPackage` -
           // den gibt es nur auf IconData. Die Material-Schrift liegt im
           // Paket `flutter`; ohne sie findet der TextPainter die
-          // Glyphe nicht und malt ein Ersatzkaestchen.
+          // Glyphe nicht und malt ein Ersatzkästchen.
           package: paket,
           fontSize: 100,
           color: color,
@@ -419,15 +419,15 @@ class QuestionChatPainter extends _ModeSymbolPainter {
   void draw(Canvas canvas) {
     // --- Blase -----------------------------------------------------------
     // MITTIG: vorher stand die Blase links unten, weil der Funke rechts
-    // oben Platz brauchte. Der Funke gehoert jetzt IN die Blase, also
+    // oben Platz brauchte. Der Funke gehört jetzt IN die Blase, also
     // kann die Blase wieder mittig stehen - auf 8.5, wie die anderen
     // Motive.
     //
-    // Die Kontur ist duenner als bei den anderen Symbolen (1.15 gegen
-    // 1.35). Das ist keine Willkuer: eine geschlossene Kontur traegt
-    // mehr Tinte pro Laenge als eine offene, und der Umriss einer
-    // Sprechblase ist die laengste geschlossene Kontur in der Liste.
-    // Bei gleicher Staerke wirkt sie deshalb breiter als der Zug.
+    // Die Kontur ist dünner als bei den anderen Symbolen (1.15 gegen
+    // 1.35). Das ist keine Willkür: eine geschlossene Kontur trägt
+    // mehr Tinte pro Länge als eine offene, und der Umriss einer
+    // Sprechblase ist die längste geschlossene Kontur in der Liste.
+    // Bei gleicher Stärke wirkt sie deshalb breiter als der Zug.
     const st = 1.15;
     final aussen = Path()
       ..addRRect(
@@ -456,15 +456,15 @@ class QuestionChatPainter extends _ModeSymbolPainter {
     );
 
     // --- Fragezeichen ------------------------------------------------------
-    // KLEINER und duenner als vorher. Das Fragezeichen war so gross,
-    // dass es die Blase ausfuellte und zusammen mit dem Funken gar
-    // nichts mehr uebrig blieb. Jetzt sitzt es links oben in der
-    // Blase und laesst rechts Platz fuer den Funken.
+    // KLEINER und dünner als vorher. Das Fragezeichen war so groß,
+    // dass es die Blase ausfüllte und zusammen mit dem Funken gar
+    // nichts mehr übrig blieb. Jetzt sitzt es links oben in der
+    // Blase und lässt rechts Platz für den Funken.
     //
-    // FEINJUSTIERUNG (Nutzerwunsch, 27.10.2026): duennerer Bogen, und
+    // FEINJUSTIERUNG (Nutzerwunsch, 27.10.2026): dünnerer Bogen, und
     // der Punkt ist weiter unten und GROSSER - er hat jetzt dieselbe
-    // optische Staerke wie der Bogen. Vorher war er ein kleines
-    // Nadeloehr direkt unter dem Bogen; das las sich als verschmutzter
+    // optische Stärke wie der Bogen. Vorher war er ein kleines
+    // Nadelöhr direkt unter dem Bogen; das las sich als verschmutzter
     // Haken und nicht als Fragezeichen.
     const frage = (c: Offset(6.0, 7.4), h: 4.4);
     final r = frage.h / 2.0;
@@ -473,7 +473,7 @@ class QuestionChatPainter extends _ModeSymbolPainter {
       strich(color, fragezeichenBogenStaerke),
     );
     // Punkt mit sichtbarem Abstand zum Bogen und in derselben
-    // optischen Staerke: der Radius entspricht der halben Bogenstaerke,
+    // optischen Stärke: der Radius entspricht der halben Bogenstärke,
     // der Punkt wirkt damit wie der Gegenstrich des Fragezeichens.
     canvas.drawCircle(
       Offset(frage.c.dx + r * 0.18, frage.c.dy + r * 0.94),
@@ -484,7 +484,7 @@ class QuestionChatPainter extends _ModeSymbolPainter {
     // --- Funke IN der Blase ------------------------------------------------
     // Rechts unten in der Blase, nicht neben ihr. Der Funke war
     // vorher ein zweites Motiv neben der Blase und hat die Kachel in
-    // zwei Teile geteilt; in der Blase ist es ein Aufdruck und traegt
+    // zwei Teile geteilt; in der Blase ist es ein Aufdruck und trägt
     // die Aussage "Funke in einem Chat".
     funkeMitSchleier(canvas, const Offset(10.9, 10.7), 1.9, color);
   }

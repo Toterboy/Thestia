@@ -22,8 +22,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -160,7 +160,7 @@ def main():
                 continue
             if cons.startswith('^'):
                 want = cons[1:]
-                # nur echte Bruchstellen zaehlen, keine prerelease-Sonderfaelle
+                # nur echte Bruchstellen zählen, keine prerelease-Sonderfälle
                 if want.split('.')[0] != locked.split('.')[0]:
                     drift.append((pkg, cons, locked))
             elif locked != cons:

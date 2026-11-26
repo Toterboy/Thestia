@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/widgets/common/admin_metric_row.dart';
 import 'package:thestia/widgets/chat/pill_tab_bar.dart';
 
-/// Tests fuer die beiden neuen Bausteine des Admin-Screens
+/// Tests für die beiden neuen Bausteine des Admin-Screens
 /// (ROADMAP Zeile 807): Pillen-Tab-Indikator und Kennzahlen-Zeile.
 ///
-/// Beide zeigen Arbeitsstand an. Ein Fehler dort faellt nicht als Absturz
+/// Beide zeigen Arbeitsstand an. Ein Fehler dort fällt nicht als Absturz
 /// auf, sondern als falsche Zahl an der falschen Stelle - deshalb sind das
 /// Tests gegen den sichtbaren Zustand und nicht nur gegen den Aufbau.
 void main() {
@@ -107,7 +107,7 @@ void main() {
     testWidgets('die Auswahl wandert mit (kein Zurueckspringen)', (
       tester,
     ) async {
-      // Ohne AnimatedBuilder um den Controller waere die Pille beim
+      // Ohne AnimatedBuilder um den Controller wäre die Pille beim
       // Wischen stehen geblieben und erst nach dem Loslassen gewandert.
       final controller = TabController(length: 3, vsync: tester);
       addTearDown(controller.dispose);
@@ -133,8 +133,8 @@ void main() {
     testWidgets('eine Kennzahl wird angezeigt, eine Null nicht', (
       tester,
     ) async {
-      // Null heisst "nichts offen" und darf keinen Platz beanspruchen:
-      // sonst stuende eine leere Kachel neben jeder geschlossenen Queue.
+      // Null heißt "nichts offen" und darf keinen Platz beanspruchen:
+      // sonst stünde eine leere Kachel neben jeder geschlossenen Queue.
       final controller = TabController(length: 2, vsync: tester);
       addTearDown(controller.dispose);
       await pumpTabs(tester, controller, const [
@@ -163,7 +163,7 @@ void main() {
     });
 
     testWidgets('Semantik nennt Label und Kennzahl', (tester) async {
-      // Screenreader: "Meldungen" allein waere falsch, es sind 7.
+      // Screenreader: "Meldungen" allein wäre falsch, es sind 7.
       final controller = TabController(length: 1, vsync: tester);
       addTearDown(controller.dispose);
       await pumpTabs(tester, controller, const [
@@ -193,8 +193,8 @@ void main() {
     testWidgets('Gegenprobe: die Pille ist wirklich die Auswahl', (
       tester,
     ) async {
-      // Ohne Auswahl waere jede Pille gleich aussehend und der Test
-      // "der erste Tab ist ausgewaehlt" koennte nie fallen. Geprueft wird
+      // Ohne Auswahl wäre jede Pille gleich aussehend und der Test
+      // "der erste Tab ist ausgewählt" kännte nie fallen. Geprüft wird
       // die gezeichnete Hintergrundfarbe, nicht nur das Semantics-Flag.
       final controller = TabController(length: 2, vsync: tester);
       addTearDown(controller.dispose);
@@ -222,14 +222,14 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('pill_tab_B')));
       await tester.pumpAndSettle();
-      // Jetzt ist B die gefuellte Pille - die Farbe ist mitgewandert.
+      // Jetzt ist B die gefüllte Pille - die Farbe ist mitgewandert.
       expect(fillOf('B'), isNot(inactive));
       expect(fillOf('A'), isNot(active));
     });
 
     testWidgets('überlebt grosse Schrift ohne Overflow', (tester) async {
       // Barrierefreiheit: bei 1,5-facher Schrift sind die Labels länger
-      // als die Pille. Die Liste muss waechseln statt abzuschneiden.
+      // als die Pille. Die Liste muss wächseln statt abzuschneiden.
       tester.platformDispatcher.textScaleFactorTestValue = 1.5;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
@@ -293,8 +293,8 @@ void main() {
 
     testWidgets('eine reine Anzeige-Kachel ist nicht als Schaltflaeche '
         'ausgezeichnet', (tester) async {
-      // Sonst waere die Zeile fuer Screenreader eine Schaltflaeche, die
-      // nichts tut. Geprueft wird die ausgezeichnete Rolle am
+      // Sonst wäre die Zeile für Screenreader eine Schaltfläche, die
+      // nichts tut. Geprüft wird die ausgezeichnete Rolle am
       // Semantics-Knoten, den das Widget selbst setzt - nicht ein Tipp.
       final handle = tester.ensureSemantics();
       await pumpMetrics(tester, const [

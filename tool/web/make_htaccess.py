@@ -1,29 +1,29 @@
-"""Erzeugt die Apache-Konfiguration (.htaccess) fuer das Webhosting.
+"""Erzeugt die Apache-Konfiguration (.htaccess) für das Webhosting.
 
 WARUM ES DAS GIBT (08.11.2026): Der Betreiber hostet die Website auf
 Infomaniak (Schweiz) - im Studentenprogramm ist das Webhosting
 kostenlos, und es ist ein klassisches Apache-Hosting. Infomaniak
-laesst mod_rewrite und .htaccess zu ("The Apache mod_rewrite module
+lässt mod_rewrite und .htaccess zu ("The Apache mod_rewrite module
 is enabled by default on all Infomaniak infrastructures", Doku vom
 08.11.2026).
 
 Die Website hat aber zwei Konfigurationsdateien, die nur Netlify und
 Cloudflare Pages lesen: `_redirects` (die Adressen ohne ".html") und
 `_headers` (die Sicherheits-Header und die Cache-Regeln). Beide muss
-man fuer Apache in eine `.htaccess` uebersetzen - 40 Rewrite-Regeln
-und 41 Header-Bloecke. Von Hand waere das ein Fundus fuer Fehler und
-ausserdem muesste es bei jeder Aenderung nachgezogen werden.
+man für Apache in eine `.htaccess` übersetzen - 40 Rewrite-Regeln
+und 41 Header-Blöcke. Von Hand wäre das ein Fundus für Fehler und
+außerdem müste es bei jeder Änderung nachgezogen werden.
 
 DESHALB: Dieses Skript liest die beiden Dateien und schreibt die
-`.htaccess`. Die Uebersetzung sitzt an genau einer Stelle, und ein
-Gate prueft, dass die erzeugte Datei zur Quelle passt
+`.htaccess`. Die Übersetzung sitzt an genau einer Stelle, und ein
+Gate prüft, dass die erzeugte Datei zur Quelle passt
 (`tool/checks/check_publish_folder.py`).
 
-DIE UEBERSETZUNG IM EINZELNEN:
+DIE ÜBERSETZUNG IM EINZELNEN:
 
 * Regel mit Code 200  -> RewriteRule (Adresse ohne ".html" auf die
-  Datei). Das Verzeichnis wird nicht mitgeschickt: Apache loest
-  Rewrite-Regeln gegen den Pfad OHNE fuehrenden Schraegstrich.
+  Datei). Das Verzeichnis wird nicht mitgeschickt: Apache löst
+  Rewrite-Regeln gegen den Pfad OHNE führenden Schrägstrich.
 * Regel mit Code 301  -> RewriteRule mit [R=301,L].
 * Regel mit Host im Quellpfad (die robots.txt des Auth-Hosts) ->
   RewriteRule mit einer RewriteCond auf den Host. Genau das, was bei
@@ -36,7 +36,7 @@ DIE UEBERSETZUNG IM EINZELNEN:
 
 Das Ergebnis liegt in `webhosting/.htaccess` - bewusst AUSSERHALB des
 Publish-Ordners: Netlify und Cloudflare Pages sollen die Datei nicht
-sehen (sie wuerden sie als statische Datei ausliefern). Beim Upload
+sehen (sie würden sie als statische Datei ausliefern). Beim Upload
 auf den Hoster wird sie in das Wurzelverzeichnis kopiert.
 
 Aufruf:
@@ -55,8 +55,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -74,38 +74,38 @@ ROOT = _projektwurzel()
 PUBLISH = ROOT / "passkey-assets"
 ZIEL = ROOT / "webhosting" / ".htaccess"
 
-# Der Auth-Host: fuer ihn gilt die gesperrte robots.txt und er darf
+# Der Auth-Host: für ihn gilt die gesperrte robots.txt und er darf
 # nicht indexiert werden. Bei Netlify macht das eine domain-bezogene
 # Regel in _redirects, bei Cloudflare Pages der X-Robots-Tag-Header in
-# _headers - bei Apache beides ueber den Host.
+# _headers - bei Apache beides über den Host.
 AUTH_HOST = "auth.thestia.de"
 
 KOPF = """# ============================================================
 # THESTIA - Apache-Konfiguration
 #
 # ERZEUGT von tool/web/make_htaccess.py aus passkey-assets/_redirects
-# und passkey-assets/_headers. NICHT von Hand aendern - das naechste
-# Erzeugen ueberschreibt die Datei.
+# und passkey-assets/_headers. NICHT von Hand ändern - das nächste
+# Erzeugen überschreibt die Datei.
 #
-# Vor der Aenderung an _redirects oder _headers:
+# Vor der Änderung an _redirects oder _headers:
 #     python tool/web/make_htaccess.py
 # und dann:
 #     python tool/checks/check_publish_folder.py
 #
-# Diese Datei gehoert in das WURZELVERZEICHNIS der Website (dort, wo
-# index.html liegt). Sie wird nur fuer das klassische Webhosting
+# Diese Datei gehört in das WURZELVERZEICHNIS der Website (dort, wo
+# index.html liegt). Sie wird nur für das klassische Webhosting
 # gebraucht - Netlify und Cloudflare Pages lesen stattdessen
 # _redirects und _headers.
 # ============================================================
 
 # Keine Verzeichnisliste, und KEIN "MultiViews": Apache soll die
-# Adressen nur ueber die Regeln unten erreichen, nicht zufaellig
-# ueber die Dateinamen.
+# Adressen nur über die Regeln unten erreichen, nicht zufällig
+# über die Dateinamen.
 Options -Indexes -MultiViews
 DirectoryIndex index.html
 
 # KEIN AUTOMATISCHER SCHRAGSTRICH (BEFUND 23.11.2026): Unter /en/
-# lag ein Ordner "eltern/" (fuer die Eltern-Einstellungen-Seite) und
+# lag ein Ordner "eltern/" (für die Eltern-Einstellungen-Seite) und
 # daneben die Datei "en/eltern.html". Ohne diese Zeile machte Apache aus
 # /en/eltern (der Adresse aus der Sitemap!) einen 301 auf /en/eltern/
 # und dort gibt es keinen Index -> 403. Mit "DirectorySlash Off" greift
@@ -128,9 +128,9 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
 def regex_escape(text: str) -> str:
     """Maskiert die Regex-Sonderzeichen (ausser der Pfad-Sonderform).
 
-    WICHTIG: Die Punkte MUESSEN escaped werden. Ohne Escape waere
-    "^auth.thestia.de$" auch ein Treffer fuer "authXthestiaYde" - und
-    "^.well-known/assetlinks.json$" wuerde auf jede Datei passen.
+    WICHTIG: Die Punkte MÜSSEN escaped werden. Ohne Escape wäre
+    "^auth.thestia.de$" auch ein Treffer für "authXthestiaYde" - und
+    "^.well-known/assetlinks.json$" würde auf jede Datei passen.
     """
     return re.sub(r"([.^$*+?{}\[\]|\\()])", r"\\\1", text)
 
@@ -165,7 +165,7 @@ def lies_umleitungen() -> list[tuple[str, str, str]]:
 
 
 def lies_header() -> list[tuple[str, list[tuple[str, str]]]]:
-    """Die Bloecke aus _headers als (Pfad, [(Name, Wert)])."""
+    """Die Blöcke aus _headers als (Pfad, [(Name, Wert)])."""
     bloecke: list[tuple[str, list[tuple[str, str]]]] = []
     pfad = None
     werte: list[tuple[str, str]] = []
@@ -191,7 +191,7 @@ def baue_htaccess(publish: pathlib.Path | None = None) -> str:
 
     Der Ordner ist ein Parameter, damit der Selbsttest mit
     synthetischen Dateien arbeiten kann - ohne die echten zu
-    veraendern.
+    verändern.
     """
     global PUBLISH
     if publish is not None:
@@ -212,13 +212,13 @@ def baue_htaccess(publish: pathlib.Path | None = None) -> str:
         normale.append((quelle, ziel, code))
 
     # Die domain-bezogene Regel zuerst (die robots.txt des Auth-Hosts),
-    # damit sie nicht von einer allgemeinen Regel ueberholt wird.
+    # damit sie nicht von einer allgemeinen Regel überholt wird.
     for quelle, ziel, code in host_regeln:
         host = quelle.split("/")[2]
         pfad = quelle.split("/", 3)[3]
         # EINE WEITERLEITUNG AUF EINE ANDERE ADRESSE (23.11.2026):
         # "www.thestia.de" soll auf "thestia.de" zeigen - eine Adresse,
-        # zwei Inhalte, sind schlecht fuer die Suche. Netlify schreibt
+        # zwei Inhalte, sind schlecht für die Suche. Netlify schreibt
         # das als "https://www.thestia.de/*  https://thestia.de/:splat
         # 301"; auf Apache wird daraus eine 301, die den Pfad mitnimmt.
         if ziel.startswith("http"):
@@ -259,9 +259,9 @@ def baue_htaccess(publish: pathlib.Path | None = None) -> str:
                          % (regex_escape(muster), ziel_pfad))
     teile.append("</IfModule>\n")
 
-    # --- 3) Die Bedingungen fuer die Header -------------------------
+    # --- 3) Die Bedingungen für die Header -------------------------
     #
-    # Die globalen Bloecke (Pfad "/*") bekommen keinen env=-Filter.
+    # Die globalen Blöcke (Pfad "/*") bekommen keinen env=-Filter.
     # Alles andere wird an den Request-URI oder den Host gebunden.
     globale = []
     bedingt = []
@@ -310,7 +310,7 @@ def baue_htaccess(publish: pathlib.Path | None = None) -> str:
     teile.append("</IfModule>\n")
 
     teile.append("""
-# --- 5) Der Auth-Host und die spaetere Web-Version --------------
+# --- 5) Der Auth-Host und die spätere Web-Version --------------
 
 # Der Auth-Host (auth.thestia.de) bekommt die gesperrte robots.txt
 # (siehe Abschnitt 2) und den Header "X-Robots-Tag: noindex". Beides
@@ -319,7 +319,7 @@ def baue_htaccess(publish: pathlib.Path | None = None) -> str:
 # Host-Rewrite in _redirects. Hier steht nichts mehr, damit es nicht
 # auseinanderlaufen kann.
 
-# Fuer die Web-Version der App (v0.12.0) kommt hier der
+# Für die Web-Version der App (v0.12.0) kommt hier der
 # SPA-Fallback hin: unbekannte Adressen liefern dann index.html.
 # RewriteCond %%{REQUEST_FILENAME} !-f
 # RewriteCond %%{REQUEST_FILENAME} !-d
@@ -330,15 +330,15 @@ def baue_htaccess(publish: pathlib.Path | None = None) -> str:
 
 
 def selbsttest() -> int:
-    """Prueft die Uebersetzung an synthetischen Dateien.
+    """Prüft die Übersetzung an synthetischen Dateien.
 
     WARUM (08.11.2026): Eine falsch maskierte Regel in der .htaccess
-    faellt auf dem Server auf, nicht hier - und eine .htaccess, die
-    zur Haelfte nicht greift, sieht im Browser wie eine kaputte
+    fällt auf dem Server auf, nicht hier - und eine .htaccess, die
+    zur Hälfte nicht greift, sieht im Browser wie eine kaputte
     Website aus (die Adressen ohne ".html" liefern dann 404).
 
     Der Test baut eine .htaccess aus zwei erfundenen Dateien und
-    prueft an den Stellen nach, an denen es in der echten Datei schon
+    prüft an den Stellen nach, an denen es in der echten Datei schon
     einmal falsch war: die Punkte in den Mustern.
     """
     import tempfile
@@ -374,7 +374,7 @@ def selbsttest() -> int:
         if text in ergebnis:
             fehler.append("darf nicht vorkommen: " + text)
 
-    # Die Rewrite-Regeln (ohne fuehrenden Schraegstrich, Punkt escaped)
+    # Die Rewrite-Regeln (ohne führenden Schrägstrich, Punkt escaped)
     muss("RewriteRule ^datenschutz$ datenschutz.html [L]")
     muss("RewriteRule ^eltern/$ eltern.html [L]")
     muss("RewriteRule ^intern$ threat-model.md [R=301,L]")
@@ -391,7 +391,7 @@ def selbsttest() -> int:
     muss('Header always set Cache-Control "public, max-age=300" env=')
     muss('SetEnvIf Host "^auth\\.thestia\\.de$"')
     muss('Header always set X-Robots-Tag "noindex" env=')
-    # Die Klammern muessen zu Ende sein
+    # Die Klammern müssen zu Ende sein
     if ergebnis.count("<IfModule") != ergebnis.count("</IfModule>"):
         fehler.append("unbalancierte IfModule-Bloecke")
     if ergebnis.count("<") != ergebnis.count(">"):

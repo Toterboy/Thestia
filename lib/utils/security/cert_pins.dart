@@ -7,7 +7,7 @@
 /// Betrieb ganz woanders lag. Und niemand sah, dass der in der App
 /// gepinnte Leaf-Pin seit dem 24.10.2026 veraltet war.
 ///
-/// Diese Datei enthaelt KEINE Flutter-Abhaengigkeit - so kann sie
+/// Diese Datei enthält KEINE Flutter-Abhängigkeit - so kann sie
 /// sowohl von der App (`cert_pinning.dart`) als auch vom reinen
 /// Dart-Werkzeug gelesen werden. Es gibt damit nur noch EINE Tabelle.
 ///
@@ -27,44 +27,44 @@ class PinnedHost {
     required this.issuer,
   });
 
-  /// Die DER-Hashes (SHA-256 ueber das X.509-Zertifikat, base64).
+  /// Die DER-Hashes (SHA-256 über das X.509-Zertifikat, base64).
   ///
   /// Mindestens EIN Pin muss passen. Der erste Eintrag ist der Leaf
   /// (das Server-Zertifikat), danach Intermediate und Root als
   /// Reserve (Dart liefert im Callback nur das Leaf - die beiden
-  /// anderen sind damit praktisch nicht pruefbar, sie stehen aber als
+  /// anderen sind damit praktisch nicht prüfbar, sie stehen aber als
   /// Dokumentation der Kette im Code).
   final List<String> pins;
 
-  /// Beginn der Gueltigkeit des gepinnten Leaf-Zertifikats
+  /// Beginn der Gültigkeit des gepinnten Leaf-Zertifikats
   /// (Sekunden seit 1970, UTC).
   final int leafNotBeforeEpoch;
 
-  /// Ende der Gueltigkeit des gepinnten Leaf-Zertifikats
+  /// Ende der Gültigkeit des gepinnten Leaf-Zertifikats
   /// (Sekunden seit 1970, UTC).
   final int leafNotAfterEpoch;
 
   /// Erwartete Bestandteile des Leaf-Ausstellers (CN + Organisation).
   final List<String> issuer;
 
-  /// Beginn der Gueltigkeit als [DateTime] (UTC).
+  /// Beginn der Gültigkeit als [DateTime] (UTC).
   DateTime get leafNotBefore => DateTime.fromMillisecondsSinceEpoch(
     leafNotBeforeEpoch * 1000,
     isUtc: true,
   );
 
-  /// Ende der Gueltigkeit als [DateTime] (UTC).
+  /// Ende der Gültigkeit als [DateTime] (UTC).
   DateTime get leafNotAfter => DateTime.fromMillisecondsSinceEpoch(
     leafNotAfterEpoch * 1000,
     isUtc: true,
   );
 
-  /// Ist das Rotationsfenster geoeffnet?
+  /// Ist das Rotationsfenster geöffnet?
   ///
   /// DER GRUND (Audit 16.11.2026): Der Aussteller-Fallback war
   /// dauerhaft offen und hat den Leaf-Pin damit entwertet - ein
-  /// Kompromitt der CA waere sofort MITM-faehig gewesen. Jetzt ist er
-  /// nur um das Ablaufdatum des gepinnten Leafs geoeffnet: dort
+  /// Kompromitt der CA wäre sofort MITM-fähig gewesen. Jetzt ist er
+  /// nur um das Ablaufdatum des gepinnten Leafs geöffnet: dort
   /// rotieren die Zertifikate (Let's Encrypt stellt das neue rund einen
   /// Monat vor dem Ablauf des alten aus).
   bool rotationWindowOpen(
@@ -86,28 +86,28 @@ const int kRotationGraceDays = 14;
 
 /// Die gepinnten Hosts.
 ///
-/// ANLEITUNG FUER DIE ROTATION (Audit 16.11.2026):
+/// ANLEITUNG FÜR DIE ROTATION (Audit 16.11.2026):
 ///   1. `dart run tool/scripts/rotate_cert_pins.dart` - das Werkzeug vergleicht
 ///      die Live-Zertifikate mit dieser Tabelle.
-///   2. Den neuen Leaf-Hash hier eintragen (den alten zunaechst
-///      behalten) und die Gueltigkeit (`leafNotBeforeEpoch`,
+///   2. Den neuen Leaf-Hash hier eintragen (den alten zunächst
+///      behalten) und die Gültigkeit (`leafNotBeforeEpoch`,
 ///      `leafNotAfterEpoch`) anpassen.
 ///   3. `flutter test test/cert_pinning_test.dart` laufen lassen.
-///   4. Release bauen. Der CI-Schritt "Zertifikat-Pins pruefen"
-///      schlaegt fehl, sobald der Pin veraltet ist - das ist gewollt.
+///   4. Release bauen. Der CI-Schritt "Zertifikat-Pins prüfen"
+///      schlägt fehl, sobald der Pin veraltet ist - das ist gewollt.
 ///
 /// Die Zeitpunkte stehen als Sekunden seit 1970 (UTC), damit die
 /// Tabelle `const` bleiben kann.
 const Map<String, PinnedHost> kPinnedHosts = {
   // Supabase (jftuigjbmmuvrckbchqo.supabase.co).
   // 1) Leaf (Let's Encrypt, CN=supabase.co / *.supabase.co) -
-  //    ausgelesen am 16.11.2026, gueltig 24.10.2026 bis 22.01.2027.
+  //    ausgelesen am 16.11.2026, gültig 24.10.2026 bis 22.01.2027.
   // 2) Intermediate (Google Trust Services, CN=WE1) - Jahre stabil.
   // 3) Root (Google Trust Services, CN=GTS Root R4) - Jahrzehnte stabil.
   //
   // WICHTIG: Der Leaf wurde am 24.10.2026 erneuert. Der bis dahin
   // gepinnte Hash war ab dem 24.10.2026 veraltet - die App lief dadurch
-  // ausschliesslich ueber den Aussteller-Fallback.
+  // ausschließlich über den Aussteller-Fallback.
   'jftuigjbmmuvrckbchqo.supabase.co': PinnedHost(
     pins: <String>[
       '6v9Fmtu620ZUy7m7Ps+XC68FFGxXMqy8cLMqf009Yq4=', // Leaf (Let's Encrypt)
@@ -121,7 +121,7 @@ const Map<String, PinnedHost> kPinnedHosts = {
   ),
   // Hugging Face Inference Router (router.huggingface.co), H-09.
   // 1) Leaf (CN=huggingface.co, AWS/CloudFront) - ausgelesen am
-  //    16.11.2026, gueltig 14.08.2026 bis 27.02.2027.
+  //    16.11.2026, gültig 14.08.2026 bis 27.02.2027.
   // 2) Intermediate (Amazon RSA 2048 M01) - stabil.
   // 3) Root (Amazon Root CA 1) - Jahrzehnte stabil.
   'router.huggingface.co': PinnedHost(
@@ -137,5 +137,5 @@ const Map<String, PinnedHost> kPinnedHosts = {
   ),
 };
 
-/// Der Standard-Host (Supabase), wenn kein Host explizit uebergeben wird.
+/// Der Standard-Host (Supabase), wenn kein Host explizit übergeben wird.
 const String kDefaultPinnedHost = 'jftuigjbmmuvrckbchqo.supabase.co';

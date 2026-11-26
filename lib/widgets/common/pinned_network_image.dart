@@ -6,17 +6,17 @@ import 'package:http/io_client.dart' show IOClient;
 
 import 'package:thestia/utils/security/cert_pinning.dart';
 
-/// Ein Bild, das ueber den **gepinnten** Client geladen wird.
+/// Ein Bild, das über den **gepinnten** Client geladen wird.
 ///
 /// WARUM (Sicherheits-Audit 16.11.2026): `Image.network` benutzt den
-/// normalen `HttpClient` - der haengt am globalen `HttpOverrides` und
-/// damit am **System-Trust-Store**. Eine auf dem Geraet nachinstallierte
+/// normalen `HttpClient` - der hängt am globalen `HttpOverrides` und
+/// damit am **System-Trust-Store**. Eine auf dem Gerät nachinstallierte
 /// Fremd-CA (MDM, Stalkerware) wird vom System akzeptiert und
-/// umgeht damit das Pinning. Genau das war der Befund fuer die
+/// umgeht damit das Pinning. Genau das war der Befund für die
 /// Bildpfade (Profilbild-Vorschau, Moderationsansicht).
 ///
-/// DER WEG: Das Bild wird ueber [CertPinning.pinnedHttpClient] geholt -
-/// der Callback laeuft immer (leerer Root-Store) und bricht bei
+/// DER WEG: Das Bild wird über [CertPinning.pinnedHttpClient] geholt -
+/// der Callback läuft immer (leerer Root-Store) und bricht bei
 /// einem Pin-Mismatch ab. Das Bild wird dann lokal angezeigt.
 ///
 /// Der Abruf passiert im Speicher (Image.memory) - die Bytes werden
@@ -33,7 +33,7 @@ class PinnedNetworkImage extends StatefulWidget {
     this.placeholderBuilder,
   });
 
-  /// Die URL (HTTPS, geprueft).
+  /// Die URL (HTTPS, geprüft).
   final String url;
 
   final double? width;
@@ -78,7 +78,7 @@ class _PinnedNetworkImageState extends State<PinnedNetworkImage> {
 
   Future<void> _lade() async {
     final uri = Uri.tryParse(widget.url);
-    // Nur HTTPS - sonst laesst der Server die Verbindung zu.
+    // Nur HTTPS - sonst lässt der Server die Verbindung zu.
     if (uri == null || uri.scheme != 'https') {
       if (mounted) setState(() => _fehler = true);
       return;

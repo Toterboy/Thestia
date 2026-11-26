@@ -1,33 +1,33 @@
-"""Prueft die LIVE-Websites vollstaendig - beide Domains, alle Seiten.
+"""Prüft die LIVE-Websites vollständig - beide Domains, alle Seiten.
 
 WARUM (08.11.2026, Betreiber): "Ist auch alles fehlerfrei bei den
 Websites?"
 
 Das Projekt-Gate `check_privacy_deployment.py` vergleicht den
 Publish-Ordner mit dem Live-Stand - aber nur auf EINEM Host
-(auth.thestia.de). Die oeffentliche Seite thestia.de (die im Play
+(auth.thestia.de). Die öffentliche Seite thestia.de (die im Play
 Console als Privacy-Policy-URL eingetragen wird) wird dabei nicht
-geprueft. Dieses Skript prueft beide Domains und ALLE Adressen, die
-ueber _redirects erreichbar sind - inklusive der .well-known-Pfade,
+geprüft. Dieses Skript prüft beide Domains und ALLE Adressen, die
+über _redirects erreichbar sind - inklusive der .well-known-Pfade,
 der Favicons und der robots-Dateien.
 
 ZWEI FEHLALARME, DIE DIESES SKRIPT NICHT MEHR MACHT (08.11.2026):
   * Umleitungen werden NICHT verfolgt. Die interne Betriebsnotiz wird
-    per 301 auf /threat-model.md umgeleitet - das ist gewuellt. Ohne
-    dieses Verhalten meldet urllib am Ende "200" und der Test wuerde
+    per 301 auf /threat-model.md umgeleitet - das ist gewüllt. Ohne
+    dieses Verhalten meldet urllib am Ende "200" und der Test würde
     eine korrekte Umleitung als Fehler ausgeben.
-  * Die robots.txt wird ueber ihre GUELTIGEN Zeilen bewertet. Die
-    Kommentare erwaehnen "Disallow: /" als Erklaerung; mit dem Wort im
+  * Die robots.txt wird über ihre GÜLTIGEN Zeilen bewertet. Die
+    Kommentare erwähnen "Disallow: /" als Erklärung; mit dem Wort im
     Text sah die Seite gesperrt aus, obwohl sie frei indexierbar ist.
 
 Aufruf:
     python tool/checks/check_websites_live.py
     python tool/checks/check_websites_live.py --host https://beispiel.pages.dev
 
-WAS DER AUFZUG-PRUEFER KANN (08.11.2026): Mit "--host" laesst sich
-  jeder weitere Host pruefen - etwa das Cloudflare-Pages-Projekt, auf
+WAS DER AUFZUG-PRÜFER KANN (08.11.2026): Mit "--host" lässt sich
+  jeder weitere Host prüfen - etwa das Cloudflare-Pages-Projekt, auf
   das der Publish-Ordner vor dem DNS-Umstellen hochgeladen wird. So
-laesst sich der Wechsel pruefen, BEVOR thestia.de auf den neuen
+lässt sich der Wechsel prüfen, BEVOR thestia.de auf den neuen
 Hoster zeigt (der alte Stand bleibt dann unangetastet).
 """
 import argparse
@@ -43,8 +43,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -65,7 +65,7 @@ DOMAINS = ["https://thestia.de", "https://auth.thestia.de"]
 
 
 class KeinFollow(urllib.request.HTTPRedirectHandler):
-    """Umleitungen nicht folgen - eine 301 kann gewuellt sein."""
+    """Umleitungen nicht folgen - eine 301 kann gewüllt sein."""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
@@ -140,7 +140,7 @@ def main() -> int:
                 # Eine Umleitung ist in Ordnung, wenn das ZIEL existiert.
                 # Netlify macht aus "/datenschutz/" eine 301 auf
                 # "/datenschutz" (die kanonische Form, ohne doppelten
-                # Inhalt fuer die Suchmaschine). Das war am 08.11.2026
+                # Inhalt für die Suchmaschine). Das war am 08.11.2026
                 # ein Fehlalarm: 26 "Fehler", die keine waren.
                 ziel = kopf.get("Location", "")
                 ziel_code = 0
@@ -156,7 +156,7 @@ def main() -> int:
                 fehler += 1
                 continue
             if domain.startswith("https://auth.") and not pfad.startswith("/robots"):
-                # Der Auth-Host liefert die oeffentlichen Seiten nicht -
+                # Der Auth-Host liefert die öffentlichen Seiten nicht -
                 # er ist die CAPTCHA-Seite. Das ist so gewollt.
                 continue
             print("    X  %-42s HTTP %s" % (pfad, code))
@@ -183,7 +183,7 @@ def main() -> int:
         else:
             print("    OK %-34s ist live und gefuellt" % was)
 
-    # Die interne Betriebsnotiz: umleiten ist gewuellt, oeffentlich nicht.
+    # Die interne Betriebsnotiz: umleiten ist gewüllt, öffentlich nicht.
     code, _, kopf = hole("https://thestia.de/ASSETLINKS_ROOTDOMAIN.md")
     ziel = kopf.get("Location", "")
     if code in (301, 302, 308) and "threat-model" in ziel:
@@ -241,8 +241,8 @@ def main() -> int:
     print("  ===== robots.txt (der Auth-Host muss gesperrt sein) =====")
     for domain in DOMAINS:
         code, koerper, _ = hole(domain + "/robots.txt")
-        # NUR die gueltigen Zeilen: die Kommentare erwaehnen "Disallow: /"
-        # als Erklaerung - mit ihnen im Text sah die Sperre aus, obwohl
+        # NUR die gültigen Zeilen: die Kommentare erwähnen "Disallow: /"
+        # als Erklärung - mit ihnen im Text sah die Sperre aus, obwohl
         # die Seite frei indexierbar ist.
         text = koerper.decode("utf-8", "replace")
         gueltig = [z.strip() for z in text.splitlines()
@@ -271,8 +271,8 @@ def main() -> int:
     # BEFUND (08.11.2026): Bei Netlify sperrt eine domain-bezogene
     # Regel in _redirects die robots.txt des Auth-Hosts. Cloudflare
     # Pages kann solche Regeln nicht - dort muss der Header
-    # "X-Robots-Tag: noindex" die Sperre uebernehmen (die Datei
-    # _headers setzt ihn fuer https://auth.thestia.de/*).
+    # "X-Robots-Tag: noindex" die Sperre übernehmen (die Datei
+    # _headers setzt ihn für https://auth.thestia.de/*).
     #
     # BEFUND (09.11.2026): Netlify wertet in `_headers` NUR PFADE aus
     # - eine regel mit einer absoluten URL (`https://auth.thestia.de/*`)
@@ -280,9 +280,9 @@ def main() -> int:
     # dort stimmt es auch.) Der Header kam deshalb bei Netlify nie an -
     # was als "Deploy zu alt" aussah, war ein Mechanics-Unterschied.
     #
-    # DER PRUEFUNG: Der Auth-Host muss NICHT INDEXIERBAR sein. Das
-    # kann auf zwei Wegen erreicht werden, und welcher gilt, haengt
-    # vom Hoster ab. Deshalb wird beides geprueft:
+    # DER PRÜFUNG: Der Auth-Host muss NICHT INDEXIERBAR sein. Das
+    # kann auf zwei Wegen erreicht werden, und welcher gilt, hängt
+    # vom Hoster ab. Deshalb wird beides geprüft:
     #   * der Header X-Robots-Tag: noindex (der Cloudflare-Weg), ODER
     #   * eine gesperrte robots.txt (der Netlify-Weg).
     # Nur wenn WEDER das eine NOCH das andere zutrifft, ist es ein
@@ -328,15 +328,15 @@ SICHERHEITS_HEADER = {
 
 
 def pruefe_header(domain: str, fehler: int) -> int:
-    """Die Sicherheits-Header, die der Host tatsaechlich liefert.
+    """Die Sicherheits-Header, die der Host tatsächlich liefert.
 
     BEFUND (08.11.2026): Die Datei _headers wird beim Hochladen
     ausgewertet - aber OB sie ausgewertet wird, sieht man erst am
     Live-Host. Wird ein Hoster gewechselt, ist das die erste Frage
     (Cloudflare Pages akzeptiert _headers, aber mit eigenen Regeln
-    zur Einrueckung).
+    zur Einrückung).
 
-    Deshalb wird hier nicht die Datei geprueft, sondern die ANTWORT
+    Deshalb wird hier nicht die Datei geprüft, sondern die ANTWORT
     des Servers.
     """
     print("  ===== Die Sicherheits-Header (live) =====")
@@ -363,8 +363,8 @@ def pruefe_assetlinks_identisch(domain: str, fehler: int) -> int:
     """Die live ausgelieferte Datei muss der im Ordner entsprechen.
 
     BEFUND (08.11.2026): Die Datei assetlinks.json im Publish-Ordner
-    nennt die Fingerabdruecke, gegen die Android die Zertifikatskette
-    des Webservers prueft. Ein veralteter Deploy liefert die alte
+    nennt die Fingerabdrücke, gegen die Android die Zertifikatskette
+    des Webservers prüft. Ein veralteter Deploy liefert die alte
     Fassung - die Passkey-Anmeldung auf Android scheitert dann, ohne
     dass irgendwo ein Fehler zu sehen ist.
 
@@ -386,12 +386,12 @@ def pruefe_assetlinks_identisch(domain: str, fehler: int) -> int:
 
 
 def pruefe_zusatzhosts(hosts: list) -> int:
-    """Prueft weitere Hosts (z. B. ein Cloudflare-Pages-Projekt).
+    """Prüft weitere Hosts (z. B. ein Cloudflare-Pages-Projekt).
 
     Der Aufruf dient dem Hosterwechsel: Der Publish-Ordner wird auf
-    das neue Projekt hochgeladen und DIESES wird geprueft - solange
+    das neue Projekt hochgeladen und DIESES wird geprüft - solange
     thestia.de noch auf den alten Hoster zeigt. Erst wenn hier
-    alles gruen ist, wird der DNS-Record umgestellt.
+    alles grün ist, wird der DNS-Record umgestellt.
     """
     if not hosts:
         return 0

@@ -1,14 +1,14 @@
-"""Prueft, dass ALLE Store-Screenshots dieselbe Schriftgroesse nutzen.
+"""Prüft, dass ALLE Store-Screenshots dieselbe Schriftgrösse nutzen.
 
 v0.9.2: 03_entdecken lief mit textScale 0.64, 04_anpassen mit 0.72,
-die uebrigen mit 1.0. Auf dem Play Store fiel der Unterschied sofort
-auf - drei Screens in derselben Serie, drei Schriftgroessen. Der
-Nutzer meldete es als "die Schrift soll ueberall gleich gross sein".
+die übrigen mit 1.0. Auf dem Play Store fiel der Unterschied sofort
+auf - drei Screens in derselben Serie, drei Schriftgrössen. Der
+Nutzer meldete es als "die Schrift soll überall gleich groß sein".
 
-Die Pruefung liest die textScale-Angaben direkt aus dem Render-Harness
-und schlaegt an, sobald ein Wert von 1.0 abweicht. Sie greift nur, wenn
-die Screenshots tatsaechlich neu gerendert wurden - in CI sind sie
-gitignoriert und nicht vorhanden, dann wird uebersprungen.
+Die Prüfung liest die textScale-Angaben direkt aus dem Render-Harness
+und schlägt an, sobald ein Wert von 1.0 abweicht. Sie greift nur, wenn
+die Screenshots tatsächlich neu gerendert wurden - in CI sind sie
+gitignoriert und nicht vorhanden, dann wird übersprungen.
 
 Aufruf:  python tool/checks/check_screenshot_consistency.py
 """
@@ -20,8 +20,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -58,11 +58,11 @@ def main():
     src = HARNESS.read_text(encoding='utf-8')
 
     # Jeder _shot()-Aufruf auswerten. Wichtig: der Argumentblock endet
-    # bei der Klammer, die zum Aufruf gehoert - NICHT bei der naechsten
+    # bei der Klammer, die zum Aufruf gehört - NICHT bei der nächsten
     # _shot(). Ein Aufruf kann einen after:-Callback enthalten, der
     # selbst Klammern mitbringt und einen Block wieder aufspaltet
-    # (5_eisbrecher). Klammerzzaehlen ist deshalb Pflicht; die erste
-    # Fassung suchte nur bis zum naechsten _shot( und hat deshalb
+    # (5_eisbrecher). Klammerzzählen ist deshalb Pflicht; die erste
+    # Fassung suchte nur bis zum nächsten _shot( und hat deshalb
     # Werte vom Folgescreen dem falschen Screenshot zugeordnet.
     calls = list(re.finditer(r"_shot\(\s*'([^']+)'", src))
     print(f'{len(calls)} _shot()-Aufrufe gefunden\n')
@@ -83,7 +83,7 @@ def main():
                 if depth == 0:
                     break
             elif ch == "'":
-                # Stringliteral ueberspringen (enthaelt Klammern)
+                # Stringliteral überspringen (enthält Klammern)
                 j += 1
                 while j < len(src) and src[j] != "'":
                     j += 2 if src[j] == '\\' else 1

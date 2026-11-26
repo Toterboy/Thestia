@@ -11,9 +11,9 @@ import 'package:flutter/material.dart';
 /// wenn rechts ein Abzeichen steht. Ohne diesen Gegenpart schiebt das
 /// Abzeichen den Namen nach links.
 ///
-/// Die Kopie ist fuer Screenreader unsichtbar ([ExcludeSemantics]) und
-/// nicht antippbar ([IgnorePointer]) - sonst wuerden die Abzeichen
-/// zweimal vorgelesen und ein Tooltip waere doppelt vorhanden.
+/// Die Kopie ist für Screenreader unsichtbar ([ExcludeSemantics]) und
+/// nicht antippbar ([IgnorePointer]) - sonst würden die Abzeichen
+/// zweimal vorgelesen und ein Tooltip wäre doppelt vorhanden.
 class CenteredNameWithBadges extends StatelessWidget {
   const CenteredNameWithBadges({
     required this.name,
@@ -53,7 +53,7 @@ class CenteredNameWithBadges extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Unsichtbarer Gegenpart - haelt den Namen mittig.
+        // Unsichtbarer Gegenpart - hält den Namen mittig.
         IgnorePointer(
           child: ExcludeSemantics(child: Opacity(opacity: 0, child: echte)),
         ),

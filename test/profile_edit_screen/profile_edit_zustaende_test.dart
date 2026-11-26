@@ -1,23 +1,23 @@
-// Der Profil-Editor: das Zurueck und das Bundesland.
+// Der Profil-Editor: das Zurück und das Bundesland.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/profile/parts/profileditaufbau.dart 62 offene Zeilen -
 // genau die Wege, die der Nutzer beim Verlassen des Editors geht.
 //
 // DER WEG: Der Bildschirm steht in einem Router (der Profil-Bildschirm
 // ist das Ziel). Der Server ist der [FakeSupabaseServer].
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * "Zurueck" ohne Aenderungen geht sofort,
-//   * "Zurueck" mit Aenderungen fragt nach - und "Verwerfen" geht
+// WAS HIER GEPRÜFT WIRD:
+//   * "Zurück" ohne Änderungen geht sofort,
+//   * "Zurück" mit Änderungen fragt nach - und "Verwerfen" geht
 //     wirklich raus (der Nutzer darf nicht im Editor feststecken),
 //   * der Weg "speichern und weiter" speichert und navigiert,
-//   * das Bundesland wird uebernommen (es ist der Wert, nach dem der
+//   * das Bundesland wird übernommen (es ist der Wert, nach dem der
 //     Server filtert).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
@@ -57,7 +57,7 @@ void main() {
     server.rpcAntworten.clear();
   });
 
-  /// Tippt in das Namensfeld (das macht den Screen "veraendert").
+  /// Tippt in das Namensfeld (das macht den Screen "verändert").
   Future<void> nameAendern(WidgetTester tester) async {
     final feld = find.byType(TextFormField).first;
     await tester.ensureVisible(feld);
@@ -89,8 +89,8 @@ void main() {
       await profileEditScreenPump(tester, profileEditScreenProfil);
       await nameAendern(tester);
 
-      // DER SYSTEM-ZURUECK: Der Geraete-Knopf oder die Geste. Der
-      // Bildschirm blockiert das (sonst waeren die Aenderungen weg).
+      // DER SYSTEM-ZURÜCK: Der Geräte-Knopf oder die Geste. Der
+      // Bildschirm blockiert das (sonst wären die Änderungen weg).
       await tester.binding.handlePopRoute();
       await pumpFrames(tester);
 
@@ -117,7 +117,7 @@ void main() {
       await tester.binding.handlePopRoute();
       await pumpFrames(tester);
 
-      // VERWERFEN: Die Aenderungen weg, der Screen verlassen.
+      // VERWERFEN: Die Änderungen weg, der Screen verlassen.
       await tester.tap(
         find.text(L10n.tWithoutContext('profile.edit.unsavedDiscard')),
       );

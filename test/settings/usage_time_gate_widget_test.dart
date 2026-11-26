@@ -1,12 +1,12 @@
 // Die Nutzungszeit-Sperre (Elternbereich).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/settings/usage_time_gate.dart nur 7,5 % Abdeckung. Die reine
 // Rechnung (isWithinWindow) war getestet - der BILDSCHIRM nicht: also
-// weiss niemand, ob die Sperre die App tatsaechlich zuhält.
+// weiß niemand, ob die Sperre die App tatsächlich zuhält.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ausserhalb der erlaubten Zeit steht die Sperre statt der App,
+// WAS HIER GEPRÜFT WIRD:
+//   * außerhalb der erlaubten Zeit steht die Sperre statt der App,
 //   * innerhalb der erlaubten Zeit steht die App (die Sperre blockt
 //     nicht versehentlich),
 //   * ohne Begrenzung steht immer die App.
@@ -146,7 +146,7 @@ void main() {
     server.rpcAntworten.clear();
   });
 
-  /// Baut die Sperre mit dem gewuenschten Stand.
+  /// Baut die Sperre mit dem gewünschten Stand.
   Future<void> zeige(WidgetTester tester, GuardianStatus stand) async {
     final container = ProviderContainer(
       overrides: <Override>[
@@ -206,7 +206,7 @@ void main() {
 
     testWidgets('innerhalb der erlaubten Zeit steht die App', (tester) async {
       final jetzt = DateTime.now();
-      // DAS FENSTER: Es laeuft von vor einer bis nach einer Stunde.
+      // DAS FENSTER: Es läuft von vor einer bis nach einer Stunde.
       final stand = GuardianStatus(
         usageLimitEnabled: true,
         usageStartMin: (jetzt.hour - 1) * 60 + jetzt.minute,

@@ -10,27 +10,27 @@ hier behoben:
    Hintergrund-Kreis (Radius = halbe Leinwand) in eine kleinere
    Maske (Radius = 72/108 der Leinwand). Sichtbar blieb damit nur die
    **Mitte** des Verlaufs - die satten Randbereiche (pink oben links,
-   violett unten rechts) lagen ausserhalb. Der Kreis sah dadurch
+   violett unten rechts) lagen außerhalb. Der Kreis sah dadurch
    deutlich blasser aus als das abgerundete Original.
 
 2) DAS HERZ WAR HALBTRANSPARENT. Die Alpha des Vordergrunds wurde
    aus der Farbe berechnet (`min(r,g,b)` zwischen 88 und 168). Das
    betraf auch die magentafarbene Lippe des Herzens (min = 104-169):
-   sie bekam nur 20-100 % Deckkraft und wurde ueber dem Verlauf zu
+   sie bekam nur 20-100 % Deckkraft und wurde über dem Verlauf zu
    rosa Milchglas. Die Schwelle ist in `generate_launcher_icon.py`
    jetzt enger (88-104), dort ist das Artwork voll deckend.
 
-DAS MODUL: Der runde Schnitt - Verlauf am Rand zusammenfuehren, damit
+DAS MODUL: Der runde Schnitt - Verlauf am Rand zusammenführen, damit
 keine transparenten Ecken bleiben, dann den Kreis draufsetzen - stand
 bisher nur in Dart (`tool/images/generate_round_logo.dart`). Hier ist er in
 Python, weil die Favicons und das Legacy-Launcher-Icon mit Pillow
 erzeugt werden. Beide Wege liefern dasselbe Bild (dieselbe Quelle,
 dieselbe Rechnung) - die beiden Werkzeuge sind unabhängig voneinander
-pruefbar.
+prüfbar.
 
 DIE QUELLE ist immer `assets/images/thestia_icon_base.png` - laut
-Projekt-Konvention die EINZIGE Logo-Quelle. Der Weg zum Logo laeuft
-sonst auseinander (das war schon einmal der Grund fuer den Bug vom
+Projekt-Konvention die EINZIGE Logo-Quelle. Der Weg zum Logo läuft
+sonst auseinander (das war schon einmal der Grund für den Bug vom
 09.11.2026).
 """
 from __future__ import annotations
@@ -43,8 +43,8 @@ from PIL import Image, ImageDraw
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -66,12 +66,12 @@ def _quadrat_mit_verlauf(src: Image.Image) -> np.ndarray:
     """Das Artwork auf ein Quadrat bringen, ohne transparente Ecken.
 
     1) Die opaken Pixel werden zu einem Quadrat beschnitten.
-    2) Jedes Pixel ausserhalb nimmt den Quellpixel an der GEKLEMMTEN
-       Position - der Verlauf laeuft damit nahtlos in die Ecken
+    2) Jedes Pixel außerhalb nimmt den Quellpixel an der GEKLEMMTEN
+       Position - der Verlauf läuft damit nahtlos in die Ecken
        weiter, statt transparent zu bleiben.
     3) Was danach noch transparent ist (die abgerundeten Ecken des
-       Originals), wird aus dem naechsten opaken Pixel derselben
-       Zeile gefuellt.
+       Originals), wird aus dem nächsten opaken Pixel derselben
+       Zeile gefüllt.
     """
     arr = np.asarray(src.convert('RGBA'), dtype=np.uint8)
     alpha = arr[:, :, 3]
@@ -91,9 +91,9 @@ def _quadrat_mit_verlauf(src: Image.Image) -> np.ndarray:
     sy = np.clip(min_y + (yy - pad_y), 0, arr.shape[0] - 1)
     quadrat = arr[sy, sx].copy()
 
-    # Restliche transparente Pixel: aus dem naechsten opaken Pixel
-    # derselben Zeile fuellen (vorwaerts oder rueckwaerts - was
-    # naeher liegt).
+    # Restliche transparente Pixel: aus dem nächsten opaken Pixel
+    # derselben Zeile füllen (vorwärts oder rückwärts - was
+    # näher liegt).
     a = quadrat[:, :, 3]
     deckend = a >= 200
     spalten = np.arange(side)[None, :]
@@ -117,15 +117,15 @@ def _quadrat_mit_verlauf(src: Image.Image) -> np.ndarray:
 def rundes_logo(size: int, quelle: pathlib.Path | None = None) -> Image.Image:
     """Das Thestia-Artwork als runder Kreis in [size] x [size].
 
-    Der Kreis sitzt mittig und fuellt die Flaeche zu 100 % - sonst
-    wuerde ringsum eine Luecke bleiben, in der die Form des
-    Launchers wieder sichtbar wuerde.
+    Der Kreis sitzt mittig und füllt die Fläche zu 100 % - sonst
+    würde ringsum eine Lücke bleiben, in der die Form des
+    Launchers wieder sichtbar würde.
     """
     pfad = quelle or QUELLE
     src = Image.open(pfad)
     quadrat = _quadrat_mit_verlauf(src)
 
-    # Auf die Zielgroesse bringen (LANCZOS) und dann den Kreis setzen.
+    # Auf die Zielgrösse bringen (LANCZOS) und dann den Kreis setzen.
     bild = Image.fromarray(quadrat, 'RGBA').resize((size, size), Image.LANCZOS)
 
     radius = size / 2.0 - 0.5
@@ -151,7 +151,7 @@ def rundes_logo(size: int, quelle: pathlib.Path | None = None) -> Image.Image:
                     px[x, y] = int(px[x, y] * max(0.0, min(1.0, kante / weich)))
 
     # Das Artwork ist innerhalb des Kreises deckend; die Maske ersetzt
-    # den Alpha ausserhalb.
+    # den Alpha außerhalb.
     ergebnis = bild.copy()
     ergebnis.putalpha(mask)
     return ergebnis

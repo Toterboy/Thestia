@@ -1,12 +1,12 @@
-// Tests fuer das Modell der freiwilligen Kontaktdaten
+// Tests für das Modell der freiwilligen Kontaktdaten
 // ("Connect to others").
 //
-// WARUM ueberhaupt ein Test: Die Telefonnummer ist personenbezogen und
-// verlaesst das Geraet nie. Deshalb sind zwei Dinge besonders wichtig:
+// WARUM überhaupt ein Test: Die Telefonnummer ist personenbezogen und
+// verlässt das Gerät nie. Deshalb sind zwei Dinge besonders wichtig:
 //  1) eine offensichtlich kaputte Nummer wird NICHT gespeichert und
 //     NICHT geteilt (sonst schickt jemand "123" an Fremde),
-//  2) der Speicher-Stand muss verlustfrei zurueckkommen - sonst
-//     verliert die Person ihre Angaben beim naechsten Start.
+//  2) der Speicher-Stand muss verlustfrei zurückkommen - sonst
+//     verliert die Person ihre Angaben beim nächsten Start.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/profile/contact_share_profile.dart';
 

@@ -4,10 +4,10 @@
 // 78 % abgedeckt - die neueren Schalter (Eisbrecher im Kontext, Dating
 // Hour, Chat-Hintergrund, Benachrichtigungen) waren ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Schalter aendern den Zustand und werden gespeichert,
-//   * ein UNGUELTIGER Chat-Hintergrund wird nicht uebernommen (der
-//     Bildschirm wuerde sonst einen kaputten Hintergrund zeigen),
+// WAS HIER GEPRÜFT WIRD:
+//   * die Schalter ändern den Zustand und werden gespeichert,
+//   * ein UNGÜLTIGER Chat-Hintergrund wird nicht übernommen (der
+//     Bildschirm würde sonst einen kaputten Hintergrund zeigen),
 //   * "Einrichtung erledigt" bleibt erledigt (zweimal setzen schadet
 //     nicht).
 import 'dart:convert';
@@ -140,9 +140,9 @@ void main() {
     });
 
     test('ein ungueltiger Hintergrund faellt auf "kein" zurueck', () async {
-      // DER GRUND: Ein kaputter Hintergrund wuerde den Chat unlesbar
+      // DER GRUND: Ein kaputter Hintergrund würde den Chat unlesbar
       // machen - der Schalter darf nur GELTIGE Werte annehmen und
-      // faellt sonst auf "kein Hintergrund" zurueck.
+      // fällt sonst auf "kein Hintergrund" zurück.
       final container = _container();
       final notifier = container.read(settingsProvider.notifier);
 
@@ -198,8 +198,8 @@ void main() {
       await notifier.setDatingHourAutoJoin(true);
 
       // DER ROHSTAND: So sieht man, was wirklich in der Ablage liegt -
-      // der Anbieter laedt im Konstruktor (asynchron), das waere
-      // unzuverlaessig.
+      // der Anbieter lädt im Konstruktor (asynchron), das wäre
+      // unzuverlässig.
       final raw = await speicher.getString('app_settings');
       expect(raw, isNotNull);
       final map = jsonDecode(raw!) as Map<String, dynamic>;

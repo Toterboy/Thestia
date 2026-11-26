@@ -7,7 +7,7 @@ import 'dart:math';
 /// Sekunde Wanduhr pro Stufe.
 ///
 /// Grundregel: JEDER erfolglose Poll (leer ODER Fehler) streckt das
-/// Intervall, jeder erfolgreiche stuft zurueck. Vorher zaehlte nur der
+/// Intervall, jeder erfolgreiche stuft zurück. Vorher zählte nur der
 /// Leerfall mit: bei totem Netz blieb der Eingang dauerhaft im
 /// 6-Sekunden-Takt, ohne Leere und ohne Zustellung als Gegenwert.
 class RelayPollBackoff {
@@ -35,7 +35,7 @@ class RelayPollBackoff {
   final List<Duration> ladder;
 
   /// Intervall bei frischer Zustellung (kann von `ladder.first`
-  /// abweichen, wenn eine eigene Leiter uebergeben wurde).
+  /// abweichen, wenn eine eigene Leiter übergeben wurde).
   final Duration baseInterval;
 
   /// Streuung gegen synchronizedes Pollen: tausend Clients, die exakt
@@ -50,7 +50,7 @@ class RelayPollBackoff {
   /// Aktuelle Stufe (0 = schnellstes Intervall).
   int get step => _step;
 
-  /// Intervall fuer den naechsten Poll, inklusive Jitter.
+  /// Intervall für den nächsten Poll, inklusive Jitter.
   Duration get next {
     final base = ladder[_step.clamp(0, ladder.length - 1)];
     return _applyJitter(base);
@@ -60,15 +60,15 @@ class RelayPollBackoff {
   void onEmpty() => _advance();
 
   /// Fehlgeschlagener Poll: eine Stufe langsampler. Gleiche
-  /// Behandlung wie [onEmpty] - ein Fehler ist fuer den Server genauso
+  /// Behandlung wie [onEmpty] - ein Fehler ist für den Server genauso
   /// "nichts zu liefern" wie eine leere Antwort.
   void onFailure() => _advance();
 
-  /// Zustellung war erfolgreich: sofort zurueck auf das Basisintervall.
+  /// Zustellung war erfolgreich: sofort zurück auf das Basisintervall.
   void onDelivered() => _step = 0;
 
   /// Vordergrund-Wechsel: frisch starten (der Nutzer soll beim
-  /// Zurueckkommen sofort sehen, was angekommen ist).
+  /// Zurückkommen sofort sehen, was angekommen ist).
   void reset() => _step = 0;
 
   void _advance() {
@@ -80,7 +80,7 @@ class RelayPollBackoff {
     final ms = base.inMilliseconds;
     final spread = (ms * jitterFraction).round();
     if (spread <= 0) return base;
-    // Untergrenze 1 ms, damit ein sehr kurzes Intervall nicht auf 0 faellt.
+    // Untergrenze 1 ms, damit ein sehr kurzes Intervall nicht auf 0 fällt.
     return Duration(
       milliseconds: max(1, ms + _random.nextInt(2 * spread + 1) - spread),
     );

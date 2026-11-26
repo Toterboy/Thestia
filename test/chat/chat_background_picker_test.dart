@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/widgets/chat/chat_background_picker.dart';
 
-/// Test fuer den Chat-Hintergrund-Picker.
+/// Test für den Chat-Hintergrund-Picker.
 ///
 /// WARUM (06.11.2026): Der Picker stand in einem AlertDialog mit
 /// `scrollable: true` und benutzte ein `GridView` mit `shrinkWrap: true`.
@@ -65,7 +65,7 @@ void main() {
                       context: context,
                       builder: (ctx) => const AlertDialog(
                         // Genau die Konstellation, die im Emulator
-                        // abstuerzte: scrollbarer Dialog.
+                        // abstürzte: scrollbarer Dialog.
                         scrollable: true,
                         title: Text('Hintergrund'),
                         content: Column(
@@ -124,12 +124,12 @@ void main() {
     // man da scrollen muss ist nur so mittel gut bei den Einstellungen."
     //
     // Vorher stand im Picker ein festes SizedBox(height: 280). Bei
-    // sieben Mustern (ohne + fuenf Vorgaenge + eigenes) sind das drei
+    // sieben Mustern (ohne + fünf Vorgänge + eigenes) sind das drei
     // Reihen - und 280 Pixel zeigten nur zwei. Man musste also
     // scrollen, um den letzten Hintergrund zu sehen.
     //
-    // Der Test prueft: der Picker ist mindestens so hoch wie sein Raster.
-    // Ein Grid, das hoeher ist als sein Platz, wuerde abgeschnitten
+    // Der Test prüft: der Picker ist mindestens so hoch wie sein Raster.
+    // Ein Grid, das höher ist als sein Platz, würde abgeschnitten
     // (oder scrollen) - und genau das war der Befund.
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 3.0;
@@ -157,7 +157,7 @@ void main() {
           '($pickerHoehe < $rasterHoehe)',
     );
 
-    // Und: der Picker hat kein eigenes Scrollen - das Raster waechst
+    // Und: der Picker hat kein eigenes Scrollen - das Raster wächst
     // mit, statt in einem Scrollbereich zu liegen.
     expect(
       find.byType(SingleChildScrollView),

@@ -1,11 +1,11 @@
-// Test fuer das Transit-Kandidaten-Modell (v0.10.1).
+// Test für das Transit-Kandidaten-Modell (v0.10.1).
 //
 // BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
-// der selben Beschreibung geben sollte, dass man dann alle dafuer
+// der selben Beschreibung geben sollte, dass man dann alle dafür
 // vorgeschlagen bekommt".
 //
 // WICHTIG (Datenschutz): Der Name erscheint NUR, wenn die Person ihn
-// freigegeben hat. Der Ort ist ihre eigene Angabe. Dieser Test haelt
+// freigegeben hat. Der Ort ist ihre eigene Angabe. Dieser Test hält
 // beides fest.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/transit/transit_models.dart';

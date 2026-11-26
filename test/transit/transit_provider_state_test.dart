@@ -1,13 +1,13 @@
 // Der Transit-Provider (der "Transit Spark").
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/providers/transit/transit_provider.dart 95 offene Zeilen bei 40 %
-// Abdeckung. Der Provider steuert, WAS der Nutzer ueber sich sagt
-// (Selbstbeschreibung, Ort, Modus) und wann der Radar laeuft.
+// Abdeckung. Der Provider steuert, WAS der Nutzer über sich sagt
+// (Selbstbeschreibung, Ort, Modus) und wann der Radar läuft.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Selbstangaben landen im Zustand (und werden getrimmt),
-//   * der Modus laesst sich nur bei inactivem Radar umschalten,
+//   * der Modus lässt sich nur bei inactivem Radar umschalten,
 //   * das Ausschalten beendet den Radar,
 //   * die Server-Aufrufe (Kandidaten, Soft-Ping, Funke) kommen mit den
 //     richtigen Angaben an.
@@ -108,8 +108,8 @@ void main() {
     });
 
     test('bei laufendem Radar bleibt der Modus', () {
-      // DER ZUSTAND: Der Radar laeuft (active = true). Der Modus
-      // wird waehrend des Laufs nicht mehr geaendert - sonst wuerde
+      // DER ZUSTAND: Der Radar läuft (active = true). Der Modus
+      // wird während des Laufs nicht mehr geändert - sonst würde
       // die Signalschwelle mitten im Funk wechseln.
       final zustand = notifier.state;
       expect(zustand.active, isFalse);

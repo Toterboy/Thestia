@@ -1,18 +1,18 @@
 // Der Verifizierungs-Dienst: die Aufnahme, die Ablage und die Einreichung.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/services/verification/verification_service.dart 77 offene Zeilen.
-// Der Dienst ist die Stelle, an der das Video der Alterspruefung
+// Der Dienst ist die Stelle, an der das Video der Altersprüfung
 // aufgezeichnet, gesichert und zum Server geschickt wird.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne initialisierte Kamera wird nichts aufgenommen (klarer Fehler),
 //   * die Aufnahme landet unter "verification_<Zeit>.mp4" im
 //     App-Support-Ordner (nicht im Cache des Kamera-Plugins),
-//   * das gespeicherte Video kommt mit allen Metadaten zurueck,
+//   * das gespeicherte Video kommt mit allen Metadaten zurück,
 //   * ohne Video gibt es nichts zum Einreichen (mit klarer Meldung),
-//   * eine kaputte Box-Eintrag wird uebersprungen,
-//   * die Einreichung laedt das Video hoch und meldet den Erfolg,
+//   * eine kaputte Box-Eintrag wird übersprungen,
+//   * die Einreichung lädt das Video hoch und meldet den Erfolg,
 //   * lehnt der Server ab, wird der Grund genannt.
 import 'dart:io';
 
@@ -52,9 +52,9 @@ void main() {
     if (tempDir.existsSync()) {
       tempDir.deleteSync(recursive: true);
     }
-    // DIE KANAele DER KAMERA BLEIBEN OFFEN: Das Kamera-Plugin holt sich
+    // DIE Kanäle DER KAMERA BLEIBEN OFFEN: Das Kamera-Plugin holt sich
     // den Fehler-Kanal beim Initialisieren und wartet auf das erste
-    // Ereignis - ein geschlossener Kanal wuerde den Controller mit
+    // Ereignis - ein geschlossener Kanal würde den Controller mit
     // "No element" abbrechen lassen.
   });
 
@@ -106,8 +106,8 @@ void main() {
     });
 
     test('eine kaputte Aufnahme liefert null statt einem Fehler', () async {
-      // DIE KAMERA LIEGT: Es gibt keine Datei - das Stoppen schlaegt fehl.
-      // Der Dienst darf den Screen nicht mit einer Ausnahme zerstoeren.
+      // DIE KAMERA LIEGT: Es gibt keine Datei - das Stoppen schlägt fehl.
+      // Der Dienst darf den Screen nicht mit einer Ausnahme zerstören.
       final controller = await _initialisierterController();
 
       final pfad = await service.recordVerificationVideo(
@@ -169,7 +169,7 @@ void main() {
     });
 
     test('ein kaputter Box-Eintrag wird uebersprungen', () async {
-      // DIE KAPUTTE BOX: Der Eintrag ist Muell (etwa aus einer
+      // DIE KAPUTTE BOX: Der Eintrag ist Müll (etwa aus einer
       // abgebrochenen Aufnahme) - er darf nicht den ganzen Weg blockieren.
       final box = await Hive.openBox<String>('verification_videos');
       await box.put('kaputt', 'kein json');
@@ -201,7 +201,7 @@ void main() {
 
     test('ohne Server gilt die Einreichung als lokal erledigt', () async {
       // OHNE SERVER (Demo-Modus): Der Nutzer hat seine Aufgabe gemacht -
-      // der Upload kommt beim naechsten Start nach.
+      // der Upload kommt beim nächsten Start nach.
       await service.saveVerificationVideo(
         filePath: legeAufnahmeAn(),
         challengeType: VerificationChallengeType.speakNumber,

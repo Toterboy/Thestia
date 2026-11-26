@@ -1,10 +1,10 @@
-// Die Helfer fuer die Tests des Zufallschats.
+// Die Helfer für die Tests des Zufallschats.
 //
-// DER WEG: Die Testdatei fuer den Zufallschat waechst ueber die Grenze
+// DER WEG: Die Testdatei für den Zufallschat wächst über die Grenze
 // von 1000 Zeilen. Die Attrappen und der Aufbau liegen deshalb hier -
 // die Tests selbst sind nach Themen auf eigene Dateien verteilt.
 //
-// OHNE ECHTE GERAETE: Der Zufallschat-Dienst, der P2P-Dienst und der
+// OHNE ECHTE GERÄTE: Der Zufallschat-Dienst, der P2P-Dienst und der
 // Relay-Dienst sind Hand-Attrappen. Es geht keine Anfrage ins Netz.
 import 'dart:async';
 
@@ -95,7 +95,7 @@ class FakeRandomChatService extends RandomChatService {
 /// Hand-Fake des P2P-Dienstes (kein WebRTC-Plugin im Test).
 ///
 /// DER GRUND: Der echte Dienst braucht das WebRTC-Plugin - im Test gibt
-/// es kein Geraet. Der Fake meldet die Zustaende, die der Test vorgibt
+/// es kein Gerät. Der Fake meldet die Zustände, die der Test vorgibt
 /// (offener Datenkanal, ICE-Fehler, eingehende Nachricht, Wake-up-Ping).
 class FakeP2PChatService extends P2PChatService {
   FakeP2PChatService(super.webrtc, super.prekey);
@@ -193,7 +193,7 @@ class FakeP2PChatService extends P2PChatService {
     kanalZustand.add(RTCDataChannelState.RTCDataChannelClosed);
   }
 
-  /// Der Partner schickt eine Nachricht ueber den direkten Kanal.
+  /// Der Partner schickt eine Nachricht über den direkten Kanal.
   void empfange(String text) => eingang.add(text);
 
   /// Der Partner meldet: im Relay wartet etwas.
@@ -213,13 +213,13 @@ class FakeP2PChatService extends P2PChatService {
 class FakeRelayService extends RelayService {
   FakeRelayService(super.ref);
 
-  /// Die Nachrichten, die der Server bereit haelt.
+  /// Die Nachrichten, die der Server bereit hält.
   final List<RelayMessage> wartend = <RelayMessage>[];
 
   /// Wie oft wurde abgeholt?
   int abholungen = 0;
 
-  /// Die Texte, die ueber den Relay abgelegt wurden.
+  /// Die Texte, die über den Relay abgelegt wurden.
   final List<String> abgelegt = <String>[];
 
   @override
@@ -268,7 +268,7 @@ final FakeSupabaseServer zufallChatServer = FakeSupabaseServer(userId: 'ich');
 /// Richtet den Ersatz-Server ein (Supabase ist ein Singleton).
 ///
 /// DER GRUND: Der Bildschirm liest `Supabase.instance` (den globalen
-/// Client) - ein eigener Client waere dort nicht sichtbar.
+/// Client) - ein eigener Client wäre dort nicht sichtbar.
 Future<void> initZufallChatServer() async {
   await supabase.Supabase.initialize(
     url: 'https://example.supabase.co',
@@ -292,7 +292,7 @@ const RandomChatSession partnerSession = RandomChatSession(
 
 /// Baut den Zufallschat.
 ///
-/// [partnerName] ist der Name, den der Server fuer den Partner meldet
+/// [partnerName] ist der Name, den der Server für den Partner meldet
 /// (null = der Server kennt das Profil nicht).
 ///
 /// [fehler] ist der Fehler, mit dem der Verbindungsaufbau scheitert
@@ -376,7 +376,7 @@ Future<ZufallChatAufbau> baueZufallChat(
   for (var i = 0; i < 6; i++) {
     await tester.pump(const Duration(milliseconds: 120));
   }
-  // DIE ECHTE EREIGNISSCHLEIFE: Das Partnerprofil kommt ueber den
+  // DIE ECHTE EREIGNISSCHLEIFE: Das Partnerprofil kommt über den
   // Server - ohne dieses Warten bleibt der Bildschirm im "verbinde".
   for (var i = 0; i < 6; i++) {
     await tester.runAsync(() async {
@@ -396,7 +396,7 @@ Future<ZufallChatAufbau> baueZufallChat(
 /// Setzt den Lebenszyklus der App.
 ///
 /// DER GRUND: Das Framework (der AppLifecycleListener) meldet jeden
-/// Sprung als Fehler - der Weg muss also ueber inactive und hidden
+/// Sprung als Fehler - der Weg muss also über inactive und hidden
 /// gehen. Diese Hilfsfunktion nimmt den Umweg.
 void setzeLebenszyklus(WidgetTester tester, AppLifecycleState ziel) {
   final aktuell = tester.binding.lifecycleState;

@@ -97,21 +97,21 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   /// Der Notifier der "laufender Anruf"-Markierung.
   ///
   /// BEFUND (14.11.2026, gefunden von einem Test): Riverpod hat den
-  /// Consumer-State im `dispose()` schon abgeraeumt - ein `ref.read()`
+  /// Consumer-State im `dispose()` schon abgeräumt - ein `ref.read()`
   /// dort wirft ("Cannot use ref after the widget was disposed"). Damit
   /// blieb die Markierung BIS ZUM APP-ENDE stehen, und die Folge war
-  /// konkret: nach dem ersten Anruf liess sich kein zweiter mehr
-  /// starten (der Chat-Screen lehnt ab, wenn schon ein Anruf laeuft).
+  /// konkret: nach dem ersten Anruf ließ sich kein zweiter mehr
+  /// starten (der Chat-Screen lehnt ab, wenn schon ein Anruf läuft).
   ///
-  /// DER WEG: Der Notifier wird im `initState` geholt. Er lebt laenger
-  /// als der Screen - so wird die Markierung wirklich wieder geloescht.
+  /// DER WEG: Der Notifier wird im `initState` geholt. Er lebt länger
+  /// als der Screen - so wird die Markierung wirklich wieder gelöscht.
   late final StateController<String?> _aktiveAnrufId;
 
   @override
   void initState() {
     super.initState();
     // Der Notifier wird jetzt geholt: im dispose() ist `ref` nicht mehr
-    // benutzbar (siehe die Erklaerung beim Feld).
+    // benutzbar (siehe die Erklärung beim Feld).
     _aktiveAnrufId = ref.read(activeCallIdProvider.notifier);
     _callId =
         widget.incomingCallId ??
@@ -138,9 +138,9 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     });
     _player.dispose();
     _recorder.dispose();
-    // Der Provider wird im dispose zurueckgesetzt - aber Riverpod hat
-    // den Consumer-State da schon abgeraeumt. Deshalb laeuft das ueber
-    // den Notifier (im initState geholt) und nicht ueber `ref`.
+    // Der Provider wird im dispose zurückgesetzt - aber Riverpod hat
+    // den Consumer-State da schon abgeräumt. Deshalb läuft das über
+    // den Notifier (im initState geholt) und nicht über `ref`.
     bestEffortSync('activeCallId zuruecksetzen', () {
       if (_aktiveAnrufId.state == _callId) {
         _aktiveAnrufId.state = null;
@@ -151,15 +151,15 @@ class _CallScreenState extends ConsumerState<CallScreen> {
 
   Future<void> _init() async {
     // BEFUND (14.11.2026, gefunden von einem Test): Riverpod verbietet
-    // das Aendern eines Providers WAEHREND DES AUFBAUS - "Tried to
+    // das Ändern eines Providers WÄHREND DES AUFBAUS - "Tried to
     // modify a provider while the widget tree was building". initState
     // ist Teil des Aufbaus: der Anruf-Screen flog also raus, BEVOR
-    // ueberhaupt ein Klingeln kam.
+    // überhaupt ein Klingeln kam.
     //
-    // DER WEG: Der Wert wird einen Frame spaeter gesetzt. Nach dem Frame
+    // DER WEG: Der Wert wird einen Frame später gesetzt. Nach dem Frame
     // ist der Aufbau fertig, und Riverpod erlaubt das Schreiben.
     //
-    // (Im dispose gilt dieselbe Regel - dort hilft nur der Weg ueber
+    // (Im dispose gilt dieselbe Regel - dort hilft nur der Weg über
     // den Notifier oben.)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -808,15 +808,15 @@ class _CallScreenState extends ConsumerState<CallScreen> {
             else if (isConnected)
               // DER UMBRUCH (18.11.2026, gefunden von einem Test): Die
               // Knopf-Reihe passte auf einem 390er-Bildschirm nicht -
-              // sie lief 186 Pixel ueber den Rand (die gelb-schwarzen
-              // Streifen standen waehrend des Gespraechs im Bild).
+              // sie lief 186 Pixel über den Rand (die gelb-schwarzen
+              // Streifen standen während des Gesprächs im Bild).
               //
-              // Die Ursache waren die BESCHRIFTUNGEN unter den Knoepfen:
+              // Die Ursache waren die BESCHRIFTUNGEN unter den Knöpfen:
               // "Eisbrecher-Fragen" ist breiter als der Knopf daneben und
               // hat die ganze Reihe gespreizt.
               //
               // DER WEG: Die Beschriftungen bekommen die Breite ihres
-              // Knopfs (mit Auslassungspunkten), die Abstaende werden
+              // Knopfs (mit Auslassungspunkten), die Abstände werden
               // kleiner, und die ganze Reihe wird notfalls skaliert
               // (FittedBox) - auf sehr schmalen Telefonen passt sie
               // damit immer hinein.

@@ -67,11 +67,11 @@ class SupabaseDatabaseService {
     //
     // BUG (Datenverlust): Diese drei Felder wurden nicht gelesen. Der
     // lokale Secure-Store wurde beim Login mit `setProfile` KOMPLETT
-    // ueberschrieben - der Serverwert fehlte im Leseergebnis, also
+    // überschrieben - der Serverwert fehlte im Leseergebnis, also
     // auch im lokalen Profil. Nach dem ersten Neustart war der
     // Lieblingssong weg und der Geburtstagsstil auf dem Default. Und
-    // weil das Profil-Edit den (leeren) lokalen Wert zurueckschreibt,
-    // wurde der SERVERwert dabei gleich mit ueberschrieben.
+    // weil das Profil-Edit den (leeren) lokalen Wert zurückschreibt,
+    // wurde der SERVERwert dabei gleich mit überschrieben.
     const columnsWithPhotos =
         'user_id, name, gender, gender_preferences, birth_date, bio, '
         'interests, photos, personality_type, max_distance_km, '
@@ -138,12 +138,12 @@ class SupabaseDatabaseService {
             'introAudioPath': response['intro_audio_path'],
             // v0.10.0: diese drei Felder wurden gelesen, aber nie
             // GESPEICHERT. Beim Login wurde der lokale Secure-Store
-            // komplett ueberschrieben - der Serverwert fehlte im
+            // komplett überschrieben - der Serverwert fehlte im
             // Leseergebnis, also auch im lokalen Profil. Ergebnis:
             // Lieblingssong, Lieblingsband und Geburtstagsstil waren
             // nach dem ersten Neustart weg, und weil das Profil-Edit
-            // den leeren lokalen Wert zurueckschreibt, wurde der
-            // SERVERwert dabei gleich mit ueberschrieben.
+            // den leeren lokalen Wert zurückschreibt, wurde der
+            // SERVERwert dabei gleich mit überschrieben.
             'favoriteSong': response['favorite_song'] ?? '',
             'favoriteBand': response['favorite_band'] ?? '',
             'birthdayStyle': response['birthday_style'] ?? 'classic',
@@ -153,7 +153,7 @@ class SupabaseDatabaseService {
             'music_liked': response['music_liked'],
             'music_disliked': response['music_disliked'],
             // Steht seit langem in der Spaltenliste, wurde aber nie
-            // gelesen. Wird fuer den Hinweis "neuer Account" gebraucht.
+            // gelesen. Wird für den Hinweis "neuer Account" gebraucht.
             'createdAt': response['created_at'],
           };
           return UserProfile.fromJson(mapped);
@@ -177,14 +177,14 @@ class SupabaseDatabaseService {
   /// `theme_name` aus Migration 071 noch nicht eingespielt), wird die
   /// Kern-Migration-066-Auswahl ohne `theme_name` geladen - die
   /// Präferenz-Wiederherstellung hängt nicht an der neuesten Migration.
-  /// Laedt die Schalter, die in eigenen Spalten liegen (v0.10.0).
+  /// Lädt die Schalter, die in eigenen Spalten liegen (v0.10.0).
   ///
-  /// BETROFFEN: show_distance (Entfernungsanzeige) und die fuenf
+  /// BETROFFEN: show_distance (Entfernungsanzeige) und die fünf
   /// Push-Spalten. Diese standen bisher nur in `ui_prefs` bzw. wurden
-  /// gar nicht zurueckgelesen - dadurch zeigte der Schalter nach einer
-  /// Neuinstallation "aus", waehrend der Server weiter true hatte.
+  /// gar nicht zurückgelesen - dadurch zeigte der Schalter nach einer
+  /// Neuinstallation "aus", während der Server weiter true hatte.
   ///
-  /// Liest ausschliesslich die EIGENE Zeile. Mit der verengten
+  /// Liest ausschließlich die EIGENE Zeile. Mit der verengten
   /// profiles-Policy (Migration 144) ist das genau die Zeile, die der
   /// angemeldete Nutzer sehen darf.
   Future<Map<String, dynamic>?> fetchOwnSwitches() async {
@@ -221,7 +221,7 @@ class SupabaseDatabaseService {
         if (response == null) return null;
         return Map<String, dynamic>.from(response);
       } catch (e) {
-        // Spalte fehlt (alter Serverstand) - die naechste Stufe ohne
+        // Spalte fehlt (alter Serverstand) - die nächste Stufe ohne
         // die neueren Spalten versuchen.
         if (kDebugMode) {
           debugPrint('[DB] Schalter nicht lesbar: $e');
@@ -364,17 +364,17 @@ class SupabaseDatabaseService {
   // Transit Spark (v0.9.0, Migration 081)
   // =========================================================================
 
-  /// Baut die Parameter fuer den Transit-Spark-Aufruf.
+  /// Baut die Parameter für den Transit-Spark-Aufruf.
   ///
-  /// Getrennt aus [matchProximitySpark], damit der Test pruefen kann,
-  /// was tatsaechlich gesendet wird - ohne einen Server.
+  /// Getrennt aus [matchProximitySpark], damit der Test prüfen kann,
+  /// was tatsächlich gesendet wird - ohne einen Server.
   ///
-  /// BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine Person
+  /// BEFUND (07.11.2026, Betreiber): "Beide Geräte suchen eine Person
   /// bei Transit Spark ... aber gibt keinen Funken." Der Grund war, dass
   /// der eigene Token nie zum Server kam. Die RPC verglich zwei
   /// Sichtungslisten - und die sind bei zwei Personen, die nur einander
-  /// sehen, disjunkt. Mit genau zwei Geraeten war ein Match
-  /// mathematisch unmoeglich (Migration 185).
+  /// sehen, disjunkt. Mit genau zwei Geräten war ein Match
+  /// mathematisch unmöglich (Migration 185).
   ///
   /// Deshalb ist [selfToken] Pflicht: ohne ihn kann der Server nicht
   /// beantworten, ob der andere einen gesehen hat.
@@ -399,7 +399,7 @@ class SupabaseDatabaseService {
       'p_self_tags': selfTags,
       'p_self_note': selfNote?.trim() ?? '',
       'p_self_token': eigener,
-      // BEFUND (11.11.2026): Der ungefaehre Ort, den der Nutzer selbst
+      // BEFUND (11.11.2026): Der ungefähre Ort, den der Nutzer selbst
       // nennt ("Zug, Wagen 3"). Frei eingegeben - das ist kein Standort.
       'p_place_kind': placeKind?.trim() ?? '',
       'p_place_text': placeText?.trim() ?? '',
@@ -410,18 +410,18 @@ class SupabaseDatabaseService {
   /// senden. Match = beidseitiges Signal MIT gemeinsamem Merkmal
   /// (Bestandspipeline erzeugt den Funke), sonst 45 Minuten vorgehalten.
   ///
-  /// BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine Person
+  /// BEFUND (07.11.2026, Betreiber): "Beide Geräte suchen eine Person
   /// bei Transit Spark ... aber gibt keinen Funken." Die RPC verglich
   /// zwei Sichtungslisten - und die sind bei zwei Personen, die nur
-  /// einander sehen, disjunkt. Mit genau zwei Geraeten war ein Match
-  /// mathematisch unmoeglich.
+  /// einander sehen, disjunkt. Mit genau zwei Geräten war ein Match
+  /// mathematisch unmöglich.
   ///
   /// [selfToken] ist deshalb PFLICHT: der eigene Token des Absenders.
-  /// Damit laesst sich "hat der andere mich gesehen?" beantworten
+  /// Damit lässt sich "hat der andere mich gesehen?" beantworten
   /// (Migration 185). Fehlt er, wird nicht gesendet - ein Versuch ohne
-  /// ihn kann keinen Match finden und wuerde den Nutzer mit einem
+  /// ihn kann keinen Match finden und würde den Nutzer mit einem
   /// stillen "kein Match" im Glauben lassen, es sei niemand in der
-  /// Naehe.
+  /// Nähe.
   Future<Map<String, dynamic>> matchProximitySpark({
     required List<String> tokens,
     required List<String> tags,
@@ -447,7 +447,7 @@ class SupabaseDatabaseService {
     // (091, +self_note), 4-Parameter- (084), 3-Parameter- (082) oder
     // 1-Parameter- (081) Signatur haben.
     // PostgREST matcht nach benannten Argumenten - ein Aufruf mit zu
-    // vielen Parametern scheitert mit PGRST202. Zusaetzlich existierten
+    // vielen Parametern scheitert mit PGRST202. Zusätzlich existierten
     // zeitweise MEHRERE Überladungen gleichzeitig (alte Signaturen wurden
     // nie gedroppt, erst 097) - dann antwortet PostgREST mit PGRST203
     // ("could not choose the best candidate"). Beides bedeutet: eine
@@ -457,8 +457,8 @@ class SupabaseDatabaseService {
     // genau eine Überladung trifft.
     //
     // WICHTIG (v0.10.0, Migration 185): Die Kette beginnt mit der
-    // Fassung MIT dem eigenen Token. Faellt der Server auf eine aeltere
-    // Fassung zurueck, kann er keinen Match finden - dann wird das
+    // Fassung MIT dem eigenen Token. Fällt der Server auf eine ältere
+    // Fassung zurück, kann er keinen Match finden - dann wird das
     // dem Nutzer gesagt statt still nichts zu tun (PGRST202/203 =>
     // 'transit_server_too_old').
     final attempts = <Map<String, dynamic>>[
@@ -484,9 +484,9 @@ class SupabaseDatabaseService {
         // Echte Fachfehler (Rate-Limit, Jugendschutz etc.) nicht
         // verschlucken: Nur bei Signatur-Fehlmatch eine Stufe absteigen.
         if (!isRpcSignatureMismatch(e)) rethrow;
-        // Der Server kennt die neue Fassung nicht. Eine aeltere Fassung
-        // koennte zwar aufgerufen werden - sie findet aber nie einen
-        // Match. Das waere ein stilles Scheitern; besser ist eine
+        // Der Server kennt die neue Fassung nicht. Eine ältere Fassung
+        // kännte zwar aufgerufen werden - sie findet aber nie einen
+        // Match. Das wäre ein stilles Scheitern; besser ist eine
         // klare Meldung.
         if (ersterVersuch) {
           throw StateError('transit_server_too_old');
@@ -528,7 +528,7 @@ class SupabaseDatabaseService {
     await _client.rpc('transit_presence_leave');
   }
 
-  /// Soft-Ping senden (1x pro Encounter-Token, 48 h Gueltigkeit).
+  /// Soft-Ping senden (1x pro Encounter-Token, 48 h Gültigkeit).
   Future<void> sendSoftPing({
     required String token,
     required String messageKey,
@@ -545,10 +545,10 @@ class SupabaseDatabaseService {
         'p_token': token,
         'p_message_key': messageKey,
         'p_custom_line': customLine,
-        // BEFUND (11.11.2026): Der Empfaenger kann direkt benannt werden
-        // (die Kandidatenliste liefert die Person). Der Server prueft dann
-        // die Naehe selbst - ein Ping an eine beliebige Person ist damit
-        // nicht moeglich.
+        // BEFUND (11.11.2026): Der Empfänger kann direkt benannt werden
+        // (die Kandidatenliste liefert die Person). Der Server prüft dann
+        // die Nähe selbst - ein Ping an eine beliebige Person ist damit
+        // nicht möglich.
         'p_recipient': recipientId,
         'p_place_kind': placeKind,
         'p_place_text': placeText,
@@ -558,10 +558,10 @@ class SupabaseDatabaseService {
     );
   }
 
-  /// Die Personen in der Naehe, deren Beschreibung passt.
+  /// Die Personen in der Nähe, deren Beschreibung passt.
   ///
   /// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere
-  /// mit der selben Beschreibung geben sollte, dass man dann alle dafuer
+  /// mit der selben Beschreibung geben sollte, dass man dann alle dafür
   /// vorgeschlagen bekommt".
   ///
   /// Die Liste ist pseudonym: Der Name erscheint nur, wenn die Person ihn
@@ -577,13 +577,13 @@ class SupabaseDatabaseService {
     return List<Map<String, dynamic>>.from(res as List<dynamic>);
   }
 
-  /// Eigene offene Soft-Pings (Empfaenger-Sicht).
+  /// Eigene offene Soft-Pings (Empfänger-Sicht).
   Future<List<Map<String, dynamic>>> listMySoftPings() async {
     final res = await _client.rpc('list_my_soft_pings');
     return List<Map<String, dynamic>>.from(res as List<dynamic>);
   }
 
-  /// Soft-Ping annehmen -> Funke ueber Bestandspipeline.
+  /// Soft-Ping annehmen -> Funke über Bestandspipeline.
   Future<Map<String, dynamic>> acceptSoftPing(String id) async {
     final res = await _client.rpc('accept_soft_ping', params: {'p_id': id});
     return Map<String, dynamic>.from(res);
@@ -591,14 +591,14 @@ class SupabaseDatabaseService {
 
   /// Schreibt die eigenen Koordinaten nach profile_locations.
   ///
-  /// v0.10.0: Das ist der eigentliche Ort fuer die exakten Werte. Die
-  /// Tabelle ist per RLS auf den Eigentuemer begrenzt und hat seit
+  /// v0.10.0: Das ist der eigentliche Ort für die exakten Werte. Die
+  /// Tabelle ist per RLS auf den Eigentümer begrenzt und hat seit
   /// Migration 137 einen BEFORE-Trigger, der lat/lng auf das 5-km-Raster
-  /// setzt - unabhaengig davon, was der Client schickt.
+  /// setzt - unabhängig davon, was der Client schickt.
   ///
   /// Der Client snappt trotzdem vorher (LocationPrivacy.snapToGrid): die
   /// Anzeige soll sofort stimmen, und das Raster ist idempotent, der
-  /// zweite Lauf aendert nichts.
+  /// zweite Lauf ändert nichts.
   ///
   /// `upsert` statt insert/update: ein zweiter Speicher-Vorgang (z. B.
   /// GPS-Knopf im Profil-Edit) darf keine Duplikate erzeugen und keine
@@ -606,7 +606,7 @@ class SupabaseDatabaseService {
   ///
   /// Wirft [AppException], wenn nicht eingeloggt. Fehler aus dem Netz
   /// werden NICHT geschluckt: dann bleibt der alte Standort stehen und
-  /// der Aufrufer kann das melden - ein still veralteter Standort waere
+  /// der Aufrufer kann das melden - ein still veralteter Standort wäre
   /// schlimmer als eine sichtbare Fehlermeldung.
   Future<void> saveOwnLocation(double lat, double lng) async {
     final userId = _currentUser?.id;
@@ -828,13 +828,13 @@ class SupabaseDatabaseService {
   }
 
   // =========================================================================
-  // Geraete & Sitzungen ("Wo bin ich eingeloggt?")
+  // Geräte & Sitzungen ("Wo bin ich eingeloggt?")
   // =========================================================================
 
-  /// Alle registrierten Geraete des eigenen Kontos (neueste zuerst).
+  /// Alle registrierten Geräte des eigenen Kontos (neueste zuerst).
   ///
-  /// Jede Zeile wurde vom Geraet selbst angelegt (RLS: nur eigene Zeilen).
-  /// Fehler werden mit bereinigter Ursache geworfen - der Geraete-Screen
+  /// Jede Zeile wurde vom Gerät selbst angelegt (RLS: nur eigene Zeilen).
+  /// Fehler werden mit bereinigter Ursache geworfen - der Geräte-Screen
   /// zeigt sie an, damit "Migration fehlt" vs. "RLS" vs. "Netz"
   /// unterscheidbar sind.
   Future<List<Map<String, dynamic>>> fetchOwnDevices() async {
@@ -849,7 +849,7 @@ class SupabaseDatabaseService {
     }
   }
 
-  /// Registriert/aktualisiert das aktuelle Geraet (Upsert auf
+  /// Registriert/aktualisiert das aktuelle Gerät (Upsert auf
   /// user_id + device_id, siehe Migration 071).
   Future<void> upsertOwnDevice({
     required String deviceId,
@@ -876,7 +876,7 @@ class SupabaseDatabaseService {
     }
   }
 
-  /// Übersetzt PostgREST-/Netzwerkfehler der Geraete-Tabelle in kurze,
+  /// Übersetzt PostgREST-/Netzwerkfehler der Geräte-Tabelle in kurze,
   /// handlungsorientierte Hinweise (keine Secrets, keine Lang-URLs).
   static String _explainDeviceError(Object e) {
     final text = e.toString().toLowerCase();
@@ -915,12 +915,12 @@ class SupabaseDatabaseService {
         'versuchen.';
   }
 
-  /// Loescht ein einzelnes eigenes Geraet aus der Liste.
+  /// Löscht ein einzelnes eigenes Gerät aus der Liste.
   Future<void> deleteOwnDevice(String deviceId) async {
     await _client.from('auth_devices').delete().eq('device_id', deviceId);
   }
 
-  /// Loescht alle GERAETE-Zeilen des eigenen Kontos AUSSER [keepDeviceId].
+  /// Löscht alle GERÄTE-Zeilen des eigenen Kontos AUSSER [keepDeviceId].
   ///
   /// Wird nach `signOut(scope: others)` aufgerufen: Die anderen Sitzungen
   /// sind dann serverseitig invalidiert, ihre Zeilen wandern aus der Liste.
@@ -976,7 +976,7 @@ class SupabaseDatabaseService {
   }
 
   // =========================================================================
-  // Admin-Funktionen (alle RPCs pruefen is_current_user_admin serverseitig,
+  // Admin-Funktionen (alle RPCs prüfen is_current_user_admin serverseitig,
   // fail-closed - der Client-Check ist nur Kosmetik).
   // =========================================================================
 
@@ -989,17 +989,17 @@ class SupabaseDatabaseService {
   Future<List<Map<String, dynamic>>> fetchUserReports() =>
       _adminList('admin_list_user_reports');
 
-  /// Die Mails fuer den Posteingang im Admin-Bereich.
+  /// Die Mails für den Posteingang im Admin-Bereich.
   ///
   /// NUR LESEN: es gibt bewusst keine Antwortfunktion (Migration 168).
-  /// Die RPC prueft serverseitig `is_current_user_admin` - ohne Admin
+  /// Die RPC prüft serverseitig `is_current_user_admin` - ohne Admin
   /// liefert sie nichts.
   Future<List<Map<String, dynamic>>> fetchAdminMailMessages({
     String? category,
     int limit = 100,
   }) async {
     final params = <String, dynamic>{'p_limit': limit};
-    // Ein null-Wert als Parameter waere in PostgREST ein String
+    // Ein null-Wert als Parameter wäre in PostgREST ein String
     // "null" - deshalb weglassen statt mitsenden.
     if (category != null && category.isNotEmpty) {
       params['p_category'] = category;
@@ -1043,15 +1043,15 @@ class SupabaseDatabaseService {
   ///
   /// Das Flag `is_location_suspicious` wird seit Migration 180
   /// korrekt geschrieben, aber von KEINER Abfrage ausgewertet - es
-  /// gibt keinen Filter, der einen auffaelligen Nutzer aus der
+  /// gibt keinen Filter, der einen auffälligen Nutzer aus der
   /// Discovery nimmt. Es ist ein Hinweis, kein Filter.
   ///
   /// Der Admin sieht hier, bei wem der Standort-Check aufgefallen ist
-  /// (Sprung ueber 15 km oder mehr als 300 km/h). Das Verhalten der
-  /// App aendert sich dadurch nicht - die Entscheidung des Nutzers
-  /// (06.11.2026) war ausdruecklich: nur anzeigen.
+  /// (Sprung über 15 km oder mehr als 300 km/h). Das Verhalten der
+  /// App ändert sich dadurch nicht - die Entscheidung des Nutzers
+  /// (06.11.2026) war ausdrücklich: nur anzeigen.
   ///
-  /// Die RPC prueft selbst, ob der Aufrufer Admin ist; ohne Admin
+  /// Die RPC prüft selbst, ob der Aufrufer Admin ist; ohne Admin
   /// liefert sie eine leere Liste.
   Future<List<Map<String, dynamic>>> fetchLocationChecks() =>
       _adminList('admin_list_location_checks');

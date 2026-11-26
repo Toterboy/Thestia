@@ -28,8 +28,8 @@ void main() {
     });
 
     // Die Cache-Frist (Audit 16.11.2026): TURN-Credentials sind
-    // kurzlebig. Liegt der Cache darueber, haelt der Client abgelaufene
-    // Credentials - der Relay-Server weist sie zurueck und der Anruf
+    // kurzlebig. Liegt der Cache darüber, hält der Client abgelaufene
+    // Credentials - der Relay-Server weist sie zurück und der Anruf
     // scheitert.
     test('die Cache-Frist endet mit den TURN-Credentials', () {
       final jetzt = DateTime.now();
@@ -71,8 +71,8 @@ void main() {
       );
     });
 
-    // Der ICE-Rueckfall (Audit 16.11.2026): Die oeffentlichen
-    // STUN-Server sind ueber den Build-Wert ICE_FALLBACK_URLS
+    // Der ICE-Rückfall (Audit 16.11.2026): Die öffentlichen
+    // STUN-Server sind über den Build-Wert ICE_FALLBACK_URLS
     // abschaltbar. Leer = keine fremden STUN-Server - das ist der
     // Zustand, wenn Thestia einen eigenen TURN-Server betreibt.
     test('die ICE-Ersatzliste kommt aus dem Build-Wert', () {
@@ -85,7 +85,7 @@ void main() {
           {'urls': 'stun:b.example.de:3478'},
         ],
       );
-      // Leer heisst: KEINE oeffentlichen STUN-Server.
+      // Leer heißt: KEINE öffentlichen STUN-Server.
       expect(WebRTCService.parseIceFallbackUrls(''), isEmpty);
       expect(WebRTCService.parseIceFallbackUrls('   '), isEmpty);
     });

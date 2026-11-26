@@ -1,20 +1,20 @@
 // Die Einstellungen und ihre Serverspiegelung - der Abgleich war
 // ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/providers/settings/settings_provider.dart 168 offene Zeilen bei 321 Zeilen
 // gesamt. Der Abgleich mit dem Server ist wichtig: nach einer
-// Neuinstallation oder auf einem zweiten Geraet muss der Serverstand
+// Neuinstallation oder auf einem zweiten Gerät muss der Serverstand
 // gelten ("Server gewinnt") - sonst glaubt der Nutzer, eine Einstellung
-// sei aus, waehrend der Server sie weiter hat.
+// sei aus, während der Server sie weiter hat.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Server gewinnt bei den UI-Einstellungen,
-//   * der Blind Mode wird NICHT vom Server uebernommen (er ist fest AN -
-//     ein alter Serverstand wuerde die App wieder ausblenden),
+//   * der Blind Mode wird NICHT vom Server übernommen (er ist fest AN -
+//     ein alter Serverstand würde die App wieder ausblenden),
 //   * "pausiert" blendet das Profil aus,
-//   * die Schalter in eigenen Spalten werden uebernommen,
-//   * fehlende Schluessel lassen den lokalen Stand unangetastet.
+//   * die Schalter in eigenen Spalten werden übernommen,
+//   * fehlende Schlüssel lassen den lokalen Stand unangetastet.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -220,7 +220,7 @@ void main() {
       final container = baueContainer();
       final notifier = container.read(settingsProvider.notifier);
 
-      // Der Vorgabe-Wert ist "aus" - also AN schalten (sonst aendert
+      // Der Vorgabe-Wert ist "aus" - also AN schalten (sonst ändert
       // sich nichts und es gibt nichts zu spiegeln).
       await notifier.setShowDistance(true);
       await Future<void>.delayed(const Duration(milliseconds: 50));

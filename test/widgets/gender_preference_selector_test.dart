@@ -1,6 +1,6 @@
 // Die Geschlechts-Präferenz ("Ich suche").
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/settings/gender_preference_selector.dart 23 offene Zeilen
 // bei 36 % Abdeckung. Die Mehrfachauswahl ist die Voreinstellung, mit der
 // die App filtert - und "Alle" ist dabei die Besonderheit: ein erneuter
@@ -11,7 +11,7 @@
 //   * ein Geschlecht lässt sich an- und abwählen,
 //   * "Alle" wählt alle und hebt die Auswahl beim zweiten Tipp wieder auf,
 //   * die Auswahl geht auch in die Datenbank (sie muss auf anderen
-//     Geraeten dieselbe sein).
+//     Geräten dieselbe sein).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,9 +78,9 @@ void main() {
     return container;
   }
 
-  /// Laesst den entprellten Server-Sync ablaufen (1,5 Sekunden).
+  /// Lässt den entprellten Server-Sync ablaufen (1,5 Sekunden).
   ///
-  /// DER GRUND: Der Sync-Timer laeuft sonst beim Testende noch - der
+  /// DER GRUND: Der Sync-Timer läuft sonst beim Testende noch - der
   /// Test scheitert dann an "Timer is still pending".
   Future<void> syncAblaufenLassen(WidgetTester tester) async {
     await tester.pump(const Duration(seconds: 2));
@@ -151,8 +151,8 @@ void main() {
         reason: '"Alle" heisst alle Geschlechter.',
       );
 
-      // NOCHMAL: Die Auswahl ist weg (sonst koennte man "Alle" nie
-      // abwaehlen).
+      // NOCHMAL: Die Auswahl ist weg (sonst kännte man "Alle" nie
+      // abwählen).
       await tester.tap(alle);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -176,7 +176,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // DER SERVER: Die Auswahl muss auch dort ankommen - sonst sieht der
-      // Nutzer auf einem anderen Geraet etwas anderes.
+      // Nutzer auf einem anderen Gerät etwas anderes.
       for (var i = 0; i < 6; i++) {
         await tester.runAsync(() async {
           await Future<void>.delayed(const Duration(milliseconds: 40));

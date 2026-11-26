@@ -8,8 +8,8 @@ import 'package:thestia/services/auth/supabase_service.dart';
 /// Der Posteingang im Admin-Bereich.
 ///
 /// NUR LESEN. Es gibt absichtlich keine Antwortfunktion: ein Antwortpfad
-/// aus der App heraus braeuchte SMTP-Zugang und eine zweite
-/// Absenderidentitaet - im Kinderschutz waere die Gefahr real, aus dem
+/// aus der App heraus bräuchte SMTP-Zugang und eine zweite
+/// Absenderidentität - im Kinderschutz wäre die Gefahr real, aus dem
 /// falschen Konto zu schreiben (Migration 168).
 ///
 /// Die Mails kommen aus `public.mail_messages`. Zwei Wege speisen sie:
@@ -192,7 +192,7 @@ class _MailKarte extends StatelessWidget {
         ),
       ),
       child: ExpansionTile(
-        // Der Kinderschutz-Bereich faellt auf: dort ist eine Mail das
+        // Der Kinderschutz-Bereich fällt auf: dort ist eine Mail das
         // Wichtigste, was im Admin-Bereich liegen kann.
         backgroundColor: mail['category'] == 'kinderschutz'
             ? theme.colorScheme.errorContainer.withValues(alpha: 0.25)

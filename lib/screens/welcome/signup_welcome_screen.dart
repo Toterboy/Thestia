@@ -23,16 +23,16 @@ class SignupWelcomeScreen extends ConsumerWidget {
     await ref.read(settingsProvider.notifier).markSignupWelcomeSeen();
     if (!context.mounted) return;
 
-    // Minderjaehrige (16 und 17) bekommen direkt nach diesem Screen die
+    // Minderjährige (16 und 17) bekommen direkt nach diesem Screen die
     // Elternfreigabe angeboten (Betreiber-Entscheidung 03.11.2026).
     //
-    // FREIWILLIG: der Screen laesst sich ueberspringen, und nach § 3a JUG
+    // FREIWILLIG: der Screen lässt sich überspringen, und nach § 3a JUG
     // kann eine Person ab dem vollendeten 16. Lebensjahr selbst
     // einwilligen. Deshalb ist das ein Angebot, keine Sperre.
     //
     // Das Alter kommt aus dem Profil (das Geburtsdatum wird bei der
     // Registrierung gesetzt). Ist es noch nicht da, gibt es keinen
-    // Umweg - die Freigabe laesst sich jederzeit auch aus den
+    // Umweg - die Freigabe lässt sich jederzeit auch aus den
     // Einstellungen anfordern.
     final alter = ref.read(profileProvider).age;
     if (alter != null &&

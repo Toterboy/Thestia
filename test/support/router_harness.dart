@@ -1,10 +1,10 @@
-// Der Ersatz fuer die Anbieter, die der Router braucht.
+// Der Ersatz für die Anbieter, die der Router braucht.
 //
-// ANLASS (19.11.2026): Der Rauchtest ueber alle Routen braucht einen
+// ANLASS (19.11.2026): Der Rauchtest über alle Routen braucht einen
 // Container, in dem der Router ein fertig eingerichtetes Konto sieht -
 // und das an ZWEI Stellen (Redirect-Test und Rauchtest).
 //
-// DER WEG: Diese Datei ist der gemeinsame Ort fuer die Ersatz-
+// DER WEG: Diese Datei ist der gemeinsame Ort für die Ersatz-
 // Anbieter. Sie sind handgeschrieben (kein mocktail, kein mockito) -
 // der Test soll zeigen, was die App wirklich tut.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,19 +59,19 @@ class TestKeystore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {
-    // Der Test loescht kein Profil im Keystore.
+    // Der Test löscht kein Profil im Keystore.
   }
 }
 
 /// Der Auth-Dienst als Ersatz.
 ///
-/// DER GRUND: Der echte Dienst holt die Session vom Server. Fuer den
+/// DER GRUND: Der echte Dienst holt die Session vom Server. Für den
 /// Test ist nur wichtig, OB jemand eingeloggt ist - und das entscheidet
 /// der Test selbst, nicht der Server.
 class TestAuth implements AppAuthService {
   /// Meldet der Dienst eine vorhandene Sitzung?
   ///
-  /// DER GRUND: Der echte Dienst holt die Session vom Server. Fuer den
+  /// DER GRUND: Der echte Dienst holt die Session vom Server. Für den
   /// Test ist nur wichtig, OB jemand eingeloggt ist - und das entscheidet
   /// der Test selbst, nicht der Server.
   final bool eingeloggt;
@@ -85,14 +85,14 @@ class TestAuth implements AppAuthService {
   /// Das Profil, das die Registrierung liefert.
   final UserProfile? registriertesProfil;
 
-  /// Wurde das Konto geloescht?
+  /// Wurde das Konto gelöscht?
   ///
-  /// DER GRUND (22.11.2026): Der Test prueft den Loesch-Ablauf - und
-  /// muss wissen, OB die Loeschung wirklich passiert ist (und nicht nur
+  /// DER GRUND (22.11.2026): Der Test prüft den Lösch-Ablauf - und
+  /// muss wissen, OB die Löschung wirklich passiert ist (und nicht nur
   /// der Dialog aufging).
   bool kontoGeloescht = false;
 
-  /// Wirft der Dienst bei der Loeschung einen Fehler?
+  /// Wirft der Dienst bei der Löschung einen Fehler?
   final Object? loeschFehler;
 
   TestAuth({
@@ -106,9 +106,9 @@ class TestAuth implements AppAuthService {
   @override
   Future<bool> restoreSession() async {
     // DER WEG: Die Wiederherstellung antwortet erst nach einem kleinen
-    // Augenblick. Sonst wuerde sie den Auth-Status UEBERSCHreiben, bevor
+    // Augenblick. Sonst würde sie den Auth-Status Überschreiben, bevor
     // der Router ihn liest - und der Server-Sync, der nach der Anmeldung
-    // laeuft, wuerde die Test-Werte zerstoeren.
+    // läuft, würde die Test-Werte zerstören.
     await Future<void>.delayed(const Duration(milliseconds: 20));
     return eingeloggt;
   }
@@ -136,8 +136,8 @@ class TestAuth implements AppAuthService {
 
   @override
   Future<void> deleteAccount() async {
-    // Der Test loescht kein Konto - aber er merkt sich, DASS es
-    // passiert ist (sonst waere der Loesch-Ablauf nicht beweisbar).
+    // Der Test löscht kein Konto - aber er merkt sich, DASS es
+    // passiert ist (sonst wäre der Lösch-Ablauf nicht beweisbar).
     kontoGeloescht = true;
     final fehler = loeschFehler;
     if (fehler != null) throw fehler;

@@ -1,18 +1,18 @@
 // Der Bild-/Audio-Speicher (Supabase Storage) - weitgehend ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/services/server/supabase_storage_service.dart 114 offene Zeilen bei 142
 // Zeilen gesamt. Hier liegen die Profilbilder, die Vorstellungs-Audios
 // und das Verifizierungs-Video - und die Zusage, dass der Server die
 // Bilder NICHT im Klartext sieht.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * das Avatar wird verschluesselt hochgeladen (der Ref traegt den
-//     Schluessel),
+// WAS HIER GEPRÜFT WIRD:
+//   * das Avatar wird verschlüsselt hochgeladen (der Ref trägt den
+//     Schlüssel),
 //   * die weiteren Bilder, das Audio und das Video landen an ihrem Ort,
-//   * das Video landet verschluesselt (.enc),
+//   * das Video landet verschlüsselt (.enc),
 //   * ohne Anmeldung geht gar nichts,
-//   * ein Bild laesst sich wieder laden.
+//   * ein Bild lässt sich wieder laden.
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -64,7 +64,7 @@ void main() {
     test('das Avatar wird verschluesselt hochgeladen', () async {
       final ref = await storage.uploadAvatar(bild);
 
-      // Der Ref besteht aus Pfad, Schluessel und IV.
+      // Der Ref besteht aus Pfad, Schlüssel und IV.
       final teile = ref.split('|');
       expect(
         teile,

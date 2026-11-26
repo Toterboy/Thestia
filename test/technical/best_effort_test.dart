@@ -1,14 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 
-/// Tests fuer den zentralen Helfer fuer Schritte, deren Fehler den
-/// Ablauf nicht stoppen duerfen.
+/// Tests für den zentralen Helfer für Schritte, deren Fehler den
+/// Ablauf nicht stoppen dürfen.
 ///
 /// WARUM (05.11.2026): In der App gab es 94 leere
-/// `catch (_) {}`-Bloecke. Sie verschluckten jeden Fehler spurlos -
+/// `catch (_) {}`-Blöcke. Sie verschluckten jeden Fehler spurlos -
 /// beim Aufräumen nach dem Abmelden war nicht mehr zu sehen, was
 /// schiefging. Der Helfer macht dasselbe wie vorher (der Fehler
-/// stoppt den Ablauf nicht), laesst ihn aber nicht verschwinden.
+/// stoppt den Ablauf nicht), lässt ihn aber nicht verschwinden.
 void main() {
   group('bestEffort', () {
     test('ein erfolgreicher Schritt laeuft durch', () async {
@@ -29,7 +29,7 @@ void main() {
     });
 
     test('ein Fehler wird geschluckt, nicht weitergegeben', () async {
-      // Wichtig: der Aufrufer darf keinen Fehler sehen - sonst waere
+      // Wichtig: der Aufrufer darf keinen Fehler sehen - sonst wäre
       // das Verhalten anders als bei einem leeren catch.
       await expectLater(
         bestEffort('Schritt', () async {

@@ -4,10 +4,10 @@ import 'package:thestia/services/server/crash_journal.dart';
 /// Der Redaktor des Crash-Journals.
 ///
 /// BEFUND 04.11.2026: Das Journal versprach im Kommentar "keine
-/// Nutzertexte, keine Geraete-Serials, keine PII" - speicherte aber
+/// Nutzertexte, keine Geräte-Serials, keine PII" - speicherte aber
 /// den ROHEN Fehlertext und den ROHEN Stack. Ein Supabase-Fehler kann
 /// die E-Mail-Adresse enthalten, das Journal wird dem Nutzer aber per
-/// Bug-Report angeboten - die Daten wuerden also das Geraet verlassen.
+/// Bug-Report angeboten - die Daten würden also das Gerät verlassen.
 void main() {
   group('CrashJournal.redact', () {
     test('entfernt eine E-Mail-Adresse', () {
@@ -72,7 +72,7 @@ void main() {
       const uuid = '46f3f558-b134-4d25-946b-4e052a8ab3b5';
       final redigiert = CrashJournal.redact('Fehler bei $uuid');
 
-      // Die User-ID wird fuer die Bearbeitung des Bug-Reports
+      // Die User-ID wird für die Bearbeitung des Bug-Reports
       // gebraucht ("nenne dazu deine User-ID"). Sie wird nicht
       // redigiert.
       expect(redigiert, contains(uuid));

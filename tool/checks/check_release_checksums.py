@@ -1,19 +1,19 @@
-"""Prueft die SHA-256-Pruefsummen in den Release-Dokumenten.
+"""Prüft die SHA-256-Prüfsummen in den Release-Dokumenten.
 
 BEFUND (11.11.2026): Die Release-Notes hatten einen EIGENEN
-Pruefsummen-Block, den `tool/release/update_release_checksums.py` nicht
+Prüfsummen-Block, den `tool/release/update_release_checksums.py` nicht
 angefasst hat. Nach dem Build 52 standen dort dadurch die Summen
 von Build 51 - und die Release-Notes werden ja auf GitHub
-veroeffentlicht. Dort standen also falsche Summen.
+veröffentlicht. Dort standen also falsche Summen.
 
-Diese Pruefung rechnet die Summen der Dateien neu und vergleicht
+Diese Prüfung rechnet die Summen der Dateien neu und vergleicht
 sie mit ALLEN Release-Dokumenten. Sie findet:
-  * eine falsche Summe (die Datei wurde nach dem Bauen geaendert),
+  * eine falsche Summe (die Datei wurde nach dem Bauen geändert),
   * eine fehlende Datei (ein Artefakt steht nicht im Dokument),
-  * eine erwaehnte Datei, die es nicht gibt.
+  * eine erwähnte Datei, die es nicht gibt.
 
 Der Ordner `releases/` steht nicht im Repository (siehe .gitignore).
-Deshalb laeuft diese Pruefung nur, wenn der Ordner mit dem
+Deshalb läuft diese Prüfung nur, wenn der Ordner mit dem
 gebauten Stand liegt - sonst gibt sie sich zufrieden.
 
 Aufruf::
@@ -31,8 +31,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -50,7 +50,7 @@ ROOT = _projektwurzel()
 
 
 def _release_ordner() -> pathlib.Path:
-    """Der Release-Ordner gehoert zur Version aus pubspec.yaml."""
+    """Der Release-Ordner gehört zur Version aus pubspec.yaml."""
     text = (ROOT / "pubspec.yaml").read_text(encoding="utf-8")
     m = re.search(r"^version:\s*([0-9.]+)\+[0-9]+", text, re.M)
     if not m:
@@ -60,7 +60,7 @@ def _release_ordner() -> pathlib.Path:
 
 RELEASE = _release_ordner()
 
-# Die Dokumente, die Pruefsummen tragen duerfen.
+# Die Dokumente, die Prüfsummen tragen dürfen.
 DOKUMENTE = ["TESTANLEITUNG.md", "RELEASE_NOTES.md"]
 
 MUSTER = re.compile(r"([0-9a-f]{64})\s+(Thestia-v[0-9.]+-[^\s]+)")
@@ -77,8 +77,8 @@ def sha256(datei: pathlib.Path) -> str:
 def main() -> int:
     if not RELEASE.exists():
         # BEFUND (11.11.2026): Der Release-Ordner steht nicht im
-        # Repository. In der CI gibt es deshalb nichts zu pruefen -
-        # das ist kein Fehler, sondern eine nicht moegliche Pruefung.
+        # Repository. In der CI gibt es deshalb nichts zu prüfen -
+        # das ist kein Fehler, sondern eine nicht mögliche Prüfung.
         print("  (kein Release-Ordner: %s - nichts zu pruefen)" % RELEASE)
         return 0
 

@@ -1,19 +1,19 @@
 // Der QR-Scanner (Kurzcode eingeben oder scannen) - bisher ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/qr/qr_scan_screen.dart 211 offene Zeilen bei 212 Zeilen
-// gesamt - der Bildschirm, ueber den man jemanden per Kurzcode
+// gesamt - der Bildschirm, über den man jemanden per Kurzcode
 // kennenlernt, war komplett ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * das Menue zeigt alle Wege (eigener Code, Kontaktkarte, scannen,
+// WAS HIER GEPRÜFT WIRD:
+//   * das Menü zeigt alle Wege (eigener Code, Kontaktkarte, scannen,
 //     Code eingeben),
-//   * ein zu kurzer Code wird abgewiesen (der Nutzer erfaehrt, wie lang
+//   * ein zu kurzer Code wird abgewiesen (der Nutzer erfährt, wie lang
 //     der Code sein muss),
 //   * ein unbekannter Code wird gemeldet,
 //   * der eigene Code wird abgewiesen (man kann sich nicht selbst
 //     liken),
-//   * ein gueltiger Code wird aufgeloest und gelikt.
+//   * ein gültiger Code wird aufgelöst und gelikt.
 //
 // OHNE KAMERA: Der Scan-Weg braucht die Kamera - getestet wird der
 // manuelle Weg (der Code eingeben).
@@ -79,7 +79,7 @@ class _FakeSecureProfileStore extends SecureProfileStore {
 }
 
 void main() {
-  /// Der Ersatz-Server (die Aufloesung kommt von dort).
+  /// Der Ersatz-Server (die Auflösung kommt von dort).
   late FakeSupabaseServer server;
 
   setUpAll(() async {
@@ -194,7 +194,7 @@ void main() {
       await codeEingeben(tester, 'KURZ');
 
       expect(tester.takeException(), isNull);
-      // Der Nutzer erfaehrt, dass der Code zu kurz ist.
+      // Der Nutzer erfährt, dass der Code zu kurz ist.
       expect(
         find.text(L10n.tWithoutContext('qr.enterFullCode')),
         findsOneWidget,
@@ -224,7 +224,7 @@ void main() {
     });
 
     testWidgets('der eigene Code wird abgewiesen', (tester) async {
-      // Der Code gehoert mir selbst.
+      // Der Code gehört mir selbst.
       server.rpcAntworten['find_user_by_code'] = <dynamic>[
         <String, dynamic>{'user_id': 'ich'},
       ];
@@ -249,7 +249,7 @@ void main() {
     testWidgets('ein gueltiger Code wird aufgeloest und gelikt', (
       tester,
     ) async {
-      // Der Code gehoert jemand anderem.
+      // Der Code gehört jemand anderem.
       server.rpcAntworten['find_user_by_code'] = <dynamic>[
         <String, dynamic>{'user_id': '11111111-2222-3333-4444-555555555555'},
       ];
@@ -266,7 +266,7 @@ void main() {
             'Der Like muss beim Server ankommen - der Funke entsteht '
             'sonst nicht.',
       );
-      // Der Nutzer bekommt die Bestaetigung.
+      // Der Nutzer bekommt die Bestätigung.
       expect(find.text(L10n.tWithoutContext('qr.likeSent')), findsOneWidget);
     });
   });

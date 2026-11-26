@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -31,15 +31,15 @@ extension _ChatP2p on _ChatDetailScreenState {
     // - die Nachrichten im Chat sind ja gelesen.
     ref.read(chatProvider.notifier).markRead(widget.matchId);
     // BEFUND (15.11.2026, gefunden von einem Test): Der P2P-Aufbau darf
-    // die RUHE-Schritte nicht blockieren. Ein haengender Connect (z. B.
-    // ein HTTP-Aufruf ohne Antwort im Mobilfunk) liess den ganzen
+    // die RUHE-Schritte nicht blockieren. Ein hängender Connect (z. B.
+    // ein HTTP-Aufruf ohne Antwort im Mobilfunk) ließ den ganzen
     // Bootstrap stehen - damit kamen die RELAY-Nachrichten nicht an,
     // das Partnerprofil wurde nicht nachgeladen und der
     // Eisbrecher-Vorschlag startete nie.
     //
     // DER WEG: Der P2P-Aufbau bekommt eine Grenze. Nach 20 Sekunden
-    // geht es ohne Direktverbindung weiter - der Chat laeuft dann ueber
-    // das Relay, und der Handshake wird spaeter nachgezogen
+    // geht es ohne Direktverbindung weiter - der Chat läuft dann über
+    // das Relay, und der Handshake wird später nachgezogen
     // (_retryHandshakeThrottled).
     await _initP2P().timeout(
       const Duration(seconds: 20),
@@ -52,7 +52,7 @@ extension _ChatP2p on _ChatDetailScreenState {
     // Relay-Nachrichten sofort abholen (Partner hat ggf. bei fehlendem
     // P2P-Kanal zwischengespeichert).
     await _fetchRelay();
-    // Die "fuer alle geloescht"-Hinweise holen (BEFUND 11.11.2026).
+    // Die "für alle gelöscht"-Hinweise holen (BEFUND 11.11.2026).
     await _applyMessageDeletions(widget.matchId);
     // Herzensstärken: Server-Match-Daten (Freundschafts-Badge,
     // Erinnerungs-Momente) im Hintergrund laden.
@@ -70,14 +70,14 @@ extension _ChatP2p on _ChatDetailScreenState {
   /// Getrennt von [dispose], weil dort `ref` nicht mehr benutzt werden
   /// darf. Vor super.dispose() aufgerufen ist es erlaubt.
   void _clearActiveChatFlags() {
-    // Ueber die Notifier (im initState geholt): im dispose() ist `ref`
-    // nicht mehr benutzbar - der Aufruf wuerfe sonst.
+    // Über die Notifier (im initState geholt): im dispose() ist `ref`
+    // nicht mehr benutzbar - der Aufruf würfe sonst.
     //
-    // DER WEG (18.11.2026, gefunden von einem Test): Das Ruecksetzen muss
-    // einen Frame warten. Wird der Bildschirm waehrend eines
-    // Routenwechsels abgeraeumt (der Nutzer geht in den Chat eines
+    // DER WEG (18.11.2026, gefunden von einem Test): Das Rücksetzen muss
+    // einen Frame warten. Wird der Bildschirm während eines
+    // Routenwechsels abgeräumt (der Nutzer geht in den Chat eines
     // anderen), passiert das dispose() MITTEN IM AUFBAU - und Riverpod
-    // verbietet das Aendern eines Providers waehrend des Aufbaus ("Tried
+    // verbietet das Ändern eines Providers während des Aufbaus ("Tried
     // to modify a provider while the widget tree was building"). Die
     // Markierung blieb dann stehen: die Meldungen des Partners kamen
     // nicht an.
@@ -103,8 +103,8 @@ extension _ChatP2p on _ChatDetailScreenState {
     if (!SupabaseService.isInitialized) return;
     try {
       // BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen
-      // fuer das Selbe." Der Push kommt vom DB-Trigger
-      // (notify_push_trigger) - der Like-Insert loest ihn aus. Ein eigener
+      // für das Selbe." Der Push kommt vom DB-Trigger
+      // (notify_push_trigger) - der Like-Insert löst ihn aus. Ein eigener
       // Aufruf von notify-user erzeugte die ZWEITE Meldung.
       await ref.read(findYourMatchServiceProvider).likeUser(match.partner.id);
     } catch (e) {
@@ -194,8 +194,8 @@ extension _ChatP2p on _ChatDetailScreenState {
     _msgSub = _p2p!.incomingMessages.listen((text) {
       if (!mounted) return;
       // DIE HULLE auspacken (BEFUND 11.11.2026): Die ID kommt vom
-      // SENDER. Damit ist dieselbe Nachricht ueber P2P und Relay erkennbar
-      // (kein Doppel-Eintrag) und "fuer alle loeschen" erreicht auch die
+      // SENDER. Damit ist dieselbe Nachricht über P2P und Relay erkennbar
+      // (kein Doppel-Eintrag) und "für alle löschen" erreicht auch die
       // andere Seite.
       final draht = parseEnvelope(text);
       final msgId = draht.fromNewFormat ? draht.id : Message.newId('p2p');

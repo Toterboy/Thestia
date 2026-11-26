@@ -1,9 +1,9 @@
 // Der Teil '_PrimaryActionButton'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -37,10 +37,10 @@ class _PrimaryActionButton extends StatelessWidget {
         style: FilledButton.styleFrom(
           // BEFUND (07.11.2026, Betreiber): "Dating-Hour-Wartebereich
           // mit Theme-Farbe." Der Wartezustand war fest grau - in einem
-          // App-Bild, in dem die Farbe das Thema traegt, sah das
+          // App-Bild, in dem die Farbe das Thema trägt, sah das
           // abgeschnitten aus. Jetzt kommt die Wartefarbe aus dem
           // Theme (primaryContainer), der Text aus dem Theme
-          // (onPrimaryContainer) - und die Farbe folgt dem gewaehlten
+          // (onPrimaryContainer) - und die Farbe folgt dem gewählten
           // Theme mit.
           backgroundColor: aktiv ? color : scheme.primaryContainer,
           foregroundColor: aktiv

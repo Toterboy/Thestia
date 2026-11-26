@@ -6,30 +6,30 @@
 
 // Der Transit-Radar (Transit Spark) - bisher ungetestet.
 //
-// ANLASS (13.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (13.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/transit_radar_screen.dart 936 offene Zeilen. Der
 // Bildschirm ist der Kern von Transit Spark ("Blicke getauscht, dich
 // nicht getraut?") - und er wurde nie gerendert.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * die Alterssperre ist fail-closed (ohne Geburtsdatum gesperrt),
-//   * beim ersten Oeffnen fragt die App, ob der Name sichtbar sein soll,
+//   * beim ersten Öffnen fragt die App, ob der Name sichtbar sein soll,
 //   * der Start fragt zuerst nach der eigenen Beschreibung,
-//   * "Blicke getauscht" oeffnet die Merkmalsauswahl und sendet die Tags,
+//   * "Blicke getauscht" öffnet die Merkmalsauswahl und sendet die Tags,
 //   * die Kandidatenliste erscheint und der Zuwink meldet Erfolg/Fehlschlag,
-//   * der Ort wird uebernommen (frei gewaehlt - KEIN Standort),
+//   * der Ort wird übernommen (frei gewählt - KEIN Standort),
 //   * der Name-Schalter speichert die Entscheidung.
 //
 // OHNE FUNK, OHNE SERVER: Das BLE-Starten und der Server werden durch
 // einen Fake-Notifier ersetzt (kein Bluetooth, kein Netz). Die
 // Merkmalsauswahl selbst ist das ECHTE Widget der App - sie wird nicht
-// nachgebaut, sonst wuerde der Test nur Flutter pruefen und nicht die
+// nachgebaut, sonst würde der Test nur Flutter prüfen und nicht die
 // App.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/transit/transit_models.dart';
@@ -49,9 +49,9 @@ void main() {
     // CI-Runner das echte und findet nichts.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
-    // DER SERVER: Der Posteingang der Grueesse laeuft ueber die Datenbank
+    // DER SERVER: Der Posteingang der Grüesse läuft über die Datenbank
     // (list_my_soft_pings). Ohne Server bleibt der Posteingang leer -
-    // und genau den Bereich prueft kein Test.
+    // und genau den Bereich prüft kein Test.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -68,12 +68,12 @@ void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    // Der Server beginnt ohne Gruesse - jeder Test stellt seine eigenen.
+    // Der Server beginnt ohne Grüße - jeder Test stellt seine eigenen.
     server.rpcAntworten['list_my_soft_pings'] = <dynamic>[];
     server.rpcAntworten.remove('accept_soft_ping');
     server.schreibvorgaenge.clear();
     // DER KEYSTORE: Der Bildschirm liest die Einstellungen (Altersspanne
-    // und Suchradius) aus dem verschluesselten Speicher. Ohne diesen
+    // und Suchradius) aus dem verschlüsselten Speicher. Ohne diesen
     // Mock ruft der Test auf dem CI-Runner das echte Plugin - und das
     // findet dort keine libsecret-Sitzung.
     mockKeystore();
@@ -84,7 +84,7 @@ void main() {
       ///
       /// [grund] ist der Fehlergrund, den der echte Dienst liefert
       /// ([TransitBleService.lastError]) - der Bildschirm liest ihn
-      /// von dort, um die passende Erklaerung zu zeigen.
+      /// von dort, um die passende Erklärung zu zeigen.
       Future<FakeTransit> starteFehlgeschlagen(
         WidgetTester tester, {
         required String grund,
@@ -101,7 +101,7 @@ void main() {
         await aufbauen(tester, container, router);
         await startTippen(tester);
         // Der Start fragt zuerst nach der eigenen Beschreibung.
-        // Wichtig: es muessen MINDESTENS ZWEI Merkmale sein (Migration
+        // Wichtig: es müssen MINDESTENS ZWEI Merkmale sein (Migration
         // 149) - mit einem einzigen bleibt der Senden-Knopf gesperrt und
         // der Start kommt nie zustande.
         await merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
@@ -158,7 +158,7 @@ void main() {
 
         expect(transit.starts, greaterThan(0));
         expect(tester.takeException(), isNull);
-        // Auch fuer "Bluetooth ist aus" gibt es eine eigene Erklaerung.
+        // Auch für "Bluetooth ist aus" gibt es eine eigene Erklärung.
         expect(find.byType(AlertDialog), findsOneWidget);
       });
     });
@@ -184,9 +184,9 @@ void main() {
       expect(find.text('Blicke getauscht'), findsOneWidget);
       // Die Ortseingabe steht bereit.
       expect(find.byKey(const Key('transit.placeText')), findsOneWidget);
-      // Der Schalter fuer den Namen steht da.
+      // Der Schalter für den Namen steht da.
       expect(find.text('Namen beim Zuwinken zeigen'), findsOneWidget);
-      // Und die Datenschutz-Erklaerung nicht vergessen.
+      // Und die Datenschutz-Erklärung nicht vergessen.
       expect(find.text('Wie funktioniert das?'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
@@ -207,7 +207,7 @@ void main() {
       await aufbauen(tester, container, router);
 
       expect(tester.takeException(), isNull);
-      // Die Sperre wird erklaert, nicht kommentarlos gezeigt.
+      // Die Sperre wird erklärt, nicht kommentarlos gezeigt.
       expect(find.text('Transit Spark nur ab 18'), findsOneWidget);
       // Und es gibt KEINEN Start-Knopf (fail-closed).
       expect(find.text('Radar aktivieren'), findsNothing);
@@ -235,7 +235,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Soll dein Name sichtbar sein?'), findsOneWidget);
 
-      // "Nein" heisst: anonym bleiben.
+      // "Nein" heißt: anonym bleiben.
       await tester.tap(find.text('Nein, bleib anonym'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -319,7 +319,7 @@ void main() {
       await aufbauen(tester, container, router);
 
       // Erst den Radar starten - "Blicke getauscht" ist nur im laufenden
-      // Radar moeglich.
+      // Radar möglich.
       await startTippen(tester);
       await merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
       await sendenTippen(tester);
@@ -331,7 +331,7 @@ void main() {
 
       // Die Merkmalsauswahl geht auf - mit der Frage "Wer war das?".
       expect(find.text('Wer war das?'), findsOneWidget);
-      // Der Zaehler zeigt noch nichts.
+      // Der Zähler zeigt noch nichts.
       expect(find.text('0 gewaehlt'.replaceAll('ae', 'ä')), findsOneWidget);
 
       await merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
@@ -550,7 +550,7 @@ void main() {
       // Der Untertitel nennt die Merkmale UND den Ort in einem Text
       // ("hemd - Wagen 3") - deshalb "enthält" statt "ist gleich".
       // (Der Ort steht auch im Platzhalter des Eingabefelds - deshalb
-      // muss der Text vollstaendig passen.)
+      // muss der Text vollständig passen.)
       expect(find.textContaining('hemd - Wagen 3'), findsOneWidget);
 
       await knopfTippen(tester, 'Zuwinken');
@@ -620,7 +620,7 @@ void main() {
 
       await aufbauen(tester, container, router);
 
-      // Die Art des Ortes wird als Chip gewaehlt.
+      // Die Art des Ortes wird als Chip gewählt.
       await tester.ensureVisible(find.text('Zug'));
       await tester.pump();
       await tester.tap(find.text('Zug'));
@@ -661,7 +661,7 @@ void main() {
       expect(schalter, findsOneWidget);
 
       // Der Schalter steht jetzt in der Karte mit der Erinnerung
-      // (BEFUND 14.11.2026: "Transit Spark Screen sieht ueberfuellt und
+      // (BEFUND 14.11.2026: "Transit Spark Screen sieht überfüllt und
       // durcheinander aus") - er liegt damit weiter unten auf der
       // Seite. Ohne Scrollen geht der Tipp ins Leere.
       await tester.ensureVisible(schalter);
@@ -681,7 +681,7 @@ void main() {
         isTrue,
         reason: 'Nach dem Schalter ist die Frage entschieden.',
       );
-      // Und die Grenze wird genannt - ein Schalter ohne diese Erklaerung
+      // Und die Grenze wird genannt - ein Schalter ohne diese Erklärung
       // erzeugt eine falsche Sicherheit.
       expect(
         find.textContaining('erkennt dich trotzdem'),
@@ -700,7 +700,7 @@ void main() {
       mockBluetooth();
       resetAdvertisingZaehler();
 
-      // OHNE den Fake-Notifier: hier laeuft der echte Transit-Notifier
+      // OHNE den Fake-Notifier: hier läuft der echte Transit-Notifier
       // (er spricht den Bluetooth-Dienst an).
       final container = transitRadarScreenContainer();
       final router = transitRadarScreenRouter();
@@ -723,14 +723,14 @@ void main() {
             'sendet der Radar nichts.',
       );
 
-      // Der Container schliesst den Transit-Notifier - und damit die
+      // Der Container schließt den Transit-Notifier - und damit die
       // Timer (der 45-Minuten-Countdown und der Scan-Puls). Das muss
-      // VOR dem Testende passieren: die Pruefung auf offene Timer laeuft
+      // VOR dem Testende passieren: die Prüfung auf offene Timer läuft
       // noch vor den tearDowns.
       container.dispose();
 
       // Der Scan-Aufruf des Plugins hat einen eigenen Timer (12 s) - der
-      // laeuft hier einfach ab.
+      // läuft hier einfach ab.
       await tester.pump(const Duration(seconds: 13));
     });
     group('Die Begegnungsliste', () {
@@ -756,11 +756,11 @@ void main() {
         await radarStarten(tester);
 
         expect(tester.takeException(), isNull);
-        // Beide Geraete stehen da - mit dem Alter ("gerade eben", "vor
+        // Beide Geräte stehen da - mit dem Alter ("gerade eben", "vor
         // 5 Min.").
         expect(find.text('gerade eben'), findsOneWidget);
         expect(find.text('vor 5 Min.'), findsOneWidget);
-        // Und beide kann der Nutzer gruessen.
+        // Und beide kann der Nutzer grüßen.
         expect(
           find.text(L10n.tWithoutContext('transit.greet')),
           findsNWidgets(2),
@@ -791,7 +791,7 @@ void main() {
         // BEFUND (18.11.2026, gefunden von einem Test): Der Text benutzte
         // "%count"/"%shown" - die App ersetzt aber "{count}"/"{shown}".
         // Der Nutzer sah deshalb literally "%count Personen in der
-        // Naehe - du siehst %shown davon.".
+        // Nähe - du siehst %shown davon.".
         expect(
           find.textContaining('%count'),
           findsNothing,
@@ -845,7 +845,7 @@ void main() {
         await aufbauen(tester, container, router);
         await radarStarten(tester);
 
-        // Der Gruss-Knopf oeffnet das Blatt mit den Vorschlaegen.
+        // Der Gruß-Knopf öffnet das Blatt mit den Vorschlägen.
         await knopfTippen(tester, L10n.tWithoutContext('transit.greet'));
 
         expect(tester.takeException(), isNull);
@@ -859,7 +859,7 @@ void main() {
           findsOneWidget,
         );
 
-        // Einen Vorschlag waehlen und senden.
+        // Einen Vorschlag wählen und senden.
         await tester.tap(
           find.text(L10n.tWithoutContext('transit.preset.wave')),
         );
@@ -882,7 +882,7 @@ void main() {
               'nie, dass jemand in der Naehe war.',
         );
         expect(transit.gruesse.first.messageKey, 'wave');
-        // Und der Nutzer bekommt die Bestaetigung.
+        // Und der Nutzer bekommt die Bestätigung.
         expect(find.textContaining('Gruß gesendet'), findsWidgets);
 
         await tester.pumpWidget(const SizedBox());

@@ -57,7 +57,7 @@ void main() {
     test(
       'KRITISCH: gleicher Seed -> gleiches Ergebnis (Chips springen nicht)',
       () {
-        // Wenn der Seed pro build neu gewuerfelt wuerde, wuerde der Chip unter
+        // Wenn der Seed pro build neu gewürfelt würde, würde der Chip unter
         // dem Finger weiterspringen. Deshalb muss die Funktion bei gleichem
         // Seed exakt dasselbe liefern.
         for (int seed = 0; seed < 50; seed++) {

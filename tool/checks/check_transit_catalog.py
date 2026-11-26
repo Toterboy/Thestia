@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prueft, dass die App und der Server dieselben Merkmale kennen.
+"""Prüft, dass die App und der Server dieselben Merkmale kennen.
 
 WARUM (07.11.2026, Betreiber): "Zudem soll bei Haarfarben auch noch
 sowas wie lila usw. sein."
@@ -10,8 +10,8 @@ zweimal - im Server (public.transit_tag_catalog) und in der App
 ihre Whitelist aus der Server-Tabelle; ein Wert, den der Server nicht
 kennt, wird beim Senden STILLSCHWEIGEND weggefiltert.
 
-Das heisst: Bietet die App eine Farbe an, die der Server nicht kennt,
-faellt das dem Nutzer nicht auf - er waehlt sie, sie wird gesendet und
+Das heißt: Bietet die App eine Farbe an, die der Server nicht kennt,
+fällt das dem Nutzer nicht auf - er wählt sie, sie wird gesendet und
 verschwindet. Der Funke kommt nie. Das ist kein Fehler, den man beim
 Testen sieht, sondern einer, den man nur an der Quelle findet.
 
@@ -24,8 +24,8 @@ Aufruf (braucht eine verbundene Datenbank)::
 
     python tool/checks/check_transit_catalog.py
 
-Ohne Datenbank sagt das Skript, was es nicht pruefen konnte - es
-behauptet nicht, es sei gruen.
+Ohne Datenbank sagt das Skript, was es nicht prüfen konnte - es
+behauptet nicht, es sei grün.
 """
 
 import json
@@ -39,8 +39,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -113,7 +113,7 @@ def lies_app():
     seinen Slug und (wenn er Farben kennt) seine Palette.
 
     Wichtig: Die Slugs werden NICHT geraten. Ein geratener Slug
-    ("eye_color" statt "eyes_color") wuerde einen Fehler melden, den
+    ("eye_color" statt "eyes_color") würde einen Fehler melden, den
     es nicht gibt - und einen echten Fehler verdecken.
     """
     text = MODEL.read_text(encoding="utf-8")
@@ -132,16 +132,16 @@ def lies_app():
         "hairColors": liste("hairColors"),
         "eyeColors": liste("eyeColors"),
         "clothingColors": liste("clothingColors"),
-        # Die Wertelisten (Migration 187): Haarlaenge und Frisur.
+        # Die Wertelisten (Migration 187): Haarlänge und Frisur.
         "hairLengthValues": liste("hairLengthValues"),
         "hairStyleValues": liste("hairStyleValues"),
     }
 
-    # Der Katalog-Block: JEDER TransitTag-Eintrag zaehlt - auch die
+    # Der Katalog-Block: JEDER TransitTag-Eintrag zählt - auch die
     # ohne Farbpalette (helm, brille, rucksack ...) und auch die, die
     # einzeilig notiert sind (TransitTag('helm', Icons.motorcycle, ...)).
     # Vorher wurden nur die mit "colorizable" oder "allowedColors"
-    # gezaehlt und nur die mehrzeiligen gefunden - die App sah dadurch
+    # gezählt und nur die mehrzeiligen gefunden - die App sah dadurch
     # kleiner aus als sie ist, und das Gate meldete Merkmale, die sie
     # sehr wohl anbietet.
     merkmale = {}

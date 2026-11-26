@@ -1,14 +1,14 @@
 // Das Match-Quiz (bisher ungetestet - 0 %).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/services/dating_hour/quiz_service.dart 0 %.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Zustand wird vom Server gelesen,
 //   * eine Frage wird geholt,
 //   * im Cooldown kommt der Cooldown-Hinweis (nicht eine Frage),
 //   * die Antwort wird abgegeben und ausgewertet,
-//   * ein Fehler fuehrt zu null (kein Absturz, kein falsches Ergebnis).
+//   * ein Fehler fährt zu null (kein Absturz, kein falsches Ergebnis).
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
 // test/support/fake_supabase_server.dart.
@@ -100,7 +100,7 @@ void main() {
       final frage = await service.startAttempt(42);
 
       expect(frage, isNotNull);
-      // Der Marker "__cooldown__" sagt der Oberflaeche: das ist keine
+      // Der Marker "__cooldown__" sagt der Oberfläche: das ist keine
       // Frage, sondern eine Wartezeit.
       expect(frage!.prompt, '__cooldown__');
       expect(frage.options.first, '120');
@@ -136,7 +136,7 @@ void main() {
     test('ein Fehler fuehrt zu null', () async {
       server.antwortetMitFehler = true;
 
-      // Kein Absturz und KEIN erfundenes Ergebnis: die Oberflaeche
+      // Kein Absturz und KEIN erfundenes Ergebnis: die Oberfläche
       // entscheidet selbst, was ein Ausfall bedeutet.
       expect(await service.getState(42), isNull);
       expect(await service.startAttempt(42), isNull);

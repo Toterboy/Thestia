@@ -14,8 +14,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -49,9 +49,9 @@ def has(rel: str, *needles: str) -> bool:
     f = ROOT / rel
     if not f.exists():
         return False
-    # Die Datei KOMPLETT lesen: Die grossen Bildschirme sind in
+    # Die Datei KOMPLETT lesen: Die großen Bildschirme sind in
     # `parts/` geteilt, die Texte in `l10n/strings/`. Ohne die Teile
-    # waere der Code "nicht vorhanden", nur weil er umgezogen ist.
+    # wäre der Code "nicht vorhanden", nur weil er umgezogen ist.
     quellen = [read(f)]
     teile = f.parent / 'parts'
     if teile.exists():
@@ -78,8 +78,8 @@ QUIZ_HELPERS = ('quiz_shuffle_for_match', 'quiz_pick_personalized',
                 'quiz_personal_distractors', 'quiz_stopwords',
                 'quiz_interest_catalog')
 
-# Migration 123 loest die Rechte DYNAMISCH ueber pg_proc/string_to_array
-# auf. Grund: `REVOKE ... FROM anon` greift nicht (Rechte werden ueber die
+# Migration 123 löst die Rechte DYNAMISCH über pg_proc/string_to_array
+# auf. Grund: `REVOKE ... FROM anon` greift nicht (Rechte werden über die
 # Pseudo-Rolle PUBLIC vererbt), und `quiz_pick_personalized` hat zwei
 # Overloads, die eine Signatur-Liste verfehlt hat. Beide Fehler sind beim
 # ersten Push aufgetreten - die statische Form ist deshalb verboten.
@@ -128,20 +128,20 @@ check("v_bad IS NOT NULL THEN" in all_sql or 'RAISE EXCEPTION' in all_sql,
 # 1b) Verifikationssperre muss serverseitig gelten
 # =====================================================================
 #
-# BEFUND (Security-Audit 31.10.2026): Die Verifikationspflicht fuer
+# BEFUND (Security-Audit 31.10.2026): Die Verifikationspflicht für
 # Find your Spark, Dating Hour und Transit Spark wurde an GENAU EINER
-# Stelle geprueft - im Client, im Modus-Auswahlbildschirm. Find your
-# Spark ist serverseitig geschuetzt (Migration 156), Dating Hour und
+# Stelle geprüft - im Client, im Modus-Auswahlbildschirm. Find your
+# Spark ist serverseitig geschützt (Migration 156), Dating Hour und
 # Transit Spark nicht: in deren RPCs kommt is_verified nirgends vor.
 #
-# Ein Client-Gate ist keine Zugriffskontrolle: die RPCs sind fuer jeden
+# Ein Client-Gate ist keine Zugriffskontrolle: die RPCs sind für jeden
 # mit eigenem JWT aufrufbar. Die Regel hier verhindert, dass das
 # erneut so gebaut wird.
 #
-# Geprueft wird deshalb: JEDE Migration, die eine der betroffenen
-# Funktionen neu definiert, muss die Verifikation im Funktionskoerper
-# pruefen. Das ist robust gegen eine spaetere, aeltere Fassung einer
-# Funktion - die spaeteste Definition gewinnt in PostgreSQL.
+# Geprüft wird deshalb: JEDE Migration, die eine der betroffenen
+# Funktionen neu definiert, muss die Verifikation im Funktionskörper
+# prüfen. Das ist robust gegen eine spätere, ältere Fassung einer
+# Funktion - die späteste Definition gewinnt in PostgreSQL.
 
 VERIFIKATIONS_PFLICHT = [
     ('join_dating_hour', 'Dating Hour (Opt-in)'),
@@ -152,31 +152,31 @@ VERIFIKATIONS_PFLICHT = [
 
 def _neueste_definition(sql: str, fn_name: str,
                        _gesehen: frozenset = frozenset()) -> str:
-    """Der Funktionskoerper der LETZTEN Definition von fn_name.
+    """Der Funktionskörper der LETZTEN Definition von fn_name.
 
     PostgreSQL nimmt bei CREATE OR REPLACE die letzte Definition. Ein
-    aelterer, sicherer Koerper wuerde sonst den Check bestehen, obwohl
-    die aktive Funktion ungeschuetzt ist.
+    älterer, sicherer Körper würde sonst den Check bestehen, obwohl
+    die aktive Funktion ungeschützt ist.
 
-    ZWEI AUFLOESUNGEN (beide noetig, seit Migration 176):
+    ZWEI AUFLÖSUNGEN (beide nötig, seit Migration 176):
 
     1) RENAME: Eine Funktion kann per
        "ALTER FUNCTION ... RENAME TO ..." umbenannt worden sein. Ihr
-       Koerper steht dann in der SQL weiterhin unter dem ALTEN Namen.
+       Körper steht dann in der SQL weiterhin unter dem ALTEN Namen.
 
-    2) DELEGATION: Eine Funktion kann eine duenne Huelle sein, die an
-       eine andere weiterreicht. Die Sicherheitspruefungen stehen dann
+    2) DELEGATION: Eine Funktion kann eine dünne Hülle sein, die an
+       eine andere weiterreicht. Die Sicherheitsprüfungen stehen dann
        in der anderen.
     """
-    # Endlosschleifen verhindern (Huelle -> Original -> Huelle).
+    # Endlosschleifen verhindern (Hülle -> Original -> Hülle).
     if fn_name.lower() in _gesehen:
         return ''
     _gesehen = _gesehen | {fn_name.lower()}
 
-    # (1) Wurde die Funktion umbenannt? Dann steht ihr Koerper unter
-    #     dem urspruenglichen Namen - und zwar in dem Teil der SQL,
+    # (1) Wurde die Funktion umbenannt? Dann steht ihr Körper unter
+    #     dem ursprünglichen Namen - und zwar in dem Teil der SQL,
     #     der VOR dem RENAME liegt (danach gibt es nur noch die
-    #     duenne Huelle unter dem neuen Namen).
+    #     dünne Hülle unter dem neuen Namen).
     ziel = fn_name
     suchtext = sql
     umbenannt = re.search(
@@ -195,18 +195,18 @@ def _neueste_definition(sql: str, fn_name: str,
     if not treffer:
         return ''
     start = treffer[-1].start()
-    # Bis zum Ende des Funktionskoerpers.
+    # Bis zum Ende des Funktionskörpers.
     #
-    # ACHTUNG (02.11.2026): Es gibt zwei Schreibweisen fuer das
+    # ACHTUNG (02.11.2026): Es gibt zwei Schreibweisen für das
     # Dollar-Delimiter - $$ ... $$ und $name$ ... $name$ (z.B.
     # $function$ oder $BODY$). Der Helfer erkannte nur $$ und griff
-    # deshalb bei einer Funktion mit $function$ das FALSCHE Stueck:
-    # es landete im nachfolgenden DO-Block statt im Funktionskoerper.
+    # deshalb bei einer Funktion mit $function$ das FALSCHE Stück:
+    # es landete im nachfolgenden DO-Block statt im Funktionskörper.
     #
-    # Das war kein theoretischer Fehler: die Pruefung "gibt
-    # Minderjaehrigen keine Entfernung" schlug dadurch fehl, obwohl
-    # die Migration die Bedingung enthaelt - und ein Check, der an
-    # der falschen Stelle sucht, prueft gar nichts.
+    # Das war kein theoretischer Fehler: die Prüfung "gibt
+    # Minderjährigen keine Entfernung" schlug dadurch fehl, obwohl
+    # die Migration die Bedingung enthält - und ein Check, der an
+    # der falschen Stelle sucht, prüft gar nichts.
     rest = suchtext[start:]
     dollar = re.search(r'\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$', rest)
     if not dollar:
@@ -218,13 +218,13 @@ def _neueste_definition(sql: str, fn_name: str,
 
     # Migration 176 (04.11.2026): Mehrere Funktionen wurden umbenannt
     # (ALTER FUNCTION ... RENAME TO ..._ohne_nutzungszeit) und davor
-    # eine duenne Huelle gesetzt, die das Gate erzwingt. Die
-    # Sicherheitspruefungen stehen im umbenannten Original.
+    # eine dünne Hülle gesetzt, die das Gate erzwingt. Die
+    # Sicherheitsprüfungen stehen im umbenannten Original.
     #
-    # Ohne diese Aufloesung wuerde der Check nur die Huelle sehen und
-    # eine Luecke melden, die es nicht gibt. Dass die Huelle das Gate
+    # Ohne diese Auflösung würde der Check nur die Hülle sehen und
+    # eine Lücke melden, die es nicht gibt. Dass die Hülle das Gate
     # wirklich aufruft, ist getrennt abgesichert (Invariante
-    # "match_dating_hour_round prueft den Aufrufer NUR, wenn er selbst
+    # "match_dating_hour_round prüft den Aufrufer NUR, wenn er selbst
     # handelt").
     delegiert = re.search(r'PERFORM\s+public\.([a-z0-9_]+)\s*\(', koerper, re.I)
     if delegiert and delegiert.group(1).lower() != fn_name.lower():
@@ -241,16 +241,16 @@ for fn_name, beschreibung in VERIFIKATIONS_PFLICHT:
               f'DB: {beschreibung} - Definition von {fn_name} gefunden',
               'keine CREATE OR REPLACE-Funktion in den Migrationen')
         continue
-    # Die Verifikation kann direkt geprueft werden (is_verified) oder
-    # ueber eine Hilfsfunktion. Beides zaehlt - aber nur, wenn die
-    # genannte Funktion die Verifikation auch WIRKLICH prueft.
+    # Die Verifikation kann direkt geprüft werden (is_verified) oder
+    # über eine Hilfsfunktion. Beides zählt - aber nur, wenn die
+    # genannte Funktion die Verifikation auch WIRKLICH prüft.
     #
-    # transit_spark_is_adult prueft NUR das Alter (Alter ohne
-    # Verifikation - die Reihenfolge ist hier wichtig). Deshalb zaehlt
-    # sie NICHT als Verifikationspruefung; sonst wuerde die Regel den
-    # Ist-Zustand als erfuellt melden.
+    # transit_spark_is_adult prüft NUR das Alter (Alter ohne
+    # Verifikation - die Reihenfolge ist hier wichtig). Deshalb zählt
+    # sie NICHT als Verifikationsprüfung; sonst würde die Regel den
+    # Ist-Zustand als erfüllt melden.
     #
-    # verification_granted ist dagegen die Verifikationspruefung
+    # verification_granted ist dagegen die Verifikationsprüfung
     # selbst (Migration 161): sie liest is_verified aus dem Profil.
     prueft = ('is_verified' in koerper
                or 'verification_granted' in koerper)
@@ -258,19 +258,19 @@ for fn_name, beschreibung in VERIFIKATIONS_PFLICHT:
           f'DB: {beschreibung} prueft die Verifikation serverseitig',
           f'letzte Definition von {fn_name} ohne is_verified')
 
-    # ZUSAETZLICH: Bei den Dating-Hour-Funktionen muss die
+    # ZUSÄTZLICH: Bei den Dating-Hour-Funktionen muss die
     # TEILNEHMERPRUEFUNG dastehen - nicht nur die des Aufrufers.
     #
-    # WARUM (04.11.2026): Ein Aufrufer-Check allein genuegt nicht.
-    # Die Paarung laeuft ueber den Cron, wo es gar keinen Aufrufer
+    # WARUM (04.11.2026): Ein Aufrufer-Check allein genügt nicht.
+    # Die Paarung läuft über den Cron, wo es gar keinen Aufrufer
     # gibt (auth.uid() ist NULL) - dort wurde die ganze Runde
     # abgebrochen. Und die eigentliche Gefahr ist ein Match
     # zwischen einer verifizierten und einer unverifizierten Person:
-    # da muss die Verifikation beider TEILNEHMER geprueft werden.
+    # da muss die Verifikation beider TEILNEHMER geprüft werden.
     if fn_name == 'match_dating_hour_round':
-        # Die Paarung: beide TEILNEHMER muessen verifiziert sein. Ein
-        # Aufrufer-Check allein genuegt nicht - die Paarung laeuft
-        # ueber den Cron, wo es gar keinen Aufrufer gibt.
+        # Die Paarung: beide TEILNEHMER müssen verifiziert sein. Ein
+        # Aufrufer-Check allein genügt nicht - die Paarung läuft
+        # über den Cron, wo es gar keinen Aufrufer gibt.
         check('verification_granted(v_user.user_id)' in koerper
               or 'verification_granted(q.user_id)' in koerper,
               'DB: Die Paarung prueft die Verifikation der TEILNEHMER '
@@ -279,8 +279,8 @@ for fn_name, beschreibung in VERIFIKATIONS_PFLICHT:
               f'letzte Definition von {fn_name} ohne Teilnehmerpruefung')
     elif fn_name == 'join_dating_hour':
         # Das Beitreten: hier ist der Aufrufer die betroffene Person.
-        # Wichtig ist, dass die Pruefung NICHT wegfaellt - deshalb wird
-        # sie hier ausdruecklich verlangt.
+        # Wichtig ist, dass die Prüfung NICHT wegfällt - deshalb wird
+        # sie hier ausdrücklich verlangt.
         check('verification_granted' in koerper,
               'DB: Das Beitreten prueft die Verifikation der Person, '
               'die beitritt',
@@ -289,16 +289,16 @@ for fn_name, beschreibung in VERIFIKATIONS_PFLICHT:
 # Die Geburtsdatum-Angabe darf nicht still auf 26-Jahre fallen:
 # ohne birth_date muss das Alter UNBEKANNT sein, nicht erfunden.
 #
-# Erlaubt sind zwei Schreibweisen fuer "unbekannt":
+# Erlaubt sind zwei Schreibweisen für "unbekannt":
 #   * birth_date ist NULL (NULLIF / NULL direkt)
 #   * birth_date wird gar nicht gesetzt (die Spalte fehlt im INSERT)
 #
 # Verboten ist der erfundene Stichtag 2000-01-01 (Alter 26).
 handle_new_user = _neueste_definition(all_sql, 'handle_new_user')
 if handle_new_user:
-    # Nur der AUSFUEHRENDE Teil zaehlt. Die Kommentare beschreiben
-    # den alten Wert (und die Bereinigung per UPDATE) - die muessen
-    # erlaubt sein, sonst koennte man den Fix nicht erklaeren.
+    # Nur der AUSFUEHRENDE Teil zählt. Die Kommentare beschreiben
+    # den alten Wert (und die Bereinigung per UPDATE) - die müssen
+    # erlaubt sein, sonst kännte man den Fix nicht erklären.
     ausfuehrend = re.sub(r'--[^\n]*', '', handle_new_user)
     erfindet = '2000-01-01' in ausfuehrend
     # 'birth_date' muss im INSERT vorhanden sein, sonst ist die Spalte
@@ -313,25 +313,25 @@ else:
           'keine CREATE OR REPLACE-Funktion in den Migrationen')
 
 # =====================================================================
-# 1d) Minderjaehrige geben KEINE Entfernung preis
+# 1d) Minderjährige geben KEINE Entfernung preis
 # =====================================================================
 #
-# BETREIBER-ENTSCHEIDUNG (02.11.2026): "Die grobe Entfernung duerfen 16
-# und 17 jaehrige auch nicht aktivieren koennen."
+# BETREIBER-ENTSCHEIDUNG (02.11.2026): "Die grobe Entfernung dürfen 16
+# und 17 jährige auch nicht aktivieren können."
 #
 # BISHER: profile_distance_km lieferte die Entfernung, sobald
 # profiles.show_distance des anderen gesetzt war - das durfte JEDER
-# aktivieren, auch ein 16-Jaehriger.
+# aktivieren, auch ein 16-Jähriger.
 #
 # Die Sperre muss in der FUNKTION sitzen, die die Entfernung ausgibt -
 # eine Einstellung, die ein gepatchter Client setzen kann, ist keine
-# Sperre. Geprueft wird deshalb, dass die letzte Definition von
-# profile_distance_km das Alter beruecksichtigt (verified_age) UND
+# Sperre. Geprüft wird deshalb, dass die letzte Definition von
+# profile_distance_km das Alter berücksichtigt (verified_age) UND
 # mindestens 18 verlangt.
 #
-# Das ist die Server-Haelfte. Die App-Haelte (der gesperrte Schalter)
+# Das ist die Server-Hälfte. Die App-Hälte (der gesperrte Schalter)
 # steht in AgeSafetyRules.isRoughDistanceForced und wird von
-# test/age_safety_rules_test.dart geprueft.
+# test/age_safety_rules_test.dart geprüft.
 
 _distanz_funktion = _neueste_definition(all_sql, 'profile_distance_km')
 check('verified_age' in _distanz_funktion,
@@ -346,21 +346,21 @@ check('>= 18' in _distanz_funktion,
       'ausgegeben werden')
 
 # =====================================================================
-# 1e) Minderjaehrige bekommen einen begrenzten Suchradius
+# 1e) Minderjährige bekommen einen begrenzten Suchradius
 # =====================================================================
 #
-# BETREIBER-ENTSCHEIDUNG (03.11.2026): "fuer 16 und 17 jaehrige
+# BETREIBER-ENTSCHEIDUNG (03.11.2026): "für 16 und 17 jährige
 # entweder gleiches Bundesland oder max. 25 Km. Und ab 18 alles frei
-# auswaehlbar."
+# auswählbar."
 #
-# BISHER: Der Radius wurde nur im Modus 'distance_km' ausgewertet. Fuer
+# BISHER: Der Radius wurde nur im Modus 'distance_km' ausgewertet. Für
 # 'state' und 'germany' fiel die Entfernungsbedingung weg - "Ganz
 # Deutschland" war also dasselbe wie "Bundesland" (nur ohne jeden
 # Vergleich!). Ein Client, der den Modus auf 'germany' stellt, kam an
 # jeder Radiusgrenze vorbei.
 #
 # Die Grenze muss deshalb in der FUNKTION sitzen, die die Sichtbarkeit
-# entscheidet - und zwar erzwungen fuer Minderjaehrige, unabhaengig vom
+# entscheidet - und zwar erzwungen für Minderjährige, unabhängig vom
 # gespeicherten Modus.
 
 _sichtbarkeit = _neueste_definition(all_sql, 'profile_discovery_visible')
@@ -389,7 +389,7 @@ check('v.state' in _sichtbarkeit and 't.state' in _sichtbarkeit,
 
 # Der Modus "Bundesland" hat bis Migration 169 gar nichts gefiltert:
 # "Bundesland" und "Ganz Deutschland" waren dieselbe Bedingung (kein
-# Radius). Die drei Modi muessen jetzt alle drei ausgewertet werden.
+# Radius). Die drei Modi müssen jetzt alle drei ausgewertet werden.
 for _modus in ('distance_km', 'state', 'germany'):
     check(f"= '{_modus}'" in _sichtbarkeit,
           f'DB: profile_discovery_visible wertet den Suchmodus "{_modus}" aus',
@@ -397,14 +397,14 @@ for _modus in ('distance_km', 'state', 'germany'):
           'Einstellung eine Anzeige ohne Wirkung')
 
 # =====================================================================
-# 1f) Die elterliche Aufsicht haengt an der Datenbank, nicht an der App
+# 1f) Die elterliche Aufsicht hängt an der Datenbank, nicht an der App
 # =====================================================================
 #
-# BETREIBER-ENTSCHEIDUNG (03.11.2026): Elternfreigabe fuer 16- und
-# 17-Jaehrige, mit PIN-geschuetzter Nutzungszeit und gebuendelten
+# BETREIBER-ENTSCHEIDUNG (03.11.2026): Elternfreigabe für 16- und
+# 17-Jährige, mit PIN-geschützter Nutzungszeit und gebündelten
 # Benachrichtigungen.
 #
-# Die Regeln muessen serverseitig gelten: eine Einstellung im Client
+# Die Regeln müssen serverseitig gelten: eine Einstellung im Client
 # kann mit einem gepatchten Client gesetzt werden.
 
 _anfrage = _neueste_definition(all_sql, 'request_guardian_consent')
@@ -455,7 +455,7 @@ check('guardian_notification_events' in all_sql,
       'DB: Die Eltern-Ereignisse werden gespeichert',
       'ohne Zwischenspeicherung gibt es nichts zu buendeln')
 
-# Die Freigabe- und Ereignis-Tabellen duerfen fuer Clients nicht
+# Die Freigabe- und Ereignis-Tabellen dürfen für Clients nicht
 # direkt lesbar sein.
 for _tabelle in ('guardian_consents', 'guardian_consent_audit',
                   'guardian_notification_events'):
@@ -468,12 +468,12 @@ for _tabelle in ('guardian_consents', 'guardian_consent_audit',
 # 1g) Der Posteingang ist NUR LESBAR
 # =====================================================================
 #
-# BETREIBER-ENTSCHEIDUNG (03.11.2026): "Koennen im Adminbereich fuer mich
+# BETREIBER-ENTSCHEIDUNG (03.11.2026): "Können im Adminbereich für mich
 # die Emails auch angezeigt werden? Kein Antworten nur anzeigen."
 #
 # "Kein Antworten" ist eine technische Vorgabe, keine Formulierung: eine
-# Antwortfunktion braeuchte SMTP-Zugang und eine zweite Absender-
-# identitaet. Im Kinderschutz waere die Gefahr real, aus dem falschen
+# Antwortfunktion bräuchte SMTP-Zugang und eine zweite Absender-
+# identität. Im Kinderschutz wäre die Gefahr real, aus dem falschen
 # Konto zu schreiben.
 
 check('ALTER TABLE public.mail_messages ENABLE ROW LEVEL SECURITY' in all_sql,
@@ -493,7 +493,7 @@ for _verb in ('INSERT INTO public.mail_messages',
           f'DB: admin_list_mail_messages schreibt nicht ({_verb})',
           'der Posteingang darf nur gelesen werden')
 
-# Und es darf gar keine Schreibfunktion fuer die Mails geben.
+# Und es darf gar keine Schreibfunktion für die Mails geben.
 for _name in ('send_mail', 'reply_mail', 'insert_mail_message',
               'delete_mail_message', 'update_mail_message'):
     check(f'FUNCTION public.{_name}' not in all_sql,
@@ -501,14 +501,14 @@ for _name in ('send_mail', 'reply_mail', 'insert_mail_message',
           'aus der App heraus wird nicht geantwortet')
 
 # =====================================================================
-# 1i) Die Standort-Flag-Anzeige ist NUR LESBAR und NUR fuer Admins
+# 1i) Die Standort-Flag-Anzeige ist NUR LESBAR und NUR für Admins
 # =====================================================================
 #
 # BETREIBER-ENTSCHEIDUNG (06.11.2026): Das Flag is_location_suspicious
 # wird seit Migration 180 korrekt geschrieben, aber von KEINER Abfrage
 # ausgewertet - es war ein Hinweis ohne Wirkung. Der Betreiber hat
 # entschieden: das Flag soll im Admin-Bereich sichtbar werden, das
-# Verhalten der App bleibt unveraendert (niemand wird aus der
+# Verhalten der App bleibt unverändert (niemand wird aus der
 # Discovery genommen, niemand gesperrt).
 #
 # Die Entscheidung hat eine Bedingung: was der Admin sieht, darf
@@ -536,17 +536,17 @@ check('FUNCTION public.clear_location_suspicious' not in all_sql,
       'nur gesetzt, nie geloescht')
 
 # =====================================================================
-# 1h) Die selektive Datenloeschung loescht NUR die eigenen Daten
+# 1h) Die selektive Datenlöschung löscht NUR die eigenen Daten
 # =====================================================================
 #
 # BETREIBER-ENTSCHEIDUNG (03.11.2026): "Biete ich Nutzern die
-# Moeglichkeit das Entfernen einiger oder aller ihrer Daten anzufordern,
-# ohne dass dabei das Konto geloescht werden muss?"
+# Möglichkeit das Entfernen einiger oder aller ihrer Daten anzufordern,
+# ohne dass dabei das Konto gelöscht werden muss?"
 #
-# Die Edge Function loescht mit der Service-Rolle - das ist der einzige
+# Die Edge Function löscht mit der Service-Rolle - das ist der einzige
 # Weg, die Daten wirklich zu entfernen (RLS und der normale Client
-# duerfen das nicht). Damit ist die Function die kritische Stelle: sie
-# muss die Identitaet des Aufrufers BEWEISEN, bevor sie loescht.
+# dürfen das nicht). Damit ist die Function die kritische Stelle: sie
+# muss die Identität des Aufrufers BEWEISEN, bevor sie löscht.
 
 _loesch_funktion = 'supabase/functions/delete-user-data/index.ts'
 
@@ -565,31 +565,31 @@ check(has(_loesch_funktion, '.eq("user_id", uid)'),
       'SERVER: delete-user-data filtert auf die eigene user_id',
       'die Loeschung muss sich auf das Konto des Aufrufers beschraenken')
 
-# Und die Loeschung darf nicht ins Konto selbst eingreifen - das
-# loescht die separate delete-account-Funktion (mit MFA-Step-up).
+# Und die Löschung darf nicht ins Konto selbst eingreifen - das
+# löscht die separate delete-account-Funktion (mit MFA-Step-up).
 check('delete-user-data' not in all_sql
       or 'auth.users' not in _neueste_definition(all_sql, 'delete_user_data'),
       'SERVER: Die selektive Loeschung loescht kein Konto',
       'das Konto zu loeschen ist ein eigener Vorgang mit MFA-Bestaetigung')
 
 # =====================================================================
-# 1i) Keine Session-Fixierung ueber einen Deep-Link
+# 1i) Keine Session-Fixierung über einen Deep-Link
 # =====================================================================
 #
 # SICHERHEIT (03.11.2026): "thestia://" ist ein EXPORTIERTES Custom
-# Scheme. Jede App auf dem Geraet kann die Thestia-App mit einer URI
-# starten. Uebernimmt die App eine URI mit access_token oder
-# token_hash, legt sie eine Session fuer genau dieses Konto an - ohne
-# jeden Nachweis, dass der Nutzer den Link in seiner E-Mail geoeffnet
-# hat. Eine boesartige App koennte so den Passwort-Reset-Screen mit
-# dem Konto des Angreifers oeffnen; alles, was der Nutzer danach
-# hochlaedt, landet im Konto des Angreifers.
+# Scheme. Jede App auf dem Gerät kann die Thestia-App mit einer URI
+# starten. Übernimmt die App eine URI mit access_token oder
+# token_hash, legt sie eine Session für genau dieses Konto an - ohne
+# jeden Nachweis, dass der Nutzer den Link in seiner E-Mail geöffnet
+# hat. Eine bösartige App kännte so den Passwort-Reset-Screen mit
+# dem Konto des Angreifers öffnen; alles, was der Nutzer danach
+# hochlädt, landet im Konto des Angreifers.
 #
 # Beide von uns genutzten Flows sind PKCE-basiert (resetPasswordForEmail
-# und signUp senden einen code_challenge) - der Link enthaelt deshalb
+# und signUp senden einen code_challenge) - der Link enthält deshalb
 # einen ?code=..., der nur mit dem geräteeigenen code_verifier
-# eingeloest werden kann. Die Formen access_token und token_hash sind
-# ungenutzte Freiheitsgrade und genau die Angriffsflaeche.
+# eingelöst werden kann. Die Formen access_token und token_hash sind
+# ungenutzte Freiheitsgrade und genau die Angriffsfläche.
 check("has('access_token') || has('token_hash')" in
       read(ROOT / 'lib' / 'main.dart') and
       "return false;" in read(ROOT / 'lib' / 'main.dart'),
@@ -624,24 +624,24 @@ check('TransitBleService.instance.suspend()' in
 # 1l) Die Neugeraete-Warnung entscheidet der SERVER, nicht die App
 # =====================================================================
 #
-# SICHERHEIT (03.11.2026): Die App meldet ihr Geraet nach dem Login.
-# Ob es ein NEUES Geraet ist, entscheidet die Edge Function - nicht der
-# Client. Andernfalls koennte ein Angreifer mit gestohlenem Passwort den
-# Alarm unterdruecken, indem er selbst festlegt "bekanntes Geraet".
+# SICHERHEIT (03.11.2026): Die App meldet ihr Gerät nach dem Login.
+# Ob es ein NEUES Gerät ist, entscheidet die Edge Function - nicht der
+# Client. Andernfalls kännte ein Angreifer mit gestohlenem Passwort den
+# Alarm unterdrücken, indem er selbst festlegt "bekanntes Gerät".
 _check = 'supabase/functions/notify-new-login/index.ts'
 # NACH DEM BEFUND VOM 03.11.2026 ("Ich habe keine Mail bekommen, als ich
-# die App Daten geloescht und mich neu angemeldet habe") wurde der Weg
+# die App Daten gelöscht und mich neu angemeldet habe") wurde der Weg
 # umgebaut:
 #
 # VORHER: Die App rief die Edge Function auf, die Funktion legte die
-# Geraete-Zeile an und schickte die Mail. Faellt der Aufruf aus, geht
+# Geräte-Zeile an und schickte die Mail. Fällt der Aufruf aus, geht
 # die Mail NIE raus - das war der gemeldete Fall. Und die Bremse
-# zaehlte die Geraete-Zeilen statt der Mails, also war sie nach
-# fuenf Neuinstallationen dicht.
+# zählte die Geräte-Zeilen statt der Mails, also war sie nach
+# fünf Neuinstallationen dicht.
 #
-# JETZT: Der Trigger auf auth_devices (Migration 170) loest die Mail
-# aus. Er feuert bei JEDEM INSERT - unabhaengig davon, wer geschrieben
-# hat. Die Entscheidung faellt damit die Datenbank, nicht der Client.
+# JETZT: Der Trigger auf auth_devices (Migration 170) löst die Mail
+# aus. Er feuert bei JEDEM INSERT - unabhängig davon, wer geschrieben
+# hat. Die Entscheidung fällt damit die Datenbank, nicht der Client.
 
 check('trg_auth_devices_new_login' in all_sql,
       'DB: Der Trigger fuer die Neugeraete-Meldung sitzt auf auth_devices',
@@ -670,15 +670,15 @@ check('notify-new-login' in
       'sonst wird die Mail gar nicht erst angestossen')
 
 # =====================================================================
-# 1m) Das Verifikationsvideo haengt an der FREIGABE, nicht am Upload
+# 1m) Das Verifikationsvideo hängt an der FREIGABE, nicht am Upload
 # =====================================================================
 #
 # BETREIBER-AUFTRAG (03.11.2026): "Sie sollen 30 Tage nach Verifizierung
 # (nicht Upload sondern Genehmigung der Verifizierung) bleiben und nach
-# 30 Tagen geloescht werden."
+# 30 Tagen gelöscht werden."
 #
 # Vorher lief die Frist ab dem Upload (Migration 160): ein Video, das
-# Wochen auf die Sichtung wartete, wurde am Tag der Freigabe geloescht.
+# Wochen auf die Sichtung wartete, wurde am Tag der Freigabe gelöscht.
 
 _video = _neueste_definition(all_sql, 'cleanup_verification_videos')
 check('verification_approved_at' in _video,
@@ -695,7 +695,7 @@ check('90 days' in _video,
       'ein Video, das ewig in der Pruefung liegt, braucht eine Grenze')
 
 # Der Freigabe-Zeitpunkt muss beim Freigeben auch wirklich gesetzt
-# werden - sonst laeuft die Frist nie an.
+# werden - sonst läuft die Frist nie an.
 _verifizierung = (ROOT / 'supabase' / 'functions' / 'verify-account' /
                   'index.ts')
 if _verifizierung.exists():
@@ -704,18 +704,18 @@ if _verifizierung.exists():
           'ohne ihn startet die 30-Tage-Frist nie')
 
 # =====================================================================
-# 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt
+# 1c) Das Verifikationsvideo wird IMMER verschlüsselt abgelegt
 # =====================================================================
 #
 # BEFUND (Security-Audit 31.10.2026): Nur der Submit-Pfad
-# verschluesselte das Video. Der Auto-Pfad lagerte das ROHVIDEO ab -
-# unter dem Dateinamen 'video.mp4.enc', der Verschluesselung
+# verschlüsselte das Video. Der Auto-Pfad lagerte das ROHVIDEO ab -
+# unter dem Dateinamen 'video.mp4.enc', der Verschlüsselung
 # suggeriert, aber ohne Chiffrat. Zwei Folgen: die Zusage der
-# Datenschutzerklaerung ("der Bucket enthaelt ausschliesslich
+# Datenschutzerklärung ("der Bucket enthält ausschließlich
 # Chiffrat") stimmte nicht, und die Admin-Sichtung brach ab, weil
-# der Schluessel fehlte.
+# der Schlüssel fehlte.
 #
-# Geprueft wird deshalb: JEDER Video-Upload im Client laeuft durch
+# Geprüft wird deshalb: JEDER Video-Upload im Client läuft durch
 # VerificationCrypto.encrypt().
 
 verifikation = read(
@@ -738,7 +738,7 @@ for m in uploads:
           'APP: Jeder Video-Upload nutzt das Chiffrat (encrypted.cipher)',
           'Upload mit %r - das waere das Rohvideo' % argument[:40])
 
-# Und: der Schluessel muss mitgeschickt werden, sonst kann die
+# Und: der Schlüssel muss mitgeschickt werden, sonst kann die
 # Edge Function ihn nicht ablegen.
 check(verifikation.count("'videoKey': encrypted.keyB64") >= 2,
       'APP: der Video-Schluessel wird in BEIDEN Pfaden mitgeschickt',
@@ -756,8 +756,8 @@ for name in ('verify-account', 'cancel-registration'):
 c = read(FN / 'delete-account' / 'index.ts')
 # BEFUND 04.11.2026: Der alte Aufruf war
 # "listFactors !== \"function\") return false;" in EINER Zeile. Der
-# neue Code prueft dieselbe Sache, aber mit einer eigenen Meldung
-# davor - deshalb wird jetzt geprueft, dass der Block vorhanden ist
+# neue Code prüft dieselbe Sache, aber mit einer eigenen Meldung
+# davor - deshalb wird jetzt geprüft, dass der Block vorhanden ist
 # UND danach "return false" folgt (fail-closed).
 _mfa_block = re.search(
     r'typeof listFactors !== "function".{0,400}?return false;', c, re.S)
@@ -769,13 +769,13 @@ check('MFA-Faktor-Pruefung fehlgeschlagen (fail-closed)' in c,
 
 for name in ('request-unban', 'send-bug-report', 'prekeys'):
     c = read(FN / name / 'index.ts')
-    # BEFUND 04.11.2026: Geprueft wird jetzt der LETZTE Eintrag aus
+    # BEFUND 04.11.2026: Geprüft wird jetzt der LETZTE Eintrag aus
     # x-forwarded-for, nicht der erste.
     #
-    # Cloudflare HAENGT die echte Client-IP an den Header an - der
-    # erste Eintrag ist damit der vom Client frei waehlbare, der
+    # Cloudflare HÄNGT die echte Client-IP an den Header an - der
+    # erste Eintrag ist damit der vom Client frei wählbare, der
     # letzte der von der Plattform gesetzte. Wer den ersten nimmt,
-    # laesst sich mit "x-forwarded-for: 1.2.3.4" pro Anfrage ein
+    # lässt sich mit "x-forwarded-for: 1.2.3.4" pro Anfrage ein
     # neues Limit-Key bauen.
     check('function clientIp' in c
           and 'split(",")' in c
@@ -823,8 +823,8 @@ check(has('lib/services/storage/secure_storage_namespaces.dart',
 check(has('lib/main.dart', 'await migrateLegacyNamespaces('),
       'APP: Namespace-Migration laeuft beim Start UND wird awaited')
 # Ein unawaited-Lauf war der Bug: der Supabase-Client startet gleich danach
-# und laeuft bei `resetOnError: true` (Default) sonst in einen Dekrypt-
-# Fehlschlag, der die Werte aller anderen Namespaces mitloescht.
+# und läuft bei `resetOnError: true` (Default) sonst in einen Dekrypt-
+# Fehlschlag, der die Werte aller anderen Namespaces mitlöscht.
 check('unawaited(migrateLegacyNamespaces' not in read(ROOT / 'lib/main.dart'),
       'APP: Namespace-Migration ist NICHT unawaited (Race mit Supabase-Init)')
 check(has('lib/main.dart', '_supabaseSessionKey()'),
@@ -868,22 +868,22 @@ check(has('tool/release/build_release.ps1', 'CAPTCHA_SITEKEY fehlt',
       'BUILD: Release bricht ohne Konfiguration/CAPTCHA ab')
 
 # =====================================================================
-# 8) Client und Server duerfen nicht auseinanderlaufen
+# 8) Client und Server dürfen nicht auseinanderlaufen
 # =====================================================================
 #
 # Am 04.11.2026 wurden zwei echte Abweichungen gefunden - beide waren
 # "die App dachte etwas anderes als der Server":
 #
-#   a) Die Re-Authentifizierung fuer "E-Mail aendern" und "Passwort
-#      aendern" rief signInWithPassword OHNE CAPTCHA-Token. GoTrue
-#      prueft das CAPTCHA bei jedem Passwort-Grant - der Server lehnte
+#   a) Die Re-Authentifizierung für "E-Mail ändern" und "Passwort
+#      ändern" rief signInWithPassword OHNE CAPTCHA-Token. GoTrue
+#      prüft das CAPTCHA bei jedem Passwort-Grant - der Server lehnte
 #      also jeden Versuch mit "Invalid login credentials" ab. Beide
 #      Funktionen waren im Release komplett kaputt, und die Meldung
 #      sah aus wie ein Tippfehler.
 #
 #   b) Die Untergrenze des Altersfilters stand in der App bei 16
-#      (18-Jaehrige) bzw. 17 (19-Jaehrige), der Server liefert fuer
-#      Erwachsene aber ausschliesslich Erwachsene (max_age_range_min
+#      (18-Jährige) bzw. 17 (19-Jährige), der Server liefert für
+#      Erwachsene aber ausschließlich Erwachsene (max_age_range_min
 #      = greatest(alter - 10, 18)). Der Filter war damit TOT.
 #
 # Beide Abweichungen sind nur durch den ABGLEICH mit dem Server
@@ -923,7 +923,7 @@ check(not re_auth_ohne_token,
 #   greatest(v_viewer_age - 10, CASE WHEN v_viewer_age < 18 THEN 16 ELSE 18 END)
 #
 # App (lib/utils/location/age_safety_rules.dart, minFilterAge):
-#   Minderjaehrige: 16, ab 18: nie unter 18, sonst eigenes Alter - 10.
+#   Minderjährige: 16, ab 18: nie unter 18, sonst eigenes Alter - 10.
 sql_alt = read(MIG / '154_youth_protection_hardening.sql')
 check('CASE WHEN v_viewer_age < 18 THEN 16 ELSE 18 END' in sql_alt,
       'DB: max_age_range_min laesst fuer Erwachsene nie unter 18 zu')
@@ -943,16 +943,16 @@ check(has('lib/utils/location/age_safety_rules.dart',
 #
 # Alle sechs folgenden Punkte sind am 04.11.2026 am Code verifiziert
 # worden - die Kommentare in den Funktionen nennen den Grund. Jeder
-# Punkt war eine echte Luecke, kein Fehlalarm.
+# Punkt war eine echte Lücke, kein Fehlalarm.
 
-# (1) Der MFA-Step-up bei der Account-Loeschung war TOT.
+# (1) Der MFA-Step-up bei der Account-Löschung war TOT.
 #
 #     Der Aufruf war `client.auth.mfa.listFactors(userId)` - das ist
 #     die NUTZER-API: sie nimmt kein Argument, braucht eine Session
 #     des Clients (der Service-Key-Client hat keine) und liefert
 #     { data: null }. Damit war die Faktorenliste immer leer und die
-#     Pruefung immer "erfuellt" - ein Konto mit TOTP war mit einem
-#     einfachen aal1-Token loeschbar.
+#     Prüfung immer "erfüllt" - ein Konto mit TOTP war mit einem
+#     einfachen aal1-Token löschbar.
 #
 #     Richtig ist die ADMIN-API: client.auth.admin.mfa.listFactors.
 delete_account = read(FN / 'delete-account' / 'index.ts')
@@ -961,7 +961,7 @@ check('auth.admin' in delete_account
       'EDGE: delete-account nutzt die Admin-MFA-API '
       '(client.auth.admin.mfa.listFactors) - sonst ist der MFA-Step-up tot')
 # Der Kommentar im Code nennt den alten Aufruf auch - deshalb wird nur
-# der CODE geprueft. "ohne //" reichte nicht: der alte Aufruf stand in
+# der CODE geprüft. "ohne //" reichte nicht: der alte Aufruf stand in
 # einem Blockkommentar (Zeilen mit " * ").
 def _ohne_kommentar(text):
     return '\n'.join(
@@ -974,15 +974,15 @@ check('listFactors(userId)' not in delete_account_code,
       'EDGE: delete-account ruft NICHT die Nutzer-MFA-API auf '
       '(liefert ohne Session immer eine leere Liste)')
 
-# (2) delete-user-data loeschte auf einer Spalte, die es nicht gibt.
+# (2) delete-user-data löschte auf einer Spalte, die es nicht gibt.
 #
 #     rate_limit_hits hat bucket_key, window_start und hit_count
 #     (Migration 042) - aber KEINE Spalte "identifier". PostgREST
-#     antwortete mit einem Spaltenfehler, die selektive Datenloeschung
-#     meldete dauerhaft ok:false und die Zaehler blieben stehen.
+#     antwortete mit einem Spaltenfehler, die selektive Datenlöschung
+#     meldete dauerhaft ok:false und die Zähler blieben stehen.
 delete_user_data = read(FN / 'delete-user-data' / 'index.ts')
 # Die Kommentare nennen den alten Aufruf auch - deshalb wird nur der
-# CODE geprueft (siehe _ohne_kommentar).
+# CODE geprüft (siehe _ohne_kommentar).
 delete_user_data_code = _ohne_kommentar(delete_user_data)
 check('.eq("identifier"' not in delete_user_data_code,
       'EDGE: delete-user-data loescht rate_limit_hits ueber bucket_key '
@@ -1005,7 +1005,7 @@ check('limitError' in request_unban,
 #
 #     "x-client-ip" ist KEIN Standard-Header von Supabase oder
 #     Cloudflare (das ist eine Vercel/Netlify-Konvention). Edge
-#     Functions reichen unbekannte Header unveraendert durch. Mit
+#     Functions reichen unbekannte Header unverändert durch. Mit
 #     "x-client-ip: 1.2.3.4" pro Anfrage war das IP-Limit zu umgehen.
 ip_probleme = []
 for ts in sorted(FN.rglob('index.ts')):
@@ -1021,12 +1021,12 @@ check(not ip_probleme,
 # (5) E-Mail-Adressen wurden ungefiltert in ein LIKE-Muster gebaut.
 #
 #     In SQL ist "%" ein Platzhalter und "_" matcht ein beliebiges
-#     Zeichen. Eine Adresse wie "%@beispiel.de" loeschte dadurch die
+#     Zeichen. Eine Adresse wie "%@beispiel.de" löschte dadurch die
 #     Rate-Limit-Buckets ALLER Adressen auf dieser Domain.
 like_probleme = []
 for ts in sorted(FN.rglob('index.ts')):
     inhalt = read(ts)
-    # Die Kommentare nennen die alten Muster auch - nur der CODE zaehlt.
+    # Die Kommentare nennen die alten Muster auch - nur der CODE zählt.
     code = _ohne_kommentar(inhalt)
     for treffer in re.finditer(r'\.like\("bucket_key",\s*([^)]*)\)', code):
         muster = treffer.group(1)
@@ -1052,27 +1052,27 @@ check('timingSafeEqual' in check_location
       'EDGE: check-location vergleicht das interne Secret constant-time '
       '(timingSafeEqual)')
 
-# (7) Die Nutzungszeit im Elternportal wurde ungeprueft gespeichert
-#     und bei einem unvollstaendigen Request geloescht.
+# (7) Die Nutzungszeit im Elternportal wurde ungeprüft gespeichert
+#     und bei einem unvollständigen Request gelöscht.
 #
 #     Migration 165 schrieb "usage_start_min = p_usage_start_min"
 #     (ohne coalesce) - fehlte der Wert, war die elterliche
-#     Beschraenkung weg, waehrend "usage_limit_enabled" weiter true
+#     Beschränkung weg, während "usage_limit_enabled" weiter true
 #     blieb. Migration 173 holt das nach.
 # =====================================================================
 # 11) Dating Hour: der automatische Funke nach 10 Minuten
 # =====================================================================
 #
 # NUTZERWUNSCH 04.11.2026): Die 5 Minuten sind eine
-# ENTSCHEIDUNGSphase, nicht das Ende des Gespraechs. Danach laeuft
+# ENTSCHEIDUNGSphase, nicht das Ende des Gesprächs. Danach läuft
 # der Chat weiter, und nach 10 Minuten entsteht automatisch ein
 # beidseitiger Funke - damit eine unterbrochene Verbindung nicht
-# dazu fuehrt, dass zwei sich gut verstandene Menschen kein Match
+# dazu fährt, dass zwei sich gut verstandene Menschen kein Match
 # bekommen.
 #
-# Das wird vom CRON erzeugt, nicht vom Client: der Cron laeuft auch
+# Das wird vom CRON erzeugt, nicht vom Client: der Cron läuft auch
 # dann, wenn beide Apps geschlossen sind. Ein clientseitiger Funke
-# waere genau die Sorte gruener Status, die nichts bedeutet.
+# wäre genau die Sorte grüner Status, die nichts bedeutet.
 
 sql_177 = read(MIG / '177_dating_hour_auto_match.sql')
 sql_178 = read(MIG / '178_auto_match_in_match_list.sql')
@@ -1104,7 +1104,7 @@ check("user_a_decision = CASE WHEN user_a = v_user THEN 'reject'"
       in sql_177,
       'DB: Das Beenden verwirft ein laufendes "Ja" - wer beendet, meint es')
 
-# Die Rueckfrage: einmalig, behalten oder entfernen.
+# Die Rückfrage: einmalig, behalten oder entfernen.
 check('CREATE OR REPLACE FUNCTION public.resolve_dating_hour_auto_match'
       in sql_177,
       'DB: Die Rueckfrage zum automatischen Funke gibt es (einmalig)')
@@ -1139,13 +1139,13 @@ check(has('lib/services/dating_hour/dating_hour_service.dart',
 # BEFUND 04.11.2026: Die Dating Hour hat seit dem 03.11.2026 nicht mehr
 # gepaart, und niemand hat es gemerkt.
 #
-# Die Ursache: match_dating_hour_round pruefte den AUFRUFER
+# Die Ursache: match_dating_hour_round prüfte den AUFRUFER
 #     IF NOT public.verification_granted(auth.uid()) THEN RAISE ...
-# Die Funktion wird aber ausschliesslich vom Cron aufgerufen (alle 30
+# Die Funktion wird aber ausschließlich vom Cron aufgerufen (alle 30
 # Sekunden) - ohne JWT. auth.uid() ist dort NULL,
 # verification_granted(NULL) ist false, also hat der Cron bei der
 # ERSTEN aktiven Veranstaltung geworfen und die ganze Runde
-# abgebrochen. Es wurde also ueberhaupt nicht mehr gepaart.
+# abgebrochen. Es wurde also überhaupt nicht mehr gepaart.
 #
 # Die App ruft die Funktion NICHT selbst auf (nur join_dating_hour) -
 # der Cron war der einzige Weg.
@@ -1153,17 +1153,17 @@ check(has('lib/services/dating_hour/dating_hour_service.dart',
 sql_176 = read(MIG / '176_email_timezone_usage_time.sql')
 sql_161 = read(MIG / '161_verification_gates_server_side.sql')
 
-# Der Aufrufer darf nur geprueft werden, wenn er selbst handelt.
+# Der Aufrufer darf nur geprüft werden, wenn er selbst handelt.
 check('auth.uid() IS NOT NULL' in sql_176
       and 'AND NOT public.verification_granted(auth.uid())' in sql_176,
       'DB: match_dating_hour_round prueft den Aufrufer NUR, wenn er selbst '
       'handelt - der Cron (ohne JWT) darf nicht die ganze Runde abbrechen')
 
-# Und die Teilnehmer werden weiterhin geprueft.
+# Und die Teilnehmer werden weiterhin geprüft.
 check('public.verification_granted(v_user.user_id)' in sql_176,
       'DB: match_dating_hour_round prueft JEDEN Teilnehmer auf Verifikation')
 
-# Die Nutzungszeit wird je Teilnehmer geprueft, nicht je Veranstaltung.
+# Die Nutzungszeit wird je Teilnehmer geprüft, nicht je Veranstaltung.
 check(sql_176.count('public.guardian_usage_time_allows(') >= 3,
       'DB: Die elterliche Nutzungszeit wird je Teilnehmer der Dating Hour '
       'geprueft (nicht je Veranstaltung - sonst wuerde eine '
@@ -1180,7 +1180,7 @@ check('pg_timezone_names' in sql_176,
       'geprueft - ein unbekannter Name wuerde in "at time zone" einen '
       'Fehler ausloesen')
 
-# Die Zeitzone kommt vom Geraet, nicht vom Server.
+# Die Zeitzone kommt vom Gerät, nicht vom Server.
 check('ADD COLUMN IF NOT EXISTS timezone text' in sql_176,
       'DB: profiles fuehrt die Zeitzone des Geraets (fuer die '
       'Nutzungszeit im lokalen Takt)')
@@ -1217,17 +1217,17 @@ check('invalid_usage_time' in sql_173,
 #
 # NUTZERWUNSCH 04.11.2026):
 #
-#   * "der Link statt 14 Tagen nur 24 Stunden gueltig sein" - nicht nur
+#   * "der Link statt 14 Tagen nur 24 Stunden gültig sein" - nicht nur
 #     im Text, sondern im Server. Ein Link, der zwei Wochen lebt, liegt
 #     irgendwann in irgendeinem Postkasten und wird dann von einer
 #     fremden Person benutzt.
 #
 #   * "die Emailadresse des Elternteils auch mit Beendigung der Freigabe
-#     geloescht" - mit EINER Ausnahme: Wer "noch 1 Monat behalten"
-#     waehlt, hat die Freigabe noch nicht beendet. Dann wird die Adresse
-#     erst nach dem Monat geloescht, nicht sofort.
+#     gelöscht" - mit EINER Ausnahme: Wer "noch 1 Monat behalten"
+#     wählt, hat die Freigabe noch nicht beendet. Dann wird die Adresse
+#     erst nach dem Monat gelöscht, nicht sofort.
 #
-# Beides wird hier geprueft, damit es nicht wieder verschwindet.
+# Beides wird hier geprüft, damit es nicht wieder verschwindet.
 
 sql_179 = read(MIG / '179_guardian_email_purge_and_24h_token.sql')
 
@@ -1243,7 +1243,7 @@ check('least(token_expires_at, now() + interval \'24 hours\')' in sql_179,
       'DB: Der Bestand offener Links wird auf 24 Stunden gekuerzt '
       '(sonst waeren die alten Links weiterhin gueltig)')
 
-# --- Die E-Mail des Elternteils wird geloescht ------------------------
+# --- Die E-Mail des Elternteils wird gelöscht ------------------------
 check('ALTER COLUMN guardian_email DROP NOT NULL' in sql_179,
       'DB: Die Adresse des Elternteils ist optional - sonst koennte '
       'sie gar nicht geloescht werden')
@@ -1287,7 +1287,7 @@ check(has('passkey-assets/en/eltern-einstellungen.html',
           'The link is valid for 24 hours'),
       'WEB: Das englische Elternportal meldet 24 hours')
 
-# Die Datenschutzerklaerung (Quelle und erzeugte Seiten).
+# Die Datenschutzerklärung (Quelle und erzeugte Seiten).
 check(has('docs/recht/DATENSCHUTZ.md',
           'nach 24 Stunden ung\u00fcltig ist',
           'E-Mail-Adresse des Elternteils wird mit dem Ende der Freigabe'),
@@ -1301,8 +1301,8 @@ check(has('docs/recht/DATENSCHUTZ_EN.md',
 
 # --- Der Generator darf den Canonical nicht mehr verlieren ------------
 # BEFUND 04.11.2026: Beim Neuerzeugen der Datenschutz-Seiten (etwa nach
-# einer Textaenderung) verschwand die kanonische Adresse wieder. Die Seite
-# war danach "nicht auffindbar" fuer die Suchmaschine - und der Fehler
+# einer Textänderung) verschwand die kanonische Adresse wieder. Die Seite
+# war danach "nicht auffindbar" für die Suchmaschine - und der Fehler
 # fiel nur auf, weil der Publish-Checker sie meldete.
 check(has('tool/web/make_privacy_policy.py',
           "'canonical': 'https://thestia.de/datenschutz'",
@@ -1312,24 +1312,24 @@ check(has('tool/web/make_privacy_policy.py',
       'kanonische Adresse mit (sonst verschwindet sie beim Neuerzeugen)')
 
 # =====================================================================
-# 13) Die Website: gleiche Hoehe, mittiger Text, englische Fassungen
+# 13) Die Website: gleiche Höhe, mittiger Text, englische Fassungen
 # =====================================================================
 #
-# NUTZERWUNSCH 04.11.2026): "Bei den Websites sind die Buttons fuer
-# Sprache und Hell Dunkel Modus nicht auf der selben Hoehe! (Nur
+# NUTZERWUNSCH 04.11.2026): "Bei den Websites sind die Buttons für
+# Sprache und Hell Dunkel Modus nicht auf der selben Höhe! (Nur
 # Elternbereich)" und "Das EN im Sprach button ist nicht mittig im
 # Button."
 
 # BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene Formular-
 # Regel "label { margin: 1rem 0 .35rem; }". Sie traf auch den
-# Modus-Knopf - er ist ja ein <label> fuer den unsichtbaren Schalter.
-# Dadurch sass er 5,6 px hoeher als der Sprachknopf daneben.
+# Modus-Knopf - er ist ja ein <label> für den unsichtbaren Schalter.
+# Dadurch saß er 5,6 px höher als der Sprachknopf daneben.
 def css_block(text: str, sel: str) -> str:
     """Der Inhalt eines CSS-Blocks, z. B. '.modus-knopf { ... }'.
 
     Die Kommentare werden vorher entfernt: sonst bricht der erste
-    '}' INNERHALB eines Kommentars den Block ab - und die Pruefung
-    schlaegt dann an, obwohl das CSS korrekt ist.
+    '}' INNERHALB eines Kommentars den Block ab - und die Prüfung
+    schlägt dann an, obwohl das CSS korrekt ist.
     """
     ohne_kommentare = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
     m = re.search(re.escape(sel) + r'\s*\{(.*?)\}', ohne_kommentare, re.S)
@@ -1347,9 +1347,9 @@ for _sel in ('.modus-knopf', '.sprach-knopf'):
 check('justify-content: center;' in css_block(theme, '.sprach-knopf'),
       'WEB: Der Sprachknopf zentriert sein Kuerzel (inline-flex)')
 
-# Jede Seite hat eine englische Fassung und verlinkt auf sie. Das prueft
+# Jede Seite hat eine englische Fassung und verlinkt auf sie. Das prüft
 # tool/checks/check_publish_folder.py (Abschnitt 9) - hier steht nur die
-# Grundlage: die Bestaetigungsseite, die bis jetzt keine hatte.
+# Grundlage: die Bestätigungsseite, die bis jetzt keine hatte.
 check(has('passkey-assets/en/bestaetigt.html',
           '<html lang="en">',
           'E-Mail confirmed',
@@ -1360,12 +1360,12 @@ check(has('passkey-assets/bestaetigt.html',
       'WEB: Die Bestaetigungsseite verlinkt auf ihre englische Fassung')
 
 # Die Tabellen: das pinke Element ist der Tabellenkopf. Ohne die
-# abgerundete Huelle bleiben seine Ecken eckig.
+# abgerundete Hülle bleiben seine Ecken eckig.
 def tabellen_ohne_huelle(rel: str) -> int:
-    """Wie viele Tabellen haben KEINE abgerundete Huelle?
+    """Wie viele Tabellen haben KEINE abgerundete Hülle?
 
     Das pinke Element ist der Tabellenkopf (background:
-    var(--accent-soft)). Ohne die Huelle mit ihrem Radius von 20 px
+    var(--accent-soft)). Ohne die Hülle mit ihrem Radius von 20 px
     bleiben seine Ecken eckig - das war der gemeldete Fehler.
     """
     inhalt = read(ROOT / rel)
@@ -1393,11 +1393,11 @@ check(tabellen_ohne_huelle('passkey-assets/en/eltern.html') == 0,
 # (zwei Netzwerkaufrufe) und schrieb erst danach. In diesem Fenster
 # konnten zwei Aufrufe parallel laufen: Beide rechneten gegen
 # dieselbe veraltete Basis, und der normale Pfad schrieb das
-# Verdachtsflag mit dem Ergebnis der EIGENEN Pruefung - ein spaeterer,
-# unauffaelliger Aufruf konnte ein gerade gesetztes Flag wieder auf
+# Verdachtsflag mit dem Ergebnis der EIGENEN Prüfung - ein späterer,
+# unauffälliger Aufruf konnte ein gerade gesetztes Flag wieder auf
 # false setzen.
 #
-# LOESUNG: Alles passiert in EINER Transaktion, unter einer
+# LÖSUNG: Alles passiert in EINER Transaktion, unter einer
 # Zeilensperre (SELECT ... FOR UPDATE).
 
 sql_180 = read(MIG / '180_atomic_location_check_and_admin_audit.sql')
@@ -1410,8 +1410,8 @@ check('CREATE OR REPLACE FUNCTION public.apply_location_check('
 def sql_block(text: str, name: str) -> str:
     """Der Rumpf einer CREATE OR REPLACE FUNCTION.
 
-    Wichtig: Die Pruefung muss im RUMPF stehen und nicht in der ganzen
-    Datei. Sonst zaehlt ein Kommentar oder der Selbsttest mit - und
+    Wichtig: Die Prüfung muss im RUMPF stehen und nicht in der ganzen
+    Datei. Sonst zählt ein Kommentar oder der Selbsttest mit - und
     eine Manipulation bliebe unbemerkt.
     """
     start = text.find('CREATE OR REPLACE FUNCTION public.%s(' % name)
@@ -1421,10 +1421,10 @@ def sql_block(text: str, name: str) -> str:
     block = text[start:end] if end > start else ''
     # Die Kommentare entfernen.
     #
-    # BEFUND 04.11.2026: Ohne diesen Schritt hat die Pruefung "FOR
+    # BEFUND 04.11.2026: Ohne diesen Schritt hat die Prüfung "FOR
     # UPDATE" auch dann gepasst, wenn der Code die Zeile NICHT mehr
-    # sperrte - weil der Kommentar ueber der Sperre dasselbe Wort
-    # enthaelt. Eine Pruefung, die einen Kommentar mitzaehlt, beweist
+    # sperrte - weil der Kommentar über der Sperre dasselbe Wort
+    # enthält. Eine Prüfung, die einen Kommentar mitzählt, beweist
     # nichts.
     return re.sub(r'--[^\n]*', '', block)
 
@@ -1455,8 +1455,8 @@ check('REVOKE ALL ON FUNCTION public.apply_location_check('
       in sql_180 and 'TO service_role' in sql_180,
       'DB: Nur der service_role darf den Standort-Check ausloesen')
 
-# Die Edge Function darf den Weg ueber die Datenbank nicht wieder
-# aufmachen (der Weg ueber Netzwerkaufrufe IST das TOCTOU-Fenster).
+# Die Edge Function darf den Weg über die Datenbank nicht wieder
+# aufmachen (der Weg über Netzwerkaufrufe IST das TOCTOU-Fenster).
 check(has('supabase/functions/process-location-check/index.ts',
           '"apply_location_check"'),
       'EDGE: process-location-check ruft die Datenbankfunktion auf')
@@ -1519,11 +1519,11 @@ check('.from("profiles")' not in
 #     status IN ('pending','active','expired')
 #
 # 'revoked' fehlte. Bei einer widerrufenen Freigabe fand sie KEINE
-# Zeile und meldete 'status': 'none' zurueck - die App zeigte also
+# Zeile und meldete 'status': 'none' zurück - die App zeigte also
 # "Keine Elternfreigabe", obwohl es eine Freigabe GAB und der
 # Elternteil seine E-Mail-Adresse verloren hatte.
 #
-# Genau so ein Fehler entgeht dem Widget-Test: der fuettert das Modell
+# Genau so ein Fehler entgeht dem Widget-Test: der füttert das Modell
 # direkt mit dem Status. Nur der Weg App -> Server -> App findet ihn.
 
 sql_182 = read(MIG / '182_guardian_status_reports_ended.sql')
@@ -1562,21 +1562,21 @@ check(has('supabase/migrations/180_atomic_location_check_and_admin_audit.sql',
 # =====================================================================
 #
 # RECHERCHE 05.11.2026: Die App ist selbst ein digitaler Dienst im
-# Sinne des Par. 5 DDG - die Informationspflichten gelten also fuer
-# sie, nicht nur fuer die Website. Und fuer eine Webanwendung mit
-# Nutzerinhalten verlangt DSA Art. 16 die "Bedingungen fuer die
+# Sinne des Par. 5 DDG - die Informationspflichten gelten also für
+# sie, nicht nur für die Website. Und für eine Webanwendung mit
+# Nutzerinhalten verlangt DSA Art. 16 die "Bedingungen für die
 # Vereinbarung von Leistungen".
 
 # BEFUND (20.11.2026, Betreiber: "Das Impressum in der App
 # funktioniert nicht"): thestia.de ist ein VERIFIZIERTER APP-LINK
 # (assetlinks.json + android:autoVerify im Manifest). Android
-# oeffnet einen solchen Link IN DER APP SELBST, nicht im Browser -
+# öffnet einen solchen Link IN DER APP SELBST, nicht im Browser -
 # die App bekam ihren eigenen Link und zeigte nichts.
 #
-# DER TEXT STEHT DESHALB IN DER APP: Der Eintrag fuehrt auf einen
+# DER TEXT STEHT DESHALB IN DER APP: Der Eintrag fährt auf einen
 # eigenen Bildschirm mit dem Volltext (wie Datenschutz und
-# Nutzungsbedingungen). Zusaetzlich geprueft: die App darf thestia.de
-# gar nicht mehr oeffnen - dort wuerde sie sich selbst oeffnen.
+# Nutzungsbedingungen). Zusätzlich geprüft: die App darf thestia.de
+# gar nicht mehr öffnen - dort würde sie sich selbst öffnen.
 check(has('lib/screens/privacy/privacy_screen.dart',
           "'privacy.imprintTitle'",
           'AppRoutes.imprint')
@@ -1617,9 +1617,9 @@ check(has('passkey-assets/nutzungsbedingungen.html',
       'WEB: Die Nutzungsbedingungen nennen den Widerspruchsweg gegen '
       'Moderationsentscheidungen (DSA Art. 17)')
 
-# Die URL wird geprueft, nicht nur das Wort: sonst wuerde ein
-# gleichnamiges Wort genuegen (und die Negativprobe waere nicht
-# aussagekraeftig).
+# Die URL wird geprüft, nicht nur das Wort: sonst würde ein
+# gleichnamiges Wort genügen (und die Negativprobe wäre nicht
+# aussagekräftig).
 check(has('passkey-assets/kinderschutz.html',
           'bundesnetzagentur.de', 'Rechtswidrige Inhalte melden'),
       'WEB: Die Meldestelle verlinkt den Meldeweg fuer rechtswidrige '
@@ -1629,14 +1629,14 @@ check(has('passkey-assets/kinderschutz.html',
 # 18) Das Store-Listing verspricht kein 16+ im Play Store
 # =====================================================================
 #
-# Google Play verlangt fuer Apps mit Dating-Kern zwingend
+# Google Play verlangt für Apps mit Dating-Kern zwingend
 # "Restrict Minor Access" (Zielgruppe 18+). Im Play-Store-Build sind
 # die 16+-Pfade also NICHT erreichbar. Ein Listing, das dort ein
 # 16+-Ziel verspricht, verspricht etwas, das der Kanal nicht
 # ausliefert.
 #
 # Erlaubt ist die ehrliche Fassung: was der Kanal hergibt (18+) und was
-# die App kann (16+ mit Elternfreigabe in den Nicht-Play-Kanaelen).
+# die App kann (16+ mit Elternfreigabe in den Nicht-Play-Kanälen).
 
 _liste_de = read(ROOT / 'fastlane' / 'metadata' / 'android' / 'de-DE'
                  / 'full_description.txt')
@@ -1654,19 +1654,19 @@ for _name, _liste in (('de-DE', _liste_de), ('en-US', _liste_en)):
           'STORE (%s): Das Listing nennt den Nicht-Play-Kanal, in dem die '
           'App ab 16 Jahren mit Elternfreigabe nutzbar ist' % _name)
 
-# Die Nutzungsbedingungen muessen in der App verlinkt sein: Play
-# verlangt fuer jede App eine erreichbare Adresse.
+# Die Nutzungsbedingungen müssen in der App verlinkt sein: Play
+# verlangt für jede App eine erreichbare Adresse.
 #
 # BEFUND (14.11.2026): Vorher lag die Adresse im Datenschutz-Screen
 # (der auf die Webseite verlinkte). Jetzt zeigt die App den Text selbst
 # (BEFUND des Betreibers: "Die Nutzungsbedingungen funktionieren in der
 # App nicht") - die Adresse steht deshalb im Bedingungs-Screen, und
-# der Datenschutz-Screen fuehrt dorthin. Beides wird geprueft.
+# der Datenschutz-Screen fährt dorthin. Beides wird geprüft.
 #
 # BEFUND (20.11.2026): Auch der Knopf "Die Webfassung im Browser
-# oeffnen" lief auf thestia.de - und damit auf die App selbst (siehe
+# öffnen" lief auf thestia.de - und damit auf die App selbst (siehe
 # den App-Link oben). Er zeigt jetzt auf auth.thestia.de; dort
-# oeffnet sich der Browser.
+# öffnet sich der Browser.
 check(has('lib/screens/privacy/privacy_screen.dart',
           "'privacy.termsTitle'",
           'AppRoutes.privacyTerms')

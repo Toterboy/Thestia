@@ -1,10 +1,10 @@
-// GENERIERTE DATEI - NICHT VON HAND AENDERN.
+// GENERIERTE DATEI - NICHT VON HAND ÄNDERN.
 // Quelle: docs/recht/DATENSCHUTZ_EN.md
 // Neu erzeugen mit: python tool/web/make_privacy_policy.py
 
 import 'package:thestia/generated/privacy_policy_blocks.dart';
 
-/// Die vollstaendige Datenschutzerklaerung als Bloecke, in der
+/// Die vollständige Datenschutzerklärung als Blöcke, in der
 /// Reihenfolge der Quelle.
 const List<PrivacyBlock> kPrivacyPolicyEn = <PrivacyBlock>[
   PrivacyBlock('h1', 'Privacy Policy for Thestia'),

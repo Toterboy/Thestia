@@ -1,9 +1,9 @@
 // Der Teil '_UserReportsTabState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -48,8 +48,8 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
       final db = ref.read(supabaseDatabaseServiceProvider);
       await db.resolveUserReport(id);
       await _load();
-      // Kennzahlen nachziehen: "Offene Meldungen" steht oben und waere
-      // sonst bis zum naechsten Oeffnen um genau diese eine zu hoch.
+      // Kennzahlen nachziehen: "Offene Meldungen" steht oben und wäre
+      // sonst bis zum nächsten Öffnen um genau diese eine zu hoch.
       refreshAdminCounts(ref);
     } catch (e) {
       if (mounted) {
@@ -86,8 +86,8 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
             (data['messages'] as List<dynamic>? ?? <dynamic>[]).length;
         // Die Karte liefert _AsyncList. Hier steht nur der INHALT - vorher
         // lag ein zweites Card() in diesem Builder, sodass jede Meldung
-        // zweimal gerahmt war (ausserhalb der Liste noch einmal 12/6
-        // eingerueckt, also drei Ringe).
+        // zweimal gerahmt war (außerhalb der Liste noch einmal 12/6
+        // eingerückt, also drei Ringe).
         return Padding(
           padding: const EdgeInsets.all(12),
           child: Column(

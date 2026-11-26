@@ -62,7 +62,7 @@ void main() {
         expect(ms, inInclusiveRange(4800, 7200));
         seen.add(ms);
       }
-      // Kein Stufen-Deckel: die Werte muessen sich wirklich unterscheiden,
+      // Kein Stufen-Deckel: die Werte müssen sich wirklich unterscheiden,
       // sonst wachen alle Clients im Gleichtakt auf.
       expect(seen.length, greaterThan(50));
     });
@@ -87,7 +87,7 @@ void main() {
     });
 
     test('Gegenprobe: Fehlerfall OHNE onFailure bleibt im 6-s-Takt', () {
-      // Haelt fest, dass genau dieser Aufruf die Dauerlast behebt.
+      // Hält fest, dass genau dieser Aufruf die Dauerlast behebt.
       // Fehlt er, bleibt der Step 0 und der Poll wieder 6 s.
       final b = RelayPollBackoff(jitterFraction: 0);
       for (var i = 0; i < 5; i++) {
@@ -98,7 +98,7 @@ void main() {
     });
   });
 
-  // Ohne diese Gruppe waere die obige Klasse gruen, obwohl der Fehlerpfad
+  // Ohne diese Gruppe wäre die obige Klasse grün, obwohl der Fehlerpfad
   // in GlobalRelayInbox._tick kaputt ist - die Klasse kannte den Aufruf
   // gar nicht. Genau dieser Test ist beim Weglassen von
   // `_backoff.onFailure()` fehlgeschlagen.

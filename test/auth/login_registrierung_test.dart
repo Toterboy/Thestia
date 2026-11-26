@@ -6,7 +6,7 @@
 // ausdrücklich bestätigt werden). Beide sind Jugendschutz - ohne sie
 // käme eine Person unter 16 in die App.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne Geburtsdatum geht die Registrierung nicht (mit Hinweis),
 //   * ohne Alters-Bestätigung geht sie auch nicht (mit Hinweis),
 //   * die Pflichtfelder werden geprüft (Name, E-Mail, Passwort).
@@ -56,7 +56,7 @@ class _Speicher implements LocalStorage {
 
 void main() {
   /// Der Ersatz-Server: an ihm sieht der Test, OB eine Registrierung
-  /// ueberhaupt hinausgegangen ist.
+  /// überhaupt hinausgegangen ist.
   late FakeSupabaseServer server;
 
   setUpAll(() async {
@@ -66,7 +66,7 @@ void main() {
     // DER KEYSTORE: der sichere Speicher der Anmeldung - ohne den
     // Ersatz ruft der Test auf dem CI-Runner das echte Plugin.
     mockKeystore();
-    // HIVE: der Verschlüsselungs-Dienst oeffnet beim Registrieren seine
+    // HIVE: der Verschlüsselungs-Dienst öffnet beim Registrieren seine
     // Boxen - ohne initialisierten Hive scheitert der Aufruf.
     await mockHive();
     server = FakeSupabaseServer(userId: 'ich');
@@ -99,7 +99,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          // Ohne den Ersatz wuerde die Registrierung am Schreiben in
+          // Ohne den Ersatz würde die Registrierung am Schreiben in
           // den lokalen Speicher scheitern (der Provider wirft
           // absichtlich, wenn er nicht gesetzt ist).
           localStorageProvider.overrideWithValue(_Speicher()),
@@ -126,7 +126,7 @@ void main() {
   }
 
   /// Scrollt, bis [anzahl] Eingabefelder gebaut sind (die Liste baut
-  /// nur die sichtbaren Eintraege).
+  /// nur die sichtbaren Einträge).
   Future<void> scrolleZuFeldern(WidgetTester tester, int anzahl) async {
     for (var i = 0; i < 14; i++) {
       if (tester.widgetList<TextFormField>(find.byType(TextFormField)).length >=
@@ -138,13 +138,13 @@ void main() {
     }
   }
 
-  /// Fuellt die Felder der Registrierung (Name, E-Mail, Passwort).
+  /// Füllt die Felder der Registrierung (Name, E-Mail, Passwort).
   Future<void> fuelleFelder(WidgetTester tester) async {
     await scrolleZuFeldern(tester, 3);
     await tester.enterText(find.byType(TextFormField).at(0), 'Lena');
     await tester.enterText(find.byType(TextFormField).at(1), 'lena@example.de');
-    // Das Passwort muss die Server-Regel erfuellen (8 Zeichen, Buchstabe,
-    // Zahl UND Sonderzeichen) - sonst stoppt die Formularpruefung vorher.
+    // Das Passwort muss die Server-Regel erfüllen (8 Zeichen, Buchstabe,
+    // Zahl UND Sonderzeichen) - sonst stoppt die Formularprüfung vorher.
     await tester.enterText(find.byType(TextFormField).at(2), 'Passwort123!');
     await tester.pump();
   }
@@ -194,11 +194,11 @@ void main() {
       await wechsleZurRegistrierung(tester);
       await fuelleFelder(tester);
 
-      // Das Geburtsdatum waehlen (der Vorschlag ist 18 Jahre zurueck).
+      // Das Geburtsdatum wählen (der Vorschlag ist 18 Jahre zurück).
       // Das Geburtsdatum-Feld ist das VIERTE TextFormField (Name,
       // E-Mail, Passwort, Geburtsdatum).
       // Das Geburtsdatum-Feld ist ein InkWell mit dem Text
-      // "Geburtsdatum waehlen" (es ist kein Eingabefeld).
+      // "Geburtsdatum wählen" (es ist kein Eingabefeld).
       final datum = find.text(L10n.tWithoutContext('auth.birthDatePick'));
       await tester.scrollUntilVisible(
         datum,
@@ -209,7 +209,7 @@ void main() {
       await tester.tap(datum);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      // Der Vorschlag bestaetigen (18 Jahre alt - genau an der Grenze).
+      // Der Vorschlag bestätigen (18 Jahre alt - genau an der Grenze).
       final ok = find.text('OK');
       if (ok.evaluate().isNotEmpty) {
         await tester.tap(ok);
@@ -226,7 +226,7 @@ void main() {
             'Das Alter muss ausdruecklich bestaetigt werden - der Nutzer '
             'muss bestaetigen, dass er die Wahrheit sagt.',
       );
-      // DIE EIGENTLICHE ZUSICHERUNG: Ohne die Bestaetigung darf sich
+      // DIE EIGENTLICHE ZUSICHERUNG: Ohne die Bestätigung darf sich
       // niemand registrieren.
       expect(
         gingRaus(),
@@ -241,7 +241,7 @@ void main() {
       await zeigeScreen(tester);
       await wechsleZurRegistrierung(tester);
 
-      // Ohne Eingaben: Die Formularpruefung meldet die leeren Felder.
+      // Ohne Eingaben: Die Formularprüfung meldet die leeren Felder.
       await tippeRegistrieren(tester);
 
       expect(tester.takeException(), isNull);

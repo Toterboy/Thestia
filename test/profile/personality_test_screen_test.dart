@@ -1,17 +1,17 @@
-// Der Persoenlichkeitstest (letzter Schritt der Einrichtung) - bisher
+// Der Persönlichkeitstest (letzter Schritt der Einrichtung) - bisher
 // ungetestet (0,8 %).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/onboarding/personality_test_screen.dart 132 offene Zeilen
 // bei 133 Zeilen gesamt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Test stellt zehn Fragen mit je zwei Polen,
 //   * erst wenn alle beantwortet sind, kann der Test abgeschlossen
-//     werden (sonst waere das Ergebnis meaningless),
-//   * das Ergebnis wird gespeichert (Profil UND Server - sonst waere der
-//     Test nach der naechsten Neuinstallation wieder da),
-//   * der Nutzer kann den Test auch ueberspringen.
+//     werden (sonst wäre das Ergebnis meaningless),
+//   * das Ergebnis wird gespeichert (Profil UND Server - sonst wäre der
+//     Test nach der nächsten Neuinstallation wieder da),
+//   * der Nutzer kann den Test auch überspringen.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,7 +74,7 @@ class _Keystore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {
-    // Der Test loescht kein Profil im Keystore.
+    // Der Test löscht kein Profil im Keystore.
   }
 }
 
@@ -238,7 +238,7 @@ void main() {
             'sonst nicht, was der Test ergab.',
       );
       // Und die Setup-Flags liegen beim Server (sonst erscheint der Test
-      // nach der naechsten Neuinstallation wieder).
+      // nach der nächsten Neuinstallation wieder).
       expect(
         server.schreibvorgaenge.any((s) => s['tabelle'] == 'profiles'),
         isTrue,

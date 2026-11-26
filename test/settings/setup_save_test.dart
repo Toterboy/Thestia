@@ -1,12 +1,12 @@
 // Das Speichern in der Ersteinrichtung (bisher ungetestet).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/onboarding/settings_privacy_once_screen.dart 373 offene
 // Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Angaben aus der Ersteinrichtung landen beim Server (nicht nur
-//     lokal - sonst waeren sie nach der Ersteinrichtung weg),
+//     lokal - sonst wären sie nach der Ersteinrichtung weg),
 //   * das Land wird mitgespeichert,
 //   * die Interessen werden mitgespeichert.
 //
@@ -98,13 +98,13 @@ void main() {
       ),
     );
 
-    // HIVE: die verschluesselten Schluessel (Signal-Protokoll) liegen in
-    // Hive-Boxen - ohne initialisierten Hive schlaegt der Aufbau fehl.
+    // HIVE: die verschlüsselten Schlüssel (Signal-Protokoll) liegen in
+    // Hive-Boxen - ohne initialisierten Hive schlägt der Aufbau fehl.
     final tempDir = await Directory.systemTemp.createTemp('thesia_setup');
     Hive.init(tempDir.path);
 
     // ANGEMELDET: Ohne Sitzung gibt der Server-Dienst nichts frei
-    // ("Nicht eingeloggt") - das Profil wuerde nie gespeichert.
+    // ("Nicht eingeloggt") - das Profil würde nie gespeichert.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
 
@@ -170,7 +170,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Geht zur Profilseite und fuellt sie.
+  /// Geht zur Profilseite und füllt sie.
   Future<void> fuelleProfil(WidgetTester tester) async {
     await tester.tap(find.text(L10n.tWithoutContext('onb.next')));
     await tester.pump();
@@ -183,7 +183,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Ein Interesse waehlen (der Chip liegt unterhalb der Falz).
+    // Ein Interesse wählen (der Chip liegt unterhalb der Falz).
     final chip = find.widgetWithText(FilterChip, 'Sport');
     await tester.ensureVisible(chip);
     await tester.pump();
@@ -214,7 +214,7 @@ void main() {
       final profil = updates.last;
       expect(profil['bio'], 'Ich mag lange Spaziergaenge am Fluss.');
       expect(profil['interests'], contains('Sport'));
-      // Und das Land (sonst stuenden alle Profile auf 'Deutschland').
+      // Und das Land (sonst stünden alle Profile auf 'Deutschland').
       expect(profil['country'], isNotNull);
     });
 

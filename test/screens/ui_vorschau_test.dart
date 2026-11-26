@@ -9,16 +9,16 @@ import 'package:go_router/go_router.dart';
 import 'package:thestia/screens/core/main_navigation.dart';
 import 'package:thestia/widgets/chat/pill_tab_bar.dart';
 
-/// VORAB-RENDERING der geaenderten Oberflaechen (27.10.2026).
+/// VORAB-RENDERING der geänderten Oberflächen (27.10.2026).
 ///
 /// Nur von Hand zu starten:
 ///   flutter test test/ui_vorschau_test.dart
 ///
-/// Schreibt PNGs nach .../Temp/opencode/m133/ui/, damit die Aenderungen
-/// angesehen werden koennen, ohne die App auf einem Geraet zu oeffnen.
+/// Schreibt PNGs nach .../Temp/opencode/m133/ui/, damit die Änderungen
+/// angesehen werden können, ohne die App auf einem Gerät zu öffnen.
 ///
 /// Warum das Werkzeug es gibt: bei den Mode-Symbolen hat der erste
-/// Entwurf den Zug zerschnitten, und das fiel erst auf dem Geraet auf.
+/// Entwurf den Zug zerschnitten, und das fiel erst auf dem Gerät auf.
 /// Ein CustomPainter, den niemand gesehen hat, ist geraten statt
 /// gezeichnet.
 void main() {
@@ -133,7 +133,7 @@ void main() {
       debugPrint('geschrieben: bottom_navigation.png');
     });
 
-    // 3) Die Interessen-Seite: Pillen-Leiste ueber dem Inhalt, Stift
+    // 3) Die Interessen-Seite: Pillen-Leiste über dem Inhalt, Stift
     //    nur rechts oben.
     await tester.pumpWidget(
       MaterialApp(

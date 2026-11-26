@@ -5,12 +5,12 @@
 // Sind die APKs veraltet?" - Ja, die Admin-APKs waren Build 33, der
 // Fix steckte im Build 38.
 //
-// Der Betreiber konnte es nicht erkennen: beide heissen "v0.10.0",
+// Der Betreiber konnte es nicht erkennen: beide heißen "v0.10.0",
 // und die App zeigte nirgends einen Build, mit dem man die Dateien
-// haette unterscheiden koennen. Deshalb steht die Build-Nummer jetzt
+// hätte unterscheiden können. Deshalb steht die Build-Nummer jetzt
 // in der Fusszeile - sie ist das, was den Build unterscheidet.
 //
-// Der Test haelt beides fest: die Build-Nummer steht da, UND die
+// Der Test hält beides fest: die Build-Nummer steht da, UND die
 // Fusszeile nennt sie nicht mit einer leeren Klammer, wenn die
 // Plattform keine Build-Nummer liefert.
 
@@ -44,7 +44,7 @@ void main() {
   testWidgets('Der Admin-Build ist an seiner Build-Nummer erkennbar', (
     tester,
   ) async {
-    // So sieht der Admin-Build auf dem Geraet aus: Basis 39 + 9000.
+    // So sieht der Admin-Build auf dem Gerät aus: Basis 39 + 9000.
     PackageInfo.setMockInitialValues(
       appName: 'Thestia',
       packageName: 'com.thestia.app',
@@ -59,7 +59,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Version 0.10.0 (9039)'), findsOneWidget);
-    // Und er ist NICHT mit dem oeffentlichen Build zu verwechseln.
+    // Und er ist NICHT mit dem öffentlichen Build zu verwechseln.
     expect(find.text('Version 0.10.0 (39)'), findsNothing);
   });
 

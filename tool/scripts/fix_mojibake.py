@@ -1,30 +1,30 @@
 """Repariert die durch PowerShell-Round-Trips oder fremde Editoren
-zerstoerte UTF-8-Kodierung im Repo.
+zerstörte UTF-8-Kodierung im Repo.
 
 URSACHE
 -------
 In PowerShell 5.1 liest `Get-Content -Raw` eine UTF-8-Datei OHNE BOM als
 System-Codepage (cp1252), nicht als UTF-8. Schreibt man das Ergebnis
-mit `Set-Content -Encoding UTF8` zurueck, ist jeder Umlaut doppelt
+mit `Set-Content -Encoding UTF8` zurück, ist jeder Umlaut doppelt
 kodiert: aus "u-umlaut" (UTF-8 C3 BC) wird erst "A-circumflex" +
 "one-quarter" (cp1252-Lesung) und dann wieder UTF-8 geschrieben.
 
 WIRKUNG
 -------
-Der Defekt faellt im Quelltext nicht auf. In
-tool/scripts/make_feature_graphic.py stand woertlich `verschlA-...-sselt` in
-einem Python-String - der Code lief, die Tests waren gruen, nichts hat
+Der Defekt fällt im Quelltext nicht auf. In
+tool/scripts/make_feature_graphic.py stand wörtlich `verschlA-...-sselt` in
+einem Python-String - der Code lief, die Tests waren grün, nichts hat
 gemeckelt. Sichtbar wurde es erst auf dem gerenderten Play-Banner.
 Eine Fehlerklasse, die nur im Artefakt auftaucht, braucht eine
-Pruefung an der Quelle: check_mojibake.py.
+Prüfung an der Quelle: check_mojibake.py.
 
-AUSSCHLUESSE - WICHTIG
+AUSSCHLÖSSE - WICHTIG
 ----------------------
-Nicht jede Doppelkodierung ist ein Fehler. test/l10n_test.dart enthaelt
+Nicht jede Doppelkodierung ist ein Fehler. test/l10n_test.dart enthält
 absichtlich die Zeichen U+00C3 und U+00C2, weil der Test damit in
 app_strings.dart nach Doppelkodierungs-Resten sucht. Wird diese Datei
-"repariert", zerstoert man das Pruefmittel und der Test laeuft ins Leere.
-Aehnlich tool/checks/check_mojibake.py, das dieselben Zeichen in seiner
+"repariert", zerstört man das Prüfmittel und der Test läuft ins Leere.
+Ähnlich tool/checks/check_mojibake.py, das dieselben Zeichen in seiner
 Dokumentation zeigt.
 
 Deshalb ist die Ausschlussliste Teil des Werkzeugs und nicht eine
@@ -43,8 +43,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -78,11 +78,11 @@ EXCLUDE_PREFIXES = ('tool/notes/',)
 
 # Beide Mengen werden ABGELEITET, nicht handgeschrieben. Grund: cp1252
 # bildet die Bytes 0x80-0x9F auf typografische Sonderzeichen ab - 0x80 ist
-# "Euro", 0x93/0x94 sind Gaenstriche, 0x96/0x97 Gedankenstriche. Eine
+# "Euro", 0x93/0x94 sind Gänstriche, 0x96/0x97 Gedankenstriche. Eine
 # handgeschriebene Menge 0x80-0xBF erfasst damit UTF-8-Dreibytezeichen
 # wie "em dash" gar nicht: sie zerfallen in "a-circumflex" + "Euro" +
 # '"', und der Lauf bricht nach einem Byte ab, weil U+20AC nicht im
-# Bereich liegt. Genau das ergab 8 unaufgeloeste Stellen.
+# Bereich liegt. Genau das ergab 8 unaufgelöste Stellen.
 #
 # Ausgangspunkt ist die Bytezahl, nicht das Zeichen: jedes Byte, das
 # cp1252 als verwertbares Zeichen kennt, wird zu dem Zeichen, das diese
@@ -122,11 +122,11 @@ def repair_line(line: str) -> tuple[str, int, int]:
     while i < len(line):
         if line[i] in LEAD:
             # Start bei i+1, NICHT bei i: die Verdachtszeichen selbst
-            # (U+00C2/C3/E2) liegen oberhalb von 0xBF und damit ausserhalb
-            # von CONT. Mit j = i pruefte die Bedingung
+            # (U+00C2/C3/E2) liegen oberhalb von 0xBF und damit außerhalb
+            # von CONT. Mit j = i prüfte die Bedingung
             # `line[j] in CONT` sofort falsch, j blieb auf i, und
             # `i = j` bewegte den Zeiger nicht - Endlosschleife, die den
-            # gesamten Lauf haengen liess. Fortschritt ist hier nicht
+            # gesamten Lauf hängen ließ. Fortschritt ist hier nicht
             # nur Performance, sondern Korrektheit.
             j = i + 1
             while j < len(line) and line[j] in CONT and (j - i) < MAX_RUN:
@@ -151,7 +151,7 @@ def walk_files():
 
     pathlib.Path.rglob('*') durchsucht auch build/, .git/, android/ und
     ios/ und filtert erst DANACH nach Namen. Das sind zehntausende
-    Dateien, der Lauf haengt. Deshalb os.walk mit Entfernen der
+    Dateien, der Lauf hängt. Deshalb os.walk mit Entfernen der
     Verzeichnisse aus dem Suchbaum - das bricht sie gar nicht erst auf.
     """
     import os
@@ -204,7 +204,7 @@ def main() -> int:
                                 if file_unresolved else ''))
             if args.apply:
                 # UTF-8 ohne BOM: der BOM kam aus demselben
-                # PowerShell-Round-Trip und stoert andere Werkzeuge.
+                # PowerShell-Round-Trip und stört andere Werkzeuge.
                 p.write_text(''.join(new_lines), encoding='utf-8', newline='\n')
 
     lines_out.insert(0, f'{"REPARIERT" if args.apply else "GEMELDET"}: '

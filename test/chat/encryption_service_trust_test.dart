@@ -1,28 +1,28 @@
-// Das Vertrauens-Gedaechtnis des Verschluesselungsdienstes.
+// Das Vertrauens-Gedächtnis des Verschlüsselungsdienstes.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/encryption_service.dart 99 offene Zeilen - genau
 // die Trust-Funktionen, mit denen die App auf einen kompromittierten
 // Server reagiert.
 //
 // DER WEG: Der Audit vom 26.09.2026 hat die "erzwungene
-// Safety-Number-Pruefung" eingefuehrt: [setRequiresPeerVerification]
-// schaltet sie fuer einen Kontakt ein, und [encryptMessage] verweigert
-// dann die Nachricht, solange die Identitaet nicht bestaetigt ist.
-// Genau diese Kette war ungetestet - ein Fehler darin waere still:
-// der Schalter waere reine Dekoration und der Nutzer haette den
-// Schutz nicht, den die Oberflaeche verspricht.
+// Safety-Number-Prüfung" eingeführt: [setRequiresPeerVerification]
+// schaltet sie für einen Kontakt ein, und [encryptMessage] verweigert
+// dann die Nachricht, solange die Identität nicht bestätigt ist.
+// Genau diese Kette war ungetestet - ein Fehler darin wäre still:
+// der Schalter wäre reine Dekoration und der Nutzer hätte den
+// Schutz nicht, den die Oberfläche verspricht.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ein unbekannter Kontakt gilt als nicht bestaetigt und hat keine
+// WAS HIER GEPRÜFT WIRD:
+//   * ein unbekannter Kontakt gilt als nicht bestätigt und hat keine
 //     Safety-Nummer,
-//   * die Bestaetigung wird gemerkt und wieder genommen,
+//   * die Bestätigung wird gemerkt und wieder genommen,
 //   * der Hinweis auf die Sicherheitsnummer wird je Kontakt gemerkt,
-//   * das Merken des Hinweises LOESCHT die anderen Flags nicht
+//   * das Merken des Hinweises LÖSCHT die anderen Flags nicht
 //     (das ist die eigentliche Falle: der Eintrag wird als JSON neu
 //     geschrieben),
-//   * die erzwungene Verifikation sperrt das Verschluesseln - und
-//     nach der Bestaetigung geht es wieder,
+//   * die erzwungene Verifikation sperrt das Verschlüsseln - und
+//     nach der Bestätigung geht es wieder,
 //   * die Schalter an einem unbekannten Kontakt tun nichts.
 //
 // ANMERKUNG: Diese Tests laufen als NORMALE Tests (nicht als
@@ -42,7 +42,7 @@ void main() {
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // DER KEYSTORE: die Boxen sind AES-256-verschluesselt.
+    // DER KEYSTORE: die Boxen sind AES-256-verschlüsselt.
     mockKeystore();
     // DIE ADAPTER: die Boxen halten Signal-Objekte.
     Hive.registerAdapter(SignalIdentityKeyPairAdapterAdapter());
@@ -75,8 +75,8 @@ void main() {
   }
 
   /// Baut eine Session (die Gegenseite wird durch ein Bundle aus
-  /// demselben Dienst angedeutet - geprueft wird der Trust, nicht
-  /// der Austausch zwischen zwei Geraeten).
+  /// demselben Dienst angedeutet - geprüft wird der Trust, nicht
+  /// der Austausch zwischen zwei Geräten).
   Future<void> baueSession(
     EncryptionService service,
     Map<String, dynamic> bundle,
@@ -206,7 +206,7 @@ void main() {
     test('die Schalter an einem unbekannten Kontakt tun nichts', () async {
       final service = await dienst('ich');
 
-      // DER GRUND: Die Oberflaeche kann den Schalter auch an einem
+      // DER GRUND: Die Oberfläche kann den Schalter auch an einem
       // Kontakt ohne Eintrag anbieten. Das darf keinen Absturz geben
       // und vor allem keinen halben Eintrag anlegen.
       await service.setPeerIdentityVerified('fremd', true);
@@ -272,9 +272,9 @@ void main() {
       await service.setRequiresPeerVerification('partner-1', true);
       await service.setPeerIdentityVerified('partner-1', true);
 
-      // DER GRUND: Wer den Kontakt einmal bestaetigt hat, soll die
-      // Pruefung nicht wieder verlieren - sonst kaeme der Schutz
-      // ueber den Umweg wieder weg.
+      // DER GRUND: Wer den Kontakt einmal bestätigt hat, soll die
+      // Prüfung nicht wieder verlieren - sonst käme der Schutz
+      // über den Umweg wieder weg.
       expect(service.requiresPeerVerification('partner-1'), isTrue);
     });
 
@@ -284,7 +284,7 @@ void main() {
       await baueSession(service, bundle, 'partner-1');
 
       // DER GRUND: Die Erzwingung ist ein Schalter des Nutzers. Ohne
-      // ihn darf der Normalfall nicht kaputt sein (sonst waere die
+      // ihn darf der Normalfall nicht kaputt sein (sonst wäre die
       // App nach dem Update unbenutzbar).
       expect(() => service.assertPeerUsable('partner-1'), returnsNormally);
       final nachricht = await service.encryptMessage('partner-1', 'Hallo');

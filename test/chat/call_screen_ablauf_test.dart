@@ -1,21 +1,21 @@
 // Der Anruf-Screen: der ganze Ablauf eines Sprachanrufs.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/call_screen.dart 300 offene Zeilen bei 32 %
-// Abdeckung - die groesste Luecke der App. Der Screen entscheidet,
-// was im Gespraech passiert: Wer nimmt ab, wer legt auf, was bei
+// Abdeckung - die größte Lücke der App. Der Screen entscheidet,
+// was im Gespräch passiert: Wer nimmt ab, wer legt auf, was bei
 // fehlender Verbindung gemeldet wird und was die Sprache des
-// Partners ausloest.
+// Partners auslöst.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Annahme und die Ablehnung (beide Richtungen),
 //   * das Ende des Anrufs durch den Partner und durch mich,
 //   * der besetzte Zweit-Anruf (der Partner soll nicht 30 Sekunden
 //     ins Leere warten),
-//   * die Zeitueberschreitung (kein endloses Klingeln),
+//   * die Zeitüberschreitung (kein endloses Klingeln),
 //   * das Push-to-Talk (ohne Mikrofon, mit Mikrofon, der Versand),
 //   * der Eisbrecher-Bogen und die Stummschaltung,
-//   * die Fehlerfaelle: kein Invite, kein DataChannel, keine ID.
+//   * die Fehlerfälle: kein Invite, kein DataChannel, keine ID.
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -25,7 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-// webrtc_interface kommt als Transitivum ueber flutter_webrtc - der Test
+// webrtc_interface kommt als Transitivum über flutter_webrtc - der Test
 // braucht nur den DataChannel-Zustand.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -42,7 +42,7 @@ import '../support/plugin_mocks.dart';
 /// Der P2P-Dienst als Ersatz.
 ///
 /// DER GRUND: Die echte Direktverbindung braucht das WebRTC-Plugin - im
-/// Test gibt es kein Geraet. Der Ersatz meldet, was der Test will, und
+/// Test gibt es kein Gerät. Der Ersatz meldet, was der Test will, und
 /// nimmt die Nachrichten auf, die der Screen schickt.
 class _FakeP2P extends P2PChatService {
   _FakeP2P(
@@ -140,8 +140,8 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
-    // HIVE: der Verschluesselungs-Dienst oeffnet seine Boxen - ohne
-    // initialisiertes Hive schlaegt der Aufbau fehl.
+    // HIVE: der Verschlüsselungs-Dienst öffnet seine Boxen - ohne
+    // initialisiertes Hive schlägt der Aufbau fehl.
     await mockHive();
     // DER AUDIO-PLAYER und die AUFNAHME: Der Screen benutzt beide.
     mockAudioPlayer();
@@ -164,7 +164,7 @@ void main() {
     server.pfade.clear();
     // DER TEMP-ORDNER UND DIE AUFNAHME: Das Push-to-Talk liest die Datei
     // spater im Screen. Das Anlegen muss VOR dem Test passieren - im
-    // Test selbst wartet das Dateisystem endlos (der Test laeuft in einer
+    // Test selbst wartet das Dateisystem endlos (der Test läuft in einer
     // nachgebauten Zeit, in der die echte Datei keine Antwort bekommt).
     tempDir = await Directory.systemTemp.createTemp('thesia_call_test');
     aufnahme = File('${tempDir.path}/aufnahme.m4a');
@@ -214,14 +214,14 @@ void main() {
     return p2p;
   }
 
-  /// Der Partner nimmt an - das Gespraech steht.
+  /// Der Partner nimmt an - das Gespräch steht.
   Future<void> partnerNimmtAn(WidgetTester tester, _FakeP2P p2p) async {
     p2p.empfangeKontrolle({'type': 'accept', 'callId': p2p.callId});
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  /// Der Knopf zum Sprechen (der grosse Kreis in der Mitte).
+  /// Der Knopf zum Sprechen (der große Kreis in der Mitte).
   Finder sprechKnopf() => find.byWidgetPredicate(
     (w) => w is Icon && w.icon == Icons.mic && w.size == 40,
   );
@@ -234,9 +234,9 @@ void main() {
   /// Lässt Test-Kreis und echten Kreis abwechseln.
   ///
   /// DER GRUND: Das Dateisystem (Aufnahme lesen, Paket speichern,
-  /// Datei loeschen) braucht den echten Ereignis-Kreis - im Test-Kreis
+  /// Datei löschen) braucht den echten Ereignis-Kreis - im Test-Kreis
   /// wartet es endlos. Die Bildschirm-Aktionen laufen dagegen im
-  /// Test-Kreis (dort ist die Uhr kuenstlich). Deshalb wird abwechselnd
+  /// Test-Kreis (dort ist die Uhr künstlich). Deshalb wird abwechselnd
   /// gearbeitet: einmal den Test-Kreis vor und danach den echten.
   Future<void> wechsle(WidgetTester tester, {int mal = 4}) async {
     for (var i = 0; i < mal; i++) {
@@ -563,7 +563,7 @@ void main() {
       final anzahl = chips.evaluate().length;
       expect(anzahl, greaterThan(1));
 
-      // Die erste Kategorie (nicht "alle") waehlen.
+      // Die erste Kategorie (nicht "alle") wählen.
       await tester.tap(chips.at(1));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -583,7 +583,7 @@ void main() {
       final p2p = await zeige(tester);
       await partnerNimmtAn(tester, p2p);
 
-      // DER GRUND FUER runAsync: Das Speichern der Datei braucht das
+      // DER GRUND FÜR runAsync: Das Speichern der Datei braucht das
       // echte Dateisystem - im Test ohne runAsync wartet der Aufruf.
       await tester.runAsync(() async {
         p2p.empfangeAudio(Uint8List.fromList(List<int>.filled(64, 9)));

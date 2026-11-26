@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Prueft, ob das Profil-Speichern der App die Datenbank wirklich akzeptiert.
+"""Prüft, ob das Profil-Speichern der App die Datenbank wirklich akzeptiert.
 
-WARUM (13.11.2026, Betreiber: "Server Sync schlaegt fehl, wenn ich mein
+WARUM (13.11.2026, Betreiber: "Server Sync schlägt fehl, wenn ich mein
 Profil anpasse"):
 
    Ein PostgREST-UPDATE ist ATOMAR. Ein EINZIGES Feld, das der
-   CHECK-Constraint ablehnt, macht das GANZE Update unmoeglich - und
+   CHECK-Constraint ablehnt, macht das GANZE Update unmöglich - und
    weil der Profil-Editor viele Felder in einem Rutsch schreibt, war
    damit auch der Name, die Bio und die Vorstellung nicht zu speichern.
    Der Betreiber sah nur "Server-Sync fehlgeschlagen".
@@ -19,8 +19,8 @@ DAS WERKZEUG macht den Schreibvorgang der App NACH:
    1. Es setzt die JWT-Claims eines Testkontos und wechselt in die
       Rolle `authenticated` - die RLS gilt also genau wie in der App.
    2. Es schreibt denselben Body, den der Profil-Editor schickt.
-   3. Alles laeuft in einer Transaktion, die am Ende ZURUECKGEROLLT
-      wird - die Produktivdaten werden nicht veraendert.
+   3. Alles läuft in einer Transaktion, die am Ende ZURÜCKGEROLLT
+      wird - die Produktivdaten werden nicht verändert.
 
    Bricht der Schreibvorgang ab (CHECK-Constraint, fehlende Spalte,
    RLS), meldet das Werkzeug die Ursache und endet mit Exitcode 1.
@@ -30,7 +30,7 @@ Aufruf::
     python tool/checks/check_profile_write_allowed.py
 
 Der Testkonto ist das des Betreibers (46f3f558-...). Es wird nichts
-veraendert - die Transaktion wird zurueckgerollt.
+verändert - die Transaktion wird zurückgerollt.
 """
 
 import pathlib
@@ -43,8 +43,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -61,14 +61,14 @@ ROOT = _projektwurzel()
 
 
 # Das Testkonto (der Betreiber). Es wird nur zum SCHREIBEN benutzt -
-# die Transaktion wird zurueckgerollt.
+# die Transaktion wird zurückgerollt.
 KONTO = "46f3f558-b134-4d25-946b-4e052a8ab3b5"
 
 # Der Body aus dem Profil-Editor (lib/screens/profile/profile_edit_screen.dart).
 # Die Werte sind die, die die App bei einem normalen Speichern schickt.
 #
-# WICHTIG: Der Body wird hier per TEXT geprueft - nicht per Import aus
-# dem Dart-Code. Das Werkzeug soll den SERVER pruefen, nicht den
+# WICHTIG: Der Body wird hier per TEXT geprüft - nicht per Import aus
+# dem Dart-Code. Das Werkzeug soll den SERVER prüfen, nicht den
 # Client. Dass der Client genau das schickt, sichert der Test
 # test/profile_server_values_test.dart ab.
 BODY = """
@@ -103,7 +103,7 @@ BODY = """
   show_habits_drugs = true
 """
 
-# Was der Client fuer preferred_state schickt, wenn dort ein BUNDESLAND
+# Was der Client für preferred_state schickt, wenn dort ein BUNDESLAND
 # steht (der Wert, der das Update kippen würde). Die Spalte kennt nur
 # die Beziehungswerte - das Bundesland wird verworfen.
 BODY_MIT_BUNDESLAND = BODY.replace(
@@ -128,7 +128,7 @@ rollback;
 def ausfuehren(sql: str) -> tuple[bool, str]:
     datei = ROOT / "_tmp_profile_write_check.sql"
     datei.write_text(sql, encoding="utf-8", newline="\n")
-    # Auf Windows heisst der CLI-Aufruf "supabase.cmd" (der Rest ist ein
+    # Auf Windows heißt der CLI-Aufruf "supabase.cmd" (der Rest ist ein
     # Shell-Skript) - dieselbe Form wie in den anderen Werkzeugen.
     cli = "supabase.cmd" if sys.platform == "win32" else "supabase"
     try:

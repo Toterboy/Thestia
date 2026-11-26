@@ -1,13 +1,13 @@
-// Die Bundesland-Aufloesung aus der Position (bisher ungetestet - 0 %).
+// Die Bundesland-Auflösung aus der Position (bisher ungetestet - 0 %).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/utils/location/geo_names.dart 0 %.
 //
 // WARUM DAS WICHTIG IST: Die Funktion liefert bewusst NUR das
-// Bundesland, nicht den Ort - der Aufenthaltsort waere sonst bis auf
-// ~11 km genau oeffentlich. Ein Test haelt diese Zusage fest.
+// Bundesland, nicht den Ort - der Aufenthaltsort wäre sonst bis auf
+// ~11 km genau öffentlich. Ein Test hält diese Zusage fest.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * geliefert wird das Bundesland, NICHT der Ort,
 //   * ohne Treffer kommt null (die Einrichtung fragt dann, statt zu raten),
 //   * ohne Bundesland kommt die grobe Landangabe,
@@ -18,9 +18,9 @@ import 'package:geocoding/geocoding.dart';
 
 import 'package:thestia/utils/location/geo_names.dart';
 
-/// Der Ersatz fuer die Geocoding-Plattform.
+/// Der Ersatz für die Geocoding-Plattform.
 ///
-/// Die echte Schnittstelle braucht das Geraet - im Test antwortet der
+/// Die echte Schnittstelle braucht das Gerät - im Test antwortet der
 /// Ersatz aus dem RAM.
 class _FakeGeocoding extends GeocodingPlatform {
   /// Die Placemarks, die der "Geocoder" liefert.
@@ -77,8 +77,8 @@ void main() {
     test('ohne Treffer kommt null', () async {
       geocoding.antwort = const [];
 
-      // Null heisst: die Einrichtung fragt den Nutzer. Ein erfundenes
-      // Bundesland waere schlimmer als keines.
+      // Null heißt: die Einrichtung fragt den Nutzer. Ein erfundenes
+      // Bundesland wäre schlimmer als keines.
       expect(await describeStateFor(53.08, 8.81), isNull);
     });
 

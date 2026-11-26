@@ -49,13 +49,13 @@ class IntroEditor extends ConsumerStatefulWidget {
   ///
   /// BEFUND (09.11.2026, Betreiber): "Es kann jedoch, wenn man sich
   /// vorstellt nur eine textliche Vorstellung sein und die Audio kann
-  /// man dann bei einem Funken hoeren. Das bleibt freigestellt."
+  /// man dann bei einem Funken hören. Das bleibt freigestellt."
   ///
   /// Vorher verlangte `isValid` Text UND Audio - die Aufnahme war
   /// Pflicht. Jetzt ist der TEXT die Pflicht, die Aufnahme die
   /// Option. Das Audio wird ohnehin erst beim Funke freigegeben
-  /// (match-media, serverseitig geprueft) - es zu erzwingen, bevor
-  /// ueberhaupt jemand die Vorstellung sieht, war widersinnig.
+  /// (match-media, serverseitig geprüft) - es zu erzwingen, bevor
+  /// überhaupt jemand die Vorstellung sieht, war widersinnig.
   static bool isValid({required String text, String? audioPath}) =>
       text.trim().isNotEmpty;
 
@@ -73,9 +73,9 @@ class IntroEditor extends ConsumerStatefulWidget {
 
   /// Fenster der Stille-Erkennung in Messungen (10 Hz => 60 = 6 Sekunden).
   ///
-  /// Fenster bewusst kleiner als die Mindestlaenge: Wer 10 Sekunden
+  /// Fenster bewusst kleiner als die Mindestlänge: Wer 10 Sekunden
   /// aufnimmt und erst in der letzten Sekunde spricht, soll das noch
-  /// merken, aber 10 Sekunden Stille am Stueck nicht.
+  /// merken, aber 10 Sekunden Stille am Stück nicht.
   static const int speechWindow = 60;
 }
 
@@ -92,8 +92,8 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
 
   /// Stille-Erkennung der laufenden Aufnahme.
   ///
-  /// Gefuellt von [_AmplitudeBars] ueber [IntroEditor.consumeLevel], weil
-  /// dort der Amplitude-Stream bereits angehaengt ist. Haelt die
+  /// Gefüllt von [_AmplitudeBars] über [IntroEditor.consumeLevel], weil
+  /// dort der Amplitude-Stream bereits angehängt ist. Hält die
   /// Entscheidung "wurde etwas gesagt" an EINER Stelle, statt sie aus
   /// der Balken-Anzeige zu erraten.
   final SpeechLevelDetector _speech = SpeechLevelDetector(
@@ -103,8 +103,8 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
   /// Vom Balken-Widget gemeldeter Wechsel "Ton <-> Stille".
   bool _silent = true;
 
-  /// Rotations-Seed fuer die Prompt-Chips. Einmal in initState
-  /// gezogen und gehalten: die Chips duerfen waehrend des
+  /// Rotations-Seed für die Prompt-Chips. Einmal in initState
+  /// gezogen und gehalten: die Chips dürfen während des
   /// Bearbeitens nicht springen (v0.9.2).
   late final int _promptSeed;
 
@@ -156,7 +156,7 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         path: path,
       );
       // Mikrofon-Permission + Start dauern real mehrere Hundert ms. Navigiert
-      // der Nutzer in dieser Zeit weg, waere das setState ein Crash.
+      // der Nutzer in dieser Zeit weg, wäre das setState ein Crash.
       if (!mounted) {
         await _recorder.stop();
         return;
@@ -177,13 +177,13 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
 
   /// Vom [_AmplitudeBars]-Widget bei jedem Pegelwert aufgerufen.
   ///
-  /// Der Balken-Subscriber ist die EINZIGE Quelle fuer Pegel: dort
-  /// haengt `onAmplitudeChanged`. Das hier nimmt die Werte entgegen und
+  /// Der Balken-Subscriber ist die EINZIGE Quelle für Pegel: dort
+  /// hängt `onAmplitudeChanged`. Das hier nimmt die Werte entgegen und
   /// entscheidet. So braucht die Erkennung keinen zweiten
   /// Recorder-Zugriff.
   void _onLevel(double? rawDb) {
     final changed = _speech.addSample(rawDb);
-    // Nur bei einem Wechsel "Ton <-> Stille" neu bauen. Sonst wuerde
+    // Nur bei einem Wechsel "Ton <-> Stille" neu bauen. Sonst würde
     // der komplette Editor 10-mal pro Sekunde neu aufbauen.
     if (changed || _silent != _speech.hasSpeech) {
       if (mounted) setState(() => _silent = !_speech.hasSpeech);
@@ -245,11 +245,11 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         return;
       }
 
-      // STILLE-PRUEFUNG (v0.10.0): Vor dem Review-Sheet. Eine Aufnahme
-      // ohne verstaendlichen Ton kann 10+ Sekunden dauern und trotzdem
-      // nichts enthalten - der Mindestlaengen-Check im Review-Sheet
+      // STILLE-PRÜFUNG (v0.10.0): Vor dem Review-Sheet. Eine Aufnahme
+      // ohne verständlichen Ton kann 10+ Sekunden dauern und trotzdem
+      // nichts enthalten - der Mindestlängen-Check im Review-Sheet
       // sieht das nicht. Hier wird abgefangen, BEVOR der Nutzer sich
-      // eine stille Aufnahme anhoert und "Senden" klickt.
+      // eine stille Aufnahme anhört und "Senden" klickt.
       if (!_speech.hasSpeech) {
         if (await file.exists()) await file.delete();
         if (!mounted) {
@@ -541,8 +541,8 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         // Drei-Schritte-Leitfaden (ROADMAP 0.10.0, "Vorstellungs-Vorlagen
         // (Text + Audio)"): Wer 60 Sekunden redet, braucht eine Struktur,
         // sonst sagt am Ende jeder nur "Ja, also... ich bin halt so".
-        // Die Text-Vorstellung hat die Prompt-Karten - fuer die Audio-
-        // Vorstellung war das die letzte fehlende Haelfte.
+        // Die Text-Vorstellung hat die Prompt-Karten - für die Audio-
+        // Vorstellung war das die letzte fehlende Hälfte.
         IntroRecordingGuide(elapsedSeconds: _recordSeconds, paused: _paused),
         const SizedBox(height: 12),
         // Lautstärke-Balken als EIGENES Widget: Die 10-Hz-Amplitude baut
@@ -682,7 +682,7 @@ class _AmplitudeBars extends StatefulWidget {
   final bool active;
   final Color color;
 
-  /// Meldet jeden Pegel nach aussen, damit der Editor die
+  /// Meldet jeden Pegel nach außen, damit der Editor die
   /// Stille-Entscheidung treffen kann, ohne den Recorder ein zweites Mal
   /// abzufragen.
   final void Function(double? rawDb)? onLevel;
@@ -725,7 +725,7 @@ class _AmplitudeBarsState extends State<_AmplitudeBars> {
         .listen((amp) {
           if (!mounted) return;
           // Rohwert weiterreichen, nicht den normalisierten - die
-          // Normalisierung gehoert in eine Stelle, dem Detector.
+          // Normalisierung gehört in eine Stelle, dem Detector.
           widget.onLevel?.call(amp.current);
           // dBFS (-60..0) auf 0..1 normieren.
           final db = amp.current.clamp(-60.0, 0.0);

@@ -61,9 +61,9 @@ param(
 $ErrorActionPreference = 'Continue'
 # Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #
-# DER WEG: Das Skript liegt jetzt in tool/pruefer/. Statt feste Ebenen
-# zu zaehlen, wird die Wurzel gesucht - so bricht der Spiegel nicht,
-# wenn sich die Tiefe aendert.
+# DER WEG: Das Skript liegt jetzt in tool/prüfer/. Statt feste Ebenen
+# zu zählen, wird die Wurzel gesucht - so bricht der Spiegel nicht,
+# wenn sich die Tiefe ändert.
 $root = $PSScriptRoot
 while ($root -and -not (Test-Path (Join-Path $root 'pubspec.yaml'))) {
     $root = Split-Path -Parent $root
@@ -74,9 +74,9 @@ Push-Location $root
 # Die Gruppenliste normalisieren.
 #
 # Aufruf per "powershell -File" liefert "-Nur a,b" als EINEN String
-# ("a,b") - ohne diese Zerlegung wuerde die Gruppe "a" nie gefunden
-# und das Skript pruefte gar nichts (und meldete gruen). Genau die
-# Sorte von gruen, die nichts prueft.
+# ("a,b") - ohne diese Zerlegung würde die Gruppe "a" nie gefunden
+# und das Skript prüfte gar nichts (und meldete grün). Genau die
+# Sorte von grün, die nichts prüft.
 $Gruppen = @()
 foreach ($roh in $Nur) {
     foreach ($teil in ($roh -split ',')) {
@@ -89,7 +89,7 @@ $fehler = New-Object System.Collections.Generic.List[string]
 $ergebnisse = New-Object System.Collections.Generic.List[string]
 
 # Die CI ruft "python3" auf. Windows hat oft kein python3-Alias,
-# deshalb wird hier auf "python" zurueckgefallen.
+# deshalb wird hier auf "python" zurückgefallen.
 $py = 'python'
 if (Get-Command python3 -ErrorAction SilentlyContinue) { $py = 'python3' }
 
@@ -110,9 +110,9 @@ function Gate {
     Write-Host "  $Name" -ForegroundColor Cyan
     Write-Host ('-' * 72) -ForegroundColor DarkGray
     # Der Aufruf kann auch aus genau einem Wort bestehen. Dann darf der
-    # Bereich 1..0 nicht gebildet werden - er liefe rueckwaerts und
-    # waere ein leerer Array, mit dem "& $cmd @()" zwar harmlos, aber
-    # in aelteren PowerShell-Versionen eine Fehlerquelle ist.
+    # Bereich 1..0 nicht gebildet werden - er liefe rückwärts und
+    # wäre ein leerer Array, mit dem "& $cmd @()" zwar harmlos, aber
+    # in älteren PowerShell-Versionen eine Fehlerquelle ist.
     $rest = @()
     if ($Argumente.Count -gt 1) { $rest = @($Argumente[1..($Argumente.Count - 1)]) }
     $out = & $Argumente[0] @rest 2>&1 | Out-String
@@ -157,8 +157,8 @@ Write-Host '  Lokale CI-Gates (Spiegel von .github/workflows/ci.yml)' -Foregroun
 Write-Host "  Repository: $root" -ForegroundColor DarkGray
 
 # ---------------------------------------------------------------------
-# 0) Die gepinnten Pruef-Abhaengigkeiten (CI: setup-python + pip install
-#    -r tool/requirements.txt). Fehlen sie, brechen die Pruefer mit
+# 0) Die gepinnten Prüf-Abhängigkeiten (CI: setup-python + pip install
+#    -r tool/requirements.txt). Fehlen sie, brechen die Prüfer mit
 #    ImportError ab - nicht mit einem Befund.
 # ---------------------------------------------------------------------
 $fehlend = @()
@@ -183,34 +183,34 @@ if (Soll 'analyze-and-test') {
     Gate -Name 'analyze-and-test: flutter analyze --fatal-infos' `
         -Argumente @('flutter', 'analyze', '--fatal-infos')
 
-    # Die Formatierung wird seit dem 06.11.2026 mitgeprueft. Ohne
-    # diesen Schritt laeuft der Code still auseinander - niemand
+    # Die Formatierung wird seit dem 06.11.2026 mitgeprüft. Ohne
+    # diesen Schritt läuft der Code still auseinander - niemand
     # merkt es, bis jemand anderes formatiert.
     #
     # third_party/ ist NICHT dabei: das sind fremde Forks, die bei
-    # einem Upstream-Update unveraendert bleiben muessen.
+    # einem Upstream-Update unverändert bleiben müssen.
     Gate -Name 'analyze-and-test: dart format (Dart 3.12)' `
         -Argumente @('dart', 'format', '--output=none',
                      '--set-exit-if-changed', 'lib', 'test', 'tool')
 
     if (-not $Schnell) {
-        # DIE LIVE-TESTS UEBERSPRINGEN - OHNE DIE .env ANZUFASSEN.
+        # DIE LIVE-TESTS ÜBERSPRINGEN - OHNE DIE .env ANZUFASSEN.
         #
-        # BEFUND (13.11.2026): Dieser Spiegel hat frueher die .env des
+        # BEFUND (13.11.2026): Dieser Spiegel hat früher die .env des
         # Entwicklers durch die .env.example ersetzt (damit die Live-Tests
         # nicht gegen das Produktivsystem laufen) und sie danach **nicht**
-        # zurueckgespielt - die echten Werte waren damit weg und mussten
+        # zurückgespielt - die echten Werte waren damit weg und mussten
         # aus dem Release-Build und der Supabase-API wiederhergestellt
         # werden.
         #
-        # Jetzt wird nichts ueberschrieben: nur die Live-Tests werden
-        # ueber die Umgebungsvariable THESTIA_SKIP_LIVE_TESTS abgeschaltet
+        # Jetzt wird nichts überschrieben: nur die Live-Tests werden
+        # über die Umgebungsvariable THESTIA_SKIP_LIVE_TESTS abgeschaltet
         # (test/support/live_test_support.dart). Die .env bleibt, wie sie
         # ist - und die Tests laufen damit gegen den echten Stand.
         $env:THESTIA_SKIP_LIVE_TESTS = '1'
         try {
             # MIT COVERAGE (13.11.2026): Die CI misst die Abdeckung - der
-            # Spiegel muss dasselbe tun, sonst waere die Zahl lokal nicht
+            # Spiegel muss dasselbe tun, sonst wäre die Zahl lokal nicht
             # nachvollziehbar.
             Gate -Name 'analyze-and-test: flutter test (mit Coverage)' `
                 -Argumente @('flutter', 'test', '--reporter', 'compact', '--coverage')
@@ -285,21 +285,21 @@ if (Soll 'static-checks') {
         (G 'Release-Checker Selbsttest' @($py, 'tool/checks/check_release_artifacts_selftest.py'))
         (G 'Release-Konsistenz Selbsttest' @($py, 'tool/checks/check_release_consistency_selftest.py'))
         # AUDIT 16.11.2026: Die Zertifikat-Pins werden gegen die
-        # Live-Zertifikate geprueft (der gepinnte Leaf war am
-        # 24.10.2026 veraltet - ohne diesen Schritt faellt das nicht
+        # Live-Zertifikate geprüft (der gepinnte Leaf war am
+        # 24.10.2026 veraltet - ohne diesen Schritt fällt das nicht
         # auf). Ebenso die SHA-Pins der GitHub-Actions (ein Tag ist
-        # veraenderlich).
+        # veränderlich).
         (G 'Zertifikat-Pins pruefen' @($py, 'tool/checks/check_cert_pins.py'))
         (G 'GitHub-Actions auf SHAs gepinnt' @($py, 'tool/scripts/pin_github_actions.py', '--check'))
         # BEFUND (11.11.2026): Die Release-Notes hatten einen eigenen
-        # Pruefsummen-Block, der beim Build nicht mitgepflegt wurde -
+        # Prüfsummen-Block, der beim Build nicht mitgepflegt wurde -
         # auf GitHub standen dadurch falsche Summen. Dieses Gate
         # vergleicht die Summen in ALLEN Release-Dokumenten mit den
         # Dateien.
         (G 'Release-Pruefsummen stimmen' @($py, 'tool/checks/check_release_checksums.py'))
         # BEFUND (20.11.2026): "Die Funken beim Interessen-Screen
-        # koennen nicht geladen werden." Drei Funktionen waren STABLE und
-        # schrieben dabei in die Datenbank - PostgREST fuehrt STABLE-
+        # können nicht geladen werden." Drei Funktionen waren STABLE und
+        # schrieben dabei in die Datenbank - PostgREST fährt STABLE-
         # Aufrufe in einer READ-ONLY-Transaktion aus, der Aufruf brach
         # mit HTTP 405 ab. Das Gate sieht jede neue STABLE-Funktion, die
         # schreibt - BEVOR sie live geht.
@@ -310,7 +310,7 @@ if (Soll 'static-checks') {
         # App zum Absturz bringen.
         (G 'Keine unsicheren Casts' @($py, 'tool/checks/check_keine_unsicheren_casts.py'))
         # Der Impressum-Text in der App muss zur Webfassung passen (der
-        # Link auf thestia.de/impressum oeffnete die App selbst).
+        # Link auf thestia.de/impressum öffnete die App selbst).
         (G 'Impressum-Text aktuell' @($py, 'tool/web/make_imprint_app.py', '--check'))
     )
 }

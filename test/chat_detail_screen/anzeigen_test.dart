@@ -5,9 +5,9 @@
 // "wie sicher ist dieser Chat" und "was kann ich abschalten", waren
 // ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die E2E-Anzeige steht da und zeigt "noch nicht verbunden",
-//   * der Eisbrecher-Schalter im Menue schaltet die Einstellung um.
+//   * der Eisbrecher-Schalter im Menü schaltet die Einstellung um.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +20,7 @@ import 'hilfen.dart';
 
 void main() {
   // DER STIMMUNGS-DIENST: Der Chat zeigt die Stimmungskarte - ohne den
-  // Client schlaegt der Aufbau fehl.
+  // Client schlägt der Aufbau fehl.
   moodClient = supabase.SupabaseClient(
     'https://example.supabase.co',
     'test-key',
@@ -81,7 +81,7 @@ void main() {
 
       final vorher = container.read(settingsProvider).contextIcebreakerEnabled;
 
-      // Das Menue oeffnen.
+      // Das Menü öffnen.
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

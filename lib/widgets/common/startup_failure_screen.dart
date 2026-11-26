@@ -52,7 +52,7 @@ class StartupFailureScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             // Kein Tripelcode, keine Rohdaten: der Nutzer soll eine
-            // Frage beantworten koennen, nicht Debug-Ausgabe lesen.
+            // Frage beantworten können, nicht Debug-Ausgabe lesen.
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -145,8 +145,8 @@ class StartupFailureScreen extends StatelessWidget {
     try {
       await SharePlus.instance.share(ShareParams(text: report));
     } catch (_) {
-      // Teilen ist nicht verfuegbar (z. B. kein Empfaenger). Der
-      // Kopierknopf ist der verlaessliche Weg.
+      // Teilen ist nicht verfügbar (z. B. kein Empfänger). Der
+      // Kopierknopf ist der verlässliche Weg.
       messenger?.showSnackBar(
         SnackBar(
           content: Text(failedText),

@@ -26,11 +26,11 @@ void main() {
     if (!out.existsSync()) return;
 
     // Die echten Schriften nachladen: ohne sie malt der Test das
-    // Ersatzkaestchen (Ahem) statt Text und Icons - man kann das Dock
+    // Ersatzkästchen (Ahem) statt Text und Icons - man kann das Dock
     // dann nicht beurteilen.
     //
     // WICHTIG: Die Dateien gibt es nur auf dem Rechner des
-    // Entwicklers. Fehlen sie (Linux-CI), ueberspringt der Test das
+    // Entwicklers. Fehlen sie (Linux-CI), überspringt der Test das
     // Nachladen - er darf dort nicht scheitern.
     final sdk =
         r'C:\Users\Thoralf\Flutter_SDK\flutter\bin\cache\artifacts'

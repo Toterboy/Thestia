@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-r"""Prueft die Zertifikat-Pins gegen die Live-Zertifikate.
+r"""Prüft die Zertifikat-Pins gegen die Live-Zertifikate.
 
 WARUM (Sicherheits-Audit 16.11.2026, P2): Am 16.11.2026 war der in
 der App gepinnte Leaf-Pin seit dem 24.10.2026 veraltet - Let's Encrypt
-hatte rotiert. Die App lief dadurch ausschliesslich ueber den
+hatte rotiert. Die App lief dadurch ausschließlich über den
 (damals dauerhaft offenen) Aussteller-Fallback, ohne dass jemand es
-bemerkt haette. Ein zweiter Fund: das Rotations-Werkzeug hatte eine
+bemerkt hätte. Ein zweiter Fund: das Rotations-Werkzeug hatte eine
 eigene, FALSCHE SHA-256 (es fehlte das w[i-7] in der
 Nachrichtenplanung) - damit passte kein Pin, den es erzeugt hatte.
 
-Diese Pruefung liest die EINE Quelle der Wahrheit
+Diese Prüfung liest die EINE Quelle der Wahrheit
 (lib/utils/security/cert_pins.dart) und vergleicht sie mit dem Live-Zertifikat:
 
-  * Leaf-Pin passt nicht               -> FEHLER (Rotation noetig)
-  * Leaf laeuft bald ab                -> FEHLER (vor dem Release erneuern)
-  * Gueltigkeit in der Tabelle falsch -> FEHLER (Datum pflegen)
+  * Leaf-Pin passt nicht               -> FEHLER (Rotation nötig)
+  * Leaf läuft bald ab                -> FEHLER (vor dem Release erneuern)
+  * Gültigkeit in der Tabelle falsch -> FEHLER (Datum pflegen)
   * Host nicht erreichbar              -> WARNUNG (Netz, kein Pin-Problem)
 
 Das Rotations-Werkzeug (tool/scripts/rotate_cert_pins.dart) nutzt dieselbe
-Tabelle und hat einen Selbsttest fuer seine eigene SHA-256.
+Tabelle und hat einen Selbsttest für seine eigene SHA-256.
 
 Aufruf:  python tool\check_cert_pins.py
 """
@@ -38,8 +38,8 @@ from pathlib import Path
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> Path:
     for kandidat in Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -61,7 +61,7 @@ MIN_TAGE_BIS_ABLAUF = 30
 
 
 def lies_pins() -> dict:
-    """Liest Hosts, Pins und Gueltigkeit aus lib/utils/security/cert_pins.dart."""
+    """Liest Hosts, Pins und Gültigkeit aus lib/utils/security/cert_pins.dart."""
     if not QUELLE.exists():
         print(f"FEHLER: {QUELLE} fehlt.")
         sys.exit(1)

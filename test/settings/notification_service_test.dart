@@ -1,6 +1,6 @@
-// Unit-Tests fuer den Benachrichtigungs-Dienst.
+// Unit-Tests für den Benachrichtigungs-Dienst.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Initialisierung (Plugin, Zeitzone, Idempotenz),
 //   * die Einzel-Schalter aus den Einstellungen (Master + je Kategorie),
 //   * die lokalen Benachrichtigungen (Channel, Payload, Sichtbarkeit),
@@ -8,12 +8,12 @@
 //   * der Tap auf eine Benachrichtigung (Payload landet beim Handler).
 //
 // WIE DAS PLUGIN ERSETZT WIRD:
-//   `flutter_local_notifications` ruft die Plattform ueber
+//   `flutter_local_notifications` ruft die Plattform über
 //   `FlutterLocalNotificationsPlatform.instance` auf. Der Test setzt
 //   dort einen handgeschriebenen Android-Fake - so werden echte
 //   MethodChannel-Aufrufe abgeschnitten, ohne dass am Produktivcode
-//   etwas geaendert werden muss. `debugDefaultTargetPlatformOverride`
-//   sorgt dafuer, dass der Dienst den Android-Zweig nimmt.
+//   etwas geändert werden muss. `debugDefaultTargetPlatformOverride`
+//   sorgt dafür, dass der Dienst den Android-Zweig nimmt.
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,10 +26,10 @@ import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/services/server/notification_service.dart';
 
-/// Der Kanal, ueber den das Plugin die Zeitzone des Geraetes liefert.
+/// Der Kanal, über den das Plugin die Zeitzone des Gerätes liefert.
 const MethodChannel _zeitzoneKanal = MethodChannel('flutter_timezone');
 
-/// In-Memory-Speicher fuer die Einstellungen (kein Plugin, kein Geraet).
+/// In-Memory-Speicher für die Einstellungen (kein Plugin, kein Gerät).
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _daten = {};
 
@@ -96,10 +96,10 @@ class _Geplant {
 
 /// Der Android-Fake des Benachrichtigungs-Plugins.
 ///
-/// DER GRUND: Der Dienst ruft das Plugin ueber die Plattform-Schnittstelle
-/// auf. Ein Fake dort ersetzt den echten Geraete-Aufruf - und laesst uns
-/// zusehen, WAS der Dienst dem Plugin uebergibt (Channel, Payload,
-/// Sichtbarkeit). Das ist genau das, was spaeter im System-Tray landet.
+/// DER GRUND: Der Dienst ruft das Plugin über die Plattform-Schnittstelle
+/// auf. Ein Fake dort ersetzt den echten Geräte-Aufruf - und lässt uns
+/// zusehen, WAS der Dienst dem Plugin übergibt (Channel, Payload,
+/// Sichtbarkeit). Das ist genau das, was später im System-Tray landet.
 class _FakeNotificationsPlugin extends AndroidFlutterLocalNotificationsPlugin {
   /// Wie oft das Plugin initialisiert wurde.
   int initializeAufrufe = 0;
@@ -194,9 +194,9 @@ void main() {
     plugin = _FakeNotificationsPlugin();
     FlutterLocalNotificationsPlatform.instance = plugin;
 
-    // Die Zeitzone kommt vom Geraet. Im Test gibt es kein Geraet -
+    // Die Zeitzone kommt vom Gerät. Im Test gibt es kein Gerät -
     // deshalb liefert der Kanal eine feste Zone. Ohne diesen Mock
-    // wuerde der Dienst auf eine Antwort der Engine warten, die im
+    // würde der Dienst auf eine Antwort der Engine warten, die im
     // Test nie kommt.
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_zeitzoneKanal, (anfrage) async {
@@ -210,13 +210,13 @@ void main() {
         .setMockMethodCallHandler(_zeitzoneKanal, null);
   });
 
-  /// Fuehrt den Testkoerper im Android-Zweig des Plugins aus.
+  /// Fährt den Testkörper im Android-Zweig des Plugins aus.
   ///
   /// DER GRUND: Der Dienst spricht das Android-Plugin an - im Test gibt
-  /// es kein Geraet, also muss der Zweig umgeleitet werden. Und:
+  /// es kein Gerät, also muss der Zweig umgeleitet werden. Und:
   /// `debugDefaultTargetPlatformOverride` muss am Ende eines Tests wieder
-  /// auf null stehen (das prueft das Test-Framework), deshalb wird es
-  /// hier im `finally` zurueckgesetzt - auch wenn der Test vorher
+  /// auf null stehen (das prüft das Test-Framework), deshalb wird es
+  /// hier im `finally` zurückgesetzt - auch wenn der Test vorher
   /// fehlgeschlagen ist.
   Future<void> alsAndroid(Future<void> Function() koerper) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
@@ -227,9 +227,9 @@ void main() {
     }
   }
 
-  /// Baut die Einstellungen und liefert einen [WidgetRef] fuer den Dienst.
+  /// Baut die Einstellungen und liefert einen [WidgetRef] für den Dienst.
   ///
-  /// DER GRUND: `NotificationService.show` liest die Schalter ueber einen
+  /// DER GRUND: `NotificationService.show` liest die Schalter über einen
   /// [WidgetRef] (der Aufrufer ist ein Widget). Der Test baut deshalb ein
   /// winziges Widget, das sich den Ref schnappt.
   Future<WidgetRef> mitEinstellungen(
@@ -268,7 +268,7 @@ void main() {
   }
 
   // WICHTIG: Der Dienst ist ein Singleton. Sein "_initialized"-Flag bleibt
-  // fuer den ganzen Testprozess gesetzt - deshalb prueft der ERSTE Test
+  // für den ganzen Testprozess gesetzt - deshalb prüft der ERSTE Test
   // die Initialisierung. Alle folgenden Tests nutzen den Dienst
   // uninitialisiert weiter (das Flag ist dann bereits gesetzt).
   testWidgets(
@@ -481,7 +481,7 @@ void main() {
   ) async {
     await alsAndroid(() async {
       // Die Planung rechnet in der lokalen Zeitzone - der Test setzt sie
-      // fest, damit das Ergebnis unabhaengig vom Geraet ist.
+      // fest, damit das Ergebnis unabhängig vom Gerät ist.
       tz.setLocalLocation(tz.getLocation('Europe/Berlin'));
       final wann = DateTime.now().add(const Duration(hours: 2));
 

@@ -1,20 +1,20 @@
 """Erzeugt die Play-konformen Icon-Dateien aus dem vorhandenen Master-Icon.
 
-Play verlangt fuer das Store-Icon:
+Play verlangt für das Store-Icon:
   - exakt 512 x 512 px
   - 32-Bit-PNG (RGBA)
   - maximal 1024 KB
   - sRGB, keine abgerundeten Ecken (Play maskiert selbst), kein Schatten
 
-Im Repo lag ein 1254x1254-Icon mit 1.535.910 Byte - groesser in beiden
+Im Repo lag ein 1254x1254-Icon mit 1.535.910 Byte - größer in beiden
 Punkten. Play lehnt das beim Upload ab, es ist also ein echter Blocker
 und keine Formalie.
 
-Qualitaet: herunterskalieren statt zuschneiden, damit das Motiv nicht
+Qualität: herunterskalieren statt zuschneiden, damit das Motiv nicht
 verzerrt. Quelle ist quadratisch, deshalb passt 512x512 ohne Beschnitt.
-Wenn das Ergebnis trotzdem ueber 1024 KB liegt, wird in Schritten
+Wenn das Ergebnis trotzdem über 1024 KB liegt, wird in Schritten
 quantisiert - das Icon ist ein flaches Vektor-Motiv, die Quantisierung
-faellt nicht auf.
+fällt nicht auf.
 """
 from __future__ import annotations
 
@@ -27,8 +27,8 @@ from PIL import Image
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -45,20 +45,20 @@ ROOT = _projektwurzel()
 
 TARGET = 512
 MAX_BYTES = 1024 * 1024  # 1024 KB
-# Quelle und Ziel duerfen NICHT dieselbe Datei sein. Im ersten Entwurf
+# Quelle und Ziel dürfen NICHT dieselbe Datei sein. Im ersten Entwurf
 # stand beides auf fastlane/.../icon.png - beim zweiten Lauf las das
 # Skript dann sein eigenes 512er-Ergebnis ein und verarbeitete das
 # weiter, statt es zu erkennen. Die Master-Datei liegt deshalb
-# unberuehrt unter assets/images/ und wird nie geschrieben.
+# unberührt unter assets/images/ und wird nie geschrieben.
 MASTER = pathlib.Path('assets/images/thestia_icon_base.png')
 TARGETS = [
     'fastlane/metadata/android/de-DE/images/icon.png',
     'fastlane/metadata/android/en-US/images/icon.png',
 ]
-# Das Store-Icon im Repo war 1254x1254 - ein groesserer, eigens fuer den
+# Das Store-Icon im Repo war 1254x1254 - ein größerer, eigens für den
 # Store geschnittener Satz. Er liegt in der Git-Historie, ist aber kein
 # separates Arbeitsmaster. Deshalb wird die Quelle bevorzugt aus dem
-# Repo-Stand des Ziels gelesen, solange sie noch zu gross ist.
+# Repo-Stand des Ziels gelesen, solange sie noch zu groß ist.
 STORE_SOURCE = TARGETS[0]
 
 
@@ -66,15 +66,15 @@ def quantize_until_fits(img: Image.Image, budget: int) -> tuple[bytes, str]:
     """PNG unterhalb des Budgets, bevorzugt echtes RGBA.
 
     Reihenfolge bewusst so: zuerst unquantisiertes RGBA, weil Play
-    ausdruecklich ein "32-bit PNG (with alpha)" verlangt. Ein
+    ausdrücklich ein "32-bit PNG (with alpha)" verlangt. Ein
     Paletten-PNG (Modus P) ist zwar kleiner, aber die Farbtabelle ist
     keine 32-Bit-RGBA-Bittebene - das ist eine Auslegung, die man beim
     Upload nicht braucht, wenn das Budget ohnehin reicht. Das flache
     Vektor-Motiv braucht 512x512 RGBA nur ~100 KB.
 
-    Erst wenn das Budget gerissen wird, wird quantisiert. Fuer RGBA
-    verlangt Pillow FASTOCTREE; MEDIANCUT ist nur fuer Bilder ohne
-    Alphakanal zulaessig und bricht mit ValueError ab.
+    Erst wenn das Budget gerissen wird, wird quantisiert. Für RGBA
+    verlangt Pillow FASTOCTREE; MEDIANCUT ist nur für Bilder ohne
+    Alphakanal zulässig und bricht mit ValueError ab.
     """
     buf = io.BytesIO()
     img.save(buf, format='PNG', optimize=True)
@@ -97,10 +97,10 @@ def quantize_until_fits(img: Image.Image, budget: int) -> tuple[bytes, str]:
 
 
 def pick_source() -> tuple[pathlib.Path, str]:
-    """Quelle waehlen und begruenden.
+    """Quelle wählen und begründen.
 
-    Bevorzugt wird das Store-Icon, solange es noch groesser als das Ziel
-    ist - das ist der eigenstaendig geschnittene Store-Satz, den man
+    Bevorzugt wird das Store-Icon, solange es noch größer als das Ziel
+    ist - das ist der eigenständig geschnittene Store-Satz, den man
     nicht durch das In-App-Motiv ersetzen sollte. Ist es bereits 512 oder
     kleiner, wurde es vermutlich schon hierher erzeugt; dann greift das
     unbearbeitete In-App-Master, und der Aufruf ist gekennzeichnet.

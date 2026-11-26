@@ -1,8 +1,8 @@
-// Die Texte des Themas 'geraete' (Deutsch und Englisch).
+// Die Texte des Themas 'geräte' (Deutsch und Englisch).
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsGeraete = {
@@ -139,11 +139,11 @@ const Map<String, Map<String, String>> stringsGeraete = {
         '5 schicke Geburtstags-Stile für dein Profil (unten auswählen '
         'oder später im Profil-Bearbeiten).',
     // Build 30 (v0.9.2). EIN Key pro Anzeigepunkt, jeder Punkt ein
-    // vollstaendiger Satz - siehe Bug-Hinweis in
+    // vollständiger Satz - siehe Bug-Hinweis in
     // lib/services/server/whats_new_service.dart: bei hartkodiertem Text
     // waren es Satzbausteine, und die Abschneidegrenze zerschnitt
-    // mitten im Satz. Ausserdem waren diese Zeilen ueberhaupt nicht
-    // uebersetzt, englische Nutzer sahen deutschen Text.
+    // mitten im Satz. Außerdem waren diese Zeilen überhaupt nicht
+    // übersetzt, englische Nutzer sahen deutschen Text.
     'whatsnew.v092.rotatingPrompts':
         'Vorstellungen, die sich nicht wiederholen: Die Ideen-Karten '
         'rotieren jetzt, statt immer dieselben vier zu zeigen.',

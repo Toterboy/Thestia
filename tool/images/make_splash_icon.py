@@ -1,48 +1,48 @@
 #!/usr/bin/env python3
 """Erzeugt die Splash-Grafiken: android12splash.png und splash.png.
 
-ZWEI Splash-Varianten, weil Android zwei verschiedene Splash-Ablaeufe
+ZWEI Splash-Varianten, weil Android zwei verschiedene Splash-Abläufe
 kennt:
 
   * Android 12 und neuer (API 31+): `windowSplashScreenAnimatedIcon`.
     Das System legt das Drawable in ein 288-dp-Fenster und maskiert es
     mit einem Kreis. Der sichtbare Kreis ist 160 dp.
-  * Android 11 und aelter: `launch_background.xml` - ein Layer-List aus
+  * Android 11 und älter: `launch_background.xml` - ein Layer-List aus
     Hintergrund und einem zentrierten Bild.
 
 WAS FALSCH WAR (Befund vom 27.10.2026, Android 16 und Android 11):
 
   * Android 16: das Logo war "an den vier ecken abgeschnitten und zu
-    gross". Grund: `android12splash.png` war 288 dp gross und enthielt
+    groß". Grund: `android12splash.png` war 288 dp groß und enthielt
     einen Kreis von 192 dp. Das System zeichnet das Drawable 1:1 in
     sein 288-dp-Fenster und maskiert es mit dem 160-dp-Kreis - ein
     192-dp-Kreis ragt an vier Stellen (oben, unten, links, rechts, in
-    den Diagonalen) ueber die Maske hinaus. Genau das war der Beschnitt.
+    den Diagonalen) über die Maske hinaus. Genau das war der Beschnitt.
   * Android 11: um das Logo lag ein SCHWARZER Kasten. Grund:
-    `splash.png` hatte eine opake schwarze Flaeche als Hintergrund
+    `splash.png` hatte eine opake schwarze Fläche als Hintergrund
     unter dem Logo.
 
-DIE LOESUNG:
+DIE LÖSUNG:
 
   * `android12splash.png`: 240-dp-Leinwand mit einem Kreis von 120 dp.
     Das System maskiert den Splash mit einem Kreis von 160 dp - ein
     Abzeichen, das kleiner ist, kann nicht beschnitten werden. 120 dp
     passen zur Legacy-Variante (110 dp), damit beide Splashs dasselbe
-    Abzeichen in derselben Groesse zeigen.
+    Abzeichen in derselben Größe zeigen.
   * `splash.png`: DASSELBE Abzeichen, aber auf TRANSPARENTEM Grund statt auf
     schwarzem. Der weisse Hintergrund (bzw. der dunkle in der
     Nachtvariante) kommt aus `background.png` und liegt dahinter.
 
 DAS ABZEICHEN selbst ist jetzt ein echter KREIS: der runde Farbverlauf
 (`thestia_icon_background.png`) plus das Motiv aus der Vordergrund-Ebene
-(`thestia_icon_foreground.png`), mittig darueber. BISHER wurde das
+(`thestia_icon_foreground.png`), mittig darüber. BISHER wurde das
 Quadrat-Logo in den Kreis geschnitten - dabei schnitten die Ober- und
 Unterkante des Quadrats mitten durch den Kreis und es blieb ein
 dunkler Saum oben und unten stehen.
 
-Die Groesse des Legacy-Logos bleibt unveraendert: der Kreis belegt
+Die Größe des Legacy-Logos bleibt unverändert: der Kreis belegt
 dieselben 43,75 % der Leinwand wie bisher. Das Logo selbst wird also
-NICHT groesser oder kleiner - nur der schwarze Kasten verschwindet.
+NICHT größer oder kleiner - nur der schwarze Kasten verschwindet.
 
     python tool/images/make_splash_icon.py
 """
@@ -53,8 +53,8 @@ from PIL import Image, ImageDraw, ImageFilter
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> Path:
     for kandidat in Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -79,8 +79,8 @@ FG = ROOT / 'assets' / 'images' / 'thestia_icon_foreground.png'
 # Anteil des Motivs (Herz + Schriftzug) am Kreisdurchmesser.
 #
 # Das Motiv belegt in der Vordergrund-Ebene 462 von 1024 px = 45,1 % der
-# Ebene. 62 % vom Kreis bedeuten fuer die Ebene also das 1,375-fache
-# des Kreisdurchmessers. Der Wert ist so gewaehlt, dass der
+# Ebene. 62 % vom Kreis bedeuten für die Ebene also das 1,375-fache
+# des Kreisdurchmessers. Der Wert ist so gewählt, dass der
 # Schriftzug noch lesbar bleibt, aber nicht zu klein wirkt.
 ART_ANTEIL = 0.62
 ART_ANTEIL_EBENE = 0.451
@@ -92,31 +92,31 @@ ART_ANTEIL_EBENE = 0.451
 # Kreis.
 #
 # WARUM 120 dp UND NICHT 160 dp (NUTZERWUNSCH 27.10.2026: "Es ist zudem
-# zu gross. Das zweite passt aber."):
+# zu groß. Das zweite passt aber."):
 #
 # Das System zeichnet das Drawable 1:1 in sein Fenster und maskiert es
-# mit einem Kreis von 160 dp. Ein Kreis, der groesser als 160 dp ist,
-# wird an vier Stellen beschnitten - das war der urspruengliche
+# mit einem Kreis von 160 dp. Ein Kreis, der größer als 160 dp ist,
+# wird an vier Stellen beschnitten - das war der ursprüngliche
 # Fehler (192 dp Kreis in einer 288-dp-Leinwand). Die alte Fassung
 # dieses Skripts hatte den Kreis auf exakt 160 dp gesetzt: damit ist
-# zwar nichts beschnitten, das Abzeichen ist aber sichtbar groesser
+# zwar nichts beschnitten, das Abzeichen ist aber sichtbar größer
 # als das der Legacy-Variante (110 dp) - und genau das hat der Nutzer
 # bemerkt.
 #
 # 120 dp liegen 20 dp innerhalb der Maske (kein Beschnitt unter jeder
 # Auslegung des Systems) und sind mit den 110 dp der Legacy-Variante
-# praktisch gleich gross. Beide Splashs zeigen damit dasselbe
-# Abzeichen in derselben Groesse.
+# praktisch gleich groß. Beide Splashs zeigen damit dasselbe
+# Abzeichen in derselben Größe.
 ICON_DP = 240
 CIRCLE_DP = 120
 PADDING_DP = (ICON_DP - CIRCLE_DP) // 2
 
 # --------------------------------------------------------------------------
-# Android 11 und aelter (launch_background.xml)
+# Android 11 und älter (launch_background.xml)
 # --------------------------------------------------------------------------
-# Das Bild wird mittig ueber den Hintergrund gelegt. Die bisherigen
-# Groessen und der Anteil des Kreises bleiben erhalten - nur der
-# schwarze Kasten um das Logo entfaellt.
+# Das Bild wird mittig über den Hintergrund gelegt. Die bisherigen
+# Größen und der Anteil des Kreises bleiben erhalten - nur der
+# schwarze Kasten um das Logo entfällt.
 LEGACY_SIZES = {
     'mdpi': 256,
     'hdpi': 384,
@@ -163,18 +163,18 @@ def _rundes_artwork(src: Image.Image, diameter: int) -> Image.Image:
 
     JETZT: der Kreis kommt aus dem RUNDEN Verlauf
     (`thestia_icon_background.png`), das Motiv (Herz + Schriftzug) aus
-    der Vordergrund-Ebene wird mittig darueber gelegt. Damit ist die
+    der Vordergrund-Ebene wird mittig darüber gelegt. Damit ist die
     Form rund und sauber - ohne beschnittene Kanten.
 
     [src] wird nicht mehr benutzt - die Parameter bleiben aber, damit
-    die Aufrufer unveraendert bleiben.
+    die Aufrufer unverändert bleiben.
     """
     verlauf = Image.open(BG).convert('RGBA')
     verlauf = verlauf.resize((diameter, diameter), Image.LANCZOS)
 
     if FG.exists():
         vordergrund = Image.open(FG).convert('RGBA')
-        # Ebene so gross, dass das Motiv ART_ANTEIL des Kreises einnimmt.
+        # Ebene so groß, dass das Motiv ART_ANTEIL des Kreises einnimmt.
         ebene = int(round(diameter * ART_ANTEIL / ART_ANTEIL_EBENE))
         vordergrund = vordergrund.resize((ebene, ebene), Image.LANCZOS)
         versatz = (diameter - ebene) // 2
@@ -209,7 +209,7 @@ def build_icon_splash(src: Image.Image, size: int) -> Image.Image:
 
 
 def build_legacy_splash(src: Image.Image, size: int) -> Image.Image:
-    """Android 11 und aelter: Logo als Kreis auf TRANSPARENTEM Grund.
+    """Android 11 und älter: Logo als Kreis auf TRANSPARENTEM Grund.
 
     Vorher lag hier ein opakes schwarzes Quadrat - das war der
     "schwarze Kasten" um das Logo. Der Hintergrund kommt aus

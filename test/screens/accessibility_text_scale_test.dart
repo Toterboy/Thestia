@@ -14,7 +14,7 @@ import 'package:thestia/services/storage/secure_contact_share_store.dart';
 import 'package:thestia/services/storage/secure_storage.dart';
 import 'package:thestia/widgets/chat/dock_tab_bar.dart';
 
-/// Noop-Variante des Secure-Storages (kein Plugin im Widget-Test noetig).
+/// Noop-Variante des Secure-Storages (kein Plugin im Widget-Test nötig).
 class _NoopSecureStorage extends FlutterSecureStorage {
   @override
   Future<String?> read({
@@ -72,7 +72,7 @@ Future<void> _pumpSettings(WidgetTester tester, double scale) async {
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-/// Kontakt-Store ohne Keystore: haelt den Stand nur im RAM.
+/// Kontakt-Store ohne Keystore: hält den Stand nur im RAM.
 class _FakeContactStore extends SecureContactShareStore {
   _FakeContactStore(this._profil);
 
@@ -85,7 +85,7 @@ class _FakeContactStore extends SecureContactShareStore {
   Future<void> save(ContactShareProfile profile) async => _profil = profile;
 }
 
-/// Accessibility: Wichtige Screens duerfen auch bei grosser Systemschrift
+/// Accessibility: Wichtige Screens dürfen auch bei großer Systemschrift
 /// (Android erlaubt bis 3.2x) keine Render-Overflow-Exception werfen.
 void main() {
   const scales = <String, double>{
@@ -142,7 +142,7 @@ void main() {
 
         expect(tester.takeException(), isNull);
 
-        // Der Knopf muss auch bei grosser Schrift erreichbar bleiben.
+        // Der Knopf muss auch bei großer Schrift erreichbar bleiben.
         expect(find.text('Ich habe verstanden'), findsOneWidget);
         final knopf = tester.getRect(find.text('Ich habe verstanden'));
         expect(
@@ -254,7 +254,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       // ALLE vier Reiter tragen ihre Beschriftung (NUTZERWUNSCH
-      // 30.10.2026) - auch bei grosser Schrift, und ohne Abschneiden.
+      // 30.10.2026) - auch bei großer Schrift, und ohne Abschneiden.
       for (final beschriftung in const [
         'Aktuelles',
         'Entdecken',

@@ -84,14 +84,14 @@ class DatingHourService {
       // Partner nicht ... Es steht, dass die sich suchen, aber finden
       // niemanden."
       //
-      // Die Paarung lief nur ueber den Cron (alle 30 Minuten), das
+      // Die Paarung lief nur über den Cron (alle 30 Minuten), das
       // Event dauert aber nur 60. Wer in der ersten halben Stunde
-      // beitritt, bekam keine Paarungsrunde mehr - der naechste Cron
+      // beitritt, bekam keine Paarungsrunde mehr - der nächste Cron
       // kam erst beim Ende des Events. Die beiden Teilnehmer blieben
       // also ewig "auf der Suche".
       //
-      // Deshalb laeuft die Runde jetzt direkt nach dem Beitritt. Die
-      // Funktion ist SECURITY DEFINER und fuer angemeldete Nutzer
+      // Deshalb läuft die Runde jetzt direkt nach dem Beitritt. Die
+      // Funktion ist SECURITY DEFINER und für angemeldete Nutzer
       // freigegeben (Migration 176); sie macht nichts, wenn es noch
       // nicht genug Teilnehmer oder keine passende Paarung gibt.
       await SupabaseService.client.rpc(
@@ -165,15 +165,15 @@ class DatingHourService {
     });
   }
 
-  /// Beendet das Gespraech einer Session (v0.10.0, Migration 177).
+  /// Beendet das Gespräch einer Session (v0.10.0, Migration 177).
   ///
   /// NUTZERWUNSCH 04.11.2026: "Wenn man das aber nicht will, kann
-  /// die eine Seite ja jederzeit das Gespraech beenden und es gibt
+  /// die eine Seite ja jederzeit das Gespräch beenden und es gibt
   /// keinen automatischen Funke von beiden Seiten."
   ///
   /// Das Beenden ist ein aktives "ich will das nicht" - deshalb
   /// bekommt eine so beendete Session auch keinen automatischen
-  /// Funke. Der Server prueft das (der Cron nimmt nur Sessions ohne
+  /// Funke. Der Server prüft das (der Cron nimmt nur Sessions ohne
   /// ended_at).
   Future<bool> endConversation(String sessionId) async {
     return _safeCall('endConversation', () async {
@@ -186,7 +186,7 @@ class DatingHourService {
     });
   }
 
-  /// Die einmalige Rueckfrage zum automatischen Funke (Migration 177).
+  /// Die einmalige Rückfrage zum automatischen Funke (Migration 177).
   ///
   /// [keep] = true: der Hinweis verschwindet, der Funke bleibt.
   /// [keep] = false: der Funke (und damit die Person) wird entfernt.
@@ -210,9 +210,9 @@ class DatingHourService {
       );
       final rows = response is List ? response : <dynamic>[];
       if (rows.isEmpty) return null;
-      // BEFUND (22.11.2026, Fuzzing): parse gibt null zurueck, wenn die
+      // BEFUND (22.11.2026, Fuzzing): parse gibt null zurück, wenn die
       // Zeile unbrauchbar ist (fehlende Zeiten) - eine Session mit
-      // erfundenem Datum wuerde einen falschen Zustand anzeigen.
+      // erfundenem Datum würde einen falschen Zustand anzeigen.
       return DatingHourSession.parse(
         Map<String, dynamic>.from(rows.first as Map),
       );

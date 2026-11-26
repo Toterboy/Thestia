@@ -155,7 +155,7 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   Future<void> restorePersistedQrContacts() async {
     await _chat.restoreQrContacts();
     // Wird im Provider-Builder unawaited gestartet: Ist der Container in
-    //zwischen invalidiert (Logout, Container-Wechsel), waere die Zuweisung
+    //zwischen invalidiert (Logout, Container-Wechsel), wäre die Zuweisung
     // ein "Bad state: ... after dispose"-Crash.
     if (mounted) state = _chat.getMatches();
   }
@@ -193,8 +193,8 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   void _countUnread(String matchId, Message msg, WidgetRef? ref) {
     // BEFUND (09.11.2026, Testlauf): `SupabaseService.currentUser` wirft
     // eine Assertion, wenn Supabase NICHT initialisiert ist (Limit-Modus
-    // oder Test). Der Zaehler darf daran nicht scheitern - deshalb wird
-    // die ID ueber einen sicheren Zugriff geholt.
+    // oder Test). Der Zähler darf daran nicht scheitern - deshalb wird
+    // die ID über einen sicheren Zugriff geholt.
     final myId = _eigeneUserId();
     if (myId.isEmpty) return;
     // Eigene Nachricht: nie zählen.
@@ -208,11 +208,11 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   /// Liefert ein einzelnes Match anhand seiner ID.
   Match? getMatchById(String matchId) => _chat.getMatchById(matchId);
 
-  /// Ersetzt eine geloeschte Nachricht durch einen Hinweis.
+  /// Ersetzt eine gelöschte Nachricht durch einen Hinweis.
   ///
-  /// BEFUND (11.11.2026): "Nachricht fuer alle loeschen" - der Empfaenger
+  /// BEFUND (11.11.2026): "Nachricht für alle löschen" - der Empfänger
   /// ersetzt die Nachricht durch den Hinweis "Diese Nachricht wurde
-  /// geloescht".
+  /// gelöscht".
   bool applyDeletion(
     String matchId,
     String messageId, {
@@ -241,14 +241,14 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   /// Die eigene User-ID - ohne zu werfen.
   ///
   /// BEFUND (09.11.2026): `SupabaseService.currentUser` wirft, wenn
-  /// Supabase nicht initialisiert ist (Limit-Modus, Tests). Fuer den
-  /// Ungelesen-Zaehler darf das nicht zu einem Absturz fuehren.
+  /// Supabase nicht initialisiert ist (Limit-Modus, Tests). Für den
+  /// Ungelesen-Zähler darf das nicht zu einem Absturz führen.
   String _eigeneUserId() {
     try {
       if (!SupabaseService.isInitialized) return '';
       return SupabaseService.currentUser?.id ?? '';
     } on Object {
-      // Absichtlich verschluckt: ohne eigene ID laesst sich nicht
+      // Absichtlich verschluckt: ohne eigene ID lässt sich nicht
       // unterscheiden, ob eine Nachricht von mir oder vom Partner kommt.
       return '';
     }

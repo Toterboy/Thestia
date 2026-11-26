@@ -1,21 +1,21 @@
-"""Aktualisiert die Pruefsummen in der Testanleitung UND den
+"""Aktualisiert die Prüfsummen in der Testanleitung UND den
 Release-Notes.
 
 Nach einem neuen Build sind die SHA-256-Summen der APKs alt. Sie
-stehen in der Testanleitung, damit der Betreiber pruefen kann, ob
-die Datei auf dem Handy die richtige ist (ein gekuerzter Download
-laesst sich sonst schwer vom Original unterscheiden).
+stehen in der Testanleitung, damit der Betreiber prüfen kann, ob
+die Datei auf dem Handy die richtige ist (ein gekürzter Download
+lässt sich sonst schwer vom Original unterscheiden).
 
 BEFUND (11.11.2026): Die Release-Notes hatten einen EIGENEN
-Pruefsummen-Block, den dieses Skript nicht angefasst hat - er
+Prüfsummen-Block, den dieses Skript nicht angefasst hat - er
 stand nach dem Build 52 noch auf den Summen von Build 51. Die
-Release-Notes werden ja auf GitHub veroeffentlicht - dort standen
+Release-Notes werden ja auf GitHub veröffentlicht - dort standen
 also falsche Summen. Deshalb werden jetzt BEIDE Dokumente
 gepflegt.
 
 Das Skript rechnet die Summen der Dateien im Release-Ordner neu und
-baut den Abschnitt "Pruefsummen (SHA-256)" neu auf. Zwei Bloecke:
-einen fuer die oeffentlichen Artefakte, einen fuer die
+baut den Abschnitt "Prüfsummen (SHA-256)" neu auf. Zwei Blöcke:
+einen für die öffentlichen Artefakte, einen für die
 Admin-Builds (nur Team-intern).
 
 Aufruf::
@@ -33,8 +33,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -52,12 +52,12 @@ ROOT = _projektwurzel()
 
 
 def _release_ordner() -> pathlib.Path:
-    """Der Release-Ordner gehoert zur Version aus pubspec.yaml.
+    """Der Release-Ordner gehört zur Version aus pubspec.yaml.
 
     BEFUND (09.11.2026): Hier stand fest 'v0.10.0'. Mit dem
-    Versionswechsel (0.11.0) waere der Ordner falsch gewesen - und
-    die Pruefsummen waeren stillschweigend im alten Ordner gelandet.
-    Der Ordner gehoert jetzt zur Version, die gebaut wird.
+    Versionswechsel (0.11.0) wäre der Ordner falsch gewesen - und
+    die Prüfsummen wären stillschweigend im alten Ordner gelandet.
+    Der Ordner gehört jetzt zur Version, die gebaut wird.
     """
     text = (ROOT / "pubspec.yaml").read_text(encoding="utf-8")
     m = re.search(r"^version:\s*([0-9.]+)\+[0-9]+", text, re.M)
@@ -68,19 +68,18 @@ def _release_ordner() -> pathlib.Path:
 
 RELEASE = _release_ordner()
 ANLEITUNG = RELEASE / "TESTANLEITUNG.md"
-# BEFUND (11.11.2026): Auch die Release-Notes tragen Pruefsummen
-# (sie werden auf GitHub veroeffentlicht).
+# BEFUND (11.11.2026): Auch die Release-Notes tragen Prüfsummen
+# (sie werden auf GitHub veröffentlicht).
 NOTES = RELEASE / "RELEASE_NOTES.md"
 
-# BEFUND (10.11.2026): Das Skript suchte exakt "## 5) Pruefsummen
+# BEFUND (10.11.2026): Das Skript suchte exakt "## 5) Prüfsummen
 # (SHA-256)" - die Testanleitung schreibt aber "## 5) Prüfsummen (SHA-256)"
 # (mit Umlaut). Dadurch wurde der Abschnitt nicht gefunden und die
-# Pruefsummen blieben auf dem alten Stand. Die Suche ist jetzt tolerant:
+# Prüfsummen blieben auf dem alten Stand. Die Suche ist jetzt tolerant:
 # beide Schreibweisen werden erkannt.
 KOPF = "## 5) Pruefsummen (SHA-256)"
 KOPF_UMLAUT = "## 5) Prüfsummen (SHA-256)"
 ENDE = "## 6) Wenn etwas nicht geht"
-
 
 def sha256(datei: pathlib.Path) -> str:
     h = hashlib.sha256()
@@ -137,10 +136,12 @@ def main() -> int:
         print("  ! Der Abschnitt mit den Pruefsummen wurde nicht gefunden.")
         return 1
 
-    abschnitt = KOPF + """
+    # DER WEG: Geschrieben wird die Überschrift MIT Umlaut (die
+    # Testanleitung schreibt sie so) - gesucht wird beide Schreibweisen.
+    abschnitt = KOPF_UMLAUT + """
 
-Damit die Uebertragung auf die Handys geprueft werden kann (ein
-gekuerzter Download laesst sich sonst schwer vom Original
+Damit die Übertragung auf die Handys geprüt werden kann (ein
+gekürzter Download lässt sich sonst schwer vom Original
 unterscheiden):
 
 ```
@@ -158,13 +159,13 @@ Und die Admin-Builds (nur Team-intern, **nicht** verteilen):
 """ % "\n".join(zeilen_admin)
 
     abschnitt += """
-Pruefen in PowerShell:
+Prüfen in PowerShell:
 
 ```powershell
 Get-FileHash .\\Thestia-v0.10.0-play.apk -Algorithm SHA256
 ```
 
-Auf dem Handy (ohne PC): die Datei mit der App "Dateiinfo" oeffnen
+Auf dem Handy (ohne PC): die Datei mit der App "Dateiinfo" öffnen
 oder mit `adb shell sha256sum <datei>`.
 
 """
@@ -184,10 +185,10 @@ NOTES_KOPF_ASCII = "## Pruefsummen (SHA-256)"
 
 
 def _notes_aktualisieren(zeilen_oeffentlich, zeilen_admin) -> None:
-    """Ersetzt die Pruefsummen-Bloecke in den Release-Notes.
+    """Ersetzt die Prüfsummen-Blöcke in den Release-Notes.
 
     BEFUND (11.11.2026): Die Release-Notes hatten einen eigenen
-    Pruefsummen-Block, der beim Build nicht mitgepflegt wurde - auf
+    Prüfsummen-Block, der beim Build nicht mitgepflegt wurde - auf
     GitHub standen dadurch falsche Summen.
     """
     if not NOTES.exists():
@@ -203,20 +204,20 @@ def _notes_aktualisieren(zeilen_oeffentlich, zeilen_admin) -> None:
               "gefunden.")
         return
 
-    # Das Ende des Abschnitts: die naechste Ueberschrift der Ebene 2.
+    # Das Ende des Abschnitts: die nächste Überschrift der Ebene 2.
     j = text.find("\n## ", i + 1)
     if j == -1:
         j = len(text)
 
     abschnitt = text[i:j]
 
-    # Die Code-Bloecke finden. Es sind (normalerweise) zwei: der erste
-    # traegt die oeffentlichen Artefakte, der zweite die Admin-Builds.
+    # Die Code-Blöcke finden. Es sind (normalerweise) zwei: der erste
+    # trägt die öffentlichen Artefakte, der zweite die Admin-Builds.
     #
     # BEFUND (11.11.2026): Die erste Fassung dieser Funktion hat den
     # Admin-Block in den ERSTEN Code-Block geschrieben - und dadurch
-    # die oeffentlichen Summen aus den Release-Notes verdraengt. Jetzt
-    # werden die Bloecke anhand ihrer Position bestimmt, nicht durch
+    # die öffentlichen Summen aus den Release-Notes verdrängt. Jetzt
+    # werden die Blöcke anhand ihrer Position bestimmt, nicht durch
     # wiederholtes Suchen.
     zaeunf = []
     pos = 0
@@ -232,7 +233,7 @@ def _notes_aktualisieren(zeilen_oeffentlich, zeilen_admin) -> None:
         return
 
     def _inhalt(start: int, ende: int) -> str:
-        """Der Text zwischen zwei Zaeunen (ohne die Zaeune selbst)."""
+        """Der Text zwischen zwei Zäunen (ohne die Zäune selbst)."""
         a = abschnitt.find("\n", start) + 1
         b = abschnitt.find("```", a)
         return abschnitt[a:b]
@@ -245,8 +246,8 @@ def _notes_aktualisieren(zeilen_oeffentlich, zeilen_admin) -> None:
         print("  ! Der Code-Block in den Release-Notes ist nicht zu.")
         return
 
-    # Von hinten nach vorn ersetzen, damit die Positionen gueltig
-    # bleiben. Der erste Block: die oeffentlichen Artefakte. Der
+    # Von hinten nach vorn ersetzen, damit die Positionen gültig
+    # bleiben. Der erste Block: die öffentlichen Artefakte. Der
     # zweite (falls vorhanden): die Admin-Builds.
     ersetzungen = [(bloecke[0][0], bloecke[0][1], zeilen_oeffentlich)]
     if len(bloecke) >= 2 and zeilen_admin:

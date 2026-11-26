@@ -1,10 +1,10 @@
 Neu:
-- Passkeys verwalten (Liste, Umbenennen, Loeschen) in den Einstellungen
+- Passkeys verwalten (Liste, Umbenennen, Löschen) in den Einstellungen
 - Hinweis auf bereits existierende Passkeys vor dem Anlegen
 
 Behoben:
 - Speichern-Nachfrage beim Profil-Editor greift jetzt auch beim Tab-Wechsel
-- Geraete-Liste zeigt klare Fehlerursachen (z. B. Migration 071 fehlt)
-- Passkey-Fehlermeldung mit Loesungsweg (alte Eintraege loeschen)
+- Geräte-Liste zeigt klare Fehlerursachen (z. B. Migration 071 fehlt)
+- Passkey-Fehlermeldung mit Lösungsweg (alte Einträge löschen)
 
-Server: Migration 071 (Geraete/Theme) + 072 (public_profiles-Konsolidierung) einspielen.
+Server: Migration 071 (Geräte/Theme) + 072 (public_profiles-Konsolidierung) einspielen.

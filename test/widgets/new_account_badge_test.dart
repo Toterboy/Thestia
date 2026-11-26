@@ -1,17 +1,17 @@
 // Der Hinweis auf ein junges Konto.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/profile/new_account_badge.dart 0 % Abdeckung. Die Plakette
-// ist ein HINWEIS auf ein junges Konto - sie soll davor schuetzen, dass
+// ist ein HINWEIS auf ein junges Konto - sie soll davor schützen, dass
 // man dauerhaft von Accounts angeschrieben wird, die es gerade erst
-// gibt. Ohne Test weiss niemand, ob sie zu oft oder zu selten erscheint.
+// gibt. Ohne Test weiß niemand, ob sie zu oft oder zu selten erscheint.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne Profil (oder ohne Erstellungsdatum) erscheint NICHTS -
-//     eine falsche Entwarnung waere schaedlicher als ein fehlender
+//     eine falsche Entwarnung wäre schädlicher als ein fehlender
 //     Hinweis,
-//   * ein Konto aelter als eine Woche wird nicht markiert,
-//   * ein junges Konto wird markiert (Text fuer Screenreader und
+//   * ein Konto älter als eine Woche wird nicht markiert,
+//   * ein junges Konto wird markiert (Text für Screenreader und
 //     Tooltip).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,7 +43,7 @@ void main() {
     testWidgets('ohne Erstellungsdatum erscheint nichts', (tester) async {
       // DER WICHTIGE FALL: Der Server liefert bei manchen Profilen kein
       // `created_at`. Dann darf der Hinweis nicht erscheinen - sonst
-      // waere es eine Behauptung ohne Grundlage.
+      // wäre es eine Behauptung ohne Grundlage.
       await tester.pumpWidget(
         baue(
           const UserProfile(id: 'p1', name: 'Mira', bio: '', birthDate: null),

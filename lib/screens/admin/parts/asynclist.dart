@@ -1,9 +1,9 @@
 // Der Teil '_AsyncList'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -27,7 +27,7 @@ class _AsyncList extends StatelessWidget {
   final String? error;
   final List<Map<String, dynamic>> items;
 
-  /// Symbol des Leerzustands. Bewusst Teil des Geraests: die drei Tabs, die
+  /// Symbol des Leerzustands. Bewusst Teil des Gerästs: die drei Tabs, die
   /// sich vorher je ein eigenes `Center(child: Text(...))` gebaut hatten,
   /// zeigten dasselbe Nichts ohne Hinweis, was dort normalerweise steht.
   final IconData emptyIcon;
@@ -35,8 +35,8 @@ class _AsyncList extends StatelessWidget {
   final String emptyTitle;
   final String emptyText;
 
-  /// Optionale Leiste ueber der Liste (z. B. das Suchfeld im Sperren-Tab).
-  /// Gehoert in den Scroll-Bereich, damit Pull-to-refresh sie mitzieht.
+  /// Optionale Leiste über der Liste (z. B. das Suchfeld im Sperren-Tab).
+  /// Gehört in den Scroll-Bereich, damit Pull-to-refresh sie mitzieht.
   final Widget? header;
 
   final Widget Function(BuildContext, Map<String, dynamic>) itemBuilder;
@@ -60,9 +60,9 @@ class _AsyncList extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         itemCount: items.length + (header == null ? 0 : 1),
         separatorBuilder: (_, _) => const SizedBox(height: 8),
-        // Card-Look konsistent zur restlichen Nutzeroberflaeche. Radius 12
+        // Card-Look konsistent zur restlichen Nutzeroberfläche. Radius 12
         // ist hier Absicht und nicht der 24er der Kacheln: eine Liste von
-        // dicht gestapelten Eintraegen braucht eine engere Rundung, sonst
+        // dicht gestapelten Eintrügen braucht eine engere Rundung, sonst
         // wirken die Zeilen wie Kacheln.
         itemBuilder: (context, i) {
           if (header != null && i == 0) return header!;

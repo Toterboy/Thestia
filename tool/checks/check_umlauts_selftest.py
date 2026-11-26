@@ -1,29 +1,29 @@
 """
 tool/checks/check_umlauts_selftest.py
 ==============================
-Prueft, dass `check_umlauts.py` Fehler WIRKLICH meldet - und dass er
-nicht uebermotive Fehlalarme produziert.
+Prüft, dass `check_umlauts.py` Fehler WIRKLICH meldet - und dass er
+nicht übermotive Fehlalarme produziert.
 
 WARUM (16.11.2026): Ein Checker, der nichts findet, sieht aus wie ein
 Checker, der sauber ist. Genau das ist beim Gitignore-Checker passiert
 (01.11.2026): Die Ausgabe wurde falsch gelesen, der Checker meldete
-nichts mehr - und niemand haette es gemerkt, weil "0 Beanstandungen"
-nach wie vor gruen aussieht.
+nichts mehr - und niemand hätte es gemerkt, weil "0 Beanstandungen"
+nach wie vor grün aussieht.
 
-Die Negativfaelle hier sind der Kern:
+Die Negativfälle hier sind der Kern:
 
-  * "fuer" in einem Nutzertext      -> MUSS gemeldet werden
-  * "fuer" in einem Quellcode-Kommentar -> MUSS NICHT gemeldet werden
+  * "für" in einem Nutzertext      -> MUSS gemeldet werden
+  * "für" in einem Quellcode-Kommentar -> MUSS NICHT gemeldet werden
     (das Projekt schreibt Kommentare bewusst in ASCII)
-  * "fuer" in einer URL              -> MUSS NICHT gemeldet werden
+  * "für" in einer URL              -> MUSS NICHT gemeldet werden
   * "Feuer" (echtes Wort ohne Umlaut)-> MUSS NICHT gemeldet werden
   * "für" (korrekt geschrieben)      -> MUSS NICHT gemeldet werden
-  * "ueber" am Wortanfang            -> MUSS gemeldet werden
+  * "über" am Wortanfang            -> MUSS gemeldet werden
 
 Aufruf:
     python tool/checks/check_umlauts_selftest.py
 
-Exit 0 = alle Negativfaelle wurden erkannt und keine Fehlalarme.
+Exit 0 = alle Negativfälle wurden erkannt und keine Fehlalarme.
 """
 
 import importlib.util
@@ -33,8 +33,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -57,7 +57,7 @@ spec.loader.exec_module(cum)
 
 
 def funde_in(text: str, art: str = 'ganz') -> list:
-    """Prueft einen Text (die gleiche Logik wie der Checker)."""
+    """Prüft einen Text (die gleiche Logik wie der Checker)."""
     funde: list = []
     if art == 'ganz':
         cum.pruefe(cum.ohne_code_und_urls(text), funde, 'test.txt')
@@ -108,8 +108,8 @@ def main() -> int:
 
     # --- Kommentare im Quellcode bleiben ASCII --------------------------
     quelltext = """
-// Kommentar im Projektstil: fuer den Sicherheitscheck, ueber die
-// Schulter, Schluessel immer pruefen.
+// Kommentar im Projektstil: für den Sicherheitscheck, über die
+// Schulter, Schlüssel immer prüfen.
 final text = 'Diese Nachricht ist fuer dich da.';
 """
     funde = funde_in(quelltext, art='strings')

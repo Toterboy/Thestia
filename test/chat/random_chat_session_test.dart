@@ -1,14 +1,14 @@
-// Unit-Tests fuer das Modell der Zufallschat-Sitzung.
+// Unit-Tests für das Modell der Zufallschat-Sitzung.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Status-Umrechnung des serverseitigen Matching (waiting/active/ended),
 //   * das Auslesen der RPC-Antwort (join_random_chat,
 //     get_random_chat_session),
 //   * die Paarungs-Bedingung [RandomChatSession.isMatched].
 //
 // WARUM DAS EIGENTLICH WICHTIG IST:
-//   Der Zufallschat entscheidet ueber die Paarung. Ein falsch gelesener
-//   Status heisst: Die App zeigt eine Partnerin an, mit der es gar keine
+//   Der Zufallschat entscheidet über die Paarung. Ein falsch gelesener
+//   Status heißt: Die App zeigt eine Partnerin an, mit der es gar keine
 //   Verbindung gibt - oder sie wartet endlos, obwohl der Server längst
 //   gepaart hat. Die Status-Umrechnung ist deshalb fail-safe gebaut:
 //   Unbekanntes wird "waiting" (nicht "active") - im Zweifel wartet die
@@ -25,9 +25,9 @@ void main() {
     });
 
     test('unbekannter oder fehlender Status heisst "waiting"', () {
-      // DER GRUND FUER DEN FAIL-SAFE: Ein neuer Server-Status (oder ein
+      // DER GRUND FÜR DEN FAIL-SAFE: Ein neuer Server-Status (oder ein
       // fehlendes Feld) darf die App NICHT in den Zustand "gepaart" bringen.
-      // Sonst wuerde der Chat einen Partner anzeigen, den es nicht gibt.
+      // Sonst würde der Chat einen Partner anzeigen, den es nicht gibt.
       expect(RandomChatStatus.fromString(null), RandomChatStatus.waiting);
       expect(RandomChatStatus.fromString(''), RandomChatStatus.waiting);
       expect(
@@ -94,7 +94,7 @@ void main() {
     test('aktiv OHNE Partner: noch nicht gepaart', () {
       // DER GRUND: Der Server kann "active" melden, bevor die
       // Partner-ID feststeht. Ohne Partner gibt es niemanden, mit dem man
-      // sprechen koennte.
+      // sprechen kännte.
       const sitzung = RandomChatSession(
         sessionId: 'sitzung-4',
         status: RandomChatStatus.active,

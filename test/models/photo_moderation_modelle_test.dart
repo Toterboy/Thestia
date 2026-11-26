@@ -1,21 +1,21 @@
 // Die Bild-Moderation: die Modelle und ihre Hive-Adapter.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/models/verification/photo_moderation_models.g.dart 68 offene
 // Zeilen - die erzeugten Adapter wurden nie benutzt. Das sind die
 // Modelle, in denen die gemeldeten Bilder und die Sperren liegen.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ein gemeldetes Bild ueberlebt den Weg in die Box und zurueck
+// WAS HIER GEPRÜFT WIRD:
+//   * ein gemeldetes Bild überlebt den Weg in die Box und zurück
 //     (inklusive aller Felder - auch der leeren),
-//   * die Sperre eines Kontos ueberlebt denselben Weg,
-//   * die Aufzaehlungen (Typ und Status) kommen unveraendert zurueck.
+//   * die Sperre eines Kontos überlebt denselben Weg,
+//   * die Aufzählungen (Typ und Status) kommen unverändert zurück.
 //
 // DER HINWEIS AUF DEN ENUM-ADAPTERN: In lib/main.dart werden die
-// Adapter fuer die beiden Modelle registriert, die fuer die
-// Aufzaehlungen (PhotoModerationType/Status) aber nicht. Ohne sie
+// Adapter für die beiden Modelle registriert, die für die
+// Aufzählungen (PhotoModerationType/Status) aber nicht. Ohne sie
 // scheitert das Schreiben (der Writer kennt den Typ nicht). Der Test
-// registriert sie deshalb mit - die naechste Fassung der App soll das
+// registriert sie deshalb mit - die nächste Fassung der App soll das
 // auch tun (siehe die offenen Punkte).
 import 'dart:io';
 
@@ -188,8 +188,8 @@ void main() {
     });
 
     test('copyWith aendert nur die genannten Felder', () async {
-      // DIE SEMANTIK: "null" heisst "unveraendert lassen" - die Sperre
-      // bleibt also stehen, wenn man sie nicht ausdruecklich wegschickt.
+      // DIE SEMANTIK: "null" heißt "unverändert lassen" - die Sperre
+      // bleibt also stehen, wenn man sie nicht ausdrücklich wegschickt.
       final original = UserModerationRecord(
         userId: 'nutzer-7',
         faceMismatchWarnings: 3,

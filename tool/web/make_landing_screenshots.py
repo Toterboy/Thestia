@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""Erzeugt die Bilder der oeffentlichen Seite (Landing-Seite).
+"""Erzeugt die Bilder der öffentlichen Seite (Landing-Seite).
 
 WARUM (04.11.2026): Die Landing-Seite (index.html) zeigte acht
-leere Kaesten - die Pfade /screenshots/*.jpg existierten auf dem
+leere Kästen - die Pfade /screenshots/*.jpg existierten auf dem
 Server nicht. Im Quelltext des Verzeichnisses lagen sie auch nicht:
 die Bilder waren nie erzeugt worden.
 
 QUELLE: die Store-Screenshots in der KACHELN-Variante (9x16,
 1080x1920) aus releases/testapk/screenshots/marketing/9x16-kacheln/
-(bzw. .../en/9x16-kacheln/ fuer Englisch). Das ist die Variante OHNE
+(bzw. .../en/9x16-kacheln/ für Englisch). Das ist die Variante OHNE
 nachgeahmte Statusleiste - der Test in test/web_pages_test.dart
 verlangt genau das ("Die Galerie zeigt die Kacheln, nicht den
-Geraete-Screen").
+Geräte-Screen").
 
-Die Geraete-Screens (fastlane/.../phoneScreenshots) haben oben die
+Die Geräte-Screens (fastlane/.../phoneScreenshots) haben oben die
 gemalte Statusleiste (Uhrzeit, WLAN, Akku) auf weissem Grund - das
-sieht in der Galerie nach einem Screenshot aus und ist fuer die
+sieht in der Galerie nach einem Screenshot aus und ist für die
 Webseite die falsche Wahl.
 
 ZIEL: passkey-assets/screenshots/*.jpg (deutsch) und
@@ -37,8 +37,8 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -56,7 +56,7 @@ ROOT = _projektwurzel()
 FASTLANE = ROOT / 'fastlane' / 'metadata' / 'android'
 PUBLISH = ROOT / 'passkey-assets'
 
-# Die Breite im Web. Die Landing-Seite haelt den Inhalt bei maximal
+# Die Breite im Web. Die Landing-Seite hält den Inhalt bei maximal
 # 46 rem (~736 px) - mit 720 px liegt das Bild genau in der Breite.
 BREITE = 720
 QUALITAET = 82

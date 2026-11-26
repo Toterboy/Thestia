@@ -1,8 +1,8 @@
 // Die lokalen Speicher (Keystore und SharedPreferences).
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/services/storage/local_storage.dart nur 39,5 % Abdeckung. Der
-// sichere Speicher traegt die sensiblen Voreinstellungen (Audit M-16:
+// sichere Speicher trägt die sensiblen Voreinstellungen (Audit M-16:
 // die Geschlechter- und Beziehungsvorlieben sind Art.-9-Daten) - und
 // seine Fehler fallen nicht auf, sondern nur durch.
 //
@@ -10,13 +10,13 @@
 // test/support/plugin_mocks.dart (mockKeystore), die
 // SharedPreferences sind der Test-Ersatz von Flutter.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ein Wert landet im sicheren Speicher und kommt wieder heraus,
-//   * ein Boolean und eine Zahl kommen als TEXT zurueck (nicht als
+//   * ein Boolean und eine Zahl kommen als TEXT zurück (nicht als
 //     "1"/"true" aus dem Klartext),
 //   * ein leerer oder unlesbarer Wert ergibt null (kein Absturz),
-//   * die Migration aus dem Klartextspeicher loescht danach die
-//     Klartextkopie (sonst waere das Geheimnis doppelt gespeichert).
+//   * die Migration aus dem Klartextspeicher löscht danach die
+//     Klartextkopie (sonst wäre das Geheimnis doppelt gespeichert).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -135,7 +135,7 @@ void main() {
 
       await speicher.migrateStringFrom(prefs, 'alter_schluessel');
       // DER ZWEITE DURCHLAUF: Der Wert im sicheren Speicher wird nicht
-      // mehr vom Klartext ueberschrieben.
+      // mehr vom Klartext überschrieben.
       await prefs.setString('alter_schluessel', 'ein_neuer_wert');
       await speicher.migrateStringFrom(prefs, 'alter_schluessel');
 

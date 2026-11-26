@@ -1,30 +1,30 @@
 // Der Sicherheitscheck (CAPTCHA) im Fenster.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/settings/captcha_challenge.dart 70 offene Zeilen bei 1
 // gedeckten - der Screen war ungetestet. Das ist der Weg, den die
 // Registrierung und der Login jedes Nutzers geht.
 //
 // ZWEI SACHEN MUSSTEN DAZU:
-//   1) der WebView (test/support/webview_fake.dart) - ohne ihn laesst
+//   1) der WebView (test/support/webview_fake.dart) - ohne ihn lässt
 //      sich das Fenster gar nicht bauen,
 //   2) ein Sitekey in der Umgebung - sonst ist das CAPTCHA
 //      abgeschaltet (AppConstants.captchaEnabled) und der Weg wird nie
 //      betreten. Der Test setzt ihn mit dotenv.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne aktiviertes CAPTCHA gibt es kein Fenster (und kein Token),
-//   * das Fenster laedt die Turnstile-Seite von auth.thestia.de,
-//   * ein Token schliesst das Fenster (und kommt beim Aufrufer an),
+//   * das Fenster lädt die Turnstile-Seite von auth.thestia.de,
+//   * ein Token schließt das Fenster (und kommt beim Aufrufer an),
 //   * ein unplausibles Token wird verworfen (Sicherheit!),
-//   * die Fehlercodes von Cloudflare werden uebersetzt,
+//   * die Fehlercodes von Cloudflare werden übersetzt,
 //   * nur die erlaubten Adressen werden geladen,
-//   * "Erneut versuchen" laedt die Seite neu,
-//   * "Abbrechen" schliesst das Fenster ohne Token.
+//   * "Erneut versuchen" lädt die Seite neu,
+//   * "Abbrechen" schließt das Fenster ohne Token.
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
-// Die WebView-Schnittstelle kommt als Transitivum ueber webview_flutter -
+// Die WebView-Schnittstelle kommt als Transitivum über webview_flutter -
 // der Test braucht nur ihre Typen.
 // ignore_for_file: depend_on_referenced_packages
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
@@ -34,7 +34,7 @@ import 'package:thestia/widgets/settings/captcha_challenge.dart';
 
 import '../support/webview_fake.dart';
 
-/// Der Sitekey, den der Test setzt (ein oeffentlicher Schluessel).
+/// Der Sitekey, den der Test setzt (ein öffentlicher Schlüssel).
 const String _sitekey = '0x4AAAAAAFDhMgIL_nrpUokM';
 
 void main() {
@@ -42,8 +42,8 @@ void main() {
 
   setUp(() {
     webview = FakeWebViewPlattform();
-    // DAS CAPTCHA EIN: Ohne Sitekey ist es abgeschaltet - der Weg waere
-    // nicht zu betreten. (Die App laedt die Werte aus der .env; der
+    // DAS CAPTCHA EIN: Ohne Sitekey ist es abgeschaltet - der Weg wäre
+    // nicht zu betreten. (Die App lädt die Werte aus der .env; der
     // Test setzt sie direkt in den Speicher der Umgebung.)
     dotenv.loadFromString(envString: 'CAPTCHA_SITEKEY=$_sitekey');
   });
@@ -63,9 +63,9 @@ void main() {
     String? ergebnis;
     await tester.pumpWidget(
       MediaQuery(
-        // DIE SCHRIFTGROESSE (50 %): Der Test-Font ist uebertrieben
+        // DIE SCHRIFTGRÖSSE (50 %): Der Test-Font ist übertrieben
         // (jeder Buchstabe ein Quadrat) - mit der echten Schrift passt
-        // der Fehlertext ohne Scrollen. Fuer den Fall "riesige
+        // der Fehlertext ohne Scrollen. Für den Fall "riesige
         // Systemschrift" gibt es einen eigenen Test unten.
         data: MediaQueryData(textScaler: TextScaler.linear(schriftGroesse)),
         child: MaterialApp(
@@ -152,7 +152,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       // DIE SEITE MELDET EIN TOKEN (so, wie es die echte Turnstile-Seite
-      // ueber den JavaScript-Bridge tut).
+      // über den JavaScript-Bridge tut).
       webview.sendeAusDerSeite('1.lAbV5RcI1e_abcdef.0123456789');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -194,8 +194,8 @@ void main() {
       tester,
     ) async {
       // DIE GROSSE SYSTEMSCHRIFT (300 %): Die App erlaubt bis 3,2x. Der
-      // Dialog hat eine feste Hoehe (200 Pixel) - der Fehlertext passte
-      // dort nicht hinein und lief ueber. Das hat den Dialog unbrauchbar
+      // Dialog hat eine feste Höhe (200 Pixel) - der Fehlertext passte
+      // dort nicht hinein und lief über. Das hat den Dialog unbrauchbar
       // gemacht: der Nutzer konnte weder die Meldung lesen noch auf
       // "Erneut versuchen" tippen.
       await zeigeChallenge(tester, schriftGroesse: 3.0);
@@ -283,7 +283,7 @@ void main() {
               '"${eintrag.value}" - sonst weiss der Nutzer nicht, was er '
               'tun soll.',
         );
-        // Der Dialog wird fuer den naechsten Fall geschlossen.
+        // Der Dialog wird für den nächsten Fall geschlossen.
         await tester.tap(find.text(L10n.tWithoutContext('common.cancel')));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));

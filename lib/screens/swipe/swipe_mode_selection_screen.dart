@@ -18,7 +18,7 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Verifikationsstatus fuer die Modus-Sperren (v0.10.0).
+    // Verifikationsstatus für die Modus-Sperren (v0.10.0).
     //
     // Der Status wird BEWACHTET, nicht gelesen: nach der Freigabe
     // durch den Admin soll die Sperre ohne Neustart verschwinden.
@@ -151,8 +151,8 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
 /// pausiert, blockt ein Popup die Auswahl und führt per Klick in die
 /// Einstellungen zum Entpausieren.
 ///
-/// Transit Spark (v0.9.2) zusaetzlich nur ab 18: Der Eintrag wird vor
-/// dem Absprung geprueft, damit die Sperre nicht erst auf der
+/// Transit Spark (v0.9.2) zusätzlich nur ab 18: Der Eintrag wird vor
+/// dem Absprung geprüft, damit die Sperre nicht erst auf der
 /// Radarseite sichtbar wird. Fail-closed - ohne Geburtsdatum bleibt
 /// der Modus zu, genau wie in der Datenbank (Migration 131).
 void _openMode(
@@ -163,10 +163,10 @@ void _openMode(
 ) {
   // Verifikationssperre (v0.10.0).
   //
-  // Geprueft wird der DREISTUFIGE Zustand: wer "wird geprueft" ist,
-  // hat die Pruefung bereits beantragt und wartet - das ist kein
+  // Geprüft wird der DREISTUFIGE Zustand: wer "wird geprüft" ist,
+  // hat die Prüfung bereits beantragt und wartet - das ist kein
   // Mangel, sondern ein laufender Vorgang. Gesperrt ist nur, wer
-  // noch gar nicht geprueft hat.
+  // noch gar nicht geprüft hat.
   if (_modeNeedsVerification(mode)) {
     final state = ref.read(profileProvider).verificationState;
     if (state != VerificationState.verified) {
@@ -214,7 +214,7 @@ void _openMode(
   );
 }
 
-/// Dialog bei Alterssperre fuer Transit Spark.
+/// Dialog bei Alterssperre für Transit Spark.
 ///
 /// Bewusst ein Dialog und kein stilles Verschwinden der Kachel: der
 /// Nutzer soll wissen, WARUM der Modus nicht aufgeht - sonst tippt er
@@ -269,7 +269,7 @@ enum DiscoveryMode {
 
   final String label;
 
-  /// L10n-Schluessel (EN-Uebersetzung der Entdecken-Modi).
+  /// L10n-Schlüssel (EN-Übersetzung der Entdecken-Modi).
   final String labelKey;
   final String descriptionKey;
 
@@ -288,15 +288,15 @@ enum DiscoveryMode {
 /// Modi, die eine verifizierte Person voraussetzen (v0.10.0).
 ///
 /// WAEHLREGEL: QR-Code-Scannen und Zufallschat bleiben ohne
-/// Verifizierung zugaenglich. Beide sind "direkt" - man verbindet sich
+/// Verifizierung zugänglich. Beide sind "direkt" - man verbindet sich
 /// mit einer Person, die man kennt oder deren Code man hat. Alle
 /// anderen Modi setzen voraus, dass man alt genug und wirklich die
 /// Person ist, die man behauptet: Find your Spark (Vorstellung),
-/// Dating Hour (Gespraech mit einer fremden Person) und Transit Spark
+/// Dating Hour (Gespräch mit einer fremden Person) und Transit Spark
 /// (Begegnung unterwegs, ohne dass man sich vorher sieht).
 ///
-/// Ohne diese Sperre waere die Alterspruefung an einer Stelle, an der
-/// niemand sie prueft - die Verifizierung waere dann nur noch Dekoration.
+/// Ohne diese Sperre wäre die Altersprüfung an einer Stelle, an der
+/// niemand sie prüft - die Verifizierung wäre dann nur noch Dekoration.
 const Set<DiscoveryMode> _modesRequiringVerification = {
   DiscoveryMode.findMatch,
   DiscoveryMode.datingHour,
@@ -309,13 +309,13 @@ bool _modeNeedsVerification(DiscoveryMode mode) =>
 
 /// Symbole der Modi (v0.10.0).
 ///
-/// Drei eigene [CustomPainter] fuer Transit Spark, Find your Spark und
+/// Drei eigene [CustomPainter] für Transit Spark, Find your Spark und
 /// Zufallschat; Dating Hour und QR-Scan bleiben bei den Material-Symbolen.
 ///
 /// Als Extension und nicht als Feld im Enum: ein Enum-Konstruktor ist
 /// immer const, und ein Funktionsaufruf wie `_material(Icons.event)` ist
 /// darin nicht erlaubt - der erste Versuch lag genau daran. Die
-/// Extension hat ausserdem den Vorteil, dass das Symbol nur dort gebaut
+/// Extension hat außerdem den Vorteil, dass das Symbol nur dort gebaut
 /// wird, wo es gebraucht wird; im Enum stand vorher ein Painter, der
 /// auch dann erzeugt wurde, wenn das Symbol nicht angezeigt wurde.
 extension DiscoveryModeSymbol on DiscoveryMode {
@@ -357,9 +357,9 @@ class _ModeGroup extends StatelessWidget {
 
   /// Status des Betrachtenden - entscheidet, welche Kachel gesperrt ist.
   ///
-  /// PRO MODUS, nicht pro Gruppe: die Gruppe "Unterwegs" enthaelt
+  /// PRO MODUS, nicht pro Gruppe: die Gruppe "Unterwegs" enthält
   /// QR-Scan (offen) und Transit Spark (gesperrt). Eine Gruppen-Sperre
-  /// wuerde den QR-Scan mitsperren, obwohl er ohne Verifizierung
+  /// würde den QR-Scan mitsperren, obwohl er ohne Verifizierung
   /// bleiben soll.
   final VerificationState verificationState;
 
@@ -392,7 +392,7 @@ class _ModeGroup extends StatelessWidget {
   }
 }
 
-/// Erklaert, warum ein Modus gesperrt ist, und bietet den Weg zur
+/// Erklärt, warum ein Modus gesperrt ist, und bietet den Weg zur
 /// Verifizierung an.
 void _showVerificationRequiredDialog(
   BuildContext context,
@@ -444,10 +444,10 @@ class _ModeCard extends StatelessWidget {
 
   /// Gesperrt mangels Verifizierung (v0.10.0).
   ///
-  /// Gesperrt heisst: der Modus ist sichtbar, aber nicht bedienbar.
-  /// Die Kachel wird ausgegraut und traegt ein Schloss - ein
-  /// voelliges Verstecken wuerde den Nutzer raten lassen, ob es den
-  /// Modus ueberhaupt gibt.
+  /// Gesperrt heißt: der Modus ist sichtbar, aber nicht bedienbar.
+  /// Die Kachel wird ausgegraut und trägt ein Schloss - ein
+  /// völliges Verstecken würde den Nutzer raten lassen, ob es den
+  /// Modus überhaupt gibt.
   final bool isLocked;
 
   final VoidCallback onTap;
@@ -455,11 +455,11 @@ class _ModeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      // Key fuer den Store-Screenshot-Renderer: er exportiert jede
+      // Key für den Store-Screenshot-Renderer: er exportiert jede
       // Modus-Kachel einzeln. Ohne eindeutigen Key muss er die Kachel
-      // ueber ihr Layout erraten, und ein Fehler dort faellt erst
+      // über ihr Layout erraten, und ein Fehler dort fällt erst
       // beim Sichten des fertigen Bildes auf - nicht im Test.
-      // Ausserdem nuetzlich fuer gezielte Widget-Tests.
+      // Außerdem nützlich für gezielte Widget-Tests.
       key: ValueKey('mode-tile-${mode.name}'),
       margin: EdgeInsets.zero,
       elevation: isSelected ? 4 : 1,
@@ -530,7 +530,7 @@ class _ModeCard extends StatelessWidget {
                           // 27.10.2026): "Das neu bei Transit Spark kann weg."
                           // Der Modus ist seit dem Release nicht mehr neu,
                           // und ein Badge, der dauerhaft steht, ist keiner
-                          // mehr - er wird zum Dekor und stoert nur.
+                          // mehr - er wird zum Dekor und stört nur.
                         ],
                       ),
                       const SizedBox(height: 4),

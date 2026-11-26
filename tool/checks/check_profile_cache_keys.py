@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Prueft, ob jedes geschriebene Profil-Feld auch wieder gelesen wird.
+"""Prüft, ob jedes geschriebene Profil-Feld auch wieder gelesen wird.
 
 BEFUND (07.11.2026, Betreiber): "Meine Vorstellung stimmt auch nicht, da
 beide Nutzer eine Vorstellung gemacht haben aber hier steht, dass keine
 hinterlegt wurde (also bei Profil und dann meine Vorstellung)."
 
-DIE URSACHE: UserProfile.fromJson wird an FUER verschiedenen Stellen
+DIE URSACHE: UserProfile.fromJson wird an FÜR verschiedenen Stellen
 benutzt, und die Stellen benutzen DREI verschiedene Schreibweisen:
 
   1. Server-Antworten (REST/RPC)   -> snake_case  (intro_text)
@@ -19,10 +19,10 @@ nachweislich vorhanden (Text ja, Audio-Datei ja), nur der Client kam
 nicht an sie heran.
 
 WARUM EIN WERKZEUG STATT EINES FIXES: Genau diese Klasse von Fehler
-(geschrieben wird A, gelesen wird B) ist beim Testen auf dem Geraet
+(geschrieben wird A, gelesen wird B) ist beim Testen auf dem Gerät
 unsichtbar - die Daten sind da, es sieht nur falsch aus. Ein Gate, das
-jeden Schreib-/Lese-Mismatch im Quelltext findet, faengt sie ab, BEVOR
-sie jemand auf einem Geraet suchen muss.
+jeden Schreib-/Lese-Mismatch im Quelltext findet, fängt sie ab, BEVOR
+sie jemand auf einem Gerät suchen muss.
 
 Aufruf::
 
@@ -38,8 +38,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -57,7 +57,7 @@ ROOT = _projektwurzel()
 
 # Felder, die der SERVER berechnet und die deshalb keinen Unterstrich
 # haben: profile_to_jsonb liefert das Alter ("age") statt des
-# Geburtsdatums - das Alter gehoert nicht in den Cache.
+# Geburtsdatums - das Alter gehört nicht in den Cache.
 SERVER_FELDER = {"age"}
 MODELL = ROOT / "lib" / "models" / "profile" / "user_profile.dart"
 SERVICE = ROOT / "lib" / "services" / "server" / "supabase_database_service.dart"
@@ -99,7 +99,7 @@ def main() -> int:
     )
     # Die Lese-Helfer: _leseText(json, ['intro_text', 'introText']) usw.
     # Sie lesen ein Feld unter MEHREREN Schreibweisen - genau die
-    # Loesung fuer den gemischten Betrieb.
+    # Lösung für den gemischten Betrieb.
     for gruppe in _lade_alle(
         from_json.group(1),
         r"_lese(?:Text|Bool|Zahl|Liste|Datum)\(\s*json\s*,\s*\[([^\]]*)\]",
@@ -147,21 +147,21 @@ def main() -> int:
         gemeinsam = _varianten(feld) & (gelesen_set | mapped_set)
         if gemeinsam:
             # Es gibt eine andere Schreibweise - das ist der Fall, der
-            # beim Testen auf dem Geraet unsichtbar war.
+            # beim Testen auf dem Gerät unsichtbar war.
             echte_verluste.append((feld, sorted(gemeinsam)))
         else:
             echte_verluste.append((feld, []))
 
     # Und die Umkehrung: gelesen, aber niemals geschrieben -> immer leer.
     #
-    # NUR die camelCase-Schreibweise wird geprueft: ein Name mit
+    # NUR die camelCase-Schreibweise wird geprüft: ein Name mit
     # Unterstrich ("user_id", "intro_text") kommt vom SERVER - der
     # liefert die Spaltennamen so. Ein camelCase-Name dagegen entsteht
     # nur im Cache oder in der Zuordnung des DB-Service - der muss ihn
     # auch wiederbekommen.
     #
     # Die Ausnahme: ein Feld, das es in einer ANDEREN Schreibweise gibt
-    # (z. B. createdAt / created_at) ist kein Verlust - dafuer gibt es
+    # (z. B. createdAt / created_at) ist kein Verlust - dafür gibt es
     # den Fallback "json['a'] ?? json['b']".
     unbeschrieben = []
     for feld in sorted(gelesen_set - geschrieben_set):
@@ -217,9 +217,9 @@ def main() -> int:
     # Der zweite Parser: fromPublicView liest das Profil ANDERER
     # (Server-Antwort). Auch dort darf kein Feld verloren gehen.
     #
-    # DER GRUND DER PRUEFUNG: Die Vorstellung des anderen kommt dort
+    # DER GRUND DER PRÜFUNG: Die Vorstellung des anderen kommt dort
     # an - aber nur, weil beide Schreibweisen gelesen werden. Ohne den
-    # Ausgleich faellt so ein Fehler nur auf einem Geraet auf.
+    # Ausgleich fällt so ein Fehler nur auf einem Gerät auf.
     public_view = re.search(
         r"factory UserProfile\.fromPublicView\(Map<String, dynamic> json\)\s*\{\s*"
         r"(.*?)\n\s{4}\}\n",

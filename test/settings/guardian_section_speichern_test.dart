@@ -1,18 +1,18 @@
 // Das Speichern der elterlichen Einstellungen.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/settings/guardian_section.dart 99 offene Zeilen - genau
-// der Teil, mit dem der Elternteil die Nutzungszeit aendert.
+// der Teil, mit dem der Elternteil die Nutzungszeit ändert.
 //
 // DER GRUND: Hier geht es um die elterliche Aufsicht: die Nutzungszeit
-// des Jugendlichen. Zwei Wege koennen hier schiefgehen:
-//   * das Speichern geht nicht durch (die Aenderung ist fuer den
+// des Jugendlichen. Zwei Wege können hier schiefgehen:
+//   * das Speichern geht nicht durch (die Änderung ist für den
 //     Elternteil verloren),
 //   * es wird die FALSCHE Nutzungszeit gespeichert.
 // Der zweite Fall ist der teurere: eine falsche Zeit sperrt den
-// Jugendlichen aus (oder laesst ihn durch).
+// Jugendlichen aus (oder lässt ihn durch).
 //
-// DIE PIN LAEUFT AUF DEM SERVER: Das Geraet kennt die PIN nie - der
+// DIE PIN LÄUFT AUF DEM SERVER: Das Gerät kennt die PIN nie - der
 // Vergleich passiert in der Datenbank (Migration 167). Deshalb wird
 // hier der Server beantwortet, nicht die PIN nachgebaut.
 import 'package:flutter/material.dart';
@@ -146,15 +146,15 @@ void main() {
     return null;
   }
 
-  /// Oeffnet den Zeit-Waehler und bestaetigt ihn OHNE Aenderung.
+  /// Öffnet den Zeit-Wähler und bestätigt ihn OHNE Änderung.
   ///
-  /// DER WEG: Der Knopf wird ueber seinen INHALT gesucht (nicht ueber
+  /// DER WEG: Der Knopf wird über seinen INHALT gesucht (nicht über
   /// `find.text`) - im Dialog-Route trifft die Textsuche nicht
-  /// zuverlaessig.
+  /// zuverlässig.
   Future<void> waehlerBestaetigen(WidgetTester tester, String knopfText) async {
-    // DER WEG: Der Zeit-Waehler ist breiter als ein Telefon-Bildschirm.
-    // Auf einer schmalen Testflaeche liegt sein Bestaetigungs-Knopf
-    // ausserhalb - der Tipp ginge ins Leere. Darum wird hier breiter
+    // DER WEG: Der Zeit-Wähler ist breiter als ein Telefon-Bildschirm.
+    // Auf einer schmalen Testfläche liegt sein Bestätigungs-Knopf
+    // außerhalb - der Tipp ginge ins Leere. Darum wird hier breiter
     // gearbeitet.
     await tester.binding.setSurfaceSize(const Size(900, 1000));
     await tester.pump();
@@ -176,7 +176,7 @@ void main() {
     );
     expect(ok, findsOneWidget, reason: 'Der Zeit-Waehler muss aufgehen.');
 
-    // Ohne Aenderung bestaetigen.
+    // Ohne Änderung bestätigen.
     await tester.tap(ok);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
@@ -211,7 +211,7 @@ void main() {
         reason: 'Die abgeschaltete Nutzungszeit muss gespeichert werden.',
       );
       // Und der PIN ist mitgeschickt worden (ohne PIN nimmt der Server
-      // die Aenderung nicht an).
+      // die Änderung nicht an).
       expect(aufruf['p_pin'], '1234');
     });
 
@@ -245,7 +245,7 @@ void main() {
 
       // DER FALL: Die PIN war beim Entsperren noch richtig, beim
       // Speichern nicht mehr (der Elternteil hat sie inzwischen
-      // geaendert, oder jemand anders hat sie geraten).
+      // geändert, oder jemand anders hat sie geraten).
       server.rpcAntworten['set_guardian_settings_with_pin'] = <String, dynamic>{
         'error': 'wrong_pin',
       };
@@ -301,12 +301,12 @@ void main() {
       await entsperre(tester);
 
       // DER FALL: Der Elternteil schaut nur in die Zeitauswahl (und
-      // bestaetigt sie, ohne etwas zu aendern). Die Grenze darf dabei
+      // bestätigt sie, ohne etwas zu ändern). Die Grenze darf dabei
       // nicht springen.
       //
-      // DER GRUND: Der Waehler muss mit dem aktuellen Wert starten.
+      // DER GRUND: Der Wähler muss mit dem aktuellen Wert starten.
       // Startet er mit einem anderen, springt die Grenze beim
-      // Bestaetigen - und der Jugendliche verliert oder gewinnt
+      // Bestätigen - und der Jugendliche verliert oder gewinnt
       // Nutzungszeit, ohne dass es jemand bemerkt.
       await waehlerBestaetigen(
         tester,

@@ -1,10 +1,10 @@
 // Die beiden Listen des Safety Centers haben je einen eigenen Screen
 // (NUTZERWUNSCH 22.11.2026): "Blockierte Nutzer und Meldungen sollen
 // beide als einzelne Screens, damit der Safety Center Screen nicht
-// ueberladen wird, wenn es viele blockierungen und oder Meldungen
+// überladen wird, wenn es viele blockierungen und oder Meldungen
 // gibt."
 //
-// Vorher standen beide Listen direkt im Safety Center. Die Tests fuer
+// Vorher standen beide Listen direkt im Safety Center. Die Tests für
 // die Listen stehen jetzt hier - der Safety Center selbst tested nur
 // noch, dass die beiden Einstiege vorhanden sind (siehe
 // safety_center_screen_test.dart).

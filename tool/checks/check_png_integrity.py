@@ -1,4 +1,4 @@
-"""Prueft, dass alle Bild-Dateien im Repo wirklich gueltige Bilder sind.
+"""Prüft, dass alle Bild-Dateien im Repo wirklich gültige Bilder sind.
 
 Begründung
 ----------
@@ -21,14 +21,14 @@ DIE JPEGs DER LANDING-SEITE (04.11.2026)
 Genau der Schaden von oben, nur an einer anderen Stelle: Die acht
 Bilder unter `passkey-assets/screenshots/` waren keine JPEGs, sondern
 UTF-16-Text mit einem BOM - ein PowerShell-Text-Roundtrip hatte die
-Binaerdatei zerlegt. Sie lagen so im Repository und damit auch auf
-dem Server: die Landing-Seite zeigte acht leere Kaesten, und niemand
+Binärdatei zerlegt. Sie lagen so im Repository und damit auch auf
+dem Server: die Landing-Seite zeigte acht leere Kästen, und niemand
 hat es gemeldet.
 
-Der PNG-Check fasste diese Dateien nicht an (er prueft *.png), also
-blieb der Schaden unsichtbar. Seitdem werden die JPEGs mitgeprueft:
+Der PNG-Check fasste diese Dateien nicht an (er prüft *.png), also
+blieb der Schaden unsichtbar. Seitdem werden die JPEGs mitgeprüft:
   1. JPEG-Signatur (FFD8) vorhanden
-  2. die Datei laesst sich vollstaendig dekodieren
+  2. die Datei lässt sich vollständig dekodieren
   3. Bytegröße == Größe des Git-Blobs (wie bei den PNGs)
 
 Aufruf:  python tool/checks/check_png_integrity.py
@@ -43,8 +43,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -145,7 +145,7 @@ def check(p: pathlib.Path):
 
 
 def check_jpeg(p: pathlib.Path):
-    """Prueft eine JPEG-Datei (siehe Modul-Docstring)."""
+    """Prüft eine JPEG-Datei (siehe Modul-Docstring)."""
     global checked
     rel = p.relative_to(ROOT).as_posix()
     data = p.read_bytes()

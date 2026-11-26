@@ -4,7 +4,7 @@
 // Vorher waren sie nur ein Link auf die Webseite: das brauchte einen
 // installierten Browser und eine erreichbare Seite. Jetzt steht der
 // Text im Binary und wird in der App angezeigt - wie die
-// Datenschutzerklaerung, die Play ohnehin als Text in der App
+// Datenschutzerklärung, die Play ohnehin als Text in der App
 // verlangt.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,10 +27,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(tester.takeException(), isNull);
-    // Die Ueberschrift steht da (im Balken und als erste Zeile des
+    // Die Überschrift steht da (im Balken und als erste Zeile des
     // Textes - beides ist gewollt).
     expect(find.text('Nutzungsbedingungen'), findsWidgets);
-    // Und der Text ist mehr als eine Ueberschrift: die Abschnitte
+    // Und der Text ist mehr als eine Überschrift: die Abschnitte
     // stehen drin (Mindestalter und Meldeweg sind die wichtigen).
     expect(
       find.textContaining('Mindestalter'),
@@ -113,7 +113,7 @@ void main() {
   test('beide Sprachfassungen sind vollstaendig', () {
     expect(kTermsDe, isNotEmpty);
     expect(kTermsEn, isNotEmpty);
-    // Die Abschnitte muessen in beiden Fassungen gleich viele sein -
+    // Die Abschnitte müssen in beiden Fassungen gleich viele sein -
     // sonst fehlt in einer Sprache ein Abschnitt.
     expect(kTermsDe.length, kTermsEn.length);
     // Das Mindestalter steht in beiden.

@@ -1,14 +1,14 @@
 // Die Bild-Meldung (bisher ungetestet - 0 %).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/services/profile/image_report_service.dart 0 %.
 //
 // WARUM DAS WICHTIG IST: Wenn ein Nutzer ein Chat-Bild meldet, geht
-// genau EIN Bild an die KI-Pruefung und an das Moderations-Team. Zwei
-// Zusagen haengen daran:
+// genau EIN Bild an die KI-Prüfung und an das Moderations-Team. Zwei
+// Zusagen hängen daran:
 //   1. Es geht NUR das gemeldete Bild raus - nicht irgendein Bild.
 //   2. Die Reporter-ID wird pseudonymisiert (SHA-256) - der Klartext-UUID
-//      geht nicht ueber die Kabel.
+//      geht nicht über die Kabel.
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
 // test/support/fake_supabase_server.dart. Der zeichnet die
@@ -123,7 +123,7 @@ void main() {
     test('ein zu grosses Bild wird abgelehnt', () async {
       final service = ImageReportService();
 
-      // Obergrenze + 1: das Bild darf nicht raus (der Server haette es
+      // Obergrenze + 1: das Bild darf nicht raus (der Server hätte es
       // auch abgelehnt - aber es soll gar nicht erst gesendet werden).
       final zuGross = 'A' * (3 * 1024 * 1024 + 1);
 

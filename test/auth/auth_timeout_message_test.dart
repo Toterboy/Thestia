@@ -2,27 +2,27 @@ import 'package:flutter_test/flutter_test.dart';
 import '../support/l10n_quellen.dart';
 import '../support/quelltext.dart';
 
-/// Tests fuer die Fehlermeldung des Auth-Timeouts (v0.9.2).
+/// Tests für die Fehlermeldung des Auth-Timeouts (v0.9.2).
 ///
 /// Anlass: der 20-Sekunden-Timeout aus `login_screen.dart` warf
-/// `TimeoutException`, und im `catch` gab es dafuer keinen Zweig. Er
+/// `TimeoutException`, und im `catch` gab es dafür keinen Zweig. Er
 /// landete in `error.generic` ("Etwas ist schiefgelaufen") und war damit
 /// von einem CAPTCHA-Fehler, einem falschen Passwort und einem echten
 /// Serverfehler nicht zu unterscheiden.
 ///
-/// Fuer die offene Registrierungsfrage ist genau das der Unterschied: der
+/// Für die offene Registrierungsfrage ist genau das der Unterschied: der
 /// Nutzer wurde gebeten, den **Wortlaut** der Meldung zu schicken. Bei
 /// "Etwas ist schiefgelaufen" ist diese Frage nicht beantwortbar.
 void main() {
-  // Die Quelle wird statisch gelesen, nicht ueber ein Widget: der
+  // Die Quelle wird statisch gelesen, nicht über ein Widget: der
   // Timeout-Zweig liegt in einer privaten Methode mit BuildContext, und
-  // ein Widget-Test wuerde Supabase initialisieren muessen.
+  // ein Widget-Test würde Supabase initialisieren müssen.
   final loginSrc = liesQuelltext('lib/screens/auth/login_screen.dart');
   final stringsSrc = liesL10nQuellen();
 
   group('Timeout-Zweig im catch', () {
     test('der catch behandelt TimeoutException ausdruecklich', () {
-      // Ohne eigenen Zweig faellt der Timeout in den generischen else.
+      // Ohne eigenen Zweig fällt der Timeout in den generischen else.
       expect(loginSrc.contains('e is TimeoutException'), isTrue);
     });
 
@@ -31,12 +31,12 @@ void main() {
     });
 
     test('der Zweig steht VOR dem generischen else im selben catch', () {
-      // Ein Timeout-Zweig nach dem generischen else waere toter Code.
+      // Ein Timeout-Zweig nach dem generischen else wäre toter Code.
       //
-      // Nur der catch-Block zaehlt: `error.generic` kommt weiter oben
+      // Nur der catch-Block zählt: `error.generic` kommt weiter oben
       // schon im Provider-Fehlerzweig vor (Zeile ~264). Ein blindes
-      // `indexOf` im ganzen File wuerde also den FALSCHEN Treffer finden
-      // und den Test unabhaengig vom Umbau gruen halten.
+      // `indexOf` im ganzen File würde also den FALSCHEN Treffer finden
+      // und den Test unabhängig vom Umbau grün halten.
       final catchAt = loginSrc.indexOf('} catch (e) {');
       expect(catchAt, greaterThan(-1));
       final block = loginSrc.substring(catchAt);
@@ -70,7 +70,7 @@ void main() {
     });
 
     test('nennt die Ursache statt eines Sammelbegriffs', () {
-      // "Etwas ist schiefgelaufen" waere genau die Formulierung, die die
+      // "Etwas ist schiefgelaufen" wäre genau die Formulierung, die die
       // Registrierungsfrage nicht beantwortet.
       final i = stringsSrc.indexOf("'error.serverUnreachable':");
       expect(i, greaterThan(-1));
@@ -82,9 +82,9 @@ void main() {
     test('ist nicht die generische Meldung', () {
       final i = stringsSrc.indexOf("'error.serverUnreachable':");
       expect(i, greaterThan(-1));
-      // DER TEXT der Meldung (bis zum naechsten Schluessel) - nicht ein
+      // DER TEXT der Meldung (bis zum nächsten Schlüssel) - nicht ein
       // Fenster von 300 Zeichen: die Texte liegen nach Themen sortiert,
-      // ein Fenster wuerde den Nachbarn mit einschliessen.
+      // ein Fenster würde den Nachbarn mit einschliessen.
       final ende = stringsSrc.indexOf("\n    '", i);
       final block = stringsSrc.substring(i, ende > i ? ende : i + 300);
       expect(block.contains('Etwas ist schiefgelaufen'), isFalse);

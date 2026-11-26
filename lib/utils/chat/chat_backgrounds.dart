@@ -38,15 +38,15 @@ class ChatBackgrounds {
   /// eigenen Hintergrundbildes.
   static void bindAppDocsDir(String dir) => _appDocsDir = dir;
 
-  /// Der Dateiname des eigenen Hintergrundbildes (der Waehler speichert
+  /// Der Dateiname des eigenen Hintergrundbildes (der Wähler speichert
   /// es genau unter diesem Namen).
   static const String _eigeneDatei = 'chat_bg_custom.jpg';
 
-  /// Normalisiert einen Pfad (ohne fremde Abhaengigkeit): '.' und '..'
-  /// werden aufgeloest.
+  /// Normalisiert einen Pfad (ohne fremde Abhängigkeit): '.' und '..'
+  /// werden aufgelöst.
   ///
-  /// DER GRUND: Ohne das wuerde der Pfad
-  /// `documents/../fremd/chat_bg_custom.jpg` durch die Pruefung rutschen -
+  /// DER GRUND: Ohne das würde der Pfad
+  /// `documents/../fremd/chat_bg_custom.jpg` durch die Prüfung rutschen -
   /// der Import zeigte dann auf eine Datei AUSSERHALB des Verzeichnisses.
   static String _normalisiere(String pfad) {
     final teile = pfad.split(RegExp(r'[\\/]'));
@@ -131,11 +131,11 @@ class ChatBackgroundView extends StatelessWidget {
         !ChatBackgrounds.presets.contains(backgroundId)) {
       return const SizedBox.shrink();
     }
-    // RepaintBoundary: das Muster ist eine grossflaechige, teure
+    // RepaintBoundary: das Muster ist eine großflächige, teure
     // CustomPaint-Zeichnung. Ohne eigene Ebene wird sie bei jedem Repaint des
     // Chat-Screens (Scrollen, neue Nachricht, Animationen) neu gerastert -
-    // das kostet spuerbar Strom. Die Ebene merkt sich das fertige Muster und
-    // zeichnet es nur neu, wenn sich Farbe/ID aendern.
+    // das kostet spürbar Strom. Die Ebene merkt sich das fertige Muster und
+    // zeichnet es nur neu, wenn sich Farbe/ID ändern.
     return RepaintBoundary(
       child: CustomPaint(
         painter: _PatternPainter(
@@ -155,16 +155,16 @@ class ChatBackgroundView extends StatelessWidget {
 
 /// Zeichnet die Muster dezent (Alpha ~0.10), Kachelgröße 56 px.
 ///
-/// PERFORMANCE – der Grund fuer die Umstellung
+/// PERFORMANCE – der Grund für die Umstellung
 /// ------------------------------------------
-/// Beim Wechsel hell <-> dunkel aendert sich `colorScheme.primary`, also
-/// greift [shouldRepaint] und die bildschirmfuellende Flaeche wird neu
+/// Beim Wechsel hell <-> dunkel ändert sich `colorScheme.primary`, also
+/// greift [shouldRepaint] und die bildschirmfüllende Fläche wird neu
 /// gerastert. Das ist der einzige Grund, warum der Chat-Hintergrund
-/// sichtbar hinterherläuft, während der Rest der Oberflaeche (nur
+/// sichtbar hinterherläuft, während der Rest der Oberfläche (nur
 /// Farbwerte neu zugewiesen) sofort steht.
 ///
 /// Die alte Fassung baute pro Kachel ein eigenes [Path] und rasterte es
-/// sofort. Bei "hearts" auf einem 1080x2400-Geraet sind das rund 817
+/// sofort. Bei "hearts" auf einem 1080x2400-Gerät sind das rund 817
 /// Kacheln x 64 Segmente = ~52.000 Pfad-Segmente, JEDES mit
 /// Sinus-/Kosinus-Berechnung, plus 817 Allokationen - pro Repaint.
 ///
@@ -279,9 +279,9 @@ class _PatternPainter extends CustomPainter {
 
       case ChatBackgrounds.hearts:
       case ChatBackgrounds.stars:
-        // Ein Pfad, der alle Kacheln enthaelt. [addPath] verschiebt die
+        // Ein Pfad, der alle Kacheln enthält. [addPath] verschiebt die
         // bereits fertige, massgestabte Form - ohne die Kurve neu zu
-        // berechnen. Abschluss: EIN drawPath fuer das ganze Muster.
+        // berechnen. Abschluss: EIN drawPath für das ganze Muster.
         final shape = id == ChatBackgrounds.hearts ? _heartShape : _starShape;
         final path = Path();
         var row = 0;

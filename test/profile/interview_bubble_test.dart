@@ -1,14 +1,14 @@
-// Tests fuer die Interview-Blase aus der Erst-Einrichtung.
+// Tests für die Interview-Blase aus der Erst-Einrichtung.
 //
-// ANLASS: Die Blase ist das optische Kernstueck des Interviews - die
-// Einrichtung soll sich wie ein Gespraech anfuehlen und nicht wie ein
-// Formular. Genau daran haengt aber die ganze Wirkung: Wenn die Blase
-// zu breit wird, laeuft der Text aus dem Rahmen; wenn die Schrift
-// waechst, muss sie mitwaachsen.
+// ANLASS: Die Blase ist das optische Kernstück des Interviews - die
+// Einrichtung soll sich wie ein Gespräch anfühlen und nicht wie ein
+// Formular. Genau daran hängt aber die ganze Wirkung: Wenn die Blase
+// zu breit wird, läuft der Text aus dem Rahmen; wenn die Schrift
+// wächst, muss sie mitwaachsen.
 //
-// Geprueft wird deshalb: der Text steht da, das Avatar steht da, die
+// Geprüft wird deshalb: der Text steht da, das Avatar steht da, die
 // Blase sitzt LINKS (die Frage kommt von Thestia, nicht vom Nutzer),
-// und nichts laeuft bei grosser Schrift ueber den Rand.
+// und nichts läuft bei großer Schrift über den Rand.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,7 +28,7 @@ Widget _huelle(Widget kind, {double scale = 1.0}) {
   );
 }
 
-/// Die Dekoration der Blase (der aeusserste Container im Widget -
+/// Die Dekoration der Blase (der äusserste Container im Widget -
 /// der CircleAvatar bringt einen zweiten mit).
 BoxDecoration _deko(WidgetTester tester) {
   final container = tester.widget<Container>(

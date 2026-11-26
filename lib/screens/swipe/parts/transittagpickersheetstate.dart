@@ -1,9 +1,9 @@
 // Der Teil '_TransitTagPickerSheetState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -12,14 +12,14 @@ part of '../transit_radar_screen.dart';
 
 class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
   /// Grenzen (v0.10.0). Gespiegelt in Migration 149 - der Server
-  /// lehnt mit "Bitte 2-8 Merkmale waehlen" ab, wenn der Client mehr
+  /// lehnt mit "Bitte 2-8 Merkmale wählen" ab, wenn der Client mehr
   /// oder weniger schickt.
   static const int minMerkmale = 2;
   static const int maxMerkmale = 8;
 
   final Set<String> _selected = <String>{};
   final Map<String, String?> _colors = <String, String?>{};
-  // Die gewaehlten Werte der Merkmale mit Werteliste (v0.10.0,
+  // Die gewählten Werte der Merkmale mit Werteliste (v0.10.0,
   // Migration 187): Slug -> Wert (z. B. hair_style -> lockig).
   final Map<String, String> _values = <String, String>{};
   final TextEditingController _searchCtrl = TextEditingController();
@@ -42,8 +42,8 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
 
   /// Merkmale, die der Suche und dem Kategoriefilter entsprechen.
   ///
-  /// Gesucht wird im Slug, in den Schreibweisen UND in der Uebersetzung.
-  /// Die Uebersetzung braucht den Kontext, deshalb kann sie nicht im
+  /// Gesucht wird im Slug, in den Schreibweisen UND in der Übersetzung.
+  /// Die Übersetzung braucht den Kontext, deshalb kann sie nicht im
   /// Modell passieren.
   List<TransitTag> _gefiltert() {
     final q = _query.trim().toLowerCase();
@@ -89,13 +89,13 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
     });
   }
 
-  /// Ein Wert eines Merkmals mit Werteliste waehlen (z. B. "lockig").
+  /// Ein Wert eines Merkmals mit Werteliste wählen (z. B. "lockig").
   ///
   /// BEFUND (07.11.2026, Betreiber): "also Hairstyle und so" - als
-  /// blosse Merkmale waren Haarlaenge und Frisur wertlos. Migration 187
-  /// hat die Wertelisten eingefuehrt; hier werden sie gesetzt.
+  /// blosse Merkmale waren Haarlänge und Frisur wertlos. Migration 187
+  /// hat die Wertelisten eingeführt; hier werden sie gesetzt.
   ///
-  /// Das Merkmal bleibt gewaehlt, nur der Wert aendert sich. Und es
+  /// Das Merkmal bleibt gewählt, nur der Wert ändert sich. Und es
   /// gilt wie bei den Farben: ein Wert je Kategorie.
   void _wertWaehlen(TransitTag tag, String wert) {
     setState(() {
@@ -164,9 +164,9 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
             //
             // Vorher standen hier acht Filter-Chips in einer Reihe
             // (alle + sieben Kategorien) - ein ganzes Band, das die
-            // halbe Bildschirmhoehe brauchte und trotzdem nur wiederholte,
+            // halbe Bildschirmhöhe brauchte und trotzdem nur wiederholte,
             // was die Gruppierung der Merkmale unten schon zeigt. Jetzt
-            // ist es ein Chip, der ein Menue aufmacht.
+            // ist es ein Chip, der ein Menü aufmacht.
             PopupMenuButton<String>(
               initialValue: _kategorie,
               onSelected: (wert) => setState(() => _kategorie = wert),
@@ -213,22 +213,22 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
               ),
             ),
             const SizedBox(height: 8),
-            // ---- Fortschritt: Zaehler und Balken.
+            // ---- Fortschritt: Zähler und Balken.
             //
             // BEFUND (07.11.2026, Betreiber): "es so schon echt voll".
             // Die Zahl allein sagt nicht, ob man fertig ist - der Balken
-            // zeigt es. Und er zeigt auch, wie viele Merkmale ueberhaupt
-            // noetig sind (mindestens zwei, hoechstens acht).
+            // zeigt es. Und er zeigt auch, wie viele Merkmale überhaupt
+            // nötig sind (mindestens zwei, höchstens acht).
             //
             // BEFUND (14.11.2026, gefunden von einem Test): Das war eine
-            // Row mit einem Expanded (Zaehler) und einem Text daneben
+            // Row mit einem Expanded (Zähler) und einem Text daneben
             // ("Je Kategorie nur ein Merkmal."). Der zweite Text wurde
-            // unbeschraenkt gesetzt - passt er nicht mehr in die Zeile
-            // (grosse Schrift, die App verspricht bis 3,2x), laeuft er
-            // ueber und der Zaehler wird in einen 1-Spalten-Einzeiler
+            // unbeschränkt gesetzt - passt er nicht mehr in die Zeile
+            // (große Schrift, die App verspricht bis 3,2x), läuft er
+            // über und der Zähler wird in einen 1-Spalten-Einzeiler
             // gepresst. Ein Wrap statt einer Row: passt beides in eine
             // Zeile, steht es nebeneinander, passt es nicht, rutscht der
-            // Hinweis in die naechste Zeile - und nichts laeuft ueber.
+            // Hinweis in die nächste Zeile - und nichts läuft über.
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -276,8 +276,8 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
               // ---- Merkmale, gruppiert nach Kategorie
               for (final kategorie in kategorien) ...[
                 if (treffer.any((t) => t.category == kategorie.slug)) ...[
-                  // Die Ueberschrift entfaellt bei einer Kategorie mit
-                  // nur EINEM Merkmal: sie wuerde dasselbe sagen wie der
+                  // Die Überschrift entfällt bei einer Kategorie mit
+                  // nur EINEM Merkmal: sie würde dasselbe sagen wie der
                   // Chip darunter ("Frisur" als Kategorie und "Frisur" als
                   // Merkmal - zweimal dasselbe Wort auf dem Bildschirm).
                   //
@@ -324,12 +324,12 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                     ],
                   ),
                   // ---- WERT-AUSWAHL: direkt unter dem Merkmal, das
-                  // einen Wert braucht (Haarlaenge, Frisur).
+                  // einen Wert braucht (Haarlänge, Frisur).
                   //
                   // BEFUND (07.11.2026, Betreiber): "also Hairstyle und
                   // so." Die Werte stehen nicht in einer eigenen
                   // Liste weiter unten - sie stehen da, wo man das
-                  // Merkmal auswaehlt. Wer "Haarlaenge" waehlt, sieht
+                  // Merkmal auswählt. Wer "Haarlänge" wählt, sieht
                   // direkt danach "kurz / mittellang / lang ...".
                   for (final tag in treffer.where(
                     (t) => t.category == kategorie.slug && t.hasValues,
@@ -359,7 +359,7 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                   ],
                 ],
               ],
-            // ---- Farbschritt: nur fuer gewaehlte farbige Merkmale
+            // ---- Farbschritt: nur für gewählte farbige Merkmale
             for (final tag
                 in _selected
                     .map(TransitTag.bySlug)
@@ -372,8 +372,8 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                 style: theming.textTheme.labelLarge,
               ),
               const SizedBox(height: 6),
-              // Die gewaehlte Farbe steht als Text dabei - man soll
-              // nicht raten muessen, welcher Kreis gerade gewaehlt ist.
+              // Die gewählte Farbe steht als Text dabei - man soll
+              // nicht raten müssen, welcher Kreis gerade gewählt ist.
               if (_colors[tag.slug] != null) ...[
                 Text(
                   L10n.t(context, TransitTag.colorLabelKey(_colors[tag.slug]!)),
@@ -386,13 +386,13 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
               // Die Farben als Raster statt als Reihe.
               //
               // BEFUND (07.11.2026, Betreiber): "Vielleicht kann man das
-              // auch schoener als eine Reihe an Farben machen." Bei 18
+              // auch schöner als eine Reihe an Farben machen." Bei 18
               // Haarfarben (Migration 186) bricht eine Wrap-Reihe in
               // mehrere Reihen um, und die Reihen sitzen nicht auf
               // einer Linie - das sah unordentlich aus.
               //
-              // Ein Raster mit gleich grossen Kreisen ist geordneter,
-              // und die Kacheln behalten ihre Groesse (die Haarfarben
+              // Ein Raster mit gleich großen Kreisen ist geordneter,
+              // und die Kacheln behalten ihre Größe (die Haarfarben
               // werden sonst zu klein, um sie sicher zu treffen).
               GridView.builder(
                 shrinkWrap: true,
@@ -419,17 +419,17 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                           shape: BoxShape.circle,
                           border: Border.all(
                             // BEFUND (07.11.2026, Betreiber): "Wenn man
-                            // eine Farbe auswaehlt, welche am Rand ist, ist
+                            // eine Farbe auswählt, welche am Rand ist, ist
                             // die Markierung ... abgeschnitten."
                             //
                             // Die Markierung war ein Schatten mit
                             // spreadRadius: 3 - der ragt NACH AUSSEN
-                            // ueber die Kachel hinaus und wurde am
+                            // über die Kachel hinaus und wurde am
                             // Rand des Rasters abgeschnitten.
                             //
                             // Ein Rahmen wird INNERHALB der Kachel
                             // gezeichnet: er ist nie abgeschnitten.
-                            // Die weisse Farbe braucht zusaetzlich einen
+                            // Die weisse Farbe braucht zusätzlich einen
                             // dunklen Rand, sonst sieht man sie nicht.
                             color: gewaehlt
                                 ? theming.colorScheme.primary
@@ -452,7 +452,7 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                 },
               ),
             ],
-            // ---- Eigenes Textfeld zur Ergaenzung (optional)
+            // ---- Eigenes Textfeld zur Ergänzung (optional)
             if (widget.customHintKey != null) ...[
               const SizedBox(height: 16),
               TextField(
@@ -483,7 +483,7 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                         for (final slug in _selected) {
                           // Drei Arten von Angaben (Migration 187):
                           //   'hemd'              - Ja/Nein-Merkmal
-                          //   'hemd:weiss'        - Merkmal mit Farbe
+                          //   'hemd:weiß'        - Merkmal mit Farbe
                           //   'hair_style:lockig' - Merkmal mit Wert
                           final c = _colors[slug];
                           final w = _values[slug];

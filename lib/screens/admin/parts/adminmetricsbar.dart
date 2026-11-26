@@ -1,20 +1,20 @@
 // Der Teil '_AdminMetricsBar'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
 
 part of '../admin_screen.dart';
 
-/// Kennzahlen-Zeile ueber dem Tab-Inhalt.
+/// Kennzahlen-Zeile über dem Tab-Inhalt.
 ///
 /// Eigene kleine Consumer-Widget, weil sie auf `adminCountsProvider`
-/// hoert. Nach einer Aktion in einem Tab wird der Provider invalidiert -
-/// das gehoert an die eine Stelle, an der die Zeile gezeichnet wird, sonst
+/// hört. Nach einer Aktion in einem Tab wird der Provider invalidiert -
+/// das gehört an die eine Stelle, an der die Zeile gezeichnet wird, sonst
 /// vergisst es einer der sechs Tabs.
 class _AdminMetricsBar extends ConsumerWidget {
   const _AdminMetricsBar();
@@ -23,13 +23,13 @@ class _AdminMetricsBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(adminCountsProvider);
     final counts = async.valueOrNull;
-    // Der TabController kommt aus dem DefaultTabController ueber den
-    // Kontext, nicht ueber eine Property: die Zeile wird neu gebaut, wenn
-    // sich die Kennzahlen aendern, und haelt sonst einen Controller fest,
+    // Der TabController kommt aus dem DefaultTabController über den
+    // Kontext, nicht über eine Property: die Zeile wird neu gebaut, wenn
+    // sich die Kennzahlen ändern, und hält sonst einen Controller fest,
     // den der DefaultTabController beim Screenwechsel schon freigegeben hat.
     final controller = DefaultTabController.of(context);
 
-    // Ladezustand: keine Zeilen aus Platzhaltern bauen. "-1" waere eine
+    // Ladezustand: keine Zeilen aus Platzhaltern bauen. "-1" wäre eine
     // gelogene Zahl; die Zeile erscheint, sobald echte Werte da sind.
     if (counts == null) {
       return async.hasError

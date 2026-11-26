@@ -1,9 +1,9 @@
 // Der Teil '_SwipeToCloseState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -11,10 +11,10 @@
 part of '../chat_detail_screen.dart';
 
 class _SwipeToCloseState extends State<_SwipeToClose> {
-  /// Der zurueckgelegte Weg (negativ = nach links).
+  /// Der zurückgelegte Weg (negativ = nach links).
   double _weg = 0.0;
 
-  /// Wie weit gewischt werden muss, damit das Fenster schliesst.
+  /// Wie weit gewischt werden muss, damit das Fenster schließt.
   static const double _schwelle = 70;
 
   @override

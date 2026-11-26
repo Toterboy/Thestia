@@ -86,7 +86,7 @@ class BrevoBugReportService {
   /// zwischen den Android-Versionen unterscheidet (Splash-Screen ab
   /// Android 12, Randverhalten ab Android 15).
   ///
-  /// Ergaenzt sind Geraetemodell und die App-Version: der Report nennt
+  /// Ergänzt sind Gerätemodell und die App-Version: der Report nennt
   /// damit genau die Konstellation, in der der Fehler aufgetreten ist.
   Future<String> _collectDeviceInfo() async {
     final buffer = StringBuffer();
@@ -116,7 +116,7 @@ class BrevoBugReportService {
       }
     });
 
-    // App-Version: zu welchem Build der Fehler gehoert.
+    // App-Version: zu welchem Build der Fehler gehört.
     await bestEffort('writeln', () async {
       final info = await PackageInfo.fromPlatform();
       buffer.writeln('App: ${info.version} (Build ${info.buildNumber})');

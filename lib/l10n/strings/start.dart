@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsStart = {
@@ -50,7 +50,7 @@ const Map<String, Map<String, String>> stringsStart = {
         'und QR-Code-Scannen nutzen.',
     'home.verifyHintReviewTitle': 'Deine Prüfung läuft noch',
     'home.verifyHintUnverifiedBody':
-        'Mit einem kurzen Video bestaetigst du dein Alter - danach sind '
+        'Mit einem kurzen Video bestätigst du dein Alter - danach sind '
         'alle Modi freigeschaltet. Die Prüfung dauert meist nur einen '
         'Moment.',
     'home.viewAll': 'Alle ansehen',

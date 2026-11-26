@@ -18,33 +18,33 @@ class GuardianService {
   ///
   /// FEHLER WERDEN WEITERGEGEBEN (BEFUND 06.11.2026): Vorher hat diese
   /// Methode jeden Fehler in "unbekannt" verwandelt. Der Bildschirm
-  /// konnte dann nicht unterscheiden zwischen "laedt noch" und "der
-  /// Abruf ist gescheitert" - und zeigte in beiden Faellen einen
+  /// konnte dann nicht unterscheiden zwischen "lädt noch" und "der
+  /// Abruf ist gescheitert" - und zeigte in beiden Fällen einen
   /// endlosen Ladekreis. Der Aufrufer entscheidet jetzt, was passiert.
   ///
-  /// Zusaetzlich gibt es fuer beide Schritte eine Zeitgrenze: ein
-  /// haengender Server darf den Elternbereich nicht blockieren.
+  /// Zusätzlich gibt es für beide Schritte eine Zeitgrenze: ein
+  /// hängender Server darf den Elternbereich nicht blockieren.
   Future<GuardianStatus> fetchStatus() async {
     // Noch nicht bereit (App-Start, Testlauf): das ist KEIN Fehler des
     // Dienstes, sondern eine Lage - der Aufrufer darf sie von einem
-    // echten Fehler unterscheiden und spaeter erneut versuchen.
+    // echten Fehler unterscheiden und später erneut versuchen.
     //
-    // DIE PRUEFUNG STEHT HIER UND NICHT IM PROVIDER (06.11.2026): so
-    // laesst sich der Fehlerpfad testen, ohne die Supabase-Verbindung
-    // in einem Test aufbauen zu muessen.
+    // DIE PRÜFUNG STEHT HIER UND NICHT IM PROVIDER (06.11.2026): so
+    // lässt sich der Fehlerpfad testen, ohne die Supabase-Verbindung
+    // in einem Test aufbauen zu müssen.
     if (!SupabaseService.isInitialized) {
       throw const GuardianServiceException('not_ready');
     }
     // Die Zeitzone melden, BEVOR der Status gelesen wird.
     //
     // Der Server braucht sie, um die elterliche Nutzungszeit in der
-    // LOKALEN Zeit des Geraets zu pruefen (Migration 176). Ohne sie
-    // kann er die Beschraenkung nicht bewerten - und der Server
+    // LOKALEN Zeit des Geräts zu prüfen (Migration 176). Ohne sie
+    // kann er die Beschränkung nicht bewerten - und der Server
     // blockiert dann fail-closed.
     //
     // Das Melden ist ein eigener Schritt und darf den Status nicht
-    // verhindern: schlaegt er fehl, lesen wir trotzdem den Status. Die
-    // Zeitgrenze ist wichtig - ein haengender Aufruf wuerde den
+    // verhindern: schlägt er fehl, lesen wir trotzdem den Status. Die
+    // Zeitgrenze ist wichtig - ein hängender Aufruf würde den
     // Elternblock dauerhaft am Ladekreis festhalten (BEFUND 06.11.2026).
     await _meldeZeitzone();
     final res = await _client
@@ -56,12 +56,12 @@ class GuardianService {
     throw const GuardianServiceException('empty_response');
   }
 
-  /// Meldet die Zeitzone des Geraets an den Server.
+  /// Meldet die Zeitzone des Geräts an den Server.
   ///
   /// BEOGRUENDUNG (04.11.2026): Die elterliche Nutzungszeit ist
-  /// "Minuten seit Mitternacht in der Zeitzone des Geraets". Solange
+  /// "Minuten seit Mitternacht in der Zeitzone des Geräts". Solange
   /// der Server die Zeitzone nicht kannte, war eine serverseitige
-  /// Pruefung unmoglich - die Beschraenkung galt damit nur im
+  /// Prüfung unmoglich - die Beschränkung galt damit nur im
   /// Client, und der Client ist patchbar.
   ///
   /// Wir melden einen IANA-Namen ("Europe/Berlin"). Der Server rechnet
@@ -71,8 +71,8 @@ class GuardianService {
   /// Fehler werden verschluckt: Die Zeitzone ist eine Verbesserung,
   /// kein Grund, den Status nicht zu lesen. Der Server blockiert in
   /// dem Fall fail-closed - der Jugendliche sieht dann die Sperre und
-  /// kann sie ueber den Standort-Check (der die Zeitzone mitschickt)
-  /// aufloesen.
+  /// kann sie über den Standort-Check (der die Zeitzone mitschickt)
+  /// auflösen.
   Future<void> _meldeZeitzone() async {
     try {
       final tz = await FlutterTimezone.getLocalTimezone();
@@ -91,7 +91,7 @@ class GuardianService {
   /// Fordert die Freigabe eines Elternteils an.
   ///
   /// Die Adresse muss eine andere sein als die eigene Kontoadresse - das
-  /// prueft der Server (`same_email`). Die Altersgrenze (16/17) prueft
+  /// prüft der Server (`same_email`). Die Altersgrenze (16/17) prüft
   /// der Server ebenfalls (`not_eligible`).
   Future<GuardianResult> requestConsent(String guardianEmail) async {
     try {
@@ -134,9 +134,9 @@ class GuardianService {
     }
   }
 
-  /// Prueft die vierstellige PIN der Aufsicht.
+  /// Prüft die vierstellige PIN der Aufsicht.
   ///
-  /// Der Vergleich laeuft auf dem SERVER - das Geraet kennt die PIN nie.
+  /// Der Vergleich läuft auf dem SERVER - das Gerät kennt die PIN nie.
   /// Bei falschen Versuchen sperrt der Server die PIN (5 pro Stunde).
   Future<bool> verifyPin(String pin) async {
     try {
@@ -160,10 +160,10 @@ class GuardianService {
     }
   }
 
-  /// Aendert die Einstellungen der Aufsicht - nur mit der PIN.
+  /// Ändert die Einstellungen der Aufsicht - nur mit der PIN.
   ///
-  /// Der PIN-Vergleich laeuft auf dem Server (Migration 167). Ohne die
-  /// richtige PIN aendert sich nichts; die PIN gehoert dem Elternteil,
+  /// Der PIN-Vergleich läuft auf dem Server (Migration 167). Ohne die
+  /// richtige PIN ändert sich nichts; die PIN gehört dem Elternteil,
   /// damit kann der Jugendliche die Nutzungszeit nicht selbst verschieben.
   Future<GuardianResult> updateSettingsWithPin({
     required String pin,
@@ -226,7 +226,7 @@ class GuardianServiceException implements Exception {
   /// 'not_authenticated' | 'server'.
   final String code;
 
-  /// Die urspruengliche Ausnahme (fuer das Log).
+  /// Die ursprüngliche Ausnahme (für das Log).
   final Object? cause;
 
   @override

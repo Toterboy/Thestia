@@ -1,21 +1,21 @@
 // Der Startbildschirm "Aktuelles" (bisher ungetestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/home/home_screen.dart 367 offene Zeilen - die Seite, die
-// der Nutzer als erstes sieht, wenn er die App oeffnet.
+// der Nutzer als erstes sieht, wenn er die App öffnet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
-//   * die Begruessung steht da (mit dem Namen aus dem Profil),
+//   * die Begrüßung steht da (mit dem Namen aus dem Profil),
 //   * die drei Abschnitte (Nachrichten, Likes, Funken) stehen da - mit
-//     ihren Leerzustaenden, nicht mit einer leeren Seite,
+//     ihren Leerzuständen, nicht mit einer leeren Seite,
 //   * der Verifikations-Hinweis steht da und verschwindet, wenn das
 //     Profil verifiziert ist,
 //   * der Pausiert-Hinweis erscheint, wenn das Profil pausiert ist,
 //   * die Karte "Leute entdecken" steht da.
 //
 // OHNE SERVER: Es wird kein Supabase-Client initialisiert - damit
-// bleiben die Serverzaehler leer und der Test greift nur auf den
+// bleiben die Serverzähler leer und der Test greift nur auf den
 // lokalen Stand zu (kein Netzwerkverkehr im Test).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,7 +84,7 @@ void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    // DER KEYSTORE: das Profil liegt im verschluesselten Speicher - ohne
+    // DER KEYSTORE: das Profil liegt im verschlüsselten Speicher - ohne
     // den Mock ruft der Test auf dem CI-Runner das echte Plugin (das
     // findet dort keine libsecret-Sitzung).
     mockKeystore();
@@ -208,7 +208,7 @@ void main() {
         ),
       );
       // Die Karten zeigen nur Matches mit UNGELESENEN Nachrichten - also
-      // vor dem Notifier hochzaehlen (er liest den Stand aus dem Dienst).
+      // vor dem Notifier hochzählen (er liest den Stand aus dem Dienst).
       service.incrementUnread(match.id);
       final chat = ChatNotifier(service);
 
@@ -280,7 +280,7 @@ void main() {
       await zeigeScreen(tester);
 
       // Kein leeres Nichts, sondern der ausgeschriebene Zustand - so
-      // weiss der Nutzer, dass nichts kaputt ist.
+      // weiß der Nutzer, dass nichts kaputt ist.
       for (final leer in [
         'Keine neuen Nachrichten',
         'Keine neuen Likes',
@@ -295,7 +295,7 @@ void main() {
       tester,
     ) async {
       // Noch nicht verifiziert: der Hinweis muss den Nutzer einladen.
-      // (Eigene Texte seit 15.11.2026 - die alten waren fuer den
+      // (Eigene Texte seit 15.11.2026 - die alten waren für den
       // Modus-Sperr-Dialog geschrieben.)
       await zeigeScreen(tester);
       expect(

@@ -1,21 +1,21 @@
 // Der Event-Bildschirm der Dating Hour: die Fehler- und Rand-Wege.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/dating_hour/dating_hour_event_screen.dart 63 offene
-// Zeilen - die Fehlerfaelle, der App-Wechsel und die Nebenwege.
+// Zeilen - die Fehlerfälle, der App-Wechsel und die Nebenwege.
 //
 // DER WEG: Der Dating-Hour-Dienst ist ein Hand-Fake. Er kann jeden
 // Aufruf scheitern lassen - so sieht man, was der Bildschirm dem
 // Nutzer sagt, wenn es nicht klappt.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * schlaegt das Beitreten fehl, wird es gesagt (nicht verschwiegen),
-//   * schlaegt das Verlassen fehl, wird es gesagt,
-//   * schlaegt der Auto-Beitritt fehl, wird es gesagt,
+// WAS HIER GEPRÜFT WIRD:
+//   * schlägt das Beitreten fehl, wird es gesagt (nicht verschwiegen),
+//   * schlägt das Verlassen fehl, wird es gesagt,
+//   * schlägt der Auto-Beitritt fehl, wird es gesagt,
 //   * "Nein, danke" beim Wiedereinstieg schaltet den Auto-Beitritt ab,
 //   * ein abgesagtes Event wird deutlich gesagt,
-//   * der Bildschirm laedt nach (Timer, App-Wechsel, Refresh-Knopf),
-//   * die Wege zu den Praeferenzen und zurueck sind da.
+//   * der Bildschirm lädt nach (Timer, App-Wechsel, Refresh-Knopf),
+//   * die Wege zu den Präferenzen und zurück sind da.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,9 +74,9 @@ class _FakeLocalStorage implements LocalStorage {
 
 /// Hand-Fake des Dating-Hour-Dienstes.
 ///
-/// Der echte Dienst spricht mit der Datenbank. Der Fake haelt das Event
-/// im RAM und zaehlt die Aufrufe - so sieht man, ob der Bildschirm den
-/// Server wirklich neu laedt.
+/// Der echte Dienst spricht mit der Datenbank. Der Fake hält das Event
+/// im RAM und zählt die Aufrufe - so sieht man, ob der Bildschirm den
+/// Server wirklich neu lädt.
 class _FakeDatingHourService extends DatingHourService {
   _FakeDatingHourService({this.event, this.teilnahme = false});
 
@@ -138,7 +138,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  /// Ein Event, das JETZT laeuft (Start vor 10 Minuten, Ende in 50).
+  /// Ein Event, das JETZT läuft (Start vor 10 Minuten, Ende in 50).
   DatingHourEvent laufendesEvent() {
     final jetzt = DateTime.now();
     return DatingHourEvent(
@@ -155,7 +155,7 @@ void main() {
     );
   }
 
-  /// Ein Event, das NOCH NICHT laeuft (Start in 30 Minuten).
+  /// Ein Event, das NOCH NICHT läuft (Start in 30 Minuten).
   DatingHourEvent kommendesEvent() {
     final jetzt = DateTime.now();
     final start = jetzt.add(const Duration(minutes: 30));
@@ -176,8 +176,8 @@ void main() {
   /// Ein Event, das in 90 Minuten startet (die Anzeige in Stunden).
   ///
   /// DER HINWEIS: 90 Minuten sind wichtig - der Text "Startet in 1 Stunde
-  /// 30 Minuten" ist der laengste, den der Info-Chip bekommt. Er muss
-  /// auch bei grosser Schrift im Bildschirm bleiben (BEFUND 25.11.2026).
+  /// 30 Minuten" ist der längste, den der Info-Chip bekommt. Er muss
+  /// auch bei großer Schrift im Bildschirm bleiben (BEFUND 25.11.2026).
   DatingHourEvent eventInStunden() {
     final jetzt = DateTime.now();
     final start = jetzt.add(const Duration(minutes: 90));
@@ -427,7 +427,7 @@ void main() {
       );
       final vorher = service.ladeAufrufe;
 
-      // DER TIMER: Alle 30 Sekunden laedt der Bildschirm neu.
+      // DER TIMER: Alle 30 Sekunden lädt der Bildschirm neu.
       await tester.pump(const Duration(seconds: 31));
       await pumpFrames(tester);
 
@@ -447,7 +447,7 @@ void main() {
       );
       final vorher = service.ladeAufrufe;
 
-      // DER REFRESH-KNOPF: Ueber seinen Hinweis gesucht - das Symbol
+      // DER REFRESH-KNOPF: Über seinen Hinweis gesucht - das Symbol
       // ist auf dem Bildschirm nicht eindeutig.
       await tester.tap(find.byTooltip('Aktualisieren'));
       await pumpFrames(tester);
@@ -465,7 +465,7 @@ void main() {
         service: _FakeDatingHourService(event: laufendesEvent()),
       );
 
-      // DER APP-WECHSEL: Das Geraet geht in den Hintergrund.
+      // DER APP-WECHSEL: Das Gerät geht in den Hintergrund.
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       await pumpFrames(tester);
       final nachWechsel = service.ladeAufrufe;
@@ -505,10 +505,10 @@ void main() {
             'dem anderen Geraet kann etwas passiert sein.',
       );
 
-      // DER SERVERZEIT-DIENST: Bei "Zurueck" startet er einen Sync-Timer
+      // DER SERVERZEIT-DIENST: Bei "Zurück" startet er einen Sync-Timer
       // (5 Minuten) und ein paar Warteschleifen (3 und 8 Sekunden). Der
-      // Test laeuft aber nicht so lange - ohne das bleibt am Ende des
-      // Tests ein Timer "pending" und der Test waere rot.
+      // Test läuft aber nicht so lange - ohne das bleibt am Ende des
+      // Tests ein Timer "pending" und der Test wäre rot.
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       await tester.pump();
       await tester.pump(const Duration(seconds: 15));
@@ -543,8 +543,8 @@ void main() {
         service: _FakeDatingHourService(event: laufendesEvent()),
       );
 
-      // DER ZURUECK-KNOPF: Die Dating Hour wird per "go" erreicht - es
-      // gibt keinen Stack zum Zurueckpoppen.
+      // DER ZURÜCK-KNOPF: Die Dating Hour wird per "go" erreicht - es
+      // gibt keinen Stack zum Zurückpoppen.
       await tester.tap(find.byIcon(Icons.arrow_back));
       await pumpFrames(tester);
 

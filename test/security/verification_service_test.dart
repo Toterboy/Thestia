@@ -3,15 +3,15 @@
 // ANLASS (19.11.2026): `lib/services/verification/verification_service.dart` war nur
 // zu 19 % abgedeckt. Der Speicher (Hive) braucht das echte Plugin -
 // aber die Challenge (was der Nutzer tun soll) und die Metadaten des
-// Videos sind reine Logik und gehören geprueft.
+// Videos sind reine Logik und gehören geprüft.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Metadaten ueberstehen den Weg in den Speicher und zurueck
+// WAS HIER GEPRÜFT WIRD:
+//   * die Metadaten überstehen den Weg in den Speicher und zurück
 //     (inkl. GPS-Position und Gesichtseinbettung),
 //   * die Challenge nennt nur sprachneutrale Codes,
 //   * die Anzeige der Challenge ist lokalisiert,
-//   * die Videolaenge wird gegen die Server-Regel (5 bis 15 Sekunden)
-//     geprueft.
+//   * die Videolänge wird gegen die Server-Regel (5 bis 15 Sekunden)
+//     geprüft.
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,7 +34,7 @@ Future<BuildContext> _ctx(WidgetTester tester) async {
   return ctx;
 }
 
-/// Eine Position wie das Plugin sie liefert (alle Felder befuellt).
+/// Eine Position wie das Plugin sie liefert (alle Felder befällt).
 Position _position(double breite, double laenge) => Position(
   latitude: breite,
   longitude: laenge,

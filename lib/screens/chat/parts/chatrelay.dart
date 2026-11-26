@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -20,13 +20,13 @@ extension _ChatRelay on _ChatDetailScreenState {
     // BEFUND (09.11.2026): "Nachrichten kommen nicht richtig an. Eine
     // Benachrichtigung gab es aber ich sehe die Nachricht nicht."
     //
-    // DER GRUND: `match` kommt aus dem LOKALEN Chat-Speicher. Fuer
+    // DER GRUND: `match` kommt aus dem LOKALEN Chat-Speicher. Für
     // einen Server-Funke (Interessen-Screen) gibt es dieses lokale
     // Match erst, wenn `_ensureLocalMatch()` es angelegt hat. Fehlt es
-    // (Chat direkt aus einer Benachrichtigung geoeffnet, Server-RPC
+    // (Chat direkt aus einer Benachrichtigung geöffnet, Server-RPC
     // noch nicht durch), brach der Abruf hier komplett ab
     // (`if (match == null) return;`) - und die Nachricht blieb im Relay
-    // liegen: fuer den Nutzer unsichtbar, obwohl die Benachrichtigung
+    // liegen: für den Nutzer unsichtbar, obwohl die Benachrichtigung
     // ankam.
     //
     // JETZT: Fehlt das lokale Match, wird es einmalig vom Server
@@ -38,10 +38,10 @@ extension _ChatRelay on _ChatDetailScreenState {
     }
     if (!mounted) return;
     if (!SupabaseService.isInitialized) return;
-    // Ohne Partner koennen wir die Zeile nicht zuordnen. Wir holen
-    // sie dann NICHT - fremde Zeilen bleiben fuer ihren eigenen Chat
-    // liegen (kein Datenverlust, und nichts wird faelschlich
-    // bestaetigt).
+    // Ohne Partner können wir die Zeile nicht zuordnen. Wir holen
+    // sie dann NICHT - fremde Zeilen bleiben für ihren eigenen Chat
+    // liegen (kein Datenverlust, und nichts wird fälschlich
+    // bestätigt).
     final partnerId = match?.partner.id;
     if (partnerId == null) return;
 
@@ -57,8 +57,8 @@ extension _ChatRelay on _ChatDetailScreenState {
         if (r.senderId != partnerId) continue;
         // DIE HULLE auspacken (BEFUND 11.11.2026): Die Nachrichten-ID
         // kommt vom SENDER - damit ist sie auf beiden Seiten gleich
-        // (Grundlage fuer "fuer alle loeschen"). Eine Nachricht ohne
-        // Huelle (alte App) bekommt wie bisher eine lokale ID.
+        // (Grundlage für "für alle löschen"). Eine Nachricht ohne
+        // Hülle (alte App) bekommt wie bisher eine lokale ID.
         final draht = parseEnvelope(r.text);
         final msgId = draht.fromNewFormat ? draht.id : 'relay_${r.id}';
         if (_seenMessageIds.contains(msgId)) continue;
@@ -82,8 +82,8 @@ extension _ChatRelay on _ChatDetailScreenState {
             .addMessage(match?.id ?? widget.matchId, msg, ref: ref);
         added = true;
       }
-      // Die "fuer alle geloescht"-Hinweise (BEFUND 11.11.2026) - auch
-      // zwischendurch, damit sie im laufenden Gespraech ankommen.
+      // Die "für alle gelöscht"-Hinweise (BEFUND 11.11.2026) - auch
+      // zwischendurch, damit sie im laufenden Gespräch ankommen.
       await _applyMessageDeletions(widget.matchId);
       if (added) {
         // Zustellung lief -> Intervall wieder auf Ausgangswert.

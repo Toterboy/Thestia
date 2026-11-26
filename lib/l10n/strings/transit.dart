@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsTransit = {
@@ -53,7 +53,7 @@ const Map<String, Map<String, String>> stringsTransit = {
     'transit.cat.bottom': 'Unterteil',
     'transit.cat.eyes': 'Augen',
     'transit.cat.hair': 'Haar',
-    // Eigene Kategorien (Migration 188): Haarlaenge und Frisur sind
+    // Eigene Kategorien (Migration 188): Haarlänge und Frisur sind
     // keine Alternative, sondern zwei Angaben.
     'transit.cat.hair_length': 'Haarlänge',
     'transit.cat.hair_style': 'Frisur',
@@ -98,8 +98,8 @@ const Map<String, Map<String, String>> stringsTransit = {
     // Die Werte der Merkmale mit Werteliste (Migration 187).
     //
     // BEFUND (07.11.2026, Betreiber): "also Hairstyle und so" - als
-    // blosse Merkmale waren Haarlaenge und Frisur wertlos ("hat
-    // Haarlaenge?"). Deshalb gibt es jetzt echte Werte.
+    // blosse Merkmale waren Haarlänge und Frisur wertlos ("hat
+    // Haarlänge?"). Deshalb gibt es jetzt echte Werte.
     'transit.value.kurz': 'Kurz',
     'transit.color.white': 'Weiß',
     'transit.color.yellow': 'Gelb',

@@ -34,7 +34,7 @@ class SecureSupabaseLocalStorage implements LocalStorage {
   // secure_storage.dart).
   // Eigener Namespace (secure_storage_namespaces.dart): die Session darf
   // nicht im selben Keystore-Alias wie die Token-Credentials liegen -
-  // `resetOnError: true` (v11-Default) wuerde sonst beides loeschen.
+  // `resetOnError: true` (v11-Default) würde sonst beides löschen.
   static const _platformOptions = AndroidOptions(
     storageNamespace: SecureNamespaces.session,
   );

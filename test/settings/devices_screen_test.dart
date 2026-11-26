@@ -1,20 +1,20 @@
-// Render-Tests fuer den Screen "Wo bin ich eingeloggt?".
+// Render-Tests für den Screen "Wo bin ich eingeloggt?".
 //
-// ANLASS: Der Screen zeigt alle Geraete, auf denen das Konto angemeldet
+// ANLASS: Der Screen zeigt alle Geräte, auf denen das Konto angemeldet
 // ist, und kann alle anderen Sitzungen beenden. Er ist die Antwort auf
 // die Frage "wer ist noch drin?" - und genau deshalb darf er keine
-// Liste erfinden und keine Abmeldung vortaeuschen.
+// Liste erfinden und keine Abmeldung vortäuschen.
 //
-// Geprueft wird: kein Absturz, kein Render-Overflow, die Geraete stehen
-// da (das aktuelle Geraet ist markiert), der leere Zustand, der
+// Geprüft wird: kein Absturz, kein Render-Overflow, die Geräte stehen
+// da (das aktuelle Gerät ist markiert), der leere Zustand, der
 // Fehlerzustand mit Wiederholung, der Hinweis auf eine fehlgeschlagene
-// Registrierung, das Neuladen ueber den Aktualisieren-Knopf und -
-// wichtig - das Bestaetigungsdialog des "Ueberall abmelden".
+// Registrierung, das Neuladen über den Aktualisieren-Knopf und -
+// wichtig - das Bestätigungsdialog des "Überall abmelden".
 //
 // Der Server wird nicht angefasst: [DeviceSessionService] wird durch
 // einen Hand-Fake ersetzt (siehe [_FakeDeviceService]). Nur die
 // Supabase-Instanz wird initialisiert, damit der Bildschirm den
-// Abmelde-Knopf ueberhaupt zeigt - es geht dabei KEINE Anfrage raus.
+// Abmelde-Knopf überhaupt zeigt - es geht dabei KEINE Anfrage raus.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,7 +28,7 @@ import 'package:thestia/screens/settings/devices_screen.dart';
 
 import '../support/plugin_mocks.dart';
 
-/// In-Memory-Speicher - der Fake-Service braucht nur irgendetwas fuer
+/// In-Memory-Speicher - der Fake-Service braucht nur irgendetwas für
 /// den Super-Konstruktor. Er wird nie benutzt.
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _daten = {};
@@ -60,15 +60,15 @@ class _FakeLocalStorage implements LocalStorage {
       _daten[key] == null ? null : int.tryParse(_daten[key]!);
 }
 
-/// Hand-Fake des Geraete-Service.
+/// Hand-Fake des Geräte-Service.
 ///
 /// Der echte Service spricht mit der Datenbank - im Test gibt es
-/// keinen Server. Der Fake beantwortet alles aus dem RAM und zaehlt
+/// keinen Server. Der Fake beantwortet alles aus dem RAM und zählt
 /// die Aufrufe, damit sichtbar wird, wann neu geladen wird.
 class _FakeDeviceService extends DeviceSessionService {
   _FakeDeviceService(super.storage);
 
-  /// Die Geraete, die der Screen anzeigen soll.
+  /// Die Geräte, die der Screen anzeigen soll.
   List<DeviceSession> geraete = const [];
 
   /// Fehler, den [enrollCurrentDevice] werfen soll.
@@ -80,13 +80,13 @@ class _FakeDeviceService extends DeviceSessionService {
   /// Fehler, den [logoutEverywhereExceptCurrent] werfen soll.
   Object? logoutFehler;
 
-  /// Wie oft wurde das eigene Geraet registriert?
+  /// Wie oft wurde das eigene Gerät registriert?
   int enrollAufrufe = 0;
 
-  /// Wie oft wurde "Ueberall abmelden" ausgefuehrt?
+  /// Wie oft wurde "Überall abmelden" ausgeführt?
   int logoutAufrufe = 0;
 
-  /// Verzoegerung, mit der [listDevices] antwortet. Damit laesst sich
+  /// Verzögerung, mit der [listDevices] antwortet. Damit lässt sich
   /// der Ladezustand des Bildschirms beobachten.
   Duration antwortzeit = Duration.zero;
 
@@ -115,7 +115,7 @@ class _FakeDeviceService extends DeviceSessionService {
   }
 }
 
-/// Baut eine Huelle um den Screen.
+/// Baut eine Hülle um den Screen.
 Widget _huelle(_FakeDeviceService service, {double scale = 1.0}) {
   return ProviderScope(
     overrides: [deviceSessionServiceProvider.overrideWithValue(service)],
@@ -142,12 +142,12 @@ Future<void> _pump(
 void main() {
   setUpAll(() async {
     // Der Bildschirm zeigt den Abmelde-Knopf nur, wenn Supabase
-    // initialisiert ist ([SupabaseService.isInitialized]). Fuer den
+    // initialisiert ist ([SupabaseService.isInitialized]). Für den
     // Test wird der Client initialisiert - es geht dabei KEINE
-    // Anfrage raus, der Geraete-Service ist ein Fake.
+    // Anfrage raus, der Geräte-Service ist ein Fake.
     //
-    // autoRefreshToken: false - sonst laeuft ein periodischer Timer,
-    // an dem der Test am Ende scheitern wuerde.
+    // autoRefreshToken: false - sonst läuft ein periodischer Timer,
+    // an dem der Test am Ende scheitern würde.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
@@ -226,8 +226,8 @@ void main() {
             'Der Nutzer muss sehen, auf welchem Geraet er gerade sitzt - '
             'nur dort bleibt die Sitzung bestehen.',
       );
-      // Das eigene Geraet bekommt ein Smartphone-Symbol, die anderen
-      // ein neutrales "andere Geraete"-Symbol.
+      // Das eigene Gerät bekommt ein Smartphone-Symbol, die anderen
+      // ein neutrales "andere Geräte"-Symbol.
       expect(find.byIcon(Icons.smartphone), findsOneWidget);
       expect(find.byIcon(Icons.devices_other), findsNothing);
     });
@@ -292,7 +292,7 @@ void main() {
 
       final service = _FakeDeviceService(_FakeLocalStorage());
       // Der Server braucht einen Moment - so ist der Ladezustand
-      // ueberhaupt zu sehen.
+      // überhaupt zu sehen.
       service.antwortzeit = const Duration(milliseconds: 100);
 
       await tester.pumpWidget(_huelle(service));
@@ -333,7 +333,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       // Die Liste steht trotzdem da - der Fehler betrifft nur die
-      // Registrierung des eigenen Geraets.
+      // Registrierung des eigenen Geräts.
       expect(find.text('Google Pixel 8'), findsOneWidget);
       expect(find.textContaining('Kein Netz'), findsOneWidget);
       expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
@@ -385,20 +385,20 @@ void main() {
 
       // ... aber BEFUND (13.11.2026, gefunden von diesem Test):
       // `_reload()` ruft `setState(() => _future = _load())`. Der
-      // Pfeil gibt damit das Future ZURUECK - und Flutter verbietet
-      // genau das in setState (Debug-Assert). Im Release faellt die
-      // Pruefung weg, im Debug nicht: der Bildschirm zeichnet sich
+      // Pfeil gibt damit das Future ZURÜCK - und Flutter verbietet
+      // genau das in setState (Debug-Assert). Im Release fällt die
+      // Prüfung weg, im Debug nicht: der Bildschirm zeichnet sich
       // danach nicht neu und bleibt im Fehlerzustand stehen.
       //
-      // Dieser Test haelt den Zustand fest. Wird der Produktivcode
+      // Dieser Test hält den Zustand fest. Wird der Produktivcode
       // korrigiert (setState(() { _future = _load(); })), muss diese
       // Erwartung weg - und der Bildschirm zeigt dann die Liste.
       // ... und der Bildschirm zeichnet sich auch neu.
       //
       // BEFUND (13.11.2026, gefunden von diesem Test und BEHOBEN):
       // `_reload()` rief `setState(() => _future = _load())`. Der Pfeil
-      // gibt damit das Future ZURUECK - und Flutter verbietet genau das
-      // in setState (Debug-Assert). Im Release faellt die Pruefung weg,
+      // gibt damit das Future ZURÜCK - und Flutter verbietet genau das
+      // in setState (Debug-Assert). Im Release fällt die Prüfung weg,
       // im Debug nicht: der Bildschirm zeichnete sich danach nicht neu
       // und blieb im Fehlerzustand stehen.
       expect(
@@ -425,7 +425,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Überall abmelden?'), findsOneWidget);
-      // Ohne Bestaetigung passiert nichts.
+      // Ohne Bestätigung passiert nichts.
       expect(service.logoutAufrufe, 0);
     });
 
@@ -456,9 +456,9 @@ void main() {
       await tester.tap(find.text('Überall abmelden (außer diesem Gerät)'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Überall abmelden'));
-      // Der Dialog schliesst und der Hinweis laeuft ein. Bewusst kein
+      // Der Dialog schließt und der Hinweis läuft ein. Bewusst kein
       // pumpAndSettle: der Hinweis verschwindet von selbst wieder, und
-      // pumpAndSettle wuerde ihn wegwarten.
+      // pumpAndSettle würde ihn wegwarten.
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
@@ -470,9 +470,9 @@ void main() {
       );
       // HINWEIS: Nach dem Abmelden ruft der Bildschirm `_reload()` auf
       // - und das wirft den bekannten setState-Fehler (siehe Test
-      // "der Aktualisieren-Knopf laedt neu"). Der Bildschirm faengt
-      // ihn und zeigt deshalb zusaetzlich (verzögert) die Meldung
-      // "Abmelden ist fehlgeschlagen". Dieser Test prueft den Fall,
+      // "der Aktualisieren-Knopf lädt neu"). Der Bildschirm fängt
+      // ihn und zeigt deshalb zusätzlich (verzögert) die Meldung
+      // "Abmelden ist fehlgeschlagen". Dieser Test prüft den Fall,
       // den der Nutzer zuerst sieht.
     });
 
@@ -513,20 +513,20 @@ void main() {
 
       // ... aber BEFUND (13.11.2026, gefunden von diesem Test):
       // `_reload()` ruft `setState(() => _future = _load())`. Der
-      // Pfeil gibt damit das Future ZURUECK - und Flutter verbietet
-      // genau das in setState (Debug-Assert). Im Release faellt die
-      // Pruefung weg, im Debug nicht: der Bildschirm zeichnet sich
+      // Pfeil gibt damit das Future ZURÜCK - und Flutter verbietet
+      // genau das in setState (Debug-Assert). Im Release fällt die
+      // Prüfung weg, im Debug nicht: der Bildschirm zeichnet sich
       // danach nicht neu.
       //
-      // Dieser Test haelt den Zustand fest. Wird der Produktivcode
+      // Dieser Test hält den Zustand fest. Wird der Produktivcode
       // korrigiert (setState(() { _future = _load(); })), muss diese
       // Erwartung weg.
       // ... und der Bildschirm zeichnet sich auch neu.
       //
       // BEFUND (13.11.2026, gefunden von diesem Test und BEHOBEN):
       // `_reload()` rief `setState(() => _future = _load())`. Der Pfeil
-      // gibt damit das Future ZURUECK - und Flutter verbietet genau das
-      // in setState (Debug-Assert). Im Release faellt die Pruefung weg,
+      // gibt damit das Future ZURÜCK - und Flutter verbietet genau das
+      // in setState (Debug-Assert). Im Release fällt die Prüfung weg,
       // im Debug nicht: der Bildschirm zeichnete sich danach nicht neu
       // und blieb im Fehlerzustand stehen.
       expect(

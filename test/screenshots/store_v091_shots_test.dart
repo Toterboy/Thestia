@@ -4,10 +4,10 @@
 // sind nach Themen aufgeteilt; die Helfer liegen in
 // test/support/store_v091_shots_hilfen.dart.
 
-// Store-Screenshot-Generator fuer v0.9.1 (KEIN regulaerer Test).
+// Store-Screenshot-Generator für v0.9.1 (KEIN regulärer Test).
 //
-// Rendert 5 ausgewahlte Screens in ZWEI Aufloesungen:
-//   9:16  -> 1080x1920  (Play-Store-Standard fuer Handys)
+// Rendert 5 ausgewahlte Screens in ZWEI Auflösungen:
+//   9:16  -> 1080x1920  (Play-Store-Standard für Handys)
 //   WQHD  -> 2560x1440  (16:9, Tablet-/Landscape-Variante)
 //
 // Aufruf (schreibt/aktualisiert):
@@ -48,9 +48,9 @@ void main() {
         reason: 'der Key welcome-page-content fehlt in WelcomeScreen',
       );
       // Das Rechteck ist die VEREINIGUNG von Logo, Titel und Text, nicht
-      // die Column. Die Column fuellt den ganzen Seitenbereich
+      // die Column. Die Column füllt den ganzen Seitenbereich
       // (mainAxisAlignment.center in einem Expanded), ihr Rechteck ist
-      // deshalb 574 dp hoch und die Kachel wurde ein grosses weisses
+      // deshalb 574 dp hoch und die Kachel wurde ein großes weisses
       // Rechteck mit einem Fleck darin. Der weisse Rand kommt in
       // make_store_screenshots.py dazu (CARD_MARGIN_LOGICAL).
       final logo = find.descendant(of: content, matching: find.byType(AppLogo));
@@ -72,12 +72,12 @@ void main() {
     });
 
     testWidgets('export Kacheln 04 (drei Auswahlkacheln)', (tester) async {
-      // Die drei Widgets werden einzeln in einen Host gehaengt und
+      // Die drei Widgets werden einzeln in einen Host gehängt und
       // vermessen. Sie sind ausgelagerte Widgets und in der App noch
       // nicht in einen Screen eingebaut - siehe die Anmerkung in
       // compose_cards() dazu.
       //
-      // Adressiert wird ueber den WIDGET-Typ, nicht ueber `Card`: keines
+      // Adressiert wird über den WIDGET-Typ, nicht über `Card`: keines
       // der drei baut eine Card. ThemePicker ist ein Wrap, die beiden
       // anderen Column bzw. GridView. Ein `find.byType(Card)` lieferte
       // "No element".
@@ -113,14 +113,14 @@ void main() {
           'rect': [r.left, r.top, r.width, r.height],
         };
       }
-      // Einmal am Ende: writeCardRects pro Durchlauf wuerde die Datei
-      // bei jedem Widget ueberschreiben und am Ende nur noch das
+      // Einmal am Ende: writeCardRects pro Durchlauf würde die Datei
+      // bei jedem Widget überschreiben und am Ende nur noch das
       // Chat-Hintergrund-Rechteck enthalten.
       await writeCardList(tester, '04_anpassen', cards);
     });
 
     // 6) Datenschutz. Eigenes Bild statt vierte Kachel in 04: die
-    //    Entfernungs-Anzeige ist die inhaltlich wichtigste Aenderung
+    //    Entfernungs-Anzeige ist die inhaltlich wichtigste Änderung
     //    dieses Releases, und sie verschwindet in einer von vier
     //    gleichwertigen Kacheln neben Farbschema und Chat-Hintergrund.
     //
@@ -163,7 +163,7 @@ void main() {
       );
       // Die Kategorien stehen in einem ListView.builder: gerendert wird
       // nur, was im Viewport liegt. Also wird durch die Liste gelaufen
-      // und jede Kachel dann aufgenommen, wenn sie vollstaendig sichtbar
+      // und jede Kachel dann aufgenommen, wenn sie vollständig sichtbar
       // ist.
       //
       // Der Name kommt aus dem KACHELTEXT, nicht aus ihrer Position. Mit
@@ -211,8 +211,8 @@ void main() {
     });
   }
 
-  // 0b) Chat: ersetzt das Anmelde-Bild. Der Chat traegt das staerkste
-  //      Versprechen der App und zeigt den Alltag, den die uebrigen
+  // 0b) Chat: ersetzt das Anmelde-Bild. Der Chat trägt das stärkste
+  //      Versprechen der App und zeigt den Alltag, den die übrigen
   //      Bilder nicht zeigen - 01 Willkommen, 03 Modi, 04 Personalisierung,
   //      05 Eisbrecher.
   if (enabled) {
@@ -221,7 +221,7 @@ void main() {
 
       // Auch im Phone-Ordner: make_store_screenshots.py liest den
       // Store-Screen 02 von dort, nicht aus cards/. Beide Aufrufe
-      // nutzen denselben Provider-Override - ohne ihn waere der Screen
+      // nutzen denselben Provider-Override - ohne ihn wäre der Screen
       // in einem der beiden Ordner leer.
       await pump(
         tester,
@@ -263,7 +263,7 @@ void main() {
     //
     //    Der Wunsch: "einen neuen Screenshot, wo man die Aktuelles
     //    Seite sieht" - als ZWEITES Bild, direkt nach "Blind Date mit
-    //    Substanz". Das Bild zeigt, was man beim Oeffnen der App
+    //    Substanz". Das Bild zeigt, was man beim Öffnen der App
     //    wirklich sieht: neue Nachrichten, neue Likes, neue Funken und
     //    das Dock.
     testWidgets('export 02_aktuelles (Startseite)', (tester) async {
@@ -291,11 +291,11 @@ void main() {
   if (enabled) {
     testWidgets('export 03_entdecken Kacheln', (tester) async {
       // Die View bleibt 1080x2400 bei dpr 3, also logisch 360x800 - die
-      // Groesse, in der die App die Kachel auf einem Telefon zeigt.
-      // Aufloesung kommt nicht ueber eine groessere logische View: dann
+      // Größe, in der die App die Kachel auf einem Telefon zeigt.
+      // Auflösung kommt nicht über eine größere logische View: dann
       // bricht der Text nicht mehr um, die Kachel wird flacher (88 statt
       // 92 px hoch) und zeigt etwas anderes als die App. Sie kommt
-      // ueber den Capture-Finder, siehe unten.
+      // über den Capture-Finder, siehe unten.
       await pump(
         tester,
         const SwipeModeSelectionScreen(),
@@ -324,21 +324,21 @@ void main() {
         // Jede Kachel einzeln in ein eigenes Scaffold heben und dort als
         // einziges Widget rendern - nur so ist der Export wirklich EINE
         // Kachel. Ein Capture auf find.byKey(card.key!) erfasst auf dem
-        // vollstaendigen Screen die ganze Gruppe mit Ueberschrift und
+        // vollständigen Screen die ganze Gruppe mit Überschrift und
         // Nachbarkacheln.
         //
-        // Der Capture laeuft bewusst ueber find.byType(MaterialApp).last und
-        // NICHT ueber die Kachel selbst: ein Finder-Capture auf ein
+        // Der Capture läuft bewusst über find.byType(MaterialApp).last und
+        // NICHT über die Kachel selbst: ein Finder-Capture auf ein
         // einzelnes Widget schreibt LOGISCHE Pixel (312 px breite
         // Kachel in einer 360x800-PNG), der Capture der ganzen View
         // schreibt physische (1080x2400). Genau diese 312 px wurden
         // in compose_modes() auf 830 px hochskaliert - Faktor 2,66,
         // das war die Pixeligkeit in 03_entdecken.
         //
-        // Die Datei enthaelt also die ganze View mit Scaffold-Rand um
-        // die Kachel. make_store_screenshots.py schneidet sie ueber
-        // exaktes Weiss heraus (_crop_tile) und ist damit
-        // aufloesungsunabhaengig.
+        // Die Datei enthält also die ganze View mit Scaffold-Rand um
+        // die Kachel. make_store_screenshots.py schneidet sie über
+        // exaktes Weiß heraus (_crop_tile) und ist damit
+        // auflösungsunabhängig.
         final card = widgets[i];
         await tester.pumpWidget(soleTileHost(card));
         await tester.pumpAndSettle();

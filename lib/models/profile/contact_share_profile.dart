@@ -113,7 +113,7 @@ class ContactShareProfile {
   /// Liest den gespeicherten Stand.
   ///
   /// Fail-safe: Ein kaputter oder leerer Stand liefert ein leeres
-  /// Profil statt einer Exception. Sonst koennte ein defekter
+  /// Profil statt einer Exception. Sonst kännte ein defekter
   /// Speichereintrag den ganzen Bildschirm blockieren - und die
   /// Angaben sind freiwillig, also geht nichts verloren, wenn sie
   /// neu eingegeben werden.

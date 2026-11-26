@@ -9,32 +9,32 @@ import 'package:thestia/providers/profile/profile_provider.dart';
 import 'package:thestia/utils/location/age_safety_rules.dart';
 import 'package:thestia/widgets/settings/age_range_sliders.dart';
 
-/// "Find your Spark" - STOEBERN NACH INTERESSENS-KATEGORIE.
+/// "Find your Spark" - STÖBERN NACH INTERESSENS-KATEGORIE.
 ///
 /// BEFUND (09.11.2026, Betreiber): "dann entweder Zufallsvorstellung
 /// oder Vorstellungen anderer nach Kategorien ansehen. Also Kategorien
 /// sind die Interessens-Kategorien. Auf diesen neuen Teil mit den
 /// Kategorien soll ein Bereich mit 18+ sein, wo von 18 bis 99+ alle
 /// gesehen werden (Aber man kann nach Alter filtern mit Regler) und ein
-/// 16-17 Bereich ohne Vorstellung mit Alter darueber. Wichtig ist,
-/// dass diese Grenze wirklich klappt, wie auch ueberall anders auch,
-/// damit die Kinder/Jugend geschuetzt sind. Natuerlich da dann E2E
-/// immer. Verschluesselt auf Server speichern."
+/// 16-17 Bereich ohne Vorstellung mit Alter darüber. Wichtig ist,
+/// dass diese Grenze wirklich klappt, wie auch überall anders auch,
+/// damit die Kinder/Jugend geschützt sind. Natürlich da dann E2E
+/// immer. Verschlüsselt auf Server speichern."
 ///
 /// WAS HIER SICHTBAR IST UND WAS NICHT:
 /// * Der **Text** der Vorstellung (der liegt in `profiles.intro_text`).
 /// * Die **Interessen** der Person.
 /// * NICHT die Aufnahme: das Audio ist optional und wird - wie bisher -
-///   erst beim Funke freigegeben (match-media, serverseitig geprueft).
-///   E2E bleibt also: verschluesselt auf dem Server, entschluesselt
-///   erst auf dem Geraet.
+///   erst beim Funke freigegeben (match-media, serverseitig geprüft).
+///   E2E bleibt also: verschlüsselt auf dem Server, entschlüsselt
+///   erst auf dem Gerät.
 ///
 /// DIE ALTERSSGRENZE: Die Grenzen kommen aus `AgeSafetyRules` (16/17
-/// fuer Minderjaehrige, 18-99 fuer Erwachsene) - und der SERVER
-/// begrenzt sie zusaetzlich. Ein 16-Jaehriger kann also weder durch
+/// für Minderjährige, 18-99 für Erwachsene) - und der SERVER
+/// begrenzt sie zusätzlich. Ein 16-Jähriger kann also weder durch
 /// den Regler noch durch einen manipulierten Client einen Erwachsenen
 /// sehen: die Kandidaten kommen aus `public_profiles`, und die Sicht
-/// filtert ueber `profile_discovery_visible_full`
+/// filtert über `profile_discovery_visible_full`
 /// (Migration 203/204).
 class FindYourMatchCategoryScreen extends ConsumerStatefulWidget {
   const FindYourMatchCategoryScreen({super.key});
@@ -184,12 +184,12 @@ class _FindYourMatchCategoryScreenState
 /// Text - der Nutzer stand da. Die App kennt aber die Zahl je Kategorie
 /// (`get_find_match_categories`). Also sagt sie, wo es Menschen gibt.
 ///
-/// Ist ueberhaupt niemand da, wird das ehrlich gesagt - mit dem Hinweis,
-/// spaeter wiederzukommen.
+/// Ist überhaupt niemand da, wird das ehrlich gesagt - mit dem Hinweis,
+/// später wiederzukommen.
 class _EmptyHint extends StatelessWidget {
   const _EmptyHint({required this.kategorie, required this.kategorien});
 
-  /// Die gewaehlte Kategorie (der Name im Text).
+  /// Die gewählte Kategorie (der Name im Text).
   final String? kategorie;
 
   /// Alle Kategorien mit ihren Zahlen.
@@ -197,7 +197,7 @@ class _EmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Die Kategorien mit Menschen - die gewaehlte faellt weg.
+    // Die Kategorien mit Menschen - die gewählte fällt weg.
     final mitMenschen =
         kategorien.where((k) => k.count > 0 && k.category != kategorie).toList()
           ..sort((a, b) => b.count.compareTo(a.count));

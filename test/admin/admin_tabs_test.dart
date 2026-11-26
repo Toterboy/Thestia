@@ -1,16 +1,16 @@
 // Die Reiter des Admin-Bereichs (bisher ungetestet).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/admin/admin_screen.dart 714 offene Zeilen - der Bereich,
-// in dem der Betreiber Meldungen bearbeitet, Verifizierungen prueft und
+// in dem der Betreiber Meldungen bearbeitet, Verifizierungen prüft und
 // Profile sperrt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Meldungen stehen da (mit Typ, gemeldeter Person und Datum),
 //   * "Erledigt" meldet es an den Server,
 //   * ohne Meldungen steht der Leerzustand da,
 //   * ein Serverfehler zeigt die Fehlermeldung MIT Wiederholen,
-//   * die Kennzahlen oben zaehlen die offenen Meldungen.
+//   * die Kennzahlen oben zählen die offenen Meldungen.
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
 // test/support/fake_supabase_server.dart. Der Admin-Check wird von ihm
@@ -59,7 +59,7 @@ void main() {
     server.rpcAntworten.clear();
     server.rpcAntworten['is_current_user_admin'] = true;
     // DIE LISTEN-RPCS: Der Ersatz-Server antwortet auf eine unbekannte
-    // RPC mit null - und die Kennzahlen-Zeile waere dann weg (statt
+    // RPC mit null - und die Kennzahlen-Zeile wäre dann weg (statt
     // "0" zu zeigen). Also beantwortet der Test jede Liste leer.
     for (final rpc in [
       'admin_list_user_reports',
@@ -75,7 +75,7 @@ void main() {
     }
     server.pfade.clear();
     // Der Server antwortet wieder - auch wenn der vorige Test ihn
-    // stummgeschaltet hat (sonst wuerde der Fehler in den nächsten
+    // stummgeschaltet hat (sonst würde der Fehler in den nächsten
     // Test durchschlagen).
     server.antwortetMitFehler = false;
     server.rpcFehler.clear();
@@ -195,7 +195,7 @@ void main() {
       tester,
     ) async {
       // NUR die Liste schweigt - der Admin-Check antwortet (sonst
-      // wuerde der Bereich ganz schliessen, fail-closed).
+      // würde der Bereich ganz schließen, fail-closed).
       server.rpcFehler.add('admin_list_user_reports');
       await zeigeScreen(tester);
 
@@ -208,7 +208,7 @@ void main() {
         ),
         findsWidgets,
       );
-      // Und es gibt einen Weg zurueck.
+      // Und es gibt einen Weg zurück.
       expect(find.text(L10n.tWithoutContext('common.retry')), findsOneWidget);
 
       // Jetzt antwortet der Server wieder - und der Knopf holt die Liste.
@@ -233,13 +233,13 @@ void main() {
       await zeigeScreen(tester);
 
       expect(tester.takeException(), isNull);
-      // Die Kennzahl "Offene Meldungen" steht oben und zaehlt die
+      // Die Kennzahl "Offene Meldungen" steht oben und zählt die
       // wartenden Meldungen.
       expect(
         find.text(L10n.tWithoutContext('admin.metricOpenReports')),
         findsOneWidget,
       );
-      // Der Reiter "Meldungen" traegt dieselbe Zahl.
+      // Der Reiter "Meldungen" trägt dieselbe Zahl.
       expect(find.text('3'), findsWidgets);
     });
   });

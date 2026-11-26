@@ -1,11 +1,11 @@
 NEU (Geschmack & Matching):
-- Musik-Geschmack waehlen (mag / mag nicht) - fliesst in den Matching-Score ein
+- Musik-Geschmack wählen (mag / mag nicht) - fliesst in den Matching-Score ein
 - Verbindungs-Score sichtbar: "Match: X %" in Find-your-Match
-- Erschlossene Funken (gekuehlt, ohne Druck) + Re-Funke mit einem Tap
+- Erschlossene Funken (gekühlt, ohne Druck) + Re-Funke mit einem Tap
 - Chats verwalten: Mehrfachauswahl + ausblenden
 - Ehrliches Beenden: freundliche Absage-Texte oder ruhig enden lassen
-- Ideen-Rad im Chat (Date-Ideen) + Frage-Karten fuer Schuechterne in der Dating Hour
+- Ideen-Rad im Chat (Date-Ideen) + Frage-Karten für Schüchterne in der Dating Hour
 - 60 echte Quiz-Fragen (statt 5 Platzhalter)
-- UI-Einstellungen (Blind Mode, Sichtbarkeit u. a.) ueberleben Neuinstallationen
+- UI-Einstellungen (Blind Mode, Sichtbarkeit u. a.) überleben Neuinstallationen
 
 Server: Migrationen 074 + 075 einspielen.

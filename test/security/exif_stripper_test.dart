@@ -1,20 +1,20 @@
 // Das Entfernen der Bild-Metadaten (bisher ungetestet - 0 %).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/utils/chat/exif_stripper.dart 0 %.
 //
 // WARUM DAS WICHTIG IST: Der Aufrufer verschickt NUR das Ergebnis - die
 // Originalbytes gehen nicht raus. Das ist die Zusage, dass keine
 // GPS-Koordinaten, Geräteinfos oder Zeitstempel aus dem Foto beim
-// anderen landen. Ein Fehler hier waere ein Datenleck.
+// anderen landen. Ein Fehler hier wäre ein Datenleck.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Metadaten verschwinden (an einem Bild mit eingebautem
 //     Metadatenblock nachgewiesen),
 //   * was kein Bild ist, wird ABGELEHNT (fail-closed: es werden nicht
 //     die Originalbytes geschickt),
 //   * leere Bytes werden abgelehnt,
-//   * zu grosse Eingaben werden abgelehnt (Decompression-Bomb),
+//   * zu große Eingaben werden abgelehnt (Decompression-Bomb),
 //   * ein JPEG bleibt ein JPEG, ein PNG bleibt ein PNG.
 import 'dart:typed_data';
 
@@ -40,7 +40,7 @@ Uint8List jpegBytes() {
   return Uint8List.fromList(img.encodeJpg(bild));
 }
 
-/// Haengt einen Metadatenblock (JPEG-Kommentar) in ein JPEG.
+/// Hängt einen Metadatenblock (JPEG-Kommentar) in ein JPEG.
 ///
 /// So baut der Test ein Bild, in dem wirklich Metadaten stehen - ohne
 /// eine Datei aus dem Netz zu brauchen.
@@ -53,7 +53,7 @@ Uint8List jpegMitMetadaten() {
     (text.length + 2) & 0xFF, // Laenge
     ...text,
   ];
-  // Direkt nach dem SOI-Marker (FFE8) einhaengen.
+  // Direkt nach dem SOI-Marker (FFE8) einhängen.
   return Uint8List.fromList([
     ...jpeg.sublist(0, 2),
     ...block,
@@ -102,7 +102,7 @@ void main() {
 
     test('die Metadaten verschwinden', () async {
       final eingabe = jpegMitMetadaten();
-      // Der Ausgangstest traegt die Metadaten wirklich.
+      // Der Ausgangstest trägt die Metadaten wirklich.
       expect(enthaelt(eingabe, _kennzeichen), isTrue);
 
       final ergebnis = await stripImageMetadata(eingabe);
@@ -120,8 +120,8 @@ void main() {
     });
 
     test('was kein Bild ist, wird abgelehnt', () async {
-      // KEIN Original zurueckgeben: sonst gingen die Rohbytes (mit
-      // allem, was drin steckt) an den Empfaenger.
+      // KEIN Original zurückgeben: sonst gingen die Rohbytes (mit
+      // allem, was drin steckt) an den Empfänger.
       final ergebnis = await stripImageMetadata(
         Uint8List.fromList(List<int>.filled(500, 7)),
       );
@@ -135,15 +135,15 @@ void main() {
 
     test('zu grosse Eingaben werden abgelehnt', () async {
       // Obergrenze + 1 Byte: muss ABGELEHNT werden, ohne dass der
-      // Decoder ueberhaupt anfaengt (eine winzige Datei mit riesiger
-      // Bildgroesse waere eine Speicherbombe).
+      // Decoder überhaupt anfängt (eine winzige Datei mit riesiger
+      // Bildgrösse wäre eine Speicherbombe).
       final zuGross = Uint8List(kMaxScrubBytes + 1);
       expect(await stripImageMetadata(zuGross), isNull);
     });
 
     test('die Grenzen sind so, wie sie in der Zusage stehen', () {
       // 24 MB Eingabe, 8192 px Kante, 24 MP Pixel - an diesen Werten
-      // haengt das Versprechen "keine Metadaten, keine Speicherbombe".
+      // hängt das Versprechen "keine Metadaten, keine Speicherbombe".
       expect(kMaxScrubBytes, 24 * 1024 * 1024);
       expect(kMaxScrubDimension, 8192);
       expect(kMaxScrubPixels, 24 * 1000 * 1000);

@@ -1,13 +1,13 @@
-// Unit-Tests fuer den Standort im Keystore.
+// Unit-Tests für den Standort im Keystore.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * das Speichern, Lesen und Loeschen des Verifikations-Standorts,
-//   * die Halb-Besetzung (nur Breite, nur Laenge),
+// WAS HIER GEPRÜFT WIRD:
+//   * das Speichern, Lesen und Löschen des Verifikations-Standorts,
+//   * die Halb-Besetzung (nur Breite, nur Länge),
 //   * die einmalige Migration aus den Klartext-SharedPreferences in den
 //     Keystore (inklusive Idempotenz und Fehlerfall).
 //
 // WIE DER KEYSTORE ERSETZT WIRD:
-//   Der Dienst spricht den Keystore ueber den Method-Channel von
+//   Der Dienst spricht den Keystore über den Method-Channel von
 //   flutter_secure_storage an. Der Test beantwortet diesen Kanal mit
 //   einem In-Memory-Speicher - so bleibt der Test offline und
 //   deterministisch und greift nicht auf den echten Keystore des
@@ -25,7 +25,7 @@ const MethodChannel _keystoreKanal = MethodChannel(
 /// Der In-Memory-Keystore des Tests.
 final Map<String, String> _keystore = <String, String>{};
 
-/// Wenn true, schlaegt jeder Schreibvorgang fehl (Fehlersimulation).
+/// Wenn true, schlägt jeder Schreibvorgang fehl (Fehlersimulation).
 bool _schreibenSchlaegtFehl = false;
 
 /// Beantwortet die Keystore-Aufrufe.
@@ -93,7 +93,7 @@ void main() {
     test('ohne gespeicherten Standort liefert readAll null', () async {
       // DER GRUND: Die App unterscheidet "kein Standort" (null) von
       // "Standort ohne Zeitstempel" (Map mit leerem Zeitstempel). Beide
-      // Faelle muessen unterschieden werden.
+      // Fülle müssen unterschieden werden.
       final gelesen = await SecureLocationStorage.instance.readAll();
 
       expect(gelesen, isNull);
@@ -102,7 +102,7 @@ void main() {
     test(
       'fehlender Zeitstempel und Accuracy werden zu leeren Strings',
       () async {
-        // DER GRUND: Der Keystore kann teilweise gefuellt sein (z. B. nach
+        // DER GRUND: Der Keystore kann teilweise gefüllt sein (z. B. nach
         // einem abgebrochenen Schreibvorgang). readAll darf dann nicht
         // crashen - der Aufrufer braucht eine Map.
         _keystore['thestia_loc_lat'] = '52.5200';
@@ -117,7 +117,7 @@ void main() {
     );
 
     test('nur die Haelfte des Standorts liefert null', () async {
-      // DER GRUND: Ein Standort ohne Laenge (oder ohne Breite) ist
+      // DER GRUND: Ein Standort ohne Länge (oder ohne Breite) ist
       // unbrauchbar - der Aufrufer soll "kein Standort" sehen und den
       // Nutzer neu fragen, statt mit einer halben Koordinate zu rechnen.
       _keystore['thestia_loc_lat'] = '52.5200';
@@ -143,7 +143,7 @@ void main() {
     });
 
     test('leere Werte zaehlen nicht als Standort', () async {
-      // DER GRUND: Ein leerer String ist "kein Wert" - sonst wuerde die
+      // DER GRUND: Ein leerer String ist "kein Wert" - sonst würde die
       // App einen Standort annehmen und danach eine Verifikation gegen
       // 0,0 rechnen.
       _keystore['thestia_loc_lat'] = '';
@@ -216,9 +216,9 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
 
       await SecureLocationStorage.migrateFromSharedPreferences(prefs);
-      // Der Klartext kommt danach wieder zurueck (z. B. weil ein
+      // Der Klartext kommt danach wieder zurück (z. B. weil ein
       // Backup eingespielt wurde) - die Migration darf ihn NICHT noch
-      // einmal uebernehmen.
+      // einmal übernehmen.
       await prefs.setString('verification_latitude', '48.1372');
       await prefs.setString('verification_longitude', '11.5756');
 

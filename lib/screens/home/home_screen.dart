@@ -28,16 +28,16 @@ import 'package:thestia/utils/common/best_effort.dart';
 /// Die Definition im Auftrag war: "bis man eine der modi einmal genutzt
 /// hat und dabei auch so richtig, also mit jemandem geschrieben hat".
 ///
-/// Zwei Signale, und beide zaehlen:
+/// Zwei Signale, und beide zählen:
 ///
 ///   * Es gibt einen **Funke** (Match). Dann hat der Nutzer die App
-///     benutzt - das ist der ausdruecklich genannte Fall ("Funke ->
+///     benutzt - das ist der ausdrücklich genannte Fall ("Funke ->
 ///     der Button geht weg").
 ///   * In einem Chat liegt eine **von mir gesendete** Nachricht. Dann
-///     war es kein blosses Anschauen, sondern ein Gespraech.
+///     war es kein blosses Anschauen, sondern ein Gespräch.
 ///
-/// Gesendet wird ueber [Message.senderId] verglichen - ungelesene
-/// Nachrichten zaehlen NICHT, sonst waere der Button schon nach dem
+/// Gesendet wird über [Message.senderId] verglichen - ungelesene
+/// Nachrichten zählen NICHT, sonst wäre der Button schon nach dem
 /// ersten erhaltenen Funke weg, obwohl nie geschrieben wurde.
 final hatJemandenAngeschriebenProvider = Provider<bool>((ref) {
   final meineId = ref.watch(profileProvider).id;
@@ -47,7 +47,7 @@ final hatJemandenAngeschriebenProvider = Provider<bool>((ref) {
   final funken = ref.watch(serverMatchesProvider).valueOrNull;
   if (funken != null && funken.isNotEmpty) return true;
 
-  // 2) Selbst geschrieben? Dann gab es ein echtes Gespraech.
+  // 2) Selbst geschrieben? Dann gab es ein echtes Gespräch.
   final matches = ref.watch(chatProvider);
   if (matches.isEmpty) return false;
   final notifier = ref.read(chatProvider.notifier);
@@ -61,7 +61,7 @@ final hatJemandenAngeschriebenProvider = Provider<bool>((ref) {
 
 /// Der Einstieg in die Begegnungs-Modi (NUTZERWUNSCH, 27.10.2026).
 ///
-/// Bewusst eine Karte und kein PrimaryButton: die Karte kann Erklaerung
+/// Bewusst eine Karte und kein PrimaryButton: die Karte kann Erklärung
 /// und Icon aufnehmen und sitzt dabei in derselben Spalte wie die
 /// Abschnitte darunter - der bisherige Button am Seitenende sah aus wie
 /// ein Anhang.
@@ -203,7 +203,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    // Verifikationsstatus fuer den Hinweis (v0.10.0).
+    // Verifikationsstatus für den Hinweis (v0.10.0).
     final verificationState = ref.watch(profileProvider).verificationState;
     final profile = ref.watch(profileProvider);
     final matches = ref.watch(chatProvider);
@@ -259,7 +259,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         actions: [
           // NUTZERWUNSCH (30.10.2026): QR-Symbol direkt neben den
           // Einstellungen - der Weg zu "Connect to others" soll nicht
-          // erst durch das Entdecken-Menue fuehren.
+          // erst durch das Entdecken-Menü führen.
           IconButton(
             icon: const Icon(Icons.qr_code_2),
             tooltip: L10n.t(context, 'home.qrTooltip'),
@@ -287,15 +287,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           slivers: [
             // Verifikations-Hinweis (v0.10.0).
             //
-            // Zwei Zustaende, zwei Texte: wer noch gar nicht geprueft
-            // hat, wird zur Verifizierung eingeladen; wer die Pruefung
-            // schon beantragt hat, wartet - dafuer gibt es nichts zu
+            // Zwei Zustände, zwei Texte: wer noch gar nicht geprüft
+            // hat, wird zur Verifizierung eingeladen; wer die Prüfung
+            // schon beantragt hat, wartet - dafür gibt es nichts zu
             // tun, und das steht so da.
             //
             // Der Hinweis verschwindet, sobald freigegeben wurde. Er
             // steht bewusst OBEN, nicht in einer eigenen Sektion: er
             // betrifft den Vollzugang, und der ist die Voraussetzung
-            // fuer die Modi.
+            // für die Modi.
             if (verificationState != VerificationState.verified)
               SliverToBoxAdapter(
                 child: Padding(
@@ -367,7 +367,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           // sagt dem Nutzer nicht, was er tun soll. Der
                           // Klick auf die Kachel war der einzige Weg zur
                           // Verifizierung - der jetzt sichtbare Knopf
-                          // nennt das Ziel und ist ein Treffer fuer
+                          // nennt das Ziel und ist ein Treffer für
                           // Screenreader.
                           if (verificationState !=
                               VerificationState.underReview) ...[
@@ -457,20 +457,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             //
             // NUTZERWUNSCH (27.10.2026): die beiden Buttons am ENDE der
             // Seite ("Leute entdecken" und "Zufallschat starten") sollen
-            // verschwinden. Der Einstieg gehoert nach OBEN - direkt unter
-            // die Begruessung, wo er im Blick ist, bevor die Liste
-            // beginnt. Frueher stand die Karte am Seitenende; das war
+            // verschwinden. Der Einstieg gehört nach OBEN - direkt unter
+            // die Begrüßung, wo er im Blick ist, bevor die Liste
+            // beginnt. Früher stand die Karte am Seitenende; das war
             // genau die Stelle, von der sie weg sollte.
             //
             // Er bleibt stehen, bis der Nutzer wirklich jemanden
             // angeschrieben hat (siehe
-            // [hatJemandenAngeschriebenProvider]). Wer nur empfaengt,
+            // [hatJemandenAngeschriebenProvider]). Wer nur empfängt,
             // hat die App noch nicht benutzt - da hilft der Einstieg noch.
             //
             // Der Zufallschat-BUTTON ist entfallen: er war eine zweite
-            // Aktion auf derselben Flaeche, ohne erkennbaren Grund -
-            // "Zufallschat" ist ein Modus und laesst sich im Auswahl-
-            // screen waehlen, der ohnehin ueber "Leute entdecken" erreicht
+            // Aktion auf derselben Fläche, ohne erkennbaren Grund -
+            // "Zufallschat" ist ein Modus und lässt sich im Auswahl-
+            // screen wählen, der ohnehin über "Leute entdecken" erreicht
             // wird.
             if (!ref.watch(hatJemandenAngeschriebenProvider))
               SliverToBoxAdapter(
@@ -855,7 +855,7 @@ class _SectionHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Expanded: der Titel gibt dem Button Platz, statt selbst
-        // ueber den Rand zu laufen (RenderFlex-Overflow bei grosser
+        // über den Rand zu laufen (RenderFlex-Overflow bei großer
         // Systemschrift).
         Expanded(
           child: Text(

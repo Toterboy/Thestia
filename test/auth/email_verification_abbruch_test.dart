@@ -1,15 +1,15 @@
-// Der Bestaetigungs-Screen: was passiert, wenn der Registrierungs-
+// Der Bestätigungs-Screen: was passiert, wenn der Registrierungs-
 // nachweis abgelaufen ist.
 //
 // ANLASS (19.11.2026): `lib/screens/auth/email_verification_screen.dart`
 // war nur zu 62 % abgedeckt. Der stille Auto-Login darf nach 15
 // Minuten nicht mehr greifen (der Nachweis der Inhaberschaft ist dann
-// weg) - der Nutzer muss stattdessen normal anmelden koennen.
+// weg) - der Nutzer muss stattdessen normal anmelden können.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ein abgelaufener Nachweis fuehrt zur Anmeldung (mit Hinweis),
-//   * der Dialog "Registrierung abbrechen" laesst sich abbrechen -
-//     dann wird nichts geloescht.
+// WAS HIER GEPRÜFT WIRD:
+//   * ein abgelaufener Nachweis fährt zur Anmeldung (mit Hinweis),
+//   * der Dialog "Registrierung abbrechen" lässt sich abbrechen -
+//     dann wird nichts gelöscht.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,7 +58,7 @@ class _FakeLocalStorage implements LocalStorage {
       _daten[key] == null ? null : int.tryParse(_daten[key]!);
 }
 
-/// Der Router fuer den Test.
+/// Der Router für den Test.
 GoRouter _router() {
   return GoRouter(
     initialLocation: AppRoutes.emailVerification,
@@ -152,11 +152,11 @@ void main() {
     return container;
   }
 
-  /// Raeumt den Screen ab - er hat Timer (Auto-Login, Cooldown).
+  /// Räumt den Screen ab - er hat Timer (Auto-Login, Cooldown).
   ///
   /// Ohne das bleibt ein Timer stehen und der Test scheitert an
-  /// "A Timer is still pending". DER CONTAINER GEHOERT DABEI: Der
-  /// E-Mail-Bestaetigungs-Notifier pollt alle 3 Sekunden.
+  /// "A Timer is still pending". DER CONTAINER GEHÖRT DABEI: Der
+  /// E-Mail-Bestätigungs-Notifier pollt alle 3 Sekunden.
   Future<void> aufraeumen(
     WidgetTester tester,
     ProviderContainer container,
@@ -166,7 +166,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
-  /// Wartet, BIS ein Text da ist (das Screen-Update laeuft asynchron).
+  /// Wartet, BIS ein Text da ist (das Screen-Update läuft asynchron).
   Future<bool> warteAufText(
     WidgetTester tester,
     String text, {
@@ -219,7 +219,7 @@ void main() {
         reason: 'Ohne Nachweis gibt es nur noch die normale Anmeldung.',
       );
 
-      // Die Meldung (SnackBar) muss verschwinden - ihr Timer wuerde sonst
+      // Die Meldung (SnackBar) muss verschwinden - ihr Timer würde sonst
       // noch laufen, wenn der Test endet.
       await tester.pump(const Duration(seconds: 5));
       await aufraeumen(tester, container);

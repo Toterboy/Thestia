@@ -1,17 +1,17 @@
-// Die Verschluesselung des Verifikations-Videos.
+// Die Verschlüsselung des Verifikations-Videos.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/services/verification/verification_crypto.dart 0 % Abdeckung. Das
 // Video einer Verifizierung ist biometrische Daten im Sinne Art. 9 DSGVO
-// (Gesicht und Stimme) - es wird auf dem Geraet mit AES-256-GCM
-// verschluesselt, und NUR der Chiffrat kommt in den Bucket.
+// (Gesicht und Stimme) - es wird auf dem Gerät mit AES-256-GCM
+// verschlüsselt, und NUR der Chiffrat kommt in den Bucket.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * der Roundtrip: verschluesseln und wieder entschluesseln ergibt
+// WAS HIER GEPRÜFT WIRD:
+//   * der Roundtrip: verschlüsseln und wieder entschlüsseln ergibt
 //     wieder die Originalbytes,
-//   * Schluessel und IV stehen NICHT im Chiffrat (sonst waere die
-//     Verschluesselung sinnlos),
-//   * ein fremder Schluessel liefert Muell,
+//   * Schlüssel und IV stehen NICHT im Chiffrat (sonst wäre die
+//     Verschlüsselung sinnlos),
+//   * ein fremder Schlüssel liefert Müll,
 //   * die asynchrone Variante (im Hintergrund-Isolate) liefert dasselbe
 //     Ergebnis.
 import 'dart:convert';
@@ -22,10 +22,10 @@ import 'package:pointycastle/export.dart';
 
 import 'package:thestia/services/verification/verification_crypto.dart';
 
-/// Steht der Block [block] als zusammenhaengender Teil in [gros]?
+/// Steht der Block [block] als zusammenhängender Teil in [gros]?
 ///
 /// DER GRUND: `List.contains` sucht nur EIN Byte. Ein einzelnes
-/// zufaellig gleiches Byte waere kein Beweis - der Schluessel muss
+/// zufällig gleiches Byte wäre kein Beweis - der Schlüssel muss
 /// als GANZER Block im Chiffrat stehen, damit die Aussage stimmt.
 bool _enthaeltBlock(List<int> gros, List<int> block) {
   if (block.isEmpty || block.length > gros.length) return false;

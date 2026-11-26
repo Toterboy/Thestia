@@ -87,8 +87,8 @@ class EncryptionService {
   /// Sind die Boxen offen (also der Dienst benutzbar)?
   ///
   /// DER GRUND (Audit 16.11.2026): Der Aufrufer soll nicht auf
-  /// [initialized] warten - ein Warte-Timer laeuft im Test als "pending
-  /// timer" auf und wuerde dort auffallen. Stattdessen: einmal fragen.
+  /// [initialized] warten - ein Warte-Timer läuft im Test als "pending
+  /// timer" auf und würde dort auffallen. Stattdessen: einmal fragen.
   bool get bereit {
     try {
       // Der Zugriff auf die Box wirft, solange sie nicht offen ist.
@@ -127,12 +127,12 @@ class EncryptionService {
       await _initializeInner();
     } catch (e) {
       if (!_initCompleter.isCompleted) {
-        // DER ZUHOERER: Ein Completer, dessen Fehler niemand abwartet,
+        // DER ZUHÖRER: Ein Completer, dessen Fehler niemand abwartet,
         // meldet ihn als "unhandled error". Das passiert bei einer
         // ZWEITEN Instanz (der Provider baut eine eigene - die Boxen
-        // sind aber schon offen, das Oeffnen schlaegt also fehl).
+        // sind aber schon offen, das Öffnen schlägt also fehl).
         // Der Fehler wird an die Wartenden gereicht - und der eigene
-        // Zuhoerer faengt ihn fuer die ohne Wartenden ab.
+        // Zuhörer fängt ihn für die ohne Wartenden ab.
         unawaited(_initCompleter.future.catchError((Object _) {}));
         _initCompleter.completeError(e);
       }
@@ -166,9 +166,9 @@ class EncryptionService {
       sessionBox: _sessionBox,
       identityTrustBox: _identityTrustBox,
       // Wichtig (06.11.2026): die PreKey-Box mitgeben, damit ein
-      // verbrauchter PreKey auch persistent verschwindet. Sonst wuerde
-      // er beim naechsten _loadOrEnsurePreKeys wiederbelebt und ein
-      // Einmal-Schluessel ginge an zwei Peers.
+      // verbrauchter PreKey auch persistent verschwindet. Sonst würde
+      // er beim nächsten _loadOrEnsurePreKeys wiederbelebt und ein
+      // Einmal-Schlüssel ginge an zwei Peers.
       preKeyBox: _preKeysBox,
     );
 
@@ -177,9 +177,9 @@ class EncryptionService {
     await _loadOrRotateSignedPreKey();
     // KRITISCHER FIX (Nachrichten kommen nicht an): Der libsignal-Store
     // ist In-Memory - nach einem Neustart enthielt er nur den AKTIVEN
-    // SignedPreKey. Nachrichten von Peers, die ein AELTERES Bundle
+    // SignedPreKey. Nachrichten von Peers, die ein ÄLTERES Bundle
     // geladen hatten (referenzieren SignedPreKey 1, aktiv inzwischen 2+),
-    // waren unlesbar und blieben im Relay haengen. Jetzt werden ALLE
+    // waren unlesbar und blieben im Relay hängen. Jetzt werden ALLE
     // persistierten SignedPreKeys wieder in den Store geladen.
     await _reloadAllSignedPreKeys();
     // Initialisierung abgeschlossen - wartende Consumer (PreKeyService) können
@@ -429,9 +429,9 @@ class EncryptionService {
     // KRITISCHER FIX (Nachrichten kommen nicht an): Die aktive
     // SignedPreKey-ID liegt seit der Meta-Migration in [_metaBox] (nicht
     // mehr in [_identityBox]). Vorher wurde hier null gelesen und IMMER
-    // id 1 exportiert - Bundles mit tatsaechlichem SignedPreKey 2+ waren
-    // damit faelschlich als id 1 signiert/advertised, und eingehende
-    // PreKey-Nachrichten verweigerten die Entschluesselung
+    // id 1 exportiert - Bundles mit tatsächlichem SignedPreKey 2+ waren
+    // damit fälschlich als id 1 signiert/advertised, und eingehende
+    // PreKey-Nachrichten verweigerten die Entschlüsselung
     // ("No such signed prekey").
     final activeIdStr = _metaBox.get(_signedPreKeyActiveKey);
     final activeSignedPreKeyId = int.tryParse(activeIdStr ?? '') ?? 1;
@@ -632,19 +632,19 @@ class EncryptionService {
   bool isPeerIdentityVerified(String peerId) =>
       _decodeTrustEntry(peerId)?['verified'] == true;
 
-  /// Wurde der Hinweis auf die Sicherheitsnummer fuer diesen Kontakt
+  /// Wurde der Hinweis auf die Sicherheitsnummer für diesen Kontakt
   /// schon gezeigt?
   ///
-  /// DER GRUND (Audit 16.11.2026): Die Safety-Number-Pruefung gibt es
-  /// zwar, sie war aber nur im Menue "Sicherheit" versteckt - ein
+  /// DER GRUND (Audit 16.11.2026): Die Safety-Number-Prüfung gibt es
+  /// zwar, sie war aber nur im Menü "Sicherheit" versteckt - ein
   /// Kontakt, dessen Identity-Key ein kompromittierter Server
-  /// eingeschleust hat, faellt damit nie auf. Der Hinweis im Chat
+  /// eingeschleust hat, fällt damit nie auf. Der Hinweis im Chat
   /// bietet den Vergleich aktiv an; gezeigt wird er je Kontakt EINMAL
   /// (der Nutzer soll nicht genervt werden).
   bool safetyHintShown(String peerId) =>
       _decodeTrustEntry(peerId)?['safetyHintShown'] == true;
 
-  /// Merkt sich, dass der Hinweis fuer diesen Kontakt gezeigt wurde.
+  /// Merkt sich, dass der Hinweis für diesen Kontakt gezeigt wurde.
   Future<void> markSafetyHintShown(String peerId) async {
     final entry = _decodeTrustEntry(peerId);
     if (entry == null) return;
@@ -659,26 +659,26 @@ class EncryptionService {
     );
   }
 
-  /// SECURITY (Audit 2026-09-26): Erzwingt die Out-of-Band-Bestaetigung fuer
+  /// SECURITY (Audit 2026-09-26): Erzwingt die Out-of-Band-Bestätigung für
   /// diesen Kontakt.
   ///
   /// BEFUND: Das `verified`-Flag existierte, wurde aber NIRGENDS in einer
-  /// Entscheidung ausgewertet - nur in der UI. Die Schluesselverteilung lief
-  /// ueber den Server (TOFU). Ein kompromittierter Server konnte beim
+  /// Entscheidung ausgewertet - nur in der UI. Die Schlüsselverteilung lief
+  /// über den Server (TOFU). Ein kompromittierter Server konnte beim
   /// ERSTKONTAKT ein eigenes Identity-Key-Bundle einschleusen und danach
   /// alles mitlesen. Die Safety-Nummer existierte, war aber rein informell.
   ///
   /// Mit diesem Schalter wird der Vergleich praktisch erzwungen: solange er
-  /// gesetzt und die Identity NICHT bestaetigt ist, verweigert
+  /// gesetzt und die Identity NICHT bestätigt ist, verweigert
   /// [encryptMessage] die Nachricht. Der Nutzer muss die Safety-Nummer
-  /// also im echten Gespraech (oder ueber einen zweiten Kanal) abgleichen.
+  /// also im echten Gespräch (oder über einen zweiten Kanal) abgleichen.
   ///
   /// Default: AUS. Eine erzwungene Verifikation ohne erzwungenes
-  /// MFA-Enroll waere eine Produktentscheidung, keine Sicherheitskorrektur.
+  /// MFA-Enroll wäre eine Produktentscheidung, keine Sicherheitskorrektur.
   bool requiresPeerVerification(String peerId) =>
       _decodeTrustEntry(peerId)?['requireVerification'] == true;
 
-  /// Schalter fuer [requiresPeerVerification] setzen.
+  /// Schalter für [requiresPeerVerification] setzen.
   Future<void> setRequiresPeerVerification(String peerId, bool value) async {
     final entry = _decodeTrustEntry(peerId);
     if (entry == null) return;
@@ -692,8 +692,8 @@ class EncryptionService {
     );
   }
 
-  /// Wirft, wenn fuer [peerId] eine verzwungene Verifikation gilt, die
-  /// Identity aber nicht bestaetigt ist. Aufrufer behandeln das als
+  /// Wirft, wenn für [peerId] eine verzwungene Verifikation gilt, die
+  /// Identity aber nicht bestätigt ist. Aufrufer behandeln das als
   /// "erst verifizieren".
   void assertPeerUsable(String peerId) {
     if (requiresPeerVerification(peerId) && !isPeerIdentityVerified(peerId)) {
@@ -716,7 +716,7 @@ class EncryptionService {
       jsonEncode({
         'identityKeyPublic': entry['identityKeyPublic'],
         'verified': verified,
-        // Nicht zuruecksetzen: eine aktivierte Erzwingung bleibt bestehen.
+        // Nicht zurücksetzen: eine aktivierte Erzwingung bleibt bestehen.
         'requireVerification': entry['requireVerification'] == true,
       }),
     );
@@ -849,15 +849,15 @@ class EncryptionService {
   }
 
   Future<void> dispose() async {
-    // Boxes koennen null sein, wenn initialize() nie durchlief oder
-    // scheiterte. Dann waere ein _identityBox.close() ein
+    // Boxes können null sein, wenn initialize() nie durchlief oder
+    // scheiterte. Dann wäre ein _identityBox.close() ein
     // LateInitializationError - und zwar beim Abbau, nicht beim Fehler,
     // der eigentlich die Ursache war. Der Aufrufer bekommt so die
     // eigentliche Ausnahme statt eines Folgefehlers.
     //
-    // `late` heisst hier: ist das Feld noch nie gesetzt worden, gibt der
-    // Zugriff selbst einen Fehler. Deshalb ueber den Navigator-
-    // noetigen late-Zugriff in try/catch fangen.
+    // `late` heißt hier: ist das Feld noch nie gesetzt worden, gibt der
+    // Zugriff selbst einen Fehler. Deshalb über den Navigator-
+    // nötigen late-Zugriff in try/catch fangen.
     for (final close in <Future<void> Function()>[
       () async => _identityBox.close(),
       () async => _sessionBox.close(),
@@ -870,7 +870,7 @@ class EncryptionService {
       try {
         await close();
       } on Object {
-        // Box nicht geoeffnet (Initialize abgebrochen) - nichts zu tun.
+        // Box nicht geöffnet (Initialize abgebrochen) - nichts zu tun.
       }
     }
   }

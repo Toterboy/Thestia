@@ -1,21 +1,21 @@
-"""Statische Vorpruefung fuer die 6 Fehlerklassen, die der Remote-Push
+"""Statische Vorprüfung für die 6 Fehlerklassen, die der Remote-Push
 am 2026-09-26 aufgedeckt hat. Alle sechs sind mit pglast NICHT gefunden
 worden - die echte Datenbank hat sie abgelehnt.
 
     python tool/checks/check_migration_safety.py   # Syntax + Invarianten
-    python tool/checks/check_push_readiness.py     # + diese Vorpruefung
+    python tool/checks/check_push_readiness.py     # + diese Vorprüfung
 
 1) `REVOKE ... FROM anon` ohne `FROM PUBLIC` greift nicht, weil jede Rolle
    implizit Mitglied der Pseudo-Rolle PUBLIC ist.
-2) Overloads: eine Signatur-Liste uebersieht `quiz_pick_personalized(6 Arg)`.
-   -> Der Entzug muss dynamisch ueber pg_proc laufen.
+2) Overloads: eine Signatur-Liste übersieht `quiz_pick_personalized(6 Arg)`.
+   -> Der Entzug muss dynamisch über pg_proc laufen.
 3) Fail-Fast-Checks auf `pg_proc.prosrc` schlagen auf die eigenen Kommentare
-   an, weil prosrc den Body MIT Kommentaren enthaelt.
-4) `LANGUAGE sql` loest seinen Body bei CREATE auf -> Aufruf einer erst
-   spaeter definierten public-Function ergibt 42883.
-5) `CREATE OR REPLACE` kann Rueckabetyp, Argumenttypen und Parameternamen
-   nicht aendern (42P13 / 42804).
-6) `RAISE EXCEPTION name` OHNE Anfuehrungszeichen ist ein Condition-Name und
+   an, weil prosrc den Body MIT Kommentaren enthält.
+4) `LANGUAGE sql` löst seinen Body bei CREATE auf -> Aufruf einer erst
+   später definierten public-Function ergibt 42883.
+5) `CREATE OR REPLACE` kann Rückabetyp, Argumenttypen und Parameternamen
+   nicht ändern (42P13 / 42804).
+6) `RAISE EXCEPTION name` OHNE Anführungszeichen ist ein Condition-Name und
    ergibt bei CREATE 42704 "unrecognized exception condition".
 """
 import os
@@ -26,8 +26,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -120,8 +120,8 @@ for f in NEW:
     code = strip_comments(read(f))
     for m in re.finditer(r'REVOKE\s+EXECUT\w*\s+ON\s+FUNCTION\s+[^;]*?FROM\s+([^;]+);',
                          code, re.I | re.S):
-        # Rollennamen koennen aus einem format()-String stammen, also mit
-        # Anfuehrungszeichen und Zusatztext: 'anon', r.sig)
+        # Rollennamen können aus einem format()-String stammen, also mit
+        # Anführungszeichen und Zusatztext: 'anon', r.sig)
         roles = {r.strip().strip("'\"").split()[0].lower()
                  for r in m.group(1).split(',') if r.strip()}
         if 'anon' in roles and 'public' not in roles:
@@ -130,18 +130,18 @@ for f in NEW:
                  'wird ueber die Pseudo-Rolle PUBLIC vererbt und bleibt bestehen')
 
 # ---------------------------------------------------------------- 2
-# Nur ein Problem, wenn eine MEHRFACH ueberladene Function per Signatur
-# revokt wird. Normale Signatur-Listen fuer Client-RPCs sind korrekt.
+# Nur ein Problem, wenn eine MEHRFACH überladene Function per Signatur
+# revokt wird. Normale Signatur-Listen für Client-RPCs sind korrekt.
 overloads = {}
 # Welche Signaturen hat WELCHE Migration angelegt? Das braucht die
 # Regel unten: wer eine Variante anlegt, muss sie auch sperren.
 angelegt_pro_datei = {}
 for f in ALL:
-    # WICHTIG: mit strip_comments. Sonst zaehlt eine AUSKOMMENTIERTE
-    # Definition als Ueberladung - eine Migration, die in ihrem
-    # Kommentar ein Beispiel fuer eine alte Signatur nennt, erzeugt so
+    # WICHTIG: mit strip_comments. Sonst zählt eine AUSKOMMENTIERTE
+    # Definition als Überladung - eine Migration, die in ihrem
+    # Kommentar ein Beispiel für eine alte Signatur nennt, erzeugt so
     # ein Phantom, und der Check meldet eine Variante als offen, die
-    # es nie gab. Genau das ist passiert: die Erklaerung in Migration
+    # es nie gab. Genau das ist passiert: die Erklärung in Migration
     # 145 nennt die alte Signatur, und der Check flaggte daraufhin
     # genau diese - obwohl sie im Kommentar stand.
     c = strip_comments(read(f))
@@ -156,32 +156,32 @@ for f in ALL:
 multi = {k for k, v in overloads.items() if len(v) > 1}
 
 # Der erste dynamische Sweep (Migration 123). Alles, was VOR ihm
-# angelegt wurde, hat er erfasst - er arbeitet ueber pg_proc und
-# damit ueber den ganzen Bestand zur Zeit der Migration. Die statische
+# angelegt wurde, hat er erfasst - er arbeitet über pg_proc und
+# damit über den ganzen Bestand zur Zeit der Migration. Die statische
 # Analyse sieht diese Sperren nicht (im Quelltext steht kein
-# "REVOKE ... FUNCTION <name>(<typen>)" fuer sie).
+# "REVOKE ... FUNCTION <name>(<typen>)" für sie).
 #
-# BEFUND (07.11.2026): Ohne diese Ausnahme meldete das Gate fuenf
-# Varianten als offen, die live nachweislich fuer "anon" gesperrt
+# BEFUND (07.11.2026): Ohne diese Ausnahme meldete das Gate fünf
+# Varianten als offen, die live nachweislich für "anon" gesperrt
 # sind (cool_match, end_match, hide_match, respark_match,
 # quiz_pick_personalized - alle mit der bigint-Signatur aus der
 # alten Generation).
-# Die Indizes aller Sweeps. Ein Sweep arbeitet ueber pg_proc und
+# Die Indizes aller Sweeps. Ein Sweep arbeitet über pg_proc und
 # erfasst damit den ganzen Bestand zur Zeit der Migration.
 #
 # BEFUND (20.11.2026): Die Erkennung war zu weit gefasst - JEDE
 # Migration mit dem Wort "regprocedure" galt als Sweep. Das war
 # falsch: viele Migrationen benutzen regprocedure nur, um die
-# Definition EINER Funktion zu pruefen (pg_get_functiondef, Fail-Fast).
+# Definition EINER Funktion zu prüfen (pg_get_functiondef, Fail-Fast).
 # Migration 221 (die VOLATILE-Korrektur) tut das auch - und damit
-# wurde das Gate "2 Overloads" blind fuer ALLES, was vor ihr angelegt
+# wurde das Gate "2 Overloads" blind für ALLES, was vor ihr angelegt
 # war. Der Selbsttest des Gates schlug deshalb fehl (der eingebaute
 # Fehler wurde nicht mehr erkannt).
 #
 # EIN SWEEP ERKENNT MANN AN DER SPERRE SELBST, nicht an einem
 # Hilfswort:
 #   REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;        (Migration 123)
-#   EXECUTE format('REVOKE ALL ON FUNCTION %s ...')  (aelttere Form)
+#   EXECUTE format('REVOKE ALL ON FUNCTION %s ...')  (älttere Form)
 def _ist_sweep(code: str) -> bool:
     """Sperrt diese Migration den ganzen Funktionsbestand?"""
     if 'regprocedure' not in code:
@@ -196,7 +196,7 @@ sweep_indizes = [i for i, f_sweep in enumerate(ALL)
                  if _ist_sweep(strip_comments(read(f_sweep)))]
 
 # Wann wurde jede Variante zum LETZTEN angelegt? (CREATE OR REPLACE
-# kann dieselbe Signatur mehrfach anlegen - massgeblich ist der letzte
+# kann dieselbe Signatur mehrfach anlegen - maßgeblich ist der letzte
 # Anlage-Index.)
 angelegt_index = {}
 for i, f_anl in enumerate(ALL):
@@ -219,12 +219,12 @@ def durch_sweep_gesperrt(name, sig):
         return False
     return any(s > idx for s in sweep_indizes)
 
-# Alle REVOKEs, ueber ALLE Migrationen gesammelt.
+# Alle REVOKEs, über ALLE Migrationen gesammelt.
 #
 # WARUM alle und nicht nur die ab 123: Die historischen Sperren
-# (Migration 123, 131, 156) zaehlen natuerlich auch - eine Variante,
+# (Migration 123, 131, 156) zählen natürlich auch - eine Variante,
 # die dort gesperrt wurde, ist gesperrt. Die Regel unten ist
-# repo-weit: es zaehlt, ob eine Variante aufrufbar ist, nicht ob eine
+# repo-weit: es zählt, ob eine Variante aufrufbar ist, nicht ob eine
 # bestimmte Datei sie selbst sperrt.
 alle_revokes = {}
 for f2 in ALL:
@@ -251,9 +251,9 @@ for f2 in ALL:
 # Kommentar beschriebene Ausnahme ("Migration 131 dropt die alten
 # Signaturen") hat damit nie gegriffen: als Migration 156 die Rechte
 # der FUNKTIONIERENDEN Variante verengte, war der `dropped`-Stand leer
-# und die seit 131 geloeschten Signaturen wurden als "weiter aufrufbar"
-# gemeldet. Die Sammlung laeuft jetzt ueber ALLE Migrationen, genau wie
-# `overloads` - ein DROP irgendwo entfernet die Variante fuer alles,
+# und die seit 131 gelöschten Signaturen wurden als "weiter aufrufbar"
+# gemeldet. Die Sammlung läuft jetzt über ALLE Migrationen, genau wie
+# `overloads` - ein DROP irgendwo entfernet die Variante für alles,
 # was danach kommt.
 dropped = {}
 for f in ALL:
@@ -271,7 +271,7 @@ for f in ALL:
 for f in NEW:
     code = strip_comments(read(f))
     dynamic = 'regprocedure' in code
-    # Pro Function: welche Signaturen werden tatsaechlich revokt?
+    # Pro Function: welche Signaturen werden tatsächlich revokt?
     revoked = {}
     for m in re.finditer(
             r'REVOKE[^;]*?ON\s+FUNCTION\s+(?:public\.)?([a-z_0-9]+)\s*\(([^)]*)\)',
@@ -287,23 +287,23 @@ for f in NEW:
 #
 #   Jede Variante, die irgendeine Migration ANLEGT, muss gesperrt
 #   werden - von der Datei selbst oder von einer anderen. Ab ihrer
-#   Anlage ist sie aufrufbar; eine Sperre, die erst in einer spaeteren
-#   Migration kommt, ist zu spaet.
+#   Anlage ist sie aufrufbar; eine Sperre, die erst in einer späteren
+#   Migration kommt, ist zu spät.
 #
 #   Der alte Check verglich jede Datei mit ALLEN jemals angelegten
 #   Signaturen und verlangte, dass jede Datei ALLE Sperren selbst
-#   enthaelt. Das ist formal falsch: eine Migration kann keine
+#   enthält. Das ist formal falsch: eine Migration kann keine
 #   Signatur revoken, die es noch gar nicht gibt. Er meldete deshalb
 #   Migration 131 und 156 als fehlerhaft, obwohl die dortige Sperre
-#   vollstaendig war - und Migration 185 als fehlerhaft, weil sie nur
+#   vollständig war - und Migration 185 als fehlerhaft, weil sie nur
 #   ihre EIGENE Variante sperrte (die andere war schon in 156
 #   gesperrt).
 #
-#   Geprueft wird jetzt repo-weit: eine Variante, die angelegt, nicht
+#   Geprüft wird jetzt repo-weit: eine Variante, die angelegt, nicht
 #   gedroppt und NIRGENDS gesperrt wurde, bleibt aufrufbar - genau
 #   das ist der Befund.
 #
-#   Ein Gate, das immer anschlaegt, wird irgendwann ignoriert.
+#   Ein Gate, das immer anschlägt, wird irgendwann ignoriert.
 for name, sigs in overloads.items():
     if name not in multi:
         continue
@@ -355,8 +355,8 @@ def like_to_regex(pat: str) -> str:
 
 for f in NEW:
     # Kommentare entfernen: sie stehen zwischen `proname = ...` und `prosrc
-    # LIKE` und wuerden das Suchfenster sprengen - und der Check soll
-    # schliesslich Code pruefen, nicht Prosa.
+    # LIKE` und würden das Suchfenster sprengen - und der Check soll
+    # schließlich Code prüfen, nicht Prosa.
     c = strip_comments(read(f))
     for m in re.finditer(
             r"proname\s*(?:=\s*'([a-z_0-9]+)'|IN\s*\(([^)]*)\))"
@@ -415,11 +415,11 @@ for f in NEW:
 def _droppt_davor(sql: str, name: str, args) -> bool:
     """Steht in dieser Datei ein DROP FUNCTION mit genau dieser Signatur?
 
-    Nur dann ist eine Signaturaenderung zulaessig: CREATE OR REPLACE
-    kann den Rueckgabetyp nicht aendern (42P13/42804), ein
+    Nur dann ist eine Signaturänderung zulässig: CREATE OR REPLACE
+    kann den Rückgabetyp nicht ändern (42P13/42804), ein
     vorausgehendes DROP dagegen schon.
 
-    Wichtig fuer den Fall, dass die Argumente umbenannt werden: der
+    Wichtig für den Fall, dass die Argumente umbenannt werden: der
     DROP nennt die ALTEN Namen - deshalb wird nur der Typ verglichen.
     """
     for m in re.finditer(
@@ -458,19 +458,19 @@ for f in NEW:
             continue
         _pn, pret, pargs = prev[key]
         # WICHTIG (07.11.2026): Eine Signatur darf sich nur mit einem
-        # DROP davor aendern - "CREATE OR REPLACE" kann den
-        # Rueckgabetyp nicht aendern (42P13/42804). Der legitime Weg
+        # DROP davor ändern - "CREATE OR REPLACE" kann den
+        # Rückgabetyp nicht ändern (42P13/42804). Der legitime Weg
         # ist also: DROP FUNCTION ...; CREATE FUNCTION ...
         #
         # Deshalb wird hier NICHT gemeldet, wenn die Migration die
-        # Funktion vorher mit derselben Signatur droppt. Sonst wuerde
-        # der Checker jede echte, korrekte Signaturaenderung als
+        # Funktion vorher mit derselben Signatur droppt. Sonst würde
+        # der Checker jede echte, korrekte Signaturänderung als
         # Fehler melden.
         #
         # ACHTUNG: Nach dem DROP sind die RECHTE der Funktion weg (sie
-        # haengen am Objekt, nicht an der Definition). Die MIGRATION
-        # muss sie wieder setzen - sonst ist die Funktion fuer "anon"
-        # offen. Das prueft tool/checks/check_function_grants.py.
+        # hängen am Objekt, nicht an der Definition). Die MIGRATION
+        # muss sie wieder setzen - sonst ist die Funktion für "anon"
+        # offen. Das prüft tool/checks/check_function_grants.py.
         if _droppt_davor(c, name, args):
             continue
         if pret != ret:

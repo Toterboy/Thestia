@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -11,7 +11,7 @@
 part of '../settings_privacy_once_screen.dart';
 
 extension _EinrichtungSpeichern on _SettingsPrivacyOnceScreenState {
-  /// Profilbild auswaehlen, quadratisch zuschneiden und in den privaten
+  /// Profilbild auswählen, quadratisch zuschneiden und in den privaten
   /// avatars-Bucket laden (identisch zu "Profil bearbeiten").
   Future<void> _pickAvatar() async {
     if (_uploadingAvatar) return;
@@ -26,10 +26,10 @@ extension _EinrichtungSpeichern on _SettingsPrivacyOnceScreenState {
       final path = await storage.uploadAvatar(bytes);
       await ref.read(profileProvider.notifier).update(photos: [path]);
 
-      // v0.10.0: Serverseitiger Write fehlte hier vollstaendig. Das Bild
+      // v0.10.0: Serverseitiger Write fehlte hier vollständig. Das Bild
       // lag in Storage und lokal - aber `profiles.photos` wurde nie
-      // gesetzt. Beim naechsten fetchOwnProfile stand dort wieder der
-      // alte Stand, das Bild verschwand. Von aussen sah es damit aus,
+      // gesetzt. Beim nächsten fetchOwnProfile stand dort wieder der
+      // alte Stand, das Bild verschwand. Von außen sah es damit aus,
       // als frage die Einrichtung gar kein Profilbild ab.
       if (SupabaseService.isInitialized) {
         await ref.read(supabaseDatabaseServiceProvider).updateOwnProfile({
@@ -54,8 +54,8 @@ extension _EinrichtungSpeichern on _SettingsPrivacyOnceScreenState {
   }
 
   /// Speichert den Geburtstags-Stil (v0.10.0). Eigene Seite, deshalb
-  /// eigener Save - sonst muesste die Style-Seite in [_saveProfileExtras]
-  /// aufgewaecht werden, obwohl sie an einem anderen Ort steht.
+  /// eigener Save - sonst müste die Style-Seite in [_saveProfileExtras]
+  /// aufgewächt werden, obwohl sie an einem anderen Ort steht.
   Future<void> _saveBirthdayStyle() async {
     try {
       await ref
@@ -190,7 +190,7 @@ extension _EinrichtungSpeichern on _SettingsPrivacyOnceScreenState {
     if (_passkeyBusy || _passkeyCreated) return;
     _setzeState(() => _passkeyBusy = true);
     try {
-      // v0.10.0: Vorher ungeprueft registrieren. Bei einem Geraetewechsel
+      // v0.10.0: Vorher ungeprüft registrieren. Bei einem Gerätewechsel
       // oder einem zweiten Durchlauf der Einrichtung lag schon ein
       // Passkey auf dem Konto - der native Dialog kam dann ein zweites
       // Mal und endete in einer Fehlermeldung, die nichts kaputtgemacht

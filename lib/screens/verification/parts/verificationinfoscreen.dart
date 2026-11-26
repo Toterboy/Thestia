@@ -1,9 +1,9 @@
 // Der Teil 'VerificationInfoScreen'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -87,10 +87,10 @@ class VerificationInfoScreen extends ConsumerWidget {
                       const SizedBox(height: 12),
                       // KI-Hinweis (v0.10.0).
                       //
-                      // Die Altersschaetzung im Video ist eine
-                      // KI-Schaetzung. Sie ist ein Hinweis, kein
+                      // Die Altersschätzung im Video ist eine
+                      // KI-Schätzung. Sie ist ein Hinweis, kein
                       // Beweis - und der Nutzer soll wissen, dass eine
-                      // Handpruefung dazugehoeren kann. Ohne diesen
+                      // Handprüfung dazugehören kann. Ohne diesen
                       // Hinweis wirkt die automatische Freigabe
                       // belastbarer, als sie ist.
                       const SizedBox(height: 12),

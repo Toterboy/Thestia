@@ -1,9 +1,9 @@
 // Der Teil '_EncounterGreetListState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -61,9 +61,9 @@ class _EncounterGreetListState extends ConsumerState<_EncounterGreetList> {
         ),
       );
     }
-    // BEFUND (11.11.2026, Idee 4): Die Liste zeigte hoechstens 10
-    // Personen, ohne dass man es merkte - wer 25 Menschen in der Naehe
-    // hatte, sah 10. Die Gesamtzahl steht jetzt ueber der Liste.
+    // BEFUND (11.11.2026, Idee 4): Die Liste zeigte höchstens 10
+    // Personen, ohne dass man es merkte - wer 25 Menschen in der Nähe
+    // hatte, sah 10. Die Gesamtzahl steht jetzt über der Liste.
     final alle = transit.encounterCount;
     final gezeigt = encounters.take(10).toList();
     return Column(

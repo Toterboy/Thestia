@@ -65,7 +65,7 @@ import 'package:thestia/utils/common/best_effort.dart';
 /// Gespiegelt aus `SecureSupabaseLocalStorage`, damit die Namespace-
 /// Migration wirklich denselben Key findet, den 0.9.1 geschrieben hat.
 /// Ohne das bliebe die Session im alten Keystore-Alias und jeder
-/// Bestandsnutzer waere nach dem Update abgemeldet.
+/// Bestandsnutzer wäre nach dem Update abgemeldet.
 String _supabaseSessionKey() {
   const raw = String.fromEnvironment('SUPABASE_URL');
   if (raw.isNotEmpty) {
@@ -90,13 +90,13 @@ Future<void> main() async {
   // v0.9.2: Binding VOR der Keystore-Migration aufbauen.
   //
   // `ensureInitialized()` stand previously hinter dem await der Migration.
-  // Die Migration spricht ueber Platform-Channels mit dem Keystore - ohne
+  // Die Migration spricht über Platform-Channels mit dem Keystore - ohne
   // Binding ist das der erste Kanalaufruf des Prozesses, und ein Fehler
   // dort kommt vor `FlutterError.onError` und
   // `PlatformDispatcher.instance.onError` zustande. Ein solcher Fehler
   // beendet den Prozess kommentarlos: keine Logs, kein Fehlerbildschirm,
   // nur der Splash. Das ist die Systemmeldung "Die App konnte nicht
-  // gestartet werden" - der typische Android-Text fuer einen beim Start
+  // gestartet werden" - der typische Android-Text für einen beim Start
   // gestorbenen Prozess.
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   StartupWatchdog.reached(1);
@@ -104,17 +104,17 @@ Future<void> main() async {
   // v0.9.2: Der Plattform-Fehlerbehandler steht hier und nicht weiter
   // unten bei runApp.
   //
-  // Vorher war die Luecke genau das, was wir jetzt suchen: zwischen
-  // ensureInitialized() und runApp() - also ueber der Keystore-
-  // Migration - gab es keinen Handler fuer Platform-Fehler.
+  // Vorher war die Lücke genau das, was wir jetzt suchen: zwischen
+  // ensureInitialized() und runApp() - also über der Keystore-
+  // Migration - gab es keinen Handler für Platform-Fehler.
   // FlutterError.onError (Widget-/Framework-Fehler) kam erst bei
   // runApp(). Eine PlatformException aus einem Plugin in diesem Fenster
   // hatte damit nirgends eine Adresse: nicht im Crash-Journal, nicht
   // im Fehlerbildschirm. Der Watchdog meldete nur "keystore" -
   // ohne Fehlertext, und genau so sieht ein echter Absturz aus.
   //
-  // `return false` heisst: an die Standardbehandlung weitergeben. Das
-  // Verhalten der App bleibt unveraendert, nur die Sichtbarkeit kommt
+  // `return false` heißt: an die Standardbehandlung weitergeben. Das
+  // Verhalten der App bleibt unverändert, nur die Sichtbarkeit kommt
   // dazu.
   PlatformDispatcher.instance.onError = (error, stack) {
     unawaited(CrashJournal.capture(error, stack));
@@ -124,22 +124,22 @@ Future<void> main() async {
 
   // Security (Audit 2026-09-26): Keystore-Werte einmalig aus dem alten
   // Default-Namespace in die neuen, getrennten Namespaces verschieben.
-  // Ohne das waeren nach dem Update alle Tokens unlesbar (Massen-Logout).
+  // Ohne das wären nach dem Update alle Tokens unlesbar (Massen-Logout).
   // Idempotent + fail-closed: nur wenn der Ziel-Namespace leer ist.
   // AWAITED, nicht unawaited: der Supabase-Client startet gleich danach und
   // liest die Session. Liefe die Migration parallel, fände er sie nicht -
   // und bei `resetOnError: true` (Default in v11) löscht ein Dekrypt-
   // Fehlschlag dann die Werte aller anderen Namespaces mit.
   //
-  // v0.9.2: try/catch + 8 Sekunden Limit. `migrateLegacyNamespaces` faengt
+  // v0.9.2: try/catch + 8 Sekunden Limit. `migrateLegacyNamespaces` fängt
   // Fehler pro Namespace ab, aber ein Fehler VOR dieser Schleife (Plugin-
-  // Kanal, Konstanten) wuerde durchschlagen. Und ein Keystore, der auf
-  // manchen Geraeten haengt (biometrisch gesicherte Schluessel, defekte
-  // TEE), wuerde ohne Limit endlos auf dem Splash stehen, bis Android die
-  // App killt - von aussen exakt wie ein Absturz, ohne jeden Logeintrag.
+  // Kanal, Konstanten) würde durchschlagen. Und ein Keystore, der auf
+  // manchen Geräten hängt (biometrisch gesicherte Schlüssel, defekte
+  // TEE), würde ohne Limit endlos auf dem Splash stehen, bis Android die
+  // App killt - von außen exakt wie ein Absturz, ohne jeden Logeintrag.
   //
   // Der Fehler ist bewusst NICHT fatal: die Migration ist idempotent, der
-  // Legacy-Wert bleibt beim Fehlschlag erhalten, der naechste Start
+  // Legacy-Wert bleibt beim Fehlschlag erhalten, der nächste Start
   // versucht es erneut. Ein unbrauchbarer Keystore kostet Push-Funktionen,
   // aber er darf die App nicht unsichtbar machen.
   try {
@@ -154,10 +154,10 @@ Future<void> main() async {
 
   FlutterError.onError = (details) {
     // BEFUND (13.11.2026, Sicherheits-Review): Der Aufruf war unbedingt -
-    // also auch im Release-Build. Exception-Texte koennen personenbezogene
+    // also auch im Release-Build. Exception-Texte können personenbezogene
     // Daten enthalten (Supabase-Fehler mit E-Mail-Adresse), und das
-    // Systemprotokoll (logcat) ist fuer jeden mit adb oder auf einem
-    // fremden Geraet lesbar. Das Crash-Journal redigiert seine Texte
+    // Systemprotokoll (logcat) ist für jeden mit adb oder auf einem
+    // fremden Gerät lesbar. Das Crash-Journal redigiert seine Texte
     // (crash_journal.dart), dieser Weg nicht. Im Release bleibt deshalb
     // nur das redigierte Journal - genau das wollte der Projektstand.
     if (kDebugMode) {
@@ -322,7 +322,7 @@ Future<_BootstrapInit?> _initializeApp() async {
     // erste Frame der App wartete auf einen Server-Roundtrip (bis zu
     // 6 s Timeout, im schlechtesten Fall bis zum App-Check im Store).
     //
-    // Jetzt laeuft es so:
+    // Jetzt läuft es so:
     //
     //   1) Der Cache wird ausgewertet - das ist ein lokaler Zugriff
     //      und kostet nichts. Der Gate gilt also ab dem zweiten
@@ -330,11 +330,11 @@ Future<_BootstrapInit?> _initializeApp() async {
     //   2) Ohne Cache (erster Start nach dem Update) wird der Server
     //      mit KURZEM Timeout gefragt. Das ist der einzige Fall, in
     //      dem der Start noch wartet - und danach ist der Cache da.
-    //   3) Der frische Serverwert laeuft im Hintergrund nach
+    //   3) Der frische Serverwert läuft im Hintergrund nach
     //      (app.dart) und aktualisiert den Cache.
     //
-    // Fail-open bleibt: ein Fehler oder ein Timeout heisst "kein
-    // Update noetig" - genau wie es das Verhalten der Abfrage vorher
+    // Fail-open bleibt: ein Fehler oder ein Timeout heißt "kein
+    // Update nötig" - genau wie es das Verhalten der Abfrage vorher
     // war.
     final build = await AppConfigService.currentBuildNumber();
     var minBuild = AppConfigService.cachedMinAppVersionBuild(prefs);
@@ -344,7 +344,7 @@ Future<_BootstrapInit?> _initializeApp() async {
       );
       if (minBuild != null) {
         // Das Schreiben des Caches darf den Start NIE verhindern -
-        // ein Fehler hier ist kein Grund fuer den Fehlerbildschirm.
+        // ein Fehler hier ist kein Grund für den Fehlerbildschirm.
         try {
           await AppConfigService.cacheMinAppVersionBuild(prefs, minBuild);
         } catch (e) {
@@ -364,8 +364,8 @@ Future<_BootstrapInit?> _initializeApp() async {
     );
   } catch (e) {
     debugPrint('[MAIN] Initialisierung fehlgeschlagen: $e');
-    // Schritt 4 mit Fehlertext festhalten. Ohne das weiss der
-    //naechste Start nur "irgendwo vor der App", und genau das hat die
+    // Schritt 4 mit Fehlertext festhalten. Ohne das weiß der
+    //nächste Start nur "irgendwo vor der App", und genau das hat die
     // Fehlersuche bisher blockiert.
     StartupWatchdog.reached(4, error: e);
     return null;
@@ -430,16 +430,16 @@ Future<void> _initializeSupabase() async {
   // v0.9.2: `dotenv.env` WIRFT, wenn die Datei nicht geladen wurde -
   // genauer: der Zugriff auf die Map tut es (NotInitializedError).
   //
-  // In Release-Builds ist `.env` bewusst NICHT gebuendelt; die Werte
+  // In Release-Builds ist `.env` bewusst NICHT gebündelt; die Werte
   // kommen als --dart-define herein. Dieser Zugriff hat deshalb
   // ausnahmslos geworfen und die App starb in JEDEM Release-Build -
-  // unabhaengig vom Geraet. Der Fehlerbildschirm meldete daraufhin die
+  // unabhängig vom Gerät. Der Fehlerbildschirm meldete daraufhin die
   // Schritte "keystore" und "ui"; das war die Position, an der die
   // Initialisierung gerade stand, nicht die Fehlerursache.
   //
   // `AppConstants.supabaseUrlBase` macht es seit jeher richtig:
   // erst Define, dann dotenv nur wenn geladen, sonst leer. Genau diese
-  // Reihenfolge wird hierher uebernommen.
+  // Reihenfolge wird hierher übernommen.
   // ACHTUNG: `String.fromEnvironment` funktioniert NUR mit einem
   // Compile-Zeit-Konstanten als Argument. Mit einer Laufzeitvariablen
   // liefert sie "" - nicht den Define-Wert.
@@ -450,7 +450,7 @@ Future<void> _initializeSupabase() async {
   // ausstieg, ohne einen einzigen Netzwerkversuch zu machen, und die
   // App im Limit-Modus ohne Auth-Backend im Blackscreen endete.
   //
-  // Also: keine Schleife, kein Map, kein dynamischer Schluessel.
+  // Also: keine Schleife, kein Map, kein dynamischer Schlüssel.
   // Jeder Zugriff ist ein eigenes literal.
   final supabaseUrl = () {
     const v = String.fromEnvironment('SUPABASE_URL');
@@ -476,7 +476,7 @@ Future<void> _initializeSupabase() async {
     return;
   }
 
-  // Host fuer das strikte Pinning aus der URL ableiten (ohne Schema/Port).
+  // Host für das strikte Pinning aus der URL ableiten (ohne Schema/Port).
   final supabaseHost = supabaseUrl
       .replaceFirst(RegExp(r'^https?://'), '')
       .split('/')
@@ -485,7 +485,7 @@ Future<void> _initializeSupabase() async {
   // SICHERHEIT (Audit 16.11.2026): Ist der konfigurierte Host NICHT
   // gepinnt, arbeitet die App ab hier mit einem fail-closed-Client
   // (jede TLS-Verbindung wird abgelehnt - das ist die gewollte Haltung:
-  // ein unbekannter Host darf nicht ueber den System-Trust laufen).
+  // ein unbekannter Host darf nicht über den System-Trust laufen).
   // Damit das nicht still passiert, wird es hier laut.
   if (!CertPinning.isPinnedHost(supabaseHost)) {
     debugPrint(
@@ -543,36 +543,36 @@ Future<void> _initializeSupabase() async {
           final fragment = Uri.splitQueryString(uri.fragment);
           bool has(String key) =>
               query.containsKey(key) || fragment.containsKey(key);
-          // NUR der PKCE-Code. Siehe die Erklaerung oben.
+          // NUR der PKCE-Code. Siehe die Erklärung oben.
           if (has('access_token') || has('token_hash')) return false;
           return has('code') || has('error');
         },
       ),
-      // SECURITY (Audit 2026-09-26): STRIKTES Zertifikat-Pinning fuer den
+      // SECURITY (Audit 2026-09-26): STRIKTES Zertifikat-Pinning für den
       // gesamten Supabase-Traffic (Auth, PostgREST/DB, Storage, Edge
       // Functions, Realtime).
       //
-      // Warum ein eigener Client noetig ist: `HttpOverrides.global` erzeugt
+      // Warum ein eigener Client nötig ist: `HttpOverrides.global` erzeugt
       // Clients MIT System-Root-Store. Dart ruft `badCertificateCallback` nur
       // auf, wenn die Systemvalidierung FEHLGESCHLAGEN ist - eine auf dem
-      // Geraet nachinstallierte Fremd-CA (MDM/Enterprise-Root, Stalkerware)
+      // Gerät nachinstallierte Fremd-CA (MDM/Enterprise-Root, Stalkerware)
       // wurde also akzeptiert und umging den Pin. Genau der Fall, den Pinning
       // verhindern soll.
       //
       // `CertPinning.pinnedHttpClient()` nutzt `SecurityContext(
-      // withTrustedRoots: false)`: der Callback laeuft damit IMMER. Fuer den
-      // Supabase-Host ist das unkritisch - dort wird ausschliesslich der
+      // withTrustedRoots: false)`: der Callback läuft damit IMMER. Für den
+      // Supabase-Host ist das unkritisch - dort wird ausschließlich der
       // gepinnte Supabase-Endpunkt kontaktiert, es gibt keine ungepinnten
-      // Fremd-Hosts in diesem Pfad. Fuer andere Hosts (WebRTC-Signaling)
+      // Fremd-Hosts in diesem Pfad. Für andere Hosts (WebRTC-Signaling)
       // wird derselbe strikte Client bereits separat genutzt.
-      // `http` (IOClient) verpackt den dart:io-Client fuer den
+      // `http` (IOClient) verpackt den dart:io-Client für den
       // PostgREST/Storage/Realtime-Stack von supabase_flutter.
       httpClient: IOClient(CertPinning.pinnedHttpClient(supabaseHost)),
       // DER REALTIME-WEBSOCKET braucht einen eigenen Transport:
       // realtime_client erzeugt ihn sonst mit `IOWebSocketChannel.connect`
-      // OHNE Client - also mit System-Root-Store und damit ausserhalb
-      // des Pinnings. Ueber diesen Kanal laufen Chat-Events, das
-      // Transit-Signaling und die Soft-Pings. (Sicherheitspruefung
+      // OHNE Client - also mit System-Root-Store und damit außerhalb
+      // des Pinnings. Über diesen Kanal laufen Chat-Events, das
+      // Transit-Signaling und die Soft-Pings. (Sicherheitsprüfung
       // 08.11.2026, Advisory GHSA-frr6-h895-5pxp.)
       realtimeClientOptions: const RealtimeClientOptions(
         transport: gepinnterRealtimeTransport,
@@ -608,7 +608,7 @@ Future<void> _initializeServices() async {
   }
 
   // App-Dokumentenverzeichnis für die Pfadprüfung des eigenen
-  // Chat-Hintergrundbildes binden (v0.9.1): Es werden ausschliesslich
+  // Chat-Hintergrundbildes binden (v0.9.1): Es werden ausschließlich
   // Bilder aus diesem Verzeichnis gerendert.
   try {
     final docs = await getApplicationDocumentsDirectory();
@@ -629,12 +629,12 @@ void _registerHiveAdapters() {
   // Datinghour-Modelle werden nicht mehr lokal persistiert (serverseitig in
   // Supabase). Daher keine Hive-Adapter nötig.
   //
-  // DIE AUFZAEHLUNGEN (Befund 23.11.2026, gefunden von einem Test):
+  // DIE AUFZÄHLUNGEN (Befund 23.11.2026, gefunden von einem Test):
   // PhotoModerationFlag hat zwei Felder vom Typ PhotoModerationType und
   // PhotoModerationStatus. Ohne ihre Adapter kann Hive das Flag nicht
   // schreiben ("Cannot read, unknown typeId 20/21") - die Meldung
-  // waere damit unmoeglich. Die Adapter der Modelle allein reichen
-  // nicht: Hive kennt jeden Typ nur ueber seinen Adapter.
+  // wäre damit unmöglich. Die Adapter der Modelle allein reichen
+  // nicht: Hive kennt jeden Typ nur über seinen Adapter.
   Hive.registerAdapter(PhotoModerationTypeAdapter());
   Hive.registerAdapter(PhotoModerationStatusAdapter());
   Hive.registerAdapter(PhotoModerationFlagAdapter());
@@ -658,13 +658,13 @@ class _BootstrapAppState extends State<_BootstrapApp> {
   late Future<_BootstrapInit?> _initFuture = _initializeApp();
   bool _splashRemoveScheduled = false;
 
-  /// Befund ueber den LETZTEN Startversuch.
+  /// Befund über den LETZTEN Startversuch.
   ///
   /// Wird nur einmal gelesen, und nur wenn die Basis-Initialisierung
   /// diesmal scheitert: dann ist der Bildschirm mit dem Grund
   /// wichtiger als ein erneuter Ladeversuch. Genau das ist der Fall,
   /// den der Nutzer auf Android 11 sieht - Splash, dann Systemmeldung,
-  /// und beim naechsten Versuch wieder dasselbe ohne jede Erklaerung.
+  /// und beim nächsten Versuch wieder dasselbe ohne jede Erklärung.
   StartupFailure? _previousFailure;
   bool _previousFailureChecked = false;
 

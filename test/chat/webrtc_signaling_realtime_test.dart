@@ -1,23 +1,23 @@
-// Das Signaling ueber den echten Realtime-Kanal.
+// Das Signaling über den echten Realtime-Kanal.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/chat/webrtc_service.dart ueber 130 offene Zeilen - der
-// groesste Rest. Die Ursache: Der Dienst holt seinen Kanal ueber
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
+// lib/services/chat/webrtc_service.dart über 130 offene Zeilen - der
+// größte Rest. Die Ursache: Der Dienst holt seinen Kanal über
 // `Supabase.instance.client.channel(...)` und wartet auf die
-// Bestaetigung des Servers. Ohne Server bleibt der Kanal 15 Sekunden im
+// Bestätigung des Servers. Ohne Server bleibt der Kanal 15 Sekunden im
 // Zustand "joining" - also war genau der sicherheitskritische Teil
-// (Kanal, Einladung, eingehende Nachricht, Fehlerfall) nicht pruefbar.
+// (Kanal, Einladung, eingehende Nachricht, Fehlerfall) nicht prüfbar.
 //
 // DER WEG: Der [FakeRealtimeServer] spricht das Phoenix-Protokoll des
 // Realtime-Clients. Der Test sieht damit,
-//   * was die App ueber den Kanal schickt (das Angebot, die Antwort,
+//   * was die App über den Kanal schickt (das Angebot, die Antwort,
 //     den ICE-Kandidaten, den Relay-Ping),
 //   * dass eine eingehende Nachricht wirklich bei der App ankommt,
 //   * und was passiert, wenn kein Server erreichbar ist.
 //
-// DIE NAHTEN (unveraendert in lib/): `peerConnectionFactory` liefert die
+// DIE NAHTEN (unverändert in lib/): `peerConnectionFactory` liefert die
 // PeerConnection-Attrappe, `routeSignalingForTesting` und
-// `currentPeerIdForTesting` bleiben fuer die anderen Tests da.
+// `currentPeerIdForTesting` bleiben für die anderen Tests da.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -35,11 +35,11 @@ import '../support/fake_supabase_server.dart';
 import '../support/fake_webrtc.dart';
 import '../support/plugin_mocks.dart';
 
-/// Die PeerConnection, die zusaetzlich mitzaehlt, was der Dienst
+/// Die PeerConnection, die zusätzlich mitzählt, was der Dienst
 /// mit ihr macht.
 ///
 /// DER WEG: Die Attrappe aus test/support/fake_webrtc.dart schluckt
-/// alles - fuer den Test muss aber sichtbar sein, OB der Dienst die
+/// alles - für den Test muss aber sichtbar sein, OB der Dienst die
 /// Antwort gesetzt und den ICE-Kandidaten nachgereicht hat.
 class _AufzeichnendeVerbindung extends FakePeerConnection {
   _AufzeichnendeVerbindung();
@@ -61,7 +61,7 @@ class _AufzeichnendeVerbindung extends FakePeerConnection {
     kandidaten.add(candidate);
   }
 
-  /// Der Dienst hat einen ICE-Kandidaten gefunden (der Weg ueber den
+  /// Der Dienst hat einen ICE-Kandidaten gefunden (der Weg über den
   /// Kanal in die andere Richtung).
   void meldeKandidat(RTCIceCandidate kandidat) {
     onIceCandidate?.call(kandidat);
@@ -84,8 +84,8 @@ class _AufzeichnendeVerbindung extends FakePeerConnection {
 
 /// Wartet, bis [bedingung] wahr ist (oder die Zeit abgelaufen ist).
 ///
-/// DER GRUND: Der Weg ueber den Kanal laeuft ueber mehrere asynchrone
-/// Schritte (Socket, Join, Broadcast). Ein fester Sleep waere wackelig -
+/// DER GRUND: Der Weg über den Kanal läuft über mehrere asynchrone
+/// Schritte (Socket, Join, Broadcast). Ein fester Sleep wäre wackelig -
 /// der Test wartet darum auf das ERGEBNIS.
 Future<bool> warteAuf(
   bool Function() bedingung, {
@@ -107,9 +107,9 @@ void main() {
 
   /// Wie oft wurde die PeerConnection gebaut?
   ///
-  /// DER WEG: Die Attrappe zaehlt nur das Anlegen des Datenkanals -
-  /// beim Empfaenger (Antwort auf ein Angebot) wird aber gar keiner
-  /// geoeffnet. Der Zaehler sitzt deshalb am Aufruf der Fabrik.
+  /// DER WEG: Die Attrappe zählt nur das Anlegen des Datenkanals -
+  /// beim Empfänger (Antwort auf ein Angebot) wird aber gar keiner
+  /// geöffnet. Der Zähler sitzt deshalb am Aufruf der Fabrik.
   int verbindungen = 0;
 
   setUpAll(() async {
@@ -124,8 +124,8 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
 
-    // HIVE: der Verschluesselungs-Dienst oeffnet seine Boxen - ohne
-    // initialisiertes Hive schlaegt der Aufbau fehl.
+    // HIVE: der Verschlüsselungs-Dienst öffnet seine Boxen - ohne
+    // initialisiertes Hive schlägt der Aufbau fehl.
     final temp = await Directory.systemTemp.createTemp('webrtc_realtime');
     Hive.init(temp.path);
     Hive.registerAdapter(SignalIdentityKeyPairAdapterAdapter());
@@ -151,7 +151,7 @@ void main() {
       ),
     );
     // DIE SITZUNG: In der App ist immer ein Konto angemeldet - nur dann
-    // traegt der Join das User-Token (sonst verweigert die RLS-Policy
+    // trägt der Join das User-Token (sonst verweigert die RLS-Policy
     // den Beitritt zum privaten Kanal).
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
@@ -223,7 +223,7 @@ void main() {
 
       await dienst.createOffer('partner-1');
 
-      // DER WEG UEBER DEN KANAL ist asynchron: das Senden wird nicht
+      // DER WEG ÜBER DEN KANAL ist asynchron: das Senden wird nicht
       // abgewartet - der Test wartet deshalb auf das Angebot.
       expect(
         await warteAuf(() => server.broadcastsMitArt('offer').isNotEmpty),
@@ -264,7 +264,7 @@ void main() {
 
     test('ein erneuter Handshake schickt ein zweites Angebot', () async {
       // DER GRUND: Nach einem Timeout muss der Aufbau ohne neuen Kanal
-      // und ohne neue Sitzung wiederholt werden koennen.
+      // und ohne neue Sitzung wiederholt werden können.
       await dienst.connect(myUserId: 'aaa-ich', peerId: 'zzz-partner');
       await dienst.createOffer('zzz-partner');
       expect(
@@ -408,7 +408,7 @@ void main() {
     );
 
     test('eine Antwort zu einem alten Angebot wird verworfen', () async {
-      // DER GRUND (06.11.2026): Nach einem Retry gehoert eine noch
+      // DER GRUND (06.11.2026): Nach einem Retry gehört eine noch
       // fliegende ALTE Antwort zur hinweggelegten PeerConnection - sie
       // darf die neue nicht setzen, sonst wird die echte Antwort
       // verworfen und die Verbindung ist unreparierbar.
@@ -469,7 +469,7 @@ void main() {
 
     test('eine fremde Nachricht wird verworfen', () async {
       // DER ANGRIFF (Audit H8): Ein Angreifer schickt ein Angebot mit
-      // seinem 'from' - er wuerde sonst zum Partner.
+      // seinem 'from' - er würde sonst zum Partner.
       await dienst.connect(myUserId: 'user-1', peerId: 'partner-1');
       final probleme = <String>[];
       final abo = dienst.problems.listen(probleme.add);
@@ -597,7 +597,7 @@ void main() {
 
   group('Der Dienst', () {
     test('er bietet alle Straeme an', () {
-      // DIE API: Die Bildschirme lauschen auf diesen Straemen - fehlt
+      // DIE API: Die Bildschirme lauschen auf diesen Strömen - fehlt
       // einer, wartet der Bildschirm vergeblich auf seine Nachricht.
       expect(dienst.incomingMessages, isNotNull);
       expect(dienst.incomingBinary, isNotNull);

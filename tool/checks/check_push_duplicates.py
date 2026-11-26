@@ -1,29 +1,29 @@
-"""Prueft: ein Ereignis, eine Benachrichtigung.
+"""Prüft: ein Ereignis, eine Benachrichtigung.
 
-BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen fuer
+BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen für
 das Selbe."
 
 DIE FEHLERKLASSE (live gemessen, nicht vermutet):
-Der Like-Versand lief ZWEIMAL - einmal ueber den DB-Trigger
-(notify_push_trigger) und einmal ueber einen Aufruf der App. Dazu kam
-der Transit-Weg, der fuer EINEN Funke drei Zeilen anlegte (zwei
+Der Like-Versand lief ZWEIMAL - einmal über den DB-Trigger
+(notify_push_trigger) und einmal über einen Aufruf der App. Dazu kam
+der Transit-Weg, der für EINEN Funke drei Zeilen anlegte (zwei
 technische Likes, ein Match, ein Soft-Ping) und damit bis zu vier
 Push-Aufrufe erzeugte - beide Seiten bekamen je zwei Meldungen.
 
 DAS GATE hat zwei Teile:
 
-1. STATISCH (laeuft im CI, ohne Datenbank):
+1. STATISCH (läuft im CI, ohne Datenbank):
    * Kein Dart-Code darf `notify-user` mit kind='likes' aufrufen - der
      Like-Versand ist Sache des Triggers. Sonst kommt die zweite
-     Meldung zurueck.
+     Meldung zurück.
    * Die Edge Function muss Client-Aufrufe mit kind='likes' ablehnen.
    * Die Migration muss die beiden Regeln enthalten (Transit-Markierung
-     und Match-Pruefung).
+     und Match-Prüfung).
 
-2. LIVE (nur mit --live, braucht das verknuepfte Projekt):
-   * `tool/db/measure_push_duplicates.sql` zaehlt die Push-Aufrufe, ohne
+2. LIVE (nur mit --live, braucht das verknüpfte Projekt):
+   * `tool/db/measure_push_duplicates.sql` zählt die Push-Aufrufe, ohne
      dass eine einzige Nachricht rausgeht (Transaktion + ROLLBACK).
-     Geprueft werden die vier Szenarien.
+     Geprüft werden die vier Szenarien.
 
 Aufruf:
     python tool/checks/check_push_duplicates.py          # statisch (CI)
@@ -40,8 +40,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -58,7 +58,7 @@ ROOT = _projektwurzel()
 
 if "--root" in sys.argv:
     # Der Selbsttest (tool/checks/check_push_duplicates_selftest.py) baut einen
-    # temporaeren Baum und ruft das Gate darauf auf.
+    # temporären Baum und ruft das Gate darauf auf.
     ROOT = pathlib.Path(sys.argv[sys.argv.index("--root") + 1])
 LIB = ROOT / "lib"
 FUNKTION = ROOT / "supabase" / "functions" / "notify-user" / "index.ts"
@@ -122,7 +122,7 @@ def statische_pruefungen():
         else:
             print("  OK  notify-user lehnt Client-Aufrufe mit kind='likes' ab.")
 
-    # --- 3) Die Migration enthaelt die beiden Regeln --------------------
+    # --- 3) Die Migration enthält die beiden Regeln --------------------
     migration = ROOT / "supabase" / "migrations" / "200_push_duplicate_fix.sql"
     if not migration.exists():
         print("  X Migration 200 fehlt.")
@@ -152,7 +152,7 @@ def statische_pruefungen():
 
 
 def live_pruefung():
-    """Zaehlt die Push-Aufrufe live (Transaktion + ROLLBACK)."""
+    """Zählt die Push-Aufrufe live (Transaktion + ROLLBACK)."""
     print()
     print("LIVE-MESSUNG (Transaktion + ROLLBACK - es geht keine Nachricht raus)")
     print("=" * 70)
@@ -182,7 +182,7 @@ def live_pruefung():
         print("  (keine Zeilen)")
         return None
 
-    # Die letzte Ergebnismenge enthaelt die Szenarien mit Empfaenger.
+    # Die letzte Ergebnismenge enthält die Szenarien mit Empfänger.
     szenarien = {}
     for z in zeilen:
         name = z.get("szenario")

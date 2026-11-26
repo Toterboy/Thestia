@@ -1,9 +1,9 @@
 // Der Teil '_BansTabState'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -16,7 +16,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
   String? _error;
   bool _busy = false;
 
-  /// Suchbegriff fuer E-Mail, Begruendung und Person. Leer = keine Filterung.
+  /// Suchbegriff für E-Mail, Begründung und Person. Leer = keine Filterung.
   final _searchCtrl = TextEditingController();
   String _query = '';
 
@@ -32,9 +32,9 @@ class _BansTabState extends ConsumerState<_BansTab> {
     super.dispose();
   }
 
-  /// Filtert die Sperren clientseitig ueber alle drei sichtbaren Felder:
+  /// Filtert die Sperren clientseitig über alle drei sichtbaren Felder:
   /// der Admin sucht meistens einen Teil der E-Mail, manchmal aber das
-  /// Stichwort aus der Begruendung ("Beleidigung"), weil ihm der Absender
+  /// Stichwort aus der Begründung ("Beleidigung"), weil ihm der Absender
   /// unbekannt ist. Die Logik selbst liegt in [filterBans] und ist dort
   /// getestet.
   Future<void> _load() async {
@@ -308,7 +308,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
             items: filtered,
             emptyIcon: Icons.block,
             emptyTitle: L10n.t(context, 'admin.emptyBansTitle'),
-            // Zwei verschiedene Leerfaelle: "keine Sperren ueberhaupt" und
+            // Zwei verschiedene Leerfälle: "keine Sperren überhaupt" und
             // "deine Suche passt zu nichts". Zusammen in einem Text war
             // genau das, was die Suche unbrauchbar machte - der Admin
             // las "Keine Sperren vorhanden" und dachte, die Datenbank sei leer.
@@ -316,7 +316,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
                 ? L10n.t(context, 'admin.searchBansEmpty')
                 : L10n.t(context, 'admin.noBans'),
             onRetry: _load,
-            // Trefferzahl, solange gefiltert wird. Ohne sie weiss der
+            // Trefferzahl, solange gefiltert wird. Ohne sie weiß der
             // Admin nicht, ob er 2 von 300 oder 2 von 2 sieht.
             header: searching && filtered.isNotEmpty
                 ? Padding(

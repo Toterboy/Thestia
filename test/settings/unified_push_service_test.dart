@@ -1,24 +1,24 @@
-// Unit-Tests fuer den UnifiedPush-Dienst (F-Droid-Push ohne Google).
+// Unit-Tests für den UnifiedPush-Dienst (F-Droid-Push ohne Google).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Registrierung beim Connector (Distributor suchen, speichern,
 //     registrieren) und die Fehlermeldung, wenn gar kein Distributor da ist,
 //   * das Endpunkt-Handling: nur HTTPS-Endpunkte werden gespeichert
 //     (Sicherheitsmassnahme, 03.11.2026),
-//   * das Abschalten (abmelden + Endpunkt serverseitig loeschen),
+//   * das Abschalten (abmelden + Endpunkt serverseitig löschen),
 //   * der Serverstand (ist UnifiedPush aktiv?),
 //   * der eingehende Push: Payload auswerten, lokale Benachrichtigung
-//     zeigen, Unterdrueckung bei offenem Chat.
+//     zeigen, Unterdrückung bei offenem Chat.
 //
 // WIE DIE PLUGIN-AUFRUFE ABGESCHNITTEN WERDEN:
-//   * UnifiedPush laeuft ueber `UnifiedPushPlatform.instance` - der Test
+//   * UnifiedPush läuft über `UnifiedPushPlatform.instance` - der Test
 //     setzt dort einen handgeschriebenen Fake (der "Connector").
-//   * Die lokale Benachrichtigung laeuft ueber
+//   * Die lokale Benachrichtigung läuft über
 //     `FlutterLocalNotificationsPlatform.instance` - auch da ein Fake.
-//   * Supabase laeuft ueber einen `http.Client` - der Test setzt einen
+//   * Supabase läuft über einen `http.Client` - der Test setzt einen
 //     MockClient, der den "Server" spielt.
 //
-// Alles laeuft offline und deterministisch.
+// Alles läuft offline und deterministisch.
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -37,11 +37,11 @@ import 'package:thestia/services/server/unified_push_service.dart';
 
 import '../support/plugin_mocks.dart';
 
-/// Baut ein JWT fuer die Test-Session.
+/// Baut ein JWT für die Test-Session.
 ///
 /// DER GRUND: Der Supabase-Client braucht eine Session, damit der
-/// Dienst das eigene Profil schreiben darf (RLS). Ohne Session waere
-/// `SupabaseService.currentUser` null und der Endpunkt koennte gar nicht
+/// Dienst das eigene Profil schreiben darf (RLS). Ohne Session wäre
+/// `SupabaseService.currentUser` null und der Endpunkt kännte gar nicht
 /// gespeichert werden.
 String _jwt() {
   String teil(Map<String, dynamic> inhalt) =>
@@ -63,13 +63,13 @@ class _FakeServer {
   /// HTTP-Status beim Schreiben des Profils (0 = Erfolg).
   int profilSchreibStatus = 0;
 
-  /// Die Koerper der Profil-Schreibvorgaenge.
+  /// Die Körper der Profil-Schreibvorgänge.
   final List<Map<String, dynamic>> profilUpdates = [];
 
   /// Alle Anfragen, die der Server gesehen hat.
   final List<String> anfragen = [];
 
-  /// Setzt den Server fuer den naechsten Test zurueck.
+  /// Setzt den Server für den nächsten Test zurück.
   void zuruecksetzen() {
     upEndpoint = null;
     profilLeseStatus = 0;
@@ -115,7 +115,7 @@ class _FakeServer {
       ], 200);
     }
 
-    // PATCH /rest/v1/profiles - den Endpunkt speichern oder loeschen.
+    // PATCH /rest/v1/profiles - den Endpunkt speichern oder löschen.
     if (anfrage.method == 'PATCH' && pfad.contains('/rest/v1/profiles')) {
       if (profilSchreibStatus != 0) {
         return antwort({'msg': 'kaputt'}, profilSchreibStatus);
@@ -133,12 +133,12 @@ class _FakeServer {
 /// DER GRUND: `UnifiedPushPlatform.instance` ist im Test die einzige
 /// Stelle, an der der Dienst den Connector erreicht. Der Fake merkt sich
 /// die Callbacks, die der Dienst verdrahtet - so kann der Test sie
-/// ausloesen, so wie es der echte Connector tut.
+/// auslösen, so wie es der echte Connector tut.
 class _FakeUnifiedPush extends UnifiedPushPlatform {
   /// Der Distributor, den der Connector kennt (null = keiner).
   String? gespeicherterDistributor;
 
-  /// Die auf dem Geraet installierten Distributoren.
+  /// Die auf dem Gerät installierten Distributoren.
   List<String> distributoren = const [];
 
   /// Wurde sich beim Distributor registriert?
@@ -147,16 +147,16 @@ class _FakeUnifiedPush extends UnifiedPushPlatform {
   /// Wurde sich abgemeldet?
   bool abgemeldet = false;
 
-  /// Der Callback fuer einen neuen Endpunkt (vom Dienst verdrahtet).
+  /// Der Callback für einen neuen Endpunkt (vom Dienst verdrahtet).
   ///
-  /// DER GRUND FUER DEN `dynamic`-CAST: `UnifiedPush` kapselt den Callback
+  /// DER GRUND FÜR DEN `dynamic`-CAST: `UnifiedPush` kapselt den Callback
   /// in einen asynchronen Wrapper, dessen statischer Typ trotzdem `void`
-  /// ist. Nur ueber den Cast kann der Test auf das ENDE der Arbeit
+  /// ist. Nur über den Cast kann der Test auf das ENDE der Arbeit
   /// warten (der Dienst schreibt den Endpunkt serverseitig).
   Future<void> Function(PushEndpoint endpoint, String instance)?
   onNeuerEndpunkt;
 
-  /// Der Callback fuer eine eingehende Nachricht.
+  /// Der Callback für eine eingehende Nachricht.
   Future<void> Function(PushMessage message, String instance)? onNachricht;
 
   @override
@@ -251,17 +251,17 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     server = _FakeServer();
-    // Supabase ist ein Singleton: er wird genau einmal fuer den ganzen
-    // Testprozess eingerichtet. Der MockClient haengt daran - deshalb
+    // Supabase ist ein Singleton: er wird genau einmal für den ganzen
+    // Testprozess eingerichtet. Der MockClient hängt daran - deshalb
     // arbeitet der Test mit einem gemeinsamen [_FakeServer], dessen
-    // Zustand pro Test zurueckgesetzt wird.
+    // Zustand pro Test zurückgesetzt wird.
     // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
     // das echte Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
     // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
     // gibt es keine libsecret-Sitzung.
     mockKeystore();
-    // DIE ZEITZONE: der Benachrichtigungs-Dienst braucht sie fuer die
+    // DIE ZEITZONE: der Benachrichtigungs-Dienst braucht sie für die
     // Zeitangabe. Das Plugin gibt es auf dem CI-Runner (Linux), auf
     // Windows nicht - dort bleibt die Antwort einfach aus, hier
     // scheitert der Aufruf und der Dienst startet nicht.
@@ -279,7 +279,7 @@ void main() {
       // sichtbar sein (und der Test soll schnell bleiben).
       postgrestOptions: const PostgrestClientOptions(retryEnabled: false),
     );
-    // Einloggen: der Dienst darf nur das eigene Profil aendern.
+    // Einloggen: der Dienst darf nur das eigene Profil ändern.
     await Supabase.instance.client.auth.setSession(
       'refresh-token',
       accessToken: _jwt(),
@@ -289,7 +289,7 @@ void main() {
   setUp(() {
     server.zuruecksetzen();
     connector = _FakeUnifiedPush();
-    // Standardmaessig ist ein Distributor installiert (wie auf einem Geraet
+    // Standardmässig ist ein Distributor installiert (wie auf einem Gerät
     // mit ntfy). Die Tests ohne Distributor setzen das explizit auf leer.
     connector.distributoren = const ['org.example.ntfy'];
     UnifiedPushPlatform.instance = connector;
@@ -301,11 +301,11 @@ void main() {
     UnifiedPushService.suppressCheck = null;
   });
 
-  /// Fuehrt den Testkoerper im Android-Zweig des Plugins aus.
+  /// Fährt den Testkörper im Android-Zweig des Plugins aus.
   ///
   /// DER GRUND: `debugDefaultTargetPlatformOverride` muss am Ende eines
-  /// Tests wieder auf null stehen (das prueft das Test-Framework) -
-  /// deshalb wird es hier im `finally` zurueckgesetzt.
+  /// Tests wieder auf null stehen (das prüft das Test-Framework) -
+  /// deshalb wird es hier im `finally` zurückgesetzt.
   Future<void> alsAndroid(Future<void> Function() koerper) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     try {
@@ -318,7 +318,7 @@ void main() {
   group('UnifiedPushService.enable', () {
     test('ohne Distributor: klare Fehlermeldung fuer die UI', () async {
       await alsAndroid(() async {
-        // Auf dem Geraet ist kein Distributor installiert.
+        // Auf dem Gerät ist kein Distributor installiert.
         connector.distributoren = const [];
 
         await expectLater(
@@ -475,7 +475,7 @@ void main() {
       });
     },
     // AUF LINUX: Das UnifiedPush-Plugin initialisiert ohne DBus-Namen
-    // gar nicht (der Aufruf kehrt sofort zurueck) - die Callbacks des
+    // gar nicht (der Aufruf kehrt sofort zurück) - die Callbacks des
     // Dienstes bleiben dann null. Der Linux-Desktop ist kein Ziel der
     // App (siehe pubspec.yaml) - auf dem Telefon ist der Weg derselbe.
     skip: Platform.isLinux
@@ -623,7 +623,7 @@ void main() {
 
           await expectLater(
             connector.onNachricht!(
-              // Kein gueltiges JSON - der Decoder stolpert darueber.
+              // Kein gültiges JSON - der Decoder stolpert darüber.
               PushMessage(Uint8List.fromList(utf8.encode('{kaputt')), true),
               'default',
             ),
@@ -636,7 +636,7 @@ void main() {
       });
     },
     // AUF LINUX: Das UnifiedPush-Plugin initialisiert ohne DBus-Namen
-    // gar nicht (der Aufruf kehrt sofort zurueck) - die Callbacks des
+    // gar nicht (der Aufruf kehrt sofort zurück) - die Callbacks des
     // Dienstes bleiben dann null. Der Linux-Desktop ist kein Ziel der
     // App (siehe pubspec.yaml) - auf dem Telefon ist der Weg derselbe.
     skip: Platform.isLinux

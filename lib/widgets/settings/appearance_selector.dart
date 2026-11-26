@@ -7,40 +7,40 @@ import 'package:thestia/l10n/app_strings.dart';
 ///
 /// Drei kurze, gegenseitig ausschliessende Optionen sind der
 /// Segmentfall, kein Kartenfall. Die vorherige Fassung stapelte drei
-/// grosse Karten mit Icon, Titel und zwei Zeilen Erklaerung; das
-/// drueckte in den Einstellungen Farbschema und Chat-Hintergrund weit
+/// große Karten mit Icon, Titel und zwei Zeilen Erklärung; das
+/// drückte in den Einstellungen Farbschema und Chat-Hintergrund weit
 /// unter den Bildschirmrand - der Nutzer musste scrollen, um zu sehen,
-/// dass es sie ueberhaupt gibt.
+/// dass es sie überhaupt gibt.
 ///
-/// Jetzt: eine Zeile mit drei Segmenten. Jedes traegt sein Symbol
+/// Jetzt: eine Zeile mit drei Segmenten. Jedes trägt sein Symbol
 /// (Sonne / automatisch / Mond), damit die Wahl auch ohne Text
 /// erkennbar ist. Darunter steht EINE Zeile, die die aktive Option
-/// erklaert - die Erklaerungen der beiden anderen stehen im
+/// erklärt - die Erklärungen der beiden anderen stehen im
 /// Semantics-Label ihres Segments, damit Screenreader sie genauso
 /// vorlesen.
 ///
-/// `Wrap` statt `Row` mit `Expanded`: bei 3,2-facher Schriftgroesse
-/// (Barrierefreiheitstest) waere jede feste Segmentbreite ein
-/// RenderFlex-Overflow. `Wrap` laesst die Segmente untereinander
+/// `Wrap` statt `Row` mit `Expanded`: bei 3,2-facher Schriftgrösse
+/// (Barrierefreiheitstest) wäre jede feste Segmentbreite ein
+/// RenderFlex-Overflow. `Wrap` lässt die Segmente untereinander
 /// wandern, statt sie zu beschneiden.
 ///
-/// GLEICHE ABSTAENDE (31.10.2026): "Die Abstaende bei Einstellungen
+/// GLEICHE ABSTÄNDE (31.10.2026): "Die Abstände bei Einstellungen
 /// Erscheinung sollen gleich links und rechts sein."
 ///
 /// Vorher waren die drei Segmente unterschiedlich breit - "Hell" war
 /// schmaler als "System" und "Dunkel", weil der Kasten nur eine
 /// Mindestbreite (92 px) hatte und der Text den Rest bestimmte. Die
-/// Folge: die Zeile war linksbuendig und lief rechts ins Leere, der
+/// Folge: die Zeile war linksbündig und lief rechts ins Leere, der
 /// Abstand zwischen den Kacheln war nicht der zwischen der letzten
 /// Kachel und dem Rand.
 ///
 /// Jetzt bekommen alle drei Segmente dieselbe Breite: die breiteste
 /// der drei (gemessen an ihrem Text) ist der Massstab, alle werden
 /// darauf gestreckt. So sind die Kacheln gleich breit, der Abstand
-/// zwischen ihnen ist ueberall derselbe, und die Zeile endet genau
+/// zwischen ihnen ist überall derselbe, und die Zeile endet genau
 /// dort, wo der Inhalt endet.
 ///
-/// Bei 3,2-facher Schriftgroesse passt die Zeile nicht mehr in eine
+/// Bei 3,2-facher Schriftgrösse passt die Zeile nicht mehr in eine
 /// Zeile - dann teilt [Wrap] sie auf mehrere Zeilen auf. Deshalb
 /// bleibt es bei `Wrap` und nicht bei `Row` mit `Expanded`.
 class AppearanceSelector extends StatelessWidget {
@@ -71,10 +71,10 @@ class AppearanceSelector extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    // Erklaerung zu einem Modus. Steht als eigene Funktion, damit genau
+    // Erklärung zu einem Modus. Steht als eigene Funktion, damit genau
     // EINE Key-Vorlage ('appearanceDesc.$mode') im Widget vorkommt -
     // der L10n-Test erlaubt benannte dynamische Familien, und eine
-    // zweite Vorlage mit anderem Variablennamen waere ein unzulaessiger
+    // zweite Vorlage mit anderem Variablennamen wäre ein unzulässiger
     // Key-Familien-Mix.
     String describe(String mode) => L10n.t(context, 'appearanceDesc.$mode');
 
@@ -103,21 +103,21 @@ class AppearanceSelector extends StatelessWidget {
                 textBreite(L10n.t(context, 'appearance.$mode')),
             ].reduce((a, b) => a > b ? a : b);
 
-            // Breite, die jedes Segment bekaeme, wenn die Zeile die
-            // gesamte Breite ausfuellt.
+            // Breite, die jedes Segment bekäme, wenn die Zeile die
+            // gesamte Breite ausfällt.
             //
             // `isFinite` ist wichtig: in einer horizontal scrollbaren
-            // Liste waere die Breite unendlich, und `Expanded` mit
+            // Liste wäre die Breite unendlich, und `Expanded` mit
             // unendlicher Breite wirft.
             final endlich = constraints.maxWidth.isFinite;
             final sollBreite = endlich
                 ? (constraints.maxWidth - 2 * spacing) / 3
                 : double.infinity;
 
-            // Die Schleifenvariable heisst `mode` - so entsteht der
+            // Die Schleifenvariable heißt `mode` - so entsteht der
             // Key 'appearance.$mode'. Der L10n-Test erlaubt genau
-            // diese Schreibweise; 'appearance.${_order[i]}' waere eine
-            // zweite, unzulaessige Key-Familie.
+            // diese Schreibweise; 'appearance.${_order[i]}' wäre eine
+            // zweite, unzulässige Key-Familie.
             Widget segment(String mode, {double mindestBreite = 92}) =>
                 _Segment(
                   mode: mode,
@@ -132,10 +132,10 @@ class AppearanceSelector extends StatelessWidget {
 
             // Passt die Zeile in eine Zeile? Dann strecken: alle drei
             // Segmente bekommen DENSELBEN Anteil, der Abstand
-            // zwischen ihnen ist ueberall derselbe, und links wie
+            // zwischen ihnen ist überall derselbe, und links wie
             // rechts bleibt gleich viel Rand.
             //
-            // Sonst (grosse Schrift) waere jede feste Breite ein
+            // Sonst (große Schrift) wäre jede feste Breite ein
             // RenderFlex-Overflow - dann bricht [Wrap] die Zeile auf.
             if (endlich && maxText <= sollBreite) {
               return Row(
@@ -143,9 +143,9 @@ class AppearanceSelector extends StatelessWidget {
                   for (final mode in _order) ...[
                     if (mode != _order.first) const SizedBox(width: spacing),
                     // Expanded legt die Breite fest - deshalb braucht
-                    // das Segment hier KEINE Mindestbreite (die waere
-                    // sonst groesser als der Platz und wuerde
-                    // ueberlaufen).
+                    // das Segment hier KEINE Mindestbreite (die wäre
+                    // sonst größer als der Platz und würde
+                    // überlaufen).
                     Expanded(child: segment(mode, mindestBreite: 0)),
                   ],
                 ],
@@ -160,8 +160,8 @@ class AppearanceSelector extends StatelessWidget {
           },
         ),
         const SizedBox(height: 10),
-        // Erklaerung der AKTIVEN Option. Nur eine sichtbare Zeile, sonst
-        // waere die Auswahl wieder drei Karten hoch.
+        // Erklärung der AKTIVEN Option. Nur eine sichtbare Zeile, sonst
+        // wäre die Auswahl wieder drei Karten hoch.
         Text(
           describe(value),
           style: theme.textTheme.bodySmall?.copyWith(
@@ -196,13 +196,13 @@ class _Segment extends StatelessWidget {
 
   /// Mindestbreite in logischen Pixeln.
   ///
-  /// Normalfall: 92 px - damit die drei Segmente bei ueblicher Schrift
+  /// Normalfall: 92 px - damit die drei Segmente bei üblicher Schrift
   /// eine Zeile ergeben.
   ///
-  /// 0, wenn der Platz von aussen fest vorgegeben ist (im `Row` mit
+  /// 0, wenn der Platz von außen fest vorgegeben ist (im `Row` mit
   /// `Expanded`): dort legt `Expanded` die Breite fest, und eine
-  /// Mindestbreite waere groesser als der Platz - das wuerde
-  /// ueberlaufen.
+  /// Mindestbreite wäre größer als der Platz - das würde
+  /// überlaufen.
   final double mindestBreite;
 
   @override
@@ -222,9 +222,9 @@ class _Segment extends StatelessWidget {
       container: true,
       selected: selected,
       button: true,
-      // Die Erklaerung gehoert hierher: sie ist im sichtbaren Layout nur
-      // fuer die aktive Option vorhanden, der Screenreader soll sie aber
-      // fuer alle drei vorlesen.
+      // Die Erklärung gehört hierher: sie ist im sichtbaren Layout nur
+      // für die aktive Option vorhanden, der Screenreader soll sie aber
+      // für alle drei vorlesen.
       label: '$title. $description',
       child: ExcludeSemantics(
         child: AnimatedOpacity(
@@ -250,10 +250,10 @@ class _Segment extends StatelessWidget {
                 borderRadius: BorderRadius.circular(radius),
                 child: ConstrainedBox(
                   // Mindestbreite, damit die drei Segmente bei normaler
-                  // Schrift eine Zeile ergeben. Kein Maximum: bei grosser
+                  // Schrift eine Zeile ergeben. Kein Maximum: bei großer
                   // Schrift darf ein Segment breiter werden.
                   //
-                  // [breite] schlaegt die Mindestbreite: dann sind alle
+                  // [breite] schlägt die Mindestbreite: dann sind alle
                   // drei Segmente gleich breit (siehe [AppearanceSelector]).
                   constraints: BoxConstraints(minWidth: mindestBreite),
                   child: Padding(
@@ -267,27 +267,27 @@ class _Segment extends StatelessWidget {
                     // Vorher stand dort in ALLEN Segmenten ein
                     // SizedBox(width: 16), damit die Zeile beim Wechsel
                     // nicht springt. Der Preis war ein um 6 px
-                    // nach links verschobener Text: bei "Hell" faellt das
-                    // nicht auf, weil der Haken den Platz fuellt, bei
+                    // nach links verschobener Text: bei "Hell" fällt das
+                    // nicht auf, weil der Haken den Platz füllt, bei
                     // "System" und "Dunkel" stand er schief. Genau das
-                    // war die Rueckmeldung.
+                    // war die Rückmeldung.
                     //
                     // Als Overlay costet der Haken keinen Platz, der
-                    // Text ist mittig - und die Segmentbreite haengt
+                    // Text ist mittig - und die Segmentbreite hängt
                     // nur noch vom Text ab, nicht mehr davon, ob gerade
-                    // etwas gewaehlt ist. Das Springen ist damit
+                    // etwas gewählt ist. Das Springen ist damit
                     // ebenfalls weg, und zwar ohne den Trick.
                     child: Stack(
                       // v0.9.2: `alignment: Alignment.center`.
                       //
                       // Ein Stack richtet sein nicht positioniertes Kind
-                      // standardmaessig oben links aus. Die Column hier
-                      // ist schmal (bei "Hell" rund 40 px), waehrend der
+                      // standardmässig oben links aus. Die Column hier
+                      // ist schmal (bei "Hell" rund 40 px), während der
                       // Kasten durch die Mindestbreite von 92 px breiter
                       // ist. Der Inhalt stand deshalb in jedem kurzen
                       // Segment links - Symbol UND Text. Bei "Dunkel"
                       // fiel es kaum auf, weil der Text fast die
-                      // Mindestbreite fuellt.
+                      // Mindestbreite füllt.
                       //
                       // Der Haken ist Positioned und damit von diesem
                       // Alignment nicht betroffen; er sitzt weiterhin in
@@ -311,10 +311,10 @@ class _Segment extends StatelessWidget {
                             ),
                           ],
                         ),
-                        // Kein Haken: die Auswahl traegt die Kachel
-                        // selbst (gefuelltes Icon-Feld, Titelfarbe,
-                        // Hintergrund). Ein zusaetzliches Symbol war ein
-                        // drittes Signal fuer dieselbe Aussage.
+                        // Kein Haken: die Auswahl trägt die Kachel
+                        // selbst (gefülltes Icon-Feld, Titelfarbe,
+                        // Hintergrund). Ein zusätzliches Symbol war ein
+                        // drittes Signal für dieselbe Aussage.
                       ],
                     ),
                   ),

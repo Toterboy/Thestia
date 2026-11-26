@@ -1,16 +1,16 @@
 // Die Video-Verifizierung (bisher kaum getestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/verification/verification_flow.dart 456 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Info-Screen baut sich (kein Absturz, kein Render-Overflow),
 //   * er sagt dem Nutzer, was mit dem Video passiert - und dass die
-//     Altersschaetzung eine KI-Schaetzung ist (kein Beweis),
+//     Altersschätzung eine KI-Schätzung ist (kein Beweis),
 //   * er nennt die einmalige Standortabfrage,
 //   * der Start-Knopf bringt den Code mit zur Aufnahme,
 //   * der Erfolgs-Screen unterscheidet automatische Freigabe und
-//     manuelle Pruefung,
+//     manuelle Prüfung,
 //   * nach der Verifizierung wird das Abschalten der Berechtigungen
 //     angeboten.
 import 'package:flutter/material.dart';
@@ -153,7 +153,7 @@ void main() {
             'Der Nutzer muss wissen, was mit seinem Video passiert - das '
             'ist der Kern der Verifizierung.',
       );
-      // Die Altersschaetzung ist eine KI-Schaetzung, kein Beweis - das
+      // Die Altersschätzung ist eine KI-Schätzung, kein Beweis - das
       // muss ihm gesagt werden.
       expect(
         find.text(L10n.tWithoutContext('verify.infoAiLimits')),
@@ -353,7 +353,7 @@ void main() {
         findsOneWidget,
       );
 
-      // "Spaeter" schliesst den Dialog - und fasst nichts an.
+      // "Später" schließt den Dialog - und fasst nichts an.
       await tester.tap(find.text(L10n.tWithoutContext('verify.cleanupLater')));
       await pumpFrames(tester);
 

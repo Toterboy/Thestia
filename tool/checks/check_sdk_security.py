@@ -1,26 +1,26 @@
-"""Prueft die Sicherheitsversionen von SDK und Paketen.
+"""Prüft die Sicherheitsversionen von SDK und Paketen.
 
-BEFUND (08.11.2026, Sicherheitspruefung): Nach dem Advisory
+BEFUND (08.11.2026, Sicherheitsprüfung): Nach dem Advisory
 GHSA-frr6-h895-5pxp (Severity High) sind drei Dinge alt:
 
 1. **Der Flutter-/Dart-SDK.** Dart validiert TLS-Zertifikate auf Android
    mit einem EINGEBAUTEN BoringSSL und liest die Sperrliste des
    Betriebssystems NICHT. Nach der Kompromittierung der eMudhra-
    Zwischenzertifikate (Oktober 2026) kann ein Angreifer im Netzpfad
-   damit ein gueltiges Zertifikat fuer beliebige Domains FAELSCHEN.
+   damit ein gültiges Zertifikat für beliebige Domains FÄLSCHEN.
    Betroffen: Flutter < 3.47.8, Dart < 3.13.7. (iOS/macOS/Web sind
-   nicht betroffen - dort prueft das Betriebssystem.)
+   nicht betroffen - dort prüft das Betriebssystem.)
 
 2. **Der WebRTC-SDK im lokalen Fork** `third_party/flutter_webrtc`. Der
    bringt seine eigene CA-Liste mit; der Fix ist ab WebRTC-SDK
    150.7871.04 ("drop compromised eMudhra CA root").
 
 3. **Die Flutter-Engine** bringt Skia und libpng mit. Beides hatte
-   2026 Luecken, die mit dem SDK-Update behoben sind.
+   2026 Lücken, die mit dem SDK-Update behoben sind.
 
-DAS GATE haelt diese Versionsuntergrenzen fest. Es meldet SICHERN
+DAS GATE hält diese Versionsuntergrenzen fest. Es meldet SICHERN
 (als Fehler), wenn eine Untergrenze unterschritten wird - und es
-prueft zusätzlich, ob die CI und die lokale Installation ueberhaupt
+prüft zusätzlich, ob die CI und die lokale Installation überhaupt
 dieselbe SDK-Version fahren.
 
 Aufruf:
@@ -37,8 +37,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -54,7 +54,7 @@ def _projektwurzel() -> pathlib.Path:
 ROOT = _projektwurzel()
 
 
-# Untergrenzen. Wer die erfuellt, ist von dem Advisory nicht betroffen.
+# Untergrenzen. Wer die erfüllt, ist von dem Advisory nicht betroffen.
 # (Quelle: GHSA-frr6-h895-5pxp, flutter_webrtc-Changelog 1.6.3)
 UNTERGRENZEN = {
     "flutter": (3, 47, 8),   # Dart 3.13.7 - BoringSSL vertraut die

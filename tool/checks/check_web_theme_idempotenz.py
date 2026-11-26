@@ -1,18 +1,18 @@
 """
 tool/checks/check_web_theme_idempotenz.py
 ==================================
-Prueft, dass die Web-Werkzeuge WIEDERHOLBAR sind: ein zweiter
-Durchlauf darf an den Seiten NICHTS aendern.
+Prüft, dass die Web-Werkzeuge WIEDERHOLBAR sind: ein zweiter
+Durchlauf darf an den Seiten NICHTS ändern.
 
 ANLASS (01.11.2026): Der Betreiber musste den ganzen Ordner
-passkey-assets/ bei JEDER Aenderung neu hochladen. Ursache war nicht
+passkey-assets/ bei JEDER Änderung neu hochladen. Ursache war nicht
 der Netlify-Upload, sondern die Werkzeuge: apply_theme() war nicht
 idempotent.
 
 Zwei Stellen sammelten Zeilen an:
 
   1) Der CSS-Block. THEME_CSS beginnt mit einem Umbruch und einer
-     Einrueckung, und der Marker sitzt erst an Position 5 des
+     Einrückung, und der Marker sitzt erst an Position 5 des
      CSS-Blocks. strip_theme() entfernte ab dem Marker - der Rest
      blieb stehen und kam bei jedem Lauf dazu.
 
@@ -20,15 +20,15 @@ Zwei Stellen sammelten Zeilen an:
      <body> und der Kopfzeile; strip_theme() entfernte die Kopfzeile,
      aber nicht diesen Umbruch.
 
-Das Ergebnis: die Seite war nach jedem Durchlauf eine Zeile laenger.
-Weil die Datei sich damit aenderte, meldete
+Das Ergebnis: die Seite war nach jedem Durchlauf eine Zeile länger.
+Weil die Datei sich damit änderte, meldete
 check_privacy_deployment.py eine Abweichung - und der Betreiber
 musste alles neu hochladen, obwohl sich an den Seiten nichts
-geaendert hatte.
+geändert hatte.
 
 Dieser Selbsttest macht genau das messbar, was vorher nur
-auffaellig war: Er prueft, dass ein zweiter Durchlauf die Dateien
-byte-identisch laesst.
+auffällig war: Er prüft, dass ein zweiter Durchlauf die Dateien
+byte-identisch lässt.
 
 Aufruf:
     python tool/checks/check_web_theme_idempotenz.py
@@ -42,8 +42,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -65,9 +65,9 @@ sys.path.insert(0, str(ROOT / 'tool' / 'web'))
 from web_theme import apply_theme, strip_theme  # noqa: E402
 
 # Die SeitENlisten und die Sprachlogik kommen aus apply_web_theme.py -
-# sonst prueft dieser Selbsttest etwas anderes als das echte Werkzeug.
-# Das war die Ursache fuer einen Fehlalarm: apply_theme() ohne den
-# Sprachknopf entfernt ihn, und die Seite war damit "veraendert".
+# sonst prüft dieser Selbsttest etwas anderes als das echte Werkzeug.
+# Das war die Ursache für einen Fehlalarm: apply_theme() ohne den
+# Sprachknopf entfernt ihn, und die Seite war damit "verändert".
 from apply_web_theme import EN_SEITEN, NUR_CSS, SEITEN, sprachziel  # noqa: E402
 
 ASSETS = ROOT / 'passkey-assets'
@@ -118,7 +118,7 @@ def main() -> int:
     for name in NUR_CSS:
         pruefe_seite(name, nur_css=True)
 
-    # Zugriff auf die Beispieldatei: die Werkzeuge an sich muessen
+    # Zugriff auf die Beispieldatei: die Werkzeuge an sich müssen
     # auch auf einer frischen Seite stabil sein.
     beispiel = (
         '<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { margin: 0; }\n'

@@ -1,15 +1,15 @@
 // Die Elternfreigabe (16 und 17 Jahre) - bisher ungetestet (1,2 %).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/guardian/guardian_consent_screen.dart 83 offene Zeilen bei
 // 84 Zeilen gesamt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die eigene Kontoadresse kann nicht Elternteil sein (der Server
-//     prueft das auch - hier nur die freundliche Meldung),
+//     prüft das auch - hier nur die freundliche Meldung),
 //   * eine kaputte Adresse wird abgewiesen,
 //   * die Anfrage geht an den Server,
-//   * der Nutzer sieht die Bestaetigung.
+//   * der Nutzer sieht die Bestätigung.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,9 +1,9 @@
-// Test fuer die neue Einstellung "Namen beim Zuwinken zeigen" (v0.10.1).
+// Test für die neue Einstellung "Namen beim Zuwinken zeigen" (v0.10.1).
 //
-// Prueft:
+// Prüft:
 //  1. Das Modell kennt die Einstellung und speichert sie lokal.
 //  2. Der Standard ist "an" (der Name wird beim Zuwinken gezeigt).
-//  3. Der Server-Schalter wird beim Start uebernommen ("Server gewinnt").
+//  3. Der Server-Schalter wird beim Start übernommen ("Server gewinnt").
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/settings/app_settings.dart';
 

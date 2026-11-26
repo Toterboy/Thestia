@@ -1,6 +1,6 @@
-// Unit-Tests fuer das Aufräumen der temporären Dateien.
+// Unit-Tests für das Aufräumen der temporären Dateien.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die entschlüsselten Voice-Notes werden aus dem Temp-Verzeichnis
 //     gelöscht (Audit M-17: sie waren sonst ein Ruhezustand-Rest),
 //   * fremde Dateien bleiben unangetastet,
@@ -10,17 +10,17 @@
 //   Das E2E-Versprechen der App lautet "Inhalte existieren nur im
 //   Speicher". Eine entschlüsselte Sprachnachricht, die im
 //   System-Temp-Verzeichnis liegen bleibt, bricht dieses Versprechen -
-//   sie ist danach von jedem Programm auf dem Geraet lesbar. Der
-//   Aufraeum-Lauf ist deshalb das letzte Sicherheitsnetz, und er muss
-//   TREFFER GENAU sein: Er darf nur die eigenen Reste loeschen und
-//   keine fremde Datei (Cache, Log, Bild) wegraeumen.
+//   sie ist danach von jedem Programm auf dem Gerät lesbar. Der
+//   Aufräum-Lauf ist deshalb das letzte Sicherheitsnetz, und er muss
+//   TREFFER GENAU sein: Er darf nur die eigenen Reste löschen und
+//   keine fremde Datei (Cache, Log, Bild) wegräumen.
 import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/utils/common/temp_cleanup.dart';
 
-/// Der Kanal, ueber den path_provider den Temp-Ordner nennt.
+/// Der Kanal, über den path_provider den Temp-Ordner nennt.
 const MethodChannel _pfadKanal = MethodChannel(
   'plugins.flutter.io/path_provider',
 );
@@ -33,8 +33,8 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('thestia_temp_cleanup');
     // Das Temp-Verzeichnis wird normalerweise von path_provider geliefert.
-    // Im Test gibt es kein Geraet - der Kanal liefert deshalb unseren
-    // eigenen Ordner. So prueft der Test genau das, was auch in der App
+    // Im Test gibt es kein Gerät - der Kanal liefert deshalb unseren
+    // eigenen Ordner. So prüft der Test genau das, was auch in der App
     // passiert: Dateien im gemeldeten Temp-Verzeichnis.
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_pfadKanal, (anfrage) async {
@@ -76,8 +76,8 @@ void main() {
   });
 
   test('der historische Dateiname (wisp_) wird auch geloescht', () async {
-    // DER GRUND: Aeltere App-Versionen schrieben mit "wisp_" - die Reste
-    // liegen auf den Geraeten von Nutzern, die schon gewechselt sind.
+    // DER GRUND: Ältere App-Versionen schrieben mit "wisp_" - die Reste
+    // liegen auf den Geräten von Nutzern, die schon gewechselt sind.
     final reste = await datei('wisp_incoming_77.m4a');
 
     await cleanupDecryptedTempFiles();
@@ -86,10 +86,10 @@ void main() {
   });
 
   test('fremde Dateien bleiben liegen', () async {
-    // DER GRUND FUER DIESE PRUEFUNG: Der Aufraeum-Lauf darf NICHT das
-    // ganze Temp-Verzeichnis leeren. Sonst wuerde er neben den eigenen
+    // DER GRUND FÜR DIESE PRÜFUNG: Der Aufräum-Lauf darf NICHT das
+    // ganze Temp-Verzeichnis leeren. Sonst würde er neben den eigenen
     // Resten auch Dateien fremder Module (Cache, Log, Bild-Vorschau)
-    // wegraeumen.
+    // wegräumen.
     final fremd = await datei('sonstige_datei.txt', 'gehoert jemand anderem');
     final eigenesBild = await datei('thestia_incoming_1.png');
 
@@ -110,8 +110,8 @@ void main() {
   });
 
   test('Verzeichnisse werden nicht geloescht', () async {
-    // DER GRUND: Der Code prueft "ist es eine Datei?" - ein Ordner mit
-    // demselben Namen darf nicht mitgeloescht werden (sonst waere ein
+    // DER GRUND: Der Code prüft "ist es eine Datei?" - ein Ordner mit
+    // demselben Namen darf nicht mitgelöscht werden (sonst wäre ein
     // Nutzerordner im Temp-Verzeichnis weg).
     final ordner = Directory(
       '${tempDir.path}${Platform.pathSeparator}thestia_incoming_ordner',
@@ -140,7 +140,7 @@ void main() {
   });
 
   test('ein leeres Temp-Verzeichnis ist kein Fehler', () async {
-    // DER GRUND: Der Aufraeum-Lauf laeuft beim App-Start. Wenn das
+    // DER GRUND: Der Aufräum-Lauf läuft beim App-Start. Wenn das
     // Verzeichnis leer ist (frische Installation), darf nichts passieren.
     await expectLater(cleanupDecryptedTempFiles(), completes);
   });

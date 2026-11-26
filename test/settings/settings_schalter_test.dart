@@ -1,23 +1,23 @@
 // Die Einstellungen: die Benachrichtigungs-Schalter und das Abmelden.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/settings/settings_screen.dart 67 offene Zeilen. Der
 // bestehende Test ("settings_screen_test.dart") deckt den Aufbau und
 // einen Schalter ab - offen waren die Benachrichtigungs-Schalter (sie
 // sind an den Hauptschalter gebunden) und das Abmelden.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Hauptschalter sperrt die einzelnen Schalter (der Server
-//     wuerde die Meldungen ohnehin nicht schicken - ein bedienbarer
-//     Schalter, der nichts bewirkt, ist aergerlicher als keiner),
-//   * ein Schalter aendert den Stand,
-//   * (das Abmelden haengt im Test an der Sitzungs-Bereinigung -
-//     das ist ein eigener Weg und wird im Auth-Test geprueft.)
+//     würde die Meldungen ohnehin nicht schicken - ein bedienbarer
+//     Schalter, der nichts bewirkt, ist ärgerlicher als keiner),
+//   * ein Schalter ändert den Stand,
+//   * (das Abmelden hängt im Test an der Sitzungs-Bereinigung -
+//     das ist ein eigener Weg und wird im Auth-Test geprüft.)
 //
-// NICHT DABEI: Die Versionszeile am Fuss der Seite laeuft ueber das
+// NICHT DABEI: Die Versionszeile am Fuß der Seite läuft über das
 // Paket-Info-Plugin - im Test antwortet die Plattform nicht, und der
 // Bildschirm blendet die Zeile dann aus (das ist gewollt: eine leere
-// Versionsangabe waere schlimmer als keine).
+// Versionsangabe wäre schlimmer als keine).
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -83,8 +83,8 @@ class _Keystore extends SecureProfileStore {
   Future<void> delete() async {}
 }
 
-/// Der Verschluesselungs-Dienst (der Dialog soll nur einen Code
-/// bekommen - fuer die Oberflaeche reicht das).
+/// Der Verschlüsselungs-Dienst (der Dialog soll nur einen Code
+/// bekommen - für die Oberfläche reicht das).
 class _FakeVerschluesselung extends EncryptionService {
   @override
   Future<String?> createEncryptedBackup(String password) async =>
@@ -178,7 +178,7 @@ void main() {
 
   /// Scrollt zu einem Schalter und macht ihn sichtbar.
   ///
-  /// DER HINWEIS: Die Liste baut nur die sichtbaren Eintraege - der
+  /// DER HINWEIS: Die Liste baut nur die sichtbaren Einträge - der
   /// Schalter muss also erst herangescrollt UND sichtbar gemacht
   /// werden, sonst tippt der Test ins Leere.
   Future<void> scrolleZuSchalter(WidgetTester tester, String key) async {

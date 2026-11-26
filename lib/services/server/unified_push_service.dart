@@ -112,10 +112,10 @@ class UnifiedPushService {
     // SICHERHEIT (03.11.2026): Der Endpunkt muss HTTPS sein.
     //
     // Der UnifiedPush-Connector bringt exportierte Komponenten mit, die
-    // jede App ansprechen kann. Der Export bleibt (ohne ihn kaeme kein
-    // Push an), deshalb wird die Annahme hier geprueft: ein Endpunkt
-    // auf http:// wuerde die Push-Metadaten im Klartext uebertragen -
-    // und koennte von einer fremden App gesetzt werden.
+    // jede App ansprechen kann. Der Export bleibt (ohne ihn käme kein
+    // Push an), deshalb wird die Annahme hier geprüft: ein Endpunkt
+    // auf http:// würde die Push-Metadaten im Klartext übertragen -
+    // und kännte von einer fremden App gesetzt werden.
     final uri = Uri.tryParse(url);
     if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
       debugPrint('[UnifiedPush] Endpunkt nicht HTTPS - verworfen.');

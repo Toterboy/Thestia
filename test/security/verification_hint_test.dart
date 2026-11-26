@@ -1,13 +1,13 @@
 // Die beiden offenen Verifikations-Aufgaben (15.11.2026):
 //
 //   1. Der HINWEIS auf "Aktuelles" (Startbildschirm), wenn die
-//      Alterspruefung fehlt.
+//      Altersprüfung fehlt.
 //   2. die BENACHRICHTIGUNG bei der Freigabe der Verifizierung.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Hinweis steht da, wenn das Profil nicht verifiziert ist (mit
-//     einem Knopf, der zur Verifizierung fuehrt),
-//   * im Zustand "Wird geprueft" steht der Wartetext da - und KEIN
+//     einem Knopf, der zur Verifizierung fährt),
+//   * im Zustand "Wird geprüft" steht der Wartetext da - und KEIN
 //     Knopf (es gibt nichts zu tun),
 //   * bei einem verifizierten Profil steht gar kein Hinweis da,
 //   * die Freigabe-Meldung folgt dem Master-Schalter: ist er aus, kommt
@@ -36,10 +36,10 @@ import 'package:thestia/services/storage/secure_storage.dart';
 
 import '../support/plugin_mocks.dart';
 
-/// Der Kanal, ueber den das Plugin die Zeitzone des Geraetes liefert.
+/// Der Kanal, über den das Plugin die Zeitzone des Gerätes liefert.
 const MethodChannel _zeitzoneKanal = MethodChannel('flutter_timezone');
 
-/// In-Memory-Speicher (kein Plugin, kein Geraet).
+/// In-Memory-Speicher (kein Plugin, kein Gerät).
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _daten = {};
 
@@ -121,7 +121,7 @@ class _FakeNotificationsPlugin extends AndroidFlutterLocalNotificationsPlugin {
 
   /// BEFUND (15.11.2026): Ohne diesen Override bleibt der Aufruf HANGEN.
   ///
-  /// Das Plugin spricht die Plattform seit Version 23 ueber Pigeon an
+  /// Das Plugin spricht die Plattform seit Version 23 über Pigeon an
   /// (kein MethodChannel mehr). Ohne Mock kommt keine Antwort - und die
   /// Future wartet endlos (der Test lief in den Zehn-Minuten-Timeout).
   @override
@@ -213,12 +213,12 @@ void main() {
     }
   }
 
-  /// Fuehrt den Testkoerper im Android-Zweig des Plugins aus.
+  /// Fährt den Testkörper im Android-Zweig des Plugins aus.
   ///
   /// DER GRUND: `debugDefaultTargetPlatformOverride` muss am ENDE des
-  /// Testkoerpers wieder auf null stehen - das prueft das Test-Framework
+  /// Testkörpers wieder auf null stehen - das prüft das Test-Framework
   /// VOR dem tearDown. Deshalb wird es hier (nicht im tearDown)
-  /// zurueckgesetzt.
+  /// zurückgesetzt.
   Future<void> alsAndroid(Future<void> Function() koerper) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     try {
@@ -228,7 +228,7 @@ void main() {
     }
   }
 
-  /// Baut die Einstellungen und liefert einen [WidgetRef] fuer den Dienst.
+  /// Baut die Einstellungen und liefert einen [WidgetRef] für den Dienst.
   Future<WidgetRef> mitEinstellungen(
     WidgetTester tester, {
     bool notificationsEnabled = true,

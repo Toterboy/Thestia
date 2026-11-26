@@ -1,9 +1,9 @@
 // Die Profildetail-Seite (bisher wenig getestet).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/profile/profile_detail_screen.dart 318 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * das Profil steht da (Name, Bio, Interessen),
 //   * die GEMEINSAMEN Interessen sind hervorgehoben - daran sieht der
 //     Nutzer, was ihn mit der anderen Person verbindet,
@@ -179,7 +179,7 @@ void main() {
 
   group('Die Profildetail-Seite', () {
     testWidgets('das Profil steht da', (tester) async {
-      // Der Server liefert das oeffentliche Profil (RPC).
+      // Der Server liefert das öffentliche Profil (RPC).
       server.rpcAntworten['get_public_profile'] = <String, dynamic>{
         'id': 'user-7',
         'name': 'Mira',
@@ -214,7 +214,7 @@ void main() {
       // Beide Interessen stehen da ...
       expect(find.text('Klettern'), findsOneWidget);
       expect(find.text('Kochen'), findsOneWidget);
-      // ... und das gemeinsame traegt das Herz (zusaetzlich zum Herz
+      // ... und das gemeinsame trägt das Herz (zusätzlich zum Herz
       // in der Kopfzeile).
       expect(find.byIcon(Icons.favorite), findsWidgets);
     });
@@ -252,8 +252,8 @@ void main() {
     ) async {
       // BEFUND (22.11.2026, Betreiber): "Musik Genres, die man mag und
       // Lieblings-Song und Künstler werden alle nicht im Profil angezeigt
-      // (öffentlich)." Die Bedingung der Musik-Karte pruefte Genres und
-      // Lieblingssong - aber NICHT den Lieblings-Kuenstler. Stand nur der
+      // (öffentlich)." Die Bedingung der Musik-Karte prüfte Genres und
+      // Lieblingssong - aber NICHT den Lieblings-Künstler. Stand nur der
       // in der Karte, war die ganze Karte weg.
       server.rpcAntworten['get_public_profile'] = <String, dynamic>{
         'id': 'user-7',
@@ -272,8 +272,8 @@ void main() {
     });
 
     testWidgets('die Gewohnheiten stehen da', (tester) async {
-      // NUTZERWUNSCH (22.11.2026): Die Gewohnheiten gehoeren ins
-      // oeffentliche Profil - je Gewohnheit ein Schalter (Migration 222).
+      // NUTZERWUNSCH (22.11.2026): Die Gewohnheiten gehören ins
+      // öffentliche Profil - je Gewohnheit ein Schalter (Migration 222).
       server.rpcAntworten['get_public_profile'] = <String, dynamic>{
         'id': 'user-7',
         'name': 'Mira',
@@ -338,7 +338,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       // Der Nutzer muss erfahren, dass das Profil gespeichert ist - sonst
-      // sucht er es spaeter vergebens.
+      // sucht er es später vergebens.
       expect(
         find.textContaining('Mira'),
         findsWidgets,
@@ -358,7 +358,7 @@ void main() {
         profil: const UserProfile(id: 'user-7', name: 'Mira', bio: ''),
       );
 
-      // Das Menue (die drei Punkte) oeffnen.
+      // Das Menü (die drei Punkte) öffnen.
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -373,8 +373,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(tester.takeException(), isNull);
-      // Ohne Rueckfrage waere die Person gesperrt - das ist nicht
-      // rueckgaengig zu machen.
+      // Ohne Rückfrage wäre die Person gesperrt - das ist nicht
+      // rückgängig zu machen.
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(
         find.text(L10n.tWithoutContext('chat.blockTitle')),
@@ -394,7 +394,7 @@ void main() {
         profil: const UserProfile(id: 'user-7', name: 'Mira', bio: ''),
       );
 
-      // Das Menue (die drei Punkte) oeffnen.
+      // Das Menü (die drei Punkte) öffnen.
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -421,7 +421,7 @@ void main() {
 
     testWidgets('ohne auflösbares Profil steht das da', (tester) async {
       // Der Server kennt die Person nicht (und es gibt keinen lokalen
-      // Match, aus dem der Bildschirm sie nehmen koennte).
+      // Match, aus dem der Bildschirm sie nehmen kännte).
       server.rpcAntworten['get_public_profile'] = null;
       await zeigeProfil(
         tester,
@@ -445,7 +445,7 @@ void main() {
 
     testWidgets('ohne Server bleibt das lokale Profil stehen', (tester) async {
       // Der Server schweigt - die Seite zeigt trotzdem das, was sie
-      // weiss (nicht eine leere Seite). Quelle dafuer: der Match im
+      // weiß (nicht eine leere Seite). Quelle dafür: der Match im
       // Chat.
       server.antwortetMitFehler = true;
       await zeigeProfil(
@@ -463,11 +463,11 @@ void main() {
     });
 
     // Das Nachladen des Bildes (ANLASS 22.11.2026: Die Coverage-Messung
-    // zeigte fuer lib/screens/profile/parts/avatarretryloader.dart 0 %).
+    // zeigte für lib/screens/profile/parts/avatarretryloader.dart 0 %).
     testWidgets('ein Bild, das nicht kommt, bietet das Nachladen an', (
       tester,
     ) async {
-      // DIE PERSON MIT BILD: Das Bild kommt ueber match-media vom Server -
+      // DIE PERSON MIT BILD: Das Bild kommt über match-media vom Server -
       // im Test gibt es das nicht, also bleibt es leer.
       server.antwortetMitFehler = true;
       await zeigeProfil(
@@ -482,8 +482,8 @@ void main() {
         mitMatch: true,
       );
 
-      // Der Ladevorgang muss durch sein - erst danach weiss die App, dass
-      // das Bild nicht kommt. Der Aufruf laeuft ueber den Server, also
+      // Der Ladevorgang muss durch sein - erst danach weiß die App, dass
+      // das Bild nicht kommt. Der Aufruf läuft über den Server, also
       // braucht er die echte Ereignisschleife.
       for (var i = 0; i < 12; i++) {
         await tester.runAsync(() async {

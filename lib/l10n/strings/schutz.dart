@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsSchutz = {
@@ -24,7 +24,7 @@ const Map<String, Map<String, String>> stringsSchutz = {
     'guardian.emailHint': 'name@beispiel.de',
     'guardian.emailLabel': 'E-Mail-Adresse eines Elternteils',
     'guardian.endAccessBtn': 'Elternzugriff beenden',
-    // Der Stand liess sich nicht laden (Netz, Server, Sitzung).
+    // Der Stand ließ sich nicht laden (Netz, Server, Sitzung).
     // Vorher zeigte der Bildschirm hier einen endlosen Ladekreis -
     // der Nutzer hatte keinen Weg aus dem Bereich heraus.
     'guardian.loadErrorTitle': 'Stand nicht geladen',
@@ -52,8 +52,8 @@ const Map<String, Map<String, String>> stringsSchutz = {
     'guardian.graceLabel': 'Nachfrist: {months} Monat(e)',
     'guardian.gracePicker': 'Monate',
     'guardian.loadErrorText':
-        'Der Stand der Aufsicht liess sich gerade nicht abrufen. '
-        'Pruefe deine Internetverbindung und versuche es noch '
+        'Der Stand der Aufsicht ließ sich gerade nicht abrufen. '
+        'Prüfe deine Internetverbindung und versuche es noch '
         'einmal.',
     'guardian.noConsentText':
         'Für Konten ab 18 ist keine Freigabe nötig. Wenn du 16 oder 17 bist, '
@@ -116,7 +116,7 @@ const Map<String, Map<String, String>> stringsSchutz = {
         'Elternbereich ändern.',
 
     // ===================================================================
-    // Selektive Datenloeschung (v0.10.0)
+    // Selektive Datenlöschung (v0.10.0)
     // ===================================================================
     'del.title': 'Daten löschen',
     'guardian.usageLockText':

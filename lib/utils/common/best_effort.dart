@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 /// Reste zurück: Verlauf, Entwürfe, Schlüssel, Crash-Journal. Der
 /// nächste Account auf demselben Gerät sieht sie.
 ///
-/// WAS SICH AENDERT: Vorher war das ein leeres `catch (_) {}` - der
+/// WAS SICH ÄNDERT: Vorher war das ein leeres `catch (_) {}` - der
 /// Fehler wurde spurlos geschluckt, niemand konnte sehen, dass beim
 /// Aufräumen etwas schiefging. Jetzt wird er protokolliert. Im
 /// Release ist [debugPrint] stumm, im Debug steht im Log, welcher

@@ -1,19 +1,19 @@
-// Der Empfang einer Nachricht ueber die Direktverbindung (P2P).
+// Der Empfang einer Nachricht über die Direktverbindung (P2P).
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/parts/chatp2p.dart 89 offene Zeilen - der Empfang
-// ueber den direkten Kanal war ungetestet.
+// über den direkten Kanal war ungetestet.
 //
-// DER WEG: Der WebRTC-Dienst spricht ueber die Anbieter
+// DER WEG: Der WebRTC-Dienst spricht über die Anbieter
 // ([webRTCServiceProvider]) - der Test zieht einen Ersatz ein, dessen
 // eingehende Nachrichten er selbst schiebt. So kommt eine Nachricht
-// an, ohne dass zwei echte Geraete noetig sind.
+// an, ohne dass zwei echte Geräte nötig sind.
 //
 // DER GRUND: Der Empfang ist der heikelste Teil des Chats:
 //   * eine Nachricht darf nicht doppelt ankommen (der P2P-Kanal UND
-//     der Relay-Weg koennen dieselbe Nachricht bringen),
+//     der Relay-Weg können dieselbe Nachricht bringen),
 //   * die Nachrichten-ID des Senders muss erhalten bleiben (sonst
-//     funktioniert "Nachricht fuer alle loeschen" nicht),
+//     funktioniert "Nachricht für alle löschen" nicht),
 //   * ein Eisbrecher muss als solcher erkannt werden.
 import 'dart:async';
 
@@ -71,7 +71,7 @@ class FakeWebRTCService extends WebRTCService {
 
 void main() {
   // DER STIMMUNGS-DIENST: Der Chat zeigt die Stimmungskarte - ohne den
-  // Client schlaegt der Aufbau fehl.
+  // Client schlägt der Aufbau fehl.
   moodClient = supabase.SupabaseClient(
     'https://example.supabase.co',
     'test-key',
@@ -162,7 +162,7 @@ void main() {
       );
       addTearDown(() => webrtc.schliessen());
 
-      // DER PARTNER schickt eine Nachricht (ueber den direkten Kanal).
+      // DER PARTNER schickt eine Nachricht (über den direkten Kanal).
       webrtc.empfange(
         buildEnvelope(id: 'msg-1', kind: WireKind.text, text: 'Hallo du!'),
       );
@@ -172,7 +172,7 @@ void main() {
       expect(tester.takeException(), isNull);
       // DIE NACHRICHT: Sie steht im Verlauf. (Der Text steht nicht
       // zwingend im Baum - die Liste baut nur die sichtbaren
-      // Eintraege, und die neue Nachricht liegt ganz unten.)
+      // Einträge, und die neue Nachricht liegt ganz unten.)
       final angekommen = chat.notifier
           .messagesFor(chat.match.id)
           .where((m) => m.text == 'Hallo du!')
@@ -185,7 +185,7 @@ void main() {
             'Kanal ist der Normalfall.',
       );
       // Und die Nachrichten-ID des Senders bleibt erhalten (das macht
-      // "Nachricht fuer alle loeschen" moeglich).
+      // "Nachricht für alle löschen" möglich).
       expect(angekommen.first.id, 'msg-1');
     });
 

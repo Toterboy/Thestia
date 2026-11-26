@@ -1,30 +1,30 @@
-// Beweis: die erste Nachricht einer unbekannten Person laesst sich
-// nicht entschluesseln.
+// Beweis: die erste Nachricht einer unbekannten Person lässt sich
+// nicht entschlüsseln.
 //
 // BEFUND (07.11.2026, Betreiber): "Nachrichten kommen noch immer nicht
 // an." - und die Ursache liegt nicht im Relay, sondern in der
-// Verschluesselung.
+// Verschlüsselung.
 //
-// DIE URSACHE: Beim Verschluesseln benutzt die App den SessionCipher.
-// DER erzeugt immer eine Nachricht vom Typ "whisper" - sie traegt den
-// PreKey des Empfaengers NICHT mit.
+// DIE URSACHE: Beim Verschlüsseln benutzt die App den SessionCipher.
+// DER erzeugt immer eine Nachricht vom Typ "whisper" - sie trägt den
+// PreKey des Empfängers NICHT mit.
 //
-// Der Empfaenger kann aber nur mit "decryptFromSignal" entschluesseln -
+// Der Empfänger kann aber nur mit "decryptFromSignal" entschlüsseln -
 // und DAS wirft einen NoSessionException, wenn es keine Session mit dem
 // Absender hat. Die Session entsteht aber nur, wenn
-//  a) der Empfaenger selbst das Bundle des Absenders holt, oder
+//  a) der Empfänger selbst das Bundle des Absenders holt, oder
 //  b) eine PreKey-Nachricht eintrifft (die es nie gibt, siehe oben).
 //
-// Also: Die ERSTE Nachricht von A an B ist nicht entschluesselbar -
+// Also: Die ERSTE Nachricht von A an B ist nicht entschlüsselbar -
 // ausser B hat vorher selbst an A geschrieben. Beide Wege (Direktkanal
 // und Relay) sind betroffen.
 //
 // DER TEST beweist das mit den echten Bausteinen der Bibliothek:
 //   1. A baut eine Session mit B auf (so wie die App das beim Senden
-//      macht) und verschluesselt eine Nachricht.
-//   2. B versucht zu entschluesseln -> es SCHEITERT (NoSessionException).
+//      macht) und verschlüsselt eine Nachricht.
+//   2. B versucht zu entschlüsseln -> es SCHEITERT (NoSessionException).
 //   3. B holt jetzt seinerseits das Bundle von A (der Weg, den die App
-//      beim Empfang gehen muss) und entschluesselt -> es KLAPPT.
+//      beim Empfang gehen muss) und entschlüsselt -> es KLAPPT.
 
 import 'dart:convert';
 import 'dart:typed_data';
@@ -110,14 +110,14 @@ void main() {
       final builder = SessionBuilder.fromSignalStore(a.store, b.address);
       await builder.processPreKeyBundle(b.bundle());
 
-      // 2) A verschluesselt - das ist genau das, was die App tut.
+      // 2) A verschlüsselt - das ist genau das, was die App tut.
       final cipher = SessionCipher.fromStore(a.store, b.address);
       final nachricht = await cipher.encrypt(
         Uint8List.fromList(utf8.encode('Hallo!')),
       );
 
-      // Die ERSTE Nachricht einer Sitzung traegt den PreKey mit. Das ist
-      // der Punkt: nur so kann der Empfaenger die Sitzung aufbauen, ohne
+      // Die ERSTE Nachricht einer Sitzung trägt den PreKey mit. Das ist
+      // der Punkt: nur so kann der Empfänger die Sitzung aufbauen, ohne
       // selbst das Bundle des Absenders zu holen.
       expect(
         nachricht.getType(),
@@ -127,7 +127,7 @@ void main() {
             'Empfaenger keine Sitzung aufbauen.',
       );
 
-      // 3) B entschluesselt - OHNE vorher eine Sitzung zu haben. Die
+      // 3) B entschlüsselt - OHNE vorher eine Sitzung zu haben. Die
       //    Sitzung entsteht aus der PreKey-Nachricht heraus.
       final empfaenger = SessionCipher.fromStore(b.store, a.address);
       final klartext = await empfaenger.decrypt(
@@ -138,7 +138,7 @@ void main() {
 
     test('ab der zweiten Nachricht reicht die aufgebaute Sitzung', () async {
       // Der Weg, den die App beim Empfang gehen MUSS: holt das Bundle
-      // des Absenders und baut die Session, bevor sie entschluesselt.
+      // des Absenders und baut die Session, bevor sie entschlüsselt.
       final builder = SessionBuilder.fromSignalStore(a.store, b.address);
       await builder.processPreKeyBundle(b.bundle());
 
@@ -147,17 +147,17 @@ void main() {
         Uint8List.fromList(utf8.encode('Hallo!')),
       );
 
-      // B entschluesselt die erste Nachricht - daraus entsteht die
+      // B entschlüsselt die erste Nachricht - daraus entsteht die
       // Sitzung (der PreKey steckt in der Nachricht).
       final empfaenger = SessionCipher.fromStore(b.store, a.address);
       await empfaenger.decrypt(nachricht as PreKeySignalMessage);
 
-      // Auch die ZWEITE Nachricht traegt noch den PreKey: der Absender
-      // weiss nicht, ob die erste angekommen ist (erst wenn die
-      // Gegenseite zurueckschreibt, ist die PreKey-Nachricht
-      // bestaetigt). Deshalb ist auch die zweite eine
+      // Auch die ZWEITE Nachricht trägt noch den PreKey: der Absender
+      // weiß nicht, ob die erste angekommen ist (erst wenn die
+      // Gegenseite zurückschreibt, ist die PreKey-Nachricht
+      // bestätigt). Deshalb ist auch die zweite eine
       // PreKeySignalMessage - und genau DESHALB liest die App den Typ
-      // aus der Datenbank und waehlt danach den Entschluesselungsweg.
+      // aus der Datenbank und wählt danach den Entschlüsselungsweg.
       final zweite = await cipher.encrypt(
         Uint8List.fromList(utf8.encode('Noch eine!')),
       );

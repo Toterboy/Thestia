@@ -1,18 +1,18 @@
-// Tests fuer den gemeinsamen Profilbild-Baustein.
+// Tests für den gemeinsamen Profilbild-Baustein.
 //
 // BEFUND (07.11.2026, Betreiber):
 //   * "doppeltes Profilbild"
 //   * "Die Profilvorschau soll dem entsprechen, was auch andere wirklich
-//     sehen koennen."
+//     sehen können."
 //
-// WARUM ueberhaupt ein Baustein: Das Profilbild wurde an mehreren
+// WARUM überhaupt ein Baustein: Das Profilbild wurde an mehreren
 // Stellen nachgebaut. Die eine zeichnete einen Kreis (112 px), die
 // andere ein abgerundetes Rechteck (118 x 152) - die Vorschau sah also
 // anders aus als das Original. Zwei getrennte Nachbauten sind der
-// Grund fuer solche Abweichungen: sie laufen auseinander, sobald eine
-// Stelle geaendert wird.
+// Grund für solche Abweichungen: sie laufen auseinander, sobald eine
+// Stelle geändert wird.
 //
-// Dieser Test haelt beide Eigenschaften fest:
+// Dieser Test hält beide Eigenschaften fest:
 //   1. Das Bild hat IMMER dieselbe Form (nicht "mal Kreis, mal
 //      Rechteck").
 //   2. Der Geburtstagsrahmen erscheint genau dann, wenn heute

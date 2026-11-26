@@ -88,7 +88,7 @@ class _PresetApp {
   final bool recommended;
 
   /// Das Symbol der App (NUTZERWUNSCH 01.11.2026: "Den Auswahlscreen
-  /// bei Mit anderen verbinden etwas schoener gestalten").
+  /// bei Mit anderen verbinden etwas schöner gestalten").
   ///
   /// Eine Liste von Schaltern ohne Symbol ist eine Liste von Schaltern.
   /// Mit Symbol erkennt man die App auf einen Blick - das ist der
@@ -176,7 +176,7 @@ class _ContactShareFormState extends ConsumerState<_ContactShareForm> {
   final List<_CustomControllers> _customs = [];
   bool _saving = false;
 
-  /// Loescht die Zwischenablage nach dem Kopieren (siehe [_copy]).
+  /// Löscht die Zwischenablage nach dem Kopieren (siehe [_copy]).
   Timer? _clipboardTimer;
 
   @override
@@ -353,8 +353,8 @@ class _ContactShareFormState extends ConsumerState<_ContactShareForm> {
   /// Zwischenzeit nichts anderes kopiert wurde.
   ///
   /// Telefonnummer und Handles sind personenbezogene Daten. Sie stehen
-  /// danach zwar noch in der App, aber nicht mehr fuer jeden, der den
-  /// Bildschirm entsperrt. Dasselbe Muster nutzt der 2FA-Screen fuer
+  /// danach zwar noch in der App, aber nicht mehr für jeden, der den
+  /// Bildschirm entsperrt. Dasselbe Muster nutzt der 2FA-Screen für
   /// das Einmal-Secret.
   void _scheduleClipboardClear(String text) {
     _clipboardTimer?.cancel();
@@ -471,7 +471,7 @@ class _ContactShareFormState extends ConsumerState<_ContactShareForm> {
                   color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 6),
-                // Flexible: bei grosser Schrift waechst der Text ueber
+                // Flexible: bei großer Schrift wächst der Text über
                 // die Zeile hinaus (RenderFlex-Overflow, gefunden beim
                 // Accessibility-Test mit 3,2-facher Schrift).
                 Flexible(
@@ -568,7 +568,7 @@ class _ContactShareFormState extends ConsumerState<_ContactShareForm> {
               ),
               const SizedBox(width: 8),
               // Beide Knöpfe teilen sich die Breite: Bei 3,2x Schrift
-              // waere der zweite Knopf breiter als der Bildschirm
+              // wäre der zweite Knopf breiter als der Bildschirm
               // (RenderFlex-Overflow, gefunden im Accessibility-Test).
               Expanded(
                 child: OutlinedButton.icon(

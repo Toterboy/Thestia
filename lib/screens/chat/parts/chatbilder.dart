@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -20,7 +20,7 @@ extension _ChatBilder on _ChatDetailScreenState {
         title: Text(L10n.t(context, 'chat.imageSend')),
         content: Text(L10n.t(context, 'chat.imageSourcePrompt')),
         // v0.9.0-Feedback: Buttons volle Breite, untereinander,
-        // Abbrechen ganz unten (vorher quetschten sie sich in eine Reihe).
+        // Abbrechen ganz unten (vorher qütschten sie sich in eine Reihe).
         actions: [
           FilledButton.tonal(
             onPressed: () => Navigator.of(ctx).pop('camera'),

@@ -1,17 +1,17 @@
-// Der Konto-Loesch-Ablauf (der Weg aus den Einstellungen und aus dem
+// Der Konto-Lösch-Ablauf (der Weg aus den Einstellungen und aus dem
 // Datenschutz-Bereich).
 //
 // ANLASS (22.11.2026): lib/screens/privacy/delete_account_action.dart
 // war mit 0 % Abdeckung ungetestet - und der Ablauf ist sicherheits-
-// relevant: das Loeschen eines Kontos braucht eine Bestaetigung, und
-// bei aktivem 2FA zusaetzlich eine TOTP-Bestaetigung (ASVS 7.5.3).
+// relevant: das Löschen eines Kontos braucht eine Bestätigung, und
+// bei aktivem 2FA zusätzlich eine TOTP-Bestätigung (ASVS 7.5.3).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ohne 2FA: der Bestaetigungsdialog erscheint, "Abbrechen" loescht
+// WAS HIER GEPRÜFT WIRD:
+//   * ohne 2FA: der Bestätigungsdialog erscheint, "Abbrechen" löscht
 //     nichts,
 //   * mit 2FA: zuerst der TOTP-Dialog, ein falscher Code bricht ab,
-//   * die Bestaetigung loescht das Konto und fuehrt zur Startseite,
-//   * ein Fehler beim Loeschen wird dem Nutzer gemeldet (nicht
+//   * die Bestätigung löscht das Konto und fährt zur Startseite,
+//   * ein Fehler beim Löschen wird dem Nutzer gemeldet (nicht
 //     verschluckt).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,7 +43,7 @@ void main() {
     mockKeystore();
     // HIVE: Der Auth-Provider räumt nach dem Löschen lokal auf
     // (Schlüssel, Vorab-Schlüssel, Verifizierung). Ohne Hive wirft
-    // dieser Aufraeum nach dem Test - und der Test waere rot, obwohl
+    // dieser Aufräum nach dem Test - und der Test wäre rot, obwohl
     // die Löschung geklappt hat.
     await mockHive();
     server = FakeSupabaseServer(userId: 'ich');
@@ -65,7 +65,7 @@ void main() {
     server.zeilen.clear();
   });
 
-  /// Baut den Bildschirm mit dem Loesch-Knopf.
+  /// Baut den Bildschirm mit dem Lösch-Knopf.
   Future<TestAuth> zeige(
     WidgetTester tester, {
     MfaStatus mfa = const MfaStatus.initial(),
@@ -166,8 +166,8 @@ void main() {
 
     // DER AUFRÄUM DES AUTH-PROVIDERS: Er räumt danach lokal auf
     // (Hive ist im Test nicht initialisiert). Dieser Fehler kommt
-    // NACH dem Test und darf ihn nicht kippen - die Loeschung selbst
-    // ist oben geprueft.
+    // NACH dem Test und darf ihn nicht kippen - die Löschung selbst
+    // ist oben geprüft.
     await tester.pump(const Duration(milliseconds: 100));
     tester.takeException();
   });
@@ -250,7 +250,7 @@ void main() {
           'ist - sonst glaubt er, sein Konto sei weg.',
     );
 
-    // Der Aufraeum des Auth-Providers (Hive ist im Test nicht
+    // Der Aufräum des Auth-Providers (Hive ist im Test nicht
     // initialisiert) darf den Test nicht kippen.
     await tester.pump(const Duration(milliseconds: 100));
     tester.takeException();

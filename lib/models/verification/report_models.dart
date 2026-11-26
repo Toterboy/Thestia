@@ -17,9 +17,9 @@ enum ReportType {
   other('Sonstiges'),
   @HiveField(5)
   wrongAge('Falsches Alter / Alter stimmt nicht'),
-  // v0.10.0: Play verlangt fuer Dating- und Random-Chat-Apps einen
-  // eigenen Meldeweg fuer Hinweise auf Kindesmissbrauch (CSAE/CSAM) -
-  // unabhaengig davon, ob die App altersbeschränkt ist. Die
+  // v0.10.0: Play verlangt für Dating- und Random-Chat-Apps einen
+  // eigenen Meldeweg für Hinweise auf Kindesmissbrauch (CSAE/CSAM) -
+  // unabhängig davon, ob die App altersbeschränkt ist. Die
   // HiveField-Nummer bleibt fortlaufend; bestehende gespeicherte
   // Meldungen bleiben lesbar.
   @HiveField(6)

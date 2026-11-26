@@ -1,6 +1,6 @@
-// Der Transit-Provider im Hintergrund und beim Zurueckkommen.
+// Der Transit-Provider im Hintergrund und beim Zurückkommen.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/providers/transit/transit_provider.dart 70 offene Zeilen. Der
 // bestehende Test deckt die Selbstangaben, den Modus und die
 // Server-Aufrufe ab - offen war der LEBENSZYKLUS: was passiert, wenn
@@ -8,14 +8,14 @@
 //
 // DER GRUND, WARUM DAS WICHTIG IST: Das Advertising lief im Hintergrund
 // weiter (der native Zyklus sendet bis zu 45 Minuten im ~100-ms-Takt).
-// Und mit demselben Token weiterzumachen wuerde verraten, dass das
-// Geraet zwischendurch nur still war - das ist genau die Kontinuitaet,
+// Und mit demselben Token weiterzumachen würde verraten, dass das
+// Gerät zwischendurch nur still war - das ist genau die Kontinuität,
 // nach der ein Beobachter sucht.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * im Hintergrund schweigt das Funk-Radio,
-//   * beim Zurueckkommen kommt ein FRISCHES Token,
-//   * ohne aktiven Radar passiert beim Zurueckkommen nichts.
+//   * beim Zurückkommen kommt ein FRISCHES Token,
+//   * ohne aktiven Radar passiert beim Zurückkommen nichts.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -73,7 +73,7 @@ void main() {
       notifier.didChangeAppLifecycleState(AppLifecycleState.resumed);
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      // DER HEARTBEAT: Er traegt das Token, das der Server fuer die
+      // DER HEARTBEAT: Er trägt das Token, das der Server für die
       // Anwesenheit braucht ("hat der andere mich gesehen?").
       final heartbeats = server.rpcAufrufe
           .where((c) => c['funktion'] == 'transit_presence_heartbeat')

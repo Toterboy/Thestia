@@ -3,7 +3,7 @@ import 'package:thestia/widgets/common/birthday_style.dart';
 import '../support/l10n_quellen.dart';
 import '../support/quelltext.dart';
 
-/// Tests fuer den Geburtstags-Stil und die neue Einrichtungs-Seite.
+/// Tests für den Geburtstags-Stil und die neue Einrichtungs-Seite.
 ///
 /// Anlass: der Stil wurde bei einer frischen Registrierung nie abgefragt
 /// (erst beim App-Update), und die Vorschau war eine 128-px-Kachel -
@@ -55,8 +55,8 @@ void main() {
     });
 
     test('die Seite nutzt die GROSSE Vorschau', () {
-      // Gegenprobe zur Absicht: ohne `large: true` waere es wieder die
-      // 128-px-Kachel, und der gemeldete Fehler bestuende sich.
+      // Gegenprobe zur Absicht: ohne `large: true` wäre es wieder die
+      // 128-px-Kachel, und der gemeldete Fehler bestände sich.
       expect(src.contains('large: true'), isTrue);
     });
 
@@ -81,7 +81,7 @@ void main() {
 
     test('die Passkey- und MFA-Sprungziele passen zur neuen Reihenfolge', () {
       // Zwei neue Seiten (Geburtstag, Musik) schieben beide Ziele um zwei.
-      // Ein alter Zielindex wuerde den Nutzer auf die 2FA-Seite statt auf
+      // Ein alter Zielindex würde den Nutzer auf die 2FA-Seite statt auf
       // den Passkey schicken.
       expect(src.contains('jumpToPage(7); // Passkey-Seite'), isTrue);
       expect(src.contains('jumpToPage(8); // 2FA-Seite'), isTrue);
@@ -90,14 +90,14 @@ void main() {
     });
 
     test('der Geburtstags-Stil wird serverseitig gespeichert', () {
-      // Nur lokal gespeichert waer nach dem Neustart weg - dasselbe
+      // Nur lokal gespeichert wär nach dem Neustart weg - dasselbe
       // Muster wie beim fehlenden Profilbild-Write.
       expect(src.contains("'birthday_style': _birthdayStyle"), isTrue);
     });
 
     test('der Stil wird auch beim Abschluss gesichert', () {
       // Wer auf der Stilauswahl "Weiter" nicht tippt und stattdessen
-      // ueber den Security-Nudge abschliesst, darf den Stil nicht
+      // über den Security-Nudge abschliesst, darf den Stil nicht
       // verlieren.
       expect(src.contains('await _saveBirthdayStyle();'), isTrue);
     });
@@ -162,7 +162,7 @@ void main() {
     });
 
     test('Musik wird auch beim Abschluss gesichert', () {
-      // Wer nicht auf "Weiter" tippt und ueber den Security-Nudge
+      // Wer nicht auf "Weiter" tippt und über den Security-Nudge
       // abschliesst, darf den Geschmack nicht verlieren.
       expect(setupSrc.contains('await _saveMusicTaste();'), isTrue);
     });

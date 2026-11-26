@@ -10,15 +10,15 @@ import 'package:thestia/services/chat/encryption_service.dart';
 import 'package:thestia/services/verification/guardian_service.dart';
 import 'package:thestia/widgets/settings/guardian_section.dart';
 
-/// Tests fuer den Elternbereich (BEFUND 06.11.2026).
+/// Tests für den Elternbereich (BEFUND 06.11.2026).
 ///
-/// BEFUND (Betreiber): "Der Elternbereich laedt ewig lang." Ursache:
+/// BEFUND (Betreiber): "Der Elternbereich lädt ewig lang." Ursache:
 /// Der Abruf schlug fehl (keine Sitzung, Netz, Server) - und der
-/// Bildschirm zeigte fuer JEDEN Fehler einen endlosen Ladekreis. Der
+/// Bildschirm zeigte für JEDEN Fehler einen endlosen Ladekreis. Der
 /// Nutzer hatte keinen Weg aus dem Bereich heraus.
 ///
 /// DIESE TESTS halten fest:
-///   1) Ein Fehler ist von "laedt noch" unterscheidbar.
+///   1) Ein Fehler ist von "lädt noch" unterscheidbar.
 ///   2) Der Bildschirm bietet einen Ausweg (erneut versuchen).
 ///   3) Der Provider versucht es selbst noch einmal.
 class _FehlgeschlagenerService extends GuardianService {
@@ -47,17 +47,17 @@ class _NichtGenutzt extends SupabaseClient {
       );
 }
 
-/// Die Verschluesselung ohne Keystore.
+/// Die Verschlüsselung ohne Keystore.
 ///
-/// Der Elternbereich hoert auf den Auth-Provider - und der Auth-Provider
-/// braucht die Verschluesselung. Im Test gibt es keinen Keystore
+/// Der Elternbereich hört auf den Auth-Provider - und der Auth-Provider
+/// braucht die Verschlüsselung. Im Test gibt es keinen Keystore
 /// (MissingPluginException), deshalb wird sie hier ersetzt.
 class _OhneKeystore extends EncryptionService {
   @override
   Future<void> get initialized => Future<void>.value();
 }
 
-/// Die Provider-Overrides fuer alle Tests in dieser Datei.
+/// Die Provider-Overrides für alle Tests in dieser Datei.
 List<Override> _overrides(_FehlgeschlagenerService service) => [
   guardianServiceProvider.overrideWithValue(service),
   encryptionServiceProvider.overrideWithValue(_OhneKeystore()),

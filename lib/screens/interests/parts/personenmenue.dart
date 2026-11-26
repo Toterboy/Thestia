@@ -1,30 +1,30 @@
 // Der Teil '_PersonenMenue'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
 
 part of '../interessen_screen.dart';
 
-/// Die Werkzeuge fuer eine Person in einer Liste.
+/// Die Werkzeuge für eine Person in einer Liste.
 ///
 /// NUTZERWUNSCH (01.11.2026): "Die Bearbeitungstools auf der Interessen
 /// Seite sehe ich auch nicht. Wenn sie mit Funken erst sichtbar werden
-/// ist okay, aber sonst noch ergaenzen, also entfernen, blockieren,
+/// ist okay, aber sonst noch ergänzen, also entfernen, blockieren,
 /// melden, anpinnen, archivieren usw."
 ///
-/// Bei den FUNKEN gab es diese Werkzeuge schon (das Drei-Punkte-Menue
+/// Bei den FUNKEN gab es diese Werkzeuge schon (das Drei-Punkte-Menü
 /// der Funken-Kachel). Bei den LIKES fehlten sie - und die waren nur
-/// erreichbar, wenn ueberhaupt ein Funke existierte. Wer nur geliked
+/// erreichbar, wenn überhaupt ein Funke existierte. Wer nur geliked
 /// hat, konnte nichts machen.
 ///
-/// Das Menue haengt deshalb die allgemeinen Aktionen (Profil,
+/// Das Menü hängt deshalb die allgemeinen Aktionen (Profil,
 /// Blockieren, Melden) an die aktionsspezifischen (entfernen,
-/// ignorieren, zurueck liken) an - und wird von beiden Kachelarten
+/// ignorieren, zurück liken) an - und wird von beiden Kachelarten
 /// benutzt, damit es an beiden gleich aussieht.
 class _PersonenMenue extends ConsumerWidget {
   const _PersonenMenue({
@@ -38,13 +38,13 @@ class _PersonenMenue extends ConsumerWidget {
   final String personId;
   final String personName;
 
-  /// Die aktionsspezifischen Eintraege.
+  /// Die aktionsspezifischen Einträge.
   final List<_MenueEintrag> aktionen;
 
-  /// Aufruf fuer einen aktionsspezifischen Eintrag.
+  /// Aufruf für einen aktionsspezifischen Eintrag.
   final void Function(String wert)? onAktion;
 
-  /// Bei einem laufenden Vorgang ist das Menue gesperrt.
+  /// Bei einem laufenden Vorgang ist das Menü gesperrt.
   final bool aktiv;
 
   @override

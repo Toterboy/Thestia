@@ -82,7 +82,7 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
   void initState() {
     super.initState();
     _loadRadioCleanup();
-    // Die Namens-Entscheidung (BEFUND 10.11.2026): Beim ersten Oeffnen
+    // Die Namens-Entscheidung (BEFUND 10.11.2026): Beim ersten Öffnen
     // des Transit-Radars fragen, ob der Name sichtbar sein soll. Der
     // Dialog kommt erst, wenn der Bildschirm steht (showDialog braucht
     // einen Kontext im Baum).
@@ -101,9 +101,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     super.dispose();
   }
 
-  /// Universeller Tag-Picker (v0.9.0): 1-3 Basis-Merkmale; fuer farbige
+  /// Universeller Tag-Picker (v0.9.0): 1-3 Basis-Merkmale; für farbige
   /// Merkmale folgt OPTIONAL eine Farbwahl (überspringbar, wenn man die
-  /// Farbe vergessen hat). Rueckgabe: Slugs (mit ':farbe' wenn gewaehlt)
+  /// Farbe vergessen hat). Rückgabe: Slugs (mit ':farbe' wenn gewählt)
   /// plus optionale freie Ergänzung, oder null (Abbruch).
   /// [requireSelection] = min. 1 Merkmal Pflicht. Mit [customHintKey] wird
   /// zusätzlich ein eigenes Textfeld (max. 140 Zeichen) angeboten (v0.9.1:
@@ -130,13 +130,13 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     final transit = ref.watch(transitProvider);
     final myAge = ref.watch(profileProvider).age;
 
-    // NUTZERWUNSCH (Build 30): Transit Spark ausschliesslich ab 18.
+    // NUTZERWUNSCH (Build 30): Transit Spark ausschließlich ab 18.
     // Das ist bewusst ein Fail-closed-Gate: kein Geburtsdatum bedeutet
-    // "nicht nachgewiesen volljaehrig" und wird genauso gesperrt wie
-    // ein Minderjaehriger-Alter. Genau so arbeitet auch die Datenbank
-    // (transit_spark_adult() in Migration 131) - sonst waere die
+    // "nicht nachgewiesen volljährig" und wird genauso gesperrt wie
+    // ein Minderjähriger-Alter. Genau so arbeitet auch die Datenbank
+    // (transit_spark_adult() in Migration 131) - sonst wäre die
     // Server-Sperrе allein nicht ausreichend, weil das Profil sonst
-    // bis zum naechsten Laden lokal "volljaehrig" aussaehe.
+    // bis zum nächsten Laden lokal "volljährig" aussähe.
     if (myAge == null || myAge < 18) {
       return Scaffold(
         appBar: AppBar(title: Text(L10n.t(context, 'transit.title'))),
@@ -261,7 +261,7 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
                 ),
               ],
               const SizedBox(height: 24),
-              // Der ungefaehre Ort (v0.10.1, Betreiber).
+              // Der ungefähre Ort (v0.10.1, Betreiber).
               _placePicker(context),
               const SizedBox(height: 16),
               // Modus-Auswahl (v0.9.0): Bahn/Café vs. Messe/Event - der
@@ -462,7 +462,7 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     );
   }
 
-  /// Die Orte, die man nennen kann (frei gewaehlt - kein Standort).
+  /// Die Orte, die man nennen kann (frei gewählt - kein Standort).
   static const List<String> _placeArten = [
     'zug',
     'messe',
@@ -475,19 +475,19 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
   ///
   /// DER GRUND: In einer Erweiterung darf `setState` nicht aufgerufen
   /// werden (der Analyser erlaubt es nur in Instanzmitgliedern einer
-  /// State-Klasse). Diese Methode gehoert zur Klasse - die Erweiterung
+  /// State-Klasse). Diese Methode gehört zur Klasse - die Erweiterung
   /// ruft sie auf.
   void _setzeState(VoidCallback fn) => setState(fn);
 }
 
-/// Radar laeuft und der Nutzer verlaesst die Seite: nachfragen, ob der
-/// Scan gestoppt oder weiterlaufen soll - mit Merk-Checkbox ("zukuenftig
+/// Radar läuft und der Nutzer verlässt die Seite: nachfragen, ob der
+/// Scan gestoppt oder weiterlaufen soll - mit Merk-Checkbox ("zukünftig
 /// automatisch so beibehalten"). Eine gespeicherte Entscheidung wird ohne
 /// Dialog angewendet; Abbrechen liefert `false` und der Aufrufer bleibt.
 ///
 /// Bewusst eine Top-Level-Funktion und keine Screen-Methode: derselbe
-/// Dialog muss auch greifen, wenn der Wechsel ueber die Bottom-Navigation
-/// laeuft. Dort wird der Radar-Screen nicht disposed, sein `dispose()`
+/// Dialog muss auch greifen, wenn der Wechsel über die Bottom-Navigation
+/// läuft. Dort wird der Radar-Screen nicht disposed, sein `dispose()`
 /// also nicht aufgerufen - vorher lief der Presence-Leave beim Tabsprung
 /// deshalb am vorbei und das Token blieb serverseitig liegen.
 Future<bool> confirmTransitExit(
@@ -576,37 +576,37 @@ Future<bool> confirmTransitExit(
 // Wer "Hemd" suchte, musste alles durchsehen.
 //
 // JETZT:
-//   * Suche ueber Slug, Schreibweise und Uebersetzung
+//   * Suche über Slug, Schreibweise und Übersetzung
 //   * Filter je Kategorie
 //   * Anzeige gruppiert nach Kategorie
-//   * hoechstens EIN Wert je Kategorie - "Hemd" und "Bluse" gleichzeitig
-//     waere keine Angabe, sondern Unsinn. Die Server-Regel (Migration
+//   * höchstens EIN Wert je Kategorie - "Hemd" und "Bluse" gleichzeitig
+//     wäre keine Angabe, sondern Unsinn. Die Server-Regel (Migration
 //     149) sagt dasselbe, sonst lehnt die RPC ab.
-//   * eigene Farbpaletten fuer Haar und Augen
-/// Oeffnet die Merkmals-Auswahl von Transit Spark (der Tag-Picker).
+//   * eigene Farbpaletten für Haar und Augen
+/// Öffnet die Merkmals-Auswahl von Transit Spark (der Tag-Picker).
 ///
 /// v0.10.0: Die Auswahl ist in einen eigenen Widget gezogen. Sie
-/// braucht Suchfeld, Kategoriefilter und einen Zaehler - das passt
+/// braucht Suchfeld, Kategoriefilter und einen Zähler - das passt
 /// nicht mehr in einen StatefulBuilder-Block.
 ///
 /// BEFUND (06.11.2026, Betreiber): "Bei Transit Spark mit 'Wie siehst
-/// du aus' hat die Ueberschrift in der Statusleiste gesteckt." Das
-/// Sheet ist hoeher als der Bildschirm (Suchfeld, Kategoriefilter,
+/// du aus' hat die Überschrift in der Statusleiste gesteckt." Das
+/// Sheet ist höher als der Bildschirm (Suchfeld, Kategoriefilter,
 /// Merkmale, Freitextfeld) und reicht deshalb bis an den oberen Rand -
-/// ohne SafeArea liegt die Ueberschrift unter der Statusleiste des
+/// ohne SafeArea liegt die Überschrift unter der Statusleiste des
 /// Systems.
 ///
-/// `useSafeArea: true` rueckt den Inhalt des Sheets unterhalb der
+/// `useSafeArea: true` rückt den Inhalt des Sheets unterhalb der
 /// Systemleiste ein. Ohne das ragt der Titel in die Statusleiste.
 ///
 /// BEFUND (07.11.2026): Der Betreiber meldete danach erneut, die
-/// Ueberschrift liege noch immer in der Statusleiste. Die Ursache war
+/// Überschrift liege noch immer in der Statusleiste. Die Ursache war
 /// nicht der Code, sondern die getestete Datei: die Admin-APKs waren
 /// noch Build 33 vom 06.11. 19:00 - also VOR diesem Fix (das Gate
 /// `tool/checks/check_release_artifacts.py` meldet es heute).
 ///
-/// Oeffentlich, damit der Test den WEG geht, den die App geht - mit
-/// demselben `useSafeArea`. Eine Nachbildung im Test wuerde nur pruefen,
+/// Öffentlich, damit der Test den WEG geht, den die App geht - mit
+/// demselben `useSafeArea`. Eine Nachbildung im Test würde nur prüfen,
 /// dass Flutter das kann, nicht dass die App es tut.
 @visibleForTesting
 Future<({List<String> tags, String note})?> showTransitTagPickerSheet(

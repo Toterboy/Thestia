@@ -56,15 +56,15 @@ class ImageSafetyResult {
 /// LEBENSZYKLUS: `OrtEnv` und `OrtSession` werden beim ersten Bedarf
 /// (Lazy Loading) einmalig erzeugt und anschließend wiederverwendet.
 /// Das Modell wird als Buffer direkt an ONNX Runtime übergeben
-/// ([OrtSession.fromBuffer]) - keine temporaere Datei nötig.
+/// ([OrtSession.fromBuffer]) - keine temporäre Datei nötig.
 class ImageSafetyService {
   ImageSafetyService._();
 
   static final ImageSafetyService instance = ImageSafetyService._();
 
-  /// Der Test-Haken: Uebernimmt den Befund der lokalen Pruefung.
+  /// Der Test-Haken: Übernimmt den Befund der lokalen Prüfung.
   ///
-  /// DER WEG: Nur der Test setzt das (und wieder zurueck). In der App
+  /// DER WEG: Nur der Test setzt das (und wieder zurück). In der App
   /// ist es immer `null` - dort entscheidet das Modell.
   @visibleForTesting
   static ImageSafetyResult? Function(Uint8List bytes)? classifyOverride;
@@ -124,12 +124,12 @@ class ImageSafetyService {
   /// Vorverarbeitung: Resize auf 224x224 RGB, NCHW-Float32-Tensor,
   /// Pixelwerte normalisiert auf 0..1.
   ///
-  /// DER TEST-HAKEN: [classifyOverride] uebernimmt den Befund, wenn er
+  /// DER TEST-HAKEN: [classifyOverride] übernimmt den Befund, wenn er
   /// gesetzt ist. DER GRUND (19.11.2026): Das Modell liegt als Datei
-  /// bei - im Test gibt es sie nicht, also lieferte die Pruefung immer
+  /// bei - im Test gibt es sie nicht, also lieferte die Prüfung immer
   /// "kein Befund". Genau der Fall "Befund" ist aber der heikelste:
-  /// der Nutzer wird zurueckgewiesen, und der Weg dorthin (Einspruch
-  /// beim Team) war voellig ungetestet.
+  /// der Nutzer wird zurückgewiesen, und der Weg dorthin (Einspruch
+  /// beim Team) war völlig ungetestet.
   Future<ImageSafetyResult?> classifyImage(Uint8List bytes) async {
     final ueberschreibung = classifyOverride;
     if (ueberschreibung != null) return ueberschreibung(bytes);
@@ -206,7 +206,7 @@ class ImageSafetyService {
     var g = planeSize;
     var b = planeSize * 2;
     // WICHTIG (Model-Doku OwenElliott): Farbnorm + Softmax sind IM
-    // GRAPHEN eingebacken - die Pixel muessen als 0..255 uebergeben
+    // GRAPHEN eingebacken - die Pixel müssen als 0..255 übergeben
     // werden, NICHT als 0..1.
     for (var y = 0; y < _inputSize; y++) {
       for (var x = 0; x < _inputSize; x++) {

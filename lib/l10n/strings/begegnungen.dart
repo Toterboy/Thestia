@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsBegegnungen = {
@@ -63,7 +63,7 @@ const Map<String, Map<String, String>> stringsBegegnungen = {
         'die Kontaktadresse auf der Kinderschutz-Seite.',
     'cg.6.title': 'Null-Toleranz bei Kindesmissbrauch',
     'cg.childSafetyLink.body':
-        'Hinweise auf Kindesmissbrauch und Minderjaehrige in Kontakt zu '
+        'Hinweise auf Kindesmissbrauch und Minderjährige in Kontakt zu '
         'bringen: Dafür gibt es eine eigene öffentliche Seite mit einer '
         'benannten Kontaktperson und dem Meldeweg an die zuständigen '
         'Stellen.',

@@ -1,25 +1,25 @@
-// Die ONNX-Inferenz der Alterspruefung (mit den echten Modellen).
+// Die ONNX-Inferenz der Altersprüfung (mit den echten Modellen).
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/services/transit/age_estimation_service.dart 129 offene Zeilen.
 // Die reine Logik (Zwo-Jahres-Regel, Median, Modellausgabe) ist seit dem
 // 19.11.2026 getestet - offen war die KETTE: die Modelle laden, das
-// Bild dekodieren, der Detektor laeuft, der Crop entsteht, das
+// Bild dekodieren, der Detektor läuft, der Crop entsteht, das
 // Altersmodell rechnet.
 //
 // DIE MODELLE SIND ECHT: `assets/models/face_detector.onnx` und
 // `assets/models/age_estimator.onnx` liegen im Bundle. Das ist Absicht:
 // die Kette soll mit demselben Modell laufen wie in der App - ein
-// Ersatz wuerde genau die Fehlerklasse verdecken, um es geht (ein
+// Ersatz würde genau die Fehlerklasse verdecken, um es geht (ein
 // falsch gebautes Tensor sieht man nur mit dem echten Modell).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * beide Modelle laden und die Pruefsummen passen,
-//   * ein Bild ohne Gesicht laeuft durch die Kette (und liefert eine
+// WAS HIER GEPRÜFT WIRD:
+//   * beide Modelle laden und die Prüfsummen passen,
+//   * ein Bild ohne Gesicht läuft durch die Kette (und liefert eine
 //     Schätzung mit faceCount 0 - der Fall "kein Gesicht" darf nicht
-//     haengen),
+//     hängen),
 //   * kaputte Bytes ergeben nichts (kein Absturz),
-//   * das Freigeben der Modelle setzt den Zustand zurueck.
+//   * das Freigeben der Modelle setzt den Zustand zurück.
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -32,7 +32,7 @@ void main() {
   // Binding gibt es kein Bundle.
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  /// Ein einfarbiges Bild (in der Naehe eines Gesichts: grau).
+  /// Ein einfarbiges Bild (in der Nähe eines Gesichts: grau).
   Uint8List bildBytes(int breite, int hoehe) {
     final bild = img.Image(width: breite, height: hoehe);
     img.fill(bild, color: img.ColorRgb8(180, 180, 180));
@@ -129,7 +129,7 @@ void main() {
       await dienst.ensureLoaded();
 
       // EIN GROSSES BILD: Der Weg muss auch bei 2048 Pixel klappen
-      // (das ist die Groesse, die die Kamera liefert).
+      // (das ist die Größe, die die Kamera liefert).
       final ergebnis = await dienst.estimateAge(bildBytes(2048, 1536));
 
       expect(ergebnis, isNotNull);

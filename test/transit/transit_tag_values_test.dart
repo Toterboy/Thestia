@@ -6,11 +6,11 @@
 // du aus screen."
 //
 // UND (derselbe Tag): "wie es die ganze Zeit neue Probleme geben kann,
-// wenn du es immer pruefst. Bitte deck das mit tests besser ab oder
+// wenn du es immer prüfst. Bitte deck das mit tests besser ab oder
 // irgendwie anders sinnvoll"
 //
 // Dieser Test deckt den Weg ab, den die App wirklich geht: Merkmal
-// waehlen, Wert waehlen, und pruefen, DASS als "slug:wert" zurueckkommt
+// wählen, Wert wählen, und prüfen, DASS als "slug:wert" zurückkommt
 // - denn genau so muss es zum Server.
 //
 // Ohne eigenen Token hat der Server keinen Match gefunden (Migration
@@ -26,7 +26,7 @@ import 'package:thestia/screens/swipe/transit_radar_screen.dart';
 void main() {
   group('Die Merkmale der Auswahl', () {
     test('Haare und Augen kommen zuerst', () {
-      // Der Bildschirm heisst "Wie siehst du gerade aus?" - was man im
+      // Der Bildschirm heißt "Wie siehst du gerade aus?" - was man im
       // Gesicht sieht, muss oben stehen. Vorher standen die Haare ganz
       // hinten (nach Ober- und Unterteil).
       final slugs = TransitTagCategory.values.map((k) => k.slug).toList();
@@ -62,9 +62,9 @@ void main() {
     });
 
     test('Haarlaenge und Frisur sind eigene Kategorien', () {
-      // Je Kategorie ist nur EIN Merkmal erlaubt. Haarlaenge und Frisur
+      // Je Kategorie ist nur EIN Merkmal erlaubt. Haarlänge und Frisur
       // sind aber keine Alternative, sondern zwei Angaben - in derselben
-      // Kategorie wuerden sie sich ausschliessen (Migration 188).
+      // Kategorie würden sie sich ausschliessen (Migration 188).
       final laenge = TransitTag.bySlug('hair_length')!;
       final frisur = TransitTag.bySlug('hair_style')!;
       expect(
@@ -79,8 +79,8 @@ void main() {
     });
 
     test('die Haarlaenge und die Frisur haben Werte', () {
-      // Ohne Werte waeren "hair_length" und "hair_style" wertlose
-      // Merkmale ("hat Haarlaenge?").
+      // Ohne Werte wären "hair_length" und "hair_style" wertlose
+      // Merkmale ("hat Haarlänge?").
       final laenge = TransitTag.bySlug('hair_length');
       final frisur = TransitTag.bySlug('hair_style');
       expect(laenge, isNotNull);
@@ -98,8 +98,8 @@ void main() {
     });
 
     test('jeder Wert hat einen deutschen Text', () {
-      // Fehlt ein Text, liefert L10n den Schluessel selbst zurueck -
-      // in der Auswahl stuende dann "lockig" statt "Lockig".
+      // Fehlt ein Text, liefert L10n den Schlüssel selbst zurück -
+      // in der Auswahl stünde dann "lockig" statt "Lockig".
       for (final tag in TransitTag.catalog) {
         for (final wert in tag.availableValues) {
           expect(
@@ -165,25 +165,25 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      // "Frisur" waehlen.
+      // "Frisur" wählen.
       await tippe('Frisur');
 
-      // Jetzt muessen die Werte erscheinen.
+      // Jetzt müssen die Werte erscheinen.
       expect(
         find.text('Lockig'),
         findsOneWidget,
         reason: 'nach der Wahl der Frisur erscheinen keine Werte',
       );
 
-      // "Lockig" waehlen.
+      // "Lockig" wählen.
       await tippe('Lockig');
 
       // Mindestens zwei Merkmale sind Pflicht - der Senden-Knopf ist
-      // sonst deaktiviert. Die Haarlaenge ist das zweite.
+      // sonst deaktiviert. Die Haarlänge ist das zweite.
       await tippe('Haarlänge');
       await tippe('Lang');
 
-      // Und absenden (der Knopf heisst "Funken"). Er liegt am Ende des
+      // Und absenden (der Knopf heißt "Funken"). Er liegt am Ende des
       // Sheet.
       await tester.ensureVisible(find.text('Funken'));
       await tester.pumpAndSettle();
@@ -191,9 +191,9 @@ void main() {
       // Der Knopf muss aktiv sein - zwei Merkmale sind das Minimum.
       //
       // Der Handler wird direkt aufgerufen statt angeklickt: der
-      // Knopf liegt am Ende des Sheets, und im Test waere das ein
-      // Problem der Trefferflaeche, nicht der App. Geprueft wird
-      // die KETTE: Auswahl -> Wert -> Slug -> Rueckgabe.
+      // Knopf liegt am Ende des Sheets, und im Test wäre das ein
+      // Problem der Trefferfläche, nicht der App. Geprüft wird
+      // die KETTE: Auswahl -> Wert -> Slug -> Rückgabe.
       final knopf = tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, 'Funken'),
       );

@@ -1,17 +1,17 @@
-// Render-Tests fuer den Rechts-Screen "Community Regeln".
+// Render-Tests für den Rechts-Screen "Community Regeln".
 //
-// ANLASS: Der Screen ist eine Pflicht-Seite fuer den Play-Store
-// (Kinderschutz-Standards: oeffentlich erreichbare Regeln, benannte
+// ANLASS: Der Screen ist eine Pflicht-Seite für den Play-Store
+// (Kinderschutz-Standards: öffentlich erreichbare Regeln, benannte
 // Kontaktperson, beschriebener Meldeweg). Er wird deshalb rarely
-// geaendert - und genau deshalb ist er geraten: niemand rendert ihn.
+// geändert - und genau deshalb ist er geraten: niemand rendert ihn.
 //
-// Geprueft wird: kein Absturz, kein Render-Overflow, alle sieben
+// Geprüft wird: kein Absturz, kein Render-Overflow, alle sieben
 // Regeln sind erreichbar, der Link zum Kinderschutz steht da, und der
-// Zurueck-Knopf macht das Richtige (pop, wenn es etwas zu poppen gibt -
+// Zurück-Knopf macht das Richtige (pop, wenn es etwas zu poppen gibt -
 // sonst zur Einstellung).
 //
 // Der Link wird NICHT angeklickt: er ruft den url_launcher-Plugin auf,
-// der auf dem Desktop einen echten Browser oeffnen wuerde. Geprueft
+// der auf dem Desktop einen echten Browser öffnen würde. Geprüft
 // wird deshalb die Adresse selbst, nicht der Plugin-Aufruf.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,12 +33,12 @@ const List<String> _regeln = [
 
 /// Router mit den beiden Routen, die der Screen braucht.
 ///
-/// Der Screen holt sich beim Zurueck-Knopf [AppRoutes.settings] - ohne
-/// diese Route wuerde der Knopf ins Leere zeigen.
+/// Der Screen holt sich beim Zurück-Knopf [AppRoutes.settings] - ohne
+/// diese Route würde der Knopf ins Leere zeigen.
 ///
-/// [scale] ist die Schriftgroesse. Die MediaQuery sitzt dabei UNTER
+/// [scale] ist die Schriftgrösse. Die MediaQuery sitzt dabei UNTER
 /// dem MaterialApp: das MaterialApp setzt seine eigene MediaQuery und
-/// wuerde eine aeussere ignorieren.
+/// würde eine äussere ignorieren.
 GoRouter _router({
   String start = AppRoutes.communityGuidelines,
   double scale = 1.0,
@@ -139,15 +139,15 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Kinderschutz und Meldestelle'), findsOneWidget);
       expect(find.text('Kinderschutz-Seite öffnen'), findsOneWidget);
-      // Die Meldestelle wird ausdruecklich beschrieben - der
+      // Die Meldestelle wird ausdrücklich beschrieben - der
       // Play-Store verlangt einen benannten Meldeweg.
       expect(find.textContaining('Meldeweg'), findsOneWidget);
     });
 
     testWidgets('die Adresse der Kinderschutz-Seite stimmt', (tester) async {
-      // Der Plugin-Aufruf wird nicht ausgefuehrt (er wuerde einen
-      // echten Browser oeffnen). Geprueft wird die Adresse selbst -
-      // sie muss oeffentlich erreichbar sein.
+      // Der Plugin-Aufruf wird nicht ausgeführt (er würde einen
+      // echten Browser öffnen). Geprüft wird die Adresse selbst -
+      // sie muss öffentlich erreichbar sein.
       expect(kChildSafetyUrl, 'https://auth.thestia.de/kinderschutz');
       expect(Uri.parse(kChildSafetyUrl).host, 'auth.thestia.de');
     });
@@ -210,7 +210,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Einstellungen'), findsOneWidget);
 
-      // Wie in der App: aus der Einstellung heraus oeffnen.
+      // Wie in der App: aus der Einstellung heraus öffnen.
       await tester.tap(find.text('Regeln oeffnen'));
       await tester.pumpAndSettle();
       expect(find.byType(CommunityGuidelinesScreen), findsOneWidget);

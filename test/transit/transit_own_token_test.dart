@@ -1,22 +1,22 @@
 // Der eigene Token muss zum Server - sonst kann kein Match entstehen.
 //
-// BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine Person bei
+// BEFUND (07.11.2026, Betreiber): "Beide Geräte suchen eine Person bei
 // Transit Spark (Beide haben gleiche beschreibung und beide haben sich
 // gegenseitig blicke getauscht/gefunkt, aber gibt keinen Funken.)"
 //
-// DIE URSACHE: Das Signal enthielt nur die Tokens der GERAETE, die der
+// DIE URSACHE: Das Signal enthielt nur die Tokens der GERÄTE, die der
 // Absender gesehen hat. Gesucht wurde mit genau diesen - zwei
 // Sichtungslisten. Zwei Personen, die nur einander sehen, haben aber
 // disjunkte Sichtungslisten: A sieht B, B sieht A, und die Token-Mengen
-// haben nichts gemeinsam. Mit genau zwei Geraeten war ein Match
-// mathematisch unmoeglich.
+// haben nichts gemeinsam. Mit genau zwei Geräten war ein Match
+// mathematisch unmöglich.
 //
-// DIE LOESUNG: Der eigene Token wird mitgeschickt (Migration 185). Damit
-// laesst sich die Frage beantworten, die die Sache ueberhaupt meint:
+// DIE LÖSUNG: Der eigene Token wird mitgeschickt (Migration 185). Damit
+// lässt sich die Frage beantworten, die die Sache überhaupt meint:
 // "HAT DER ANDERE MICH GESEHEN?" - denn der eigene Token des anderen
 // steht in dessen Sichtungsliste, wenn der andere mich gesehen hat.
 //
-// Diese Datei prueft die CLIENT-Seite. Die Server-Seite prueft der
+// Diese Datei prüft die CLIENT-Seite. Die Server-Seite prüft der
 // Selbsttest in der Migration selbst.
 
 import 'package:flutter_test/flutter_test.dart';
@@ -45,8 +45,8 @@ void main() {
 
     test('Ohne den eigenen Token wird gar nicht erst gesendet', () {
       // Ein Versuch ohne den eigenen Token kann keinen Match finden.
-      // Er wuerde den Nutzer mit einem stillen "kein Match" im Glauben
-      // lassen, es sei niemand in der Naehe.
+      // Er würde den Nutzer mit einem stillen "kein Match" im Glauben
+      // lassen, es sei niemand in der Nähe.
       expect(
         () => SupabaseDatabaseService.buildTransitSparkParams(
           tokens: const ['bbbbbbbbbbbbbbbbbbbb'],

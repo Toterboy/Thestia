@@ -1,12 +1,12 @@
 // Der Dienst des Zufallschats (die Warteschlange auf dem Server).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/services/dating_hour/random_chat_service.dart 32 % Abdeckung. Der
 // Dienst entscheidet, OB man im Chat landet - und liest die Antwort des
-// Servers (Paarung, Status). Ein falsch gelesener Status heisst: der
+// Servers (Paarung, Status). Ein falsch gelesener Status heißt: der
 // Nutzer wartet auf einen Partner, den es nicht gibt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * das Beitreten liefert die Session mit dem Partner,
 //   * ohne Partner liefert der Dienst null (die App zeigt dann die
 //     Fehlerseite),
@@ -184,8 +184,8 @@ void main() {
 
     test('ein unbekannter Status gilt als "wartend"', () {
       // DER GRUND: Ein Status, den die App nicht kennt, darf NICHT als
-      // "beendet" gelten - sonst wuerde die App einen lebenden Chat
-      // schliessen.
+      // "beendet" gelten - sonst würde die App einen lebenden Chat
+      // schließen.
       final session = RandomChatSession.fromJson(<String, dynamic>{
         'sessionId': 'session-1',
         'partnerId': 'partner-1',

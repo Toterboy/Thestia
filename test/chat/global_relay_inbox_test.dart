@@ -1,19 +1,19 @@
 // Der globale Relay-Eingang (die Nachrichten, die ohne offenen Chat
 // ankommen).
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/global_relay_inbox.dart 60 offene Zeilen.
 //
 // DER WEG: Der Dienst hat einen Test-Haken (`debugPollOnce`), der
-// denselben Weg laeuft wie ein echter Poll-Durchlauf - mit beliebigem
-// Fetch-Ergebnis und ohne Supabase. Damit laesst sich die
-// Zustellungs-Logik pruefen, ohne den Timer zu brauchen.
+// denselben Weg läuft wie ein echter Poll-Durchlauf - mit beliebigem
+// Fetch-Ergebnis und ohne Supabase. Damit lässt sich die
+// Zustellungs-Logik prüfen, ohne den Timer zu brauchen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * eine Relay-Nachricht landet in der passenden Session,
 //   * ein Eisbrecher wird als solcher markiert,
 //   * eine Nachricht von einem Unbekannten bleibt liegen (sie wird
-//     NICHT quittiert - sonst waere sie weg, ohne dass jemand sie gelesen
+//     NICHT quittiert - sonst wäre sie weg, ohne dass jemand sie gelesen
 //     hat),
 //   * ein Fehler beim Abholen streckt das Intervall (sonst pollt der
 //     Eingang bei totem Netz dauerhaft alle 6 Sekunden),
@@ -28,7 +28,7 @@ import 'package:thestia/models/chat/message.dart';
 import 'package:thestia/models/profile/user_profile.dart';
 import 'package:thestia/providers/chat/chat_provider.dart';
 import 'package:thestia/services/chat/chat_service.dart';
-// Der Praefix: 'appInForeground' gibt es auch im Chat-Provider.
+// Der Präfix: 'appInForeground' gibt es auch im Chat-Provider.
 import 'package:thestia/services/chat/global_relay_inbox.dart' as relay;
 import 'package:thestia/services/chat/relay_service.dart';
 import 'package:thestia/services/storage/local_storage.dart';
@@ -231,7 +231,7 @@ void main() {
       expect(relay.appInForeground(), isTrue);
 
       inbox.start();
-      // Der erste Poll laeuft sofort. Die Test-Uhr muss dabei laufen -
+      // Der erste Poll läuft sofort. Die Test-Uhr muss dabei laufen -
       // ein Future.delayed wartet im Widget-Test ewig.
       await tester.pump(const Duration(milliseconds: 300));
 

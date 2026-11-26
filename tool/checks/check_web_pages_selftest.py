@@ -1,13 +1,13 @@
 """Selbsttest: der Website-Querfer muss anschlagen.
 
 WARUM (05.11.2026): "Alle 22 Seiten sind sauber" ist wertlos, wenn der
-Pruefer gar nicht hinschaut. Dieser Selbsttest manipuliert jede Seite
-in einer KOPIE (der Temp-Ordner, nie die echten Seiten) und prueft,
-ob der Pruefer die Manipulation bemerkt.
+Prüfer gar nicht hinschaut. Dieser Selbsttest manipuliert jede Seite
+in einer KOPIE (der Temp-Ordner, nie die echten Seiten) und prüft,
+ob der Prüfer die Manipulation bemerkt.
 
 21 Proben:
-  Struktur:      doppelte ID, doppelte h1, leere Ueberschrift,
-                 Ueberschrift springt (h1 -> h3)
+  Struktur:      doppelte ID, doppelte h1, leere Überschrift,
+                 Überschrift springt (h1 -> h3)
   Barrierefrei:  Bild ohne alt, Bild mit leerem alt, Feld ohne Label,
                  Label zeigt auf eine fehlende ID
   Inhalt:        Platzhalter im sichtbaren Text
@@ -15,7 +15,7 @@ ob der Pruefer die Manipulation bemerkt.
   Technik:       JS-Syntaxfehler, kein Theme-CSS
   SEO:           canonical fehlt, canonical zeigt ins Falsche,
                  meta description fehlt, falsche Sprache,
-                 noindex auf einer oeffentlichen Seite,
+                 noindex auf einer öffentlichen Seite,
                  kein Sprachknopf
 
 Nutzung:  python tool/checks/check_web_pages_selftest.py
@@ -32,8 +32,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -106,8 +106,8 @@ def main() -> int:
         basis = pathlib.Path(tmp) / "assets"
         shutil.copytree(quelle, basis)
 
-        # Die Kopie muss gruen sein - sonst waeren die Proben nicht
-        # aussagekraeftig.
+        # Die Kopie muss grün sein - sonst wären die Proben nicht
+        # aussagekräftig.
         #
         # MEHRFACH VERSUCHEN (BEFUND 07.11.2026): Die Kopie kann eine
         # halb geschriebene Datei erwischen, wenn gerade ein anderes
@@ -117,7 +117,7 @@ def main() -> int:
         # zweite Versuch sieht dann einen konsistenten Stand.
         #
         # Wichtig: Der Fehler wird NICHT geschluckt. Erst wenn alle
-        # Versuche scheitern, gilt die Kopie als nicht gruen - ein
+        # Versuche scheitern, gilt die Kopie als nicht grün - ein
         # echter Inhaltsfehler bleibt also rot.
         ausgabe = ""
         for versuch in range(1, 4):
@@ -158,7 +158,7 @@ def main() -> int:
                 fehlgeschlagen.append((name, "nicht bemerkt"))
                 print("  FEHLT  %-38s -> NICHT bemerkt" % name)
 
-        # noindex auf einer oeffentlichen Seite
+        # noindex auf einer öffentlichen Seite
         ziel = basis / "impressum.html"
         original = ziel.read_text(encoding="utf-8")
         ziel.write_text(original.replace(

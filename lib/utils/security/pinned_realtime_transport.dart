@@ -3,10 +3,10 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:thestia/utils/security/cert_pinning.dart';
 
-/// Der WebSocket-Transport fuer Supabase Realtime - mit DEMSELBEN
+/// Der WebSocket-Transport für Supabase Realtime - mit DEMSELBEN
 /// strikten Pinning-Client wie der REST-Stack.
 ///
-/// BEFUND (08.11.2026, Sicherheitspruefung): Der Standard-Transport von
+/// BEFUND (08.11.2026, Sicherheitsprüfung): Der Standard-Transport von
 /// `realtime_client` erzeugt den WebSocket ohne eigenen Client:
 ///
 ///     IOWebSocketChannel.connect(url, headers: headers, pingInterval: ...)
@@ -21,20 +21,20 @@ import 'package:thestia/utils/security/cert_pinning.dart';
 /// (High) besagt, dass `dart:io` auf Android die Zwischenzertifikate
 /// der kompromittierten eMudhra-CA weiterhin akzeptiert - der
 /// eingebaute BoringSSL-Store kennt die Sperrliste des Betriebssystems
-/// nicht. Ein Angreifer im Netzpfad kann damit ein gefaelschtes
-/// Zertifikat fuer `*.supabase.co` vortaeuschen. Mit diesem Transport
+/// nicht. Ein Angreifer im Netzpfad kann damit ein gefälschtes
+/// Zertifikat für `*.supabase.co` vortäuschen. Mit diesem Transport
 /// ist das ausgeschlossen: der Client hat einen LEEREN Root-Store, der
-/// Pin-Callback laeuft IMMER, und ohne passenden Pin wird die
+/// Pin-Callback läuft IMMER, und ohne passenden Pin wird die
 /// Verbindung abgelehnt (fail-closed).
 ///
 /// Der Host wird aus der WebSocket-URL abgeleitet. Ist er nicht
 /// gepinnt, wird die Verbindung ebenfalls abgelehnt - fail-closed ist
-/// hier richtig: ein ungepinnter Realtime-Kanal waere genau die Luecke,
-/// die dieser Transport schliesst.
+/// hier richtig: ein ungepinnter Realtime-Kanal wäre genau die Lücke,
+/// die dieser Transport schließt.
 ///
 /// DER PING-INTERVALL (25 Sekunden) entspricht dem des
-/// Standard-Transports von realtime_client. Ohne ihn wuerde der
-/// Server die Verbindung nach einer Weile schliessen.
+/// Standard-Transports von realtime_client. Ohne ihn würde der
+/// Server die Verbindung nach einer Weile schließen.
 ///
 /// Signatur: `WebSocketTransport` aus realtime_client ist
 /// `WebSocketChannel Function(String url, Map<String, String> headers)`.

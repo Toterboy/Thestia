@@ -55,13 +55,13 @@ class L10n {
 
   /// Wie [t], aber ohne [BuildContext].
   ///
-  /// fuer Stellen, die keinen Kontext haben: ein StateNotifier kann
+  /// für Stellen, die keinen Kontext haben: ein StateNotifier kann
   /// keinen Widget-Kontext bauen, ein Hintergrund-Task gar nicht. Ohne
-  /// diese Variante muesste dort entweder ein deutscher Klartext
+  /// diese Variante müste dort entweder ein deutscher Klartext
   /// stehen (und damit die englische Fassung vergessen werden) oder
-  /// der Aufrufer auf den naechsten Bildschirm warten.
+  /// der Aufrufer auf den nächsten Bildschirm warten.
   ///
-  /// Es wird immer DEUZSCH gewaehlt - die Sprache des Geraets ist hier
+  /// Es wird immer DEUZSCH gewählt - die Sprache des Geräts ist hier
   /// nicht ermittelbar, und Deutsch ist die Quellsprache der Datei.
   static String tWithoutContext(String key) =>
       _strings['de']?[key] ?? _strings['en']?[key] ?? key;
@@ -127,8 +127,8 @@ class L10nScope extends ConsumerWidget {
 
 /// Die Texte nach Themen (je Datei in `strings/`).
 ///
-/// DER GRUND FUER DIE AUFTEILUNG: Eine Datei mit ueber 1000
-/// Zeilen kann niemand mehr ueberblicken - jede Aenderung darin
+/// DER GRUND FÜR DIE AUFTEILUNG: Eine Datei mit über 1000
+/// Zeilen kann niemand mehr überblicken - jede Änderung darin
 /// wird riskant. Nach Themen geteilt sind die Dateien klein genug
 /// zum Lesen (und der Test `code_datei_groessen_test` verhindert,
 /// dass es wieder eins wird).

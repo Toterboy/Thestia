@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsProfil = {
@@ -28,8 +28,8 @@ const Map<String, Map<String, String>> stringsProfil = {
     'profile.detail.commonWithYou': 'Gemeinsam mit dir',
     'profile.detail.favoriteBand': 'Lieblingsband: {band}',
     'profile.detail.favoriteSong': 'Lieblingssong: {song}',
-    // NUTZERWUNSCH (22.11.2026): Die Gewohnheiten gehoeren ins
-    // oeffentliche Profil (mit einem Schalter je Gewohnheit).
+    // NUTZERWUNSCH (22.11.2026): Die Gewohnheiten gehören ins
+    // öffentliche Profil (mit einem Schalter je Gewohnheit).
     'profile.detail.habitAlcohol': 'Alkohol',
     'profile.detail.habitDaily': 'Täglich',
     'profile.detail.habitDrugs': 'Drogen',
@@ -204,7 +204,7 @@ const Map<String, Map<String, String>> stringsProfil = {
     'profile.title': 'Mein Profil',
     'profile.typePrefix': 'Typ',
     // Hinweis auf ein frisches Konto. Bewusst ohne Datum: ein exaktes
-    // Erstellungsdatum waere ein Datenleck, und ein Hinweis ist kein
+    // Erstellungsdatum wäre ein Datenleck, und ein Hinweis ist kein
     // Beweis - auch echte neue Nutzer fallen darunter.
     'profile.newAccountBadge': 'Neu',
     'profile.unknown': 'Unbekannt',
@@ -232,8 +232,8 @@ const Map<String, Map<String, String>> stringsProfil = {
     'profile.detail.commonWithYou': 'Shared with you',
     'profile.detail.favoriteBand': 'Favorite band: {band}',
     'profile.detail.favoriteSong': 'Favorite song: {song}',
-    // NUTZERWUNSCH (22.11.2026): Die Gewohnheiten gehoeren ins
-    // oeffentliche Profil (mit einem Schalter je Gewohnheit).
+    // NUTZERWUNSCH (22.11.2026): Die Gewohnheiten gehören ins
+    // öffentliche Profil (mit einem Schalter je Gewohnheit).
     'profile.detail.habitAlcohol': 'Alcohol',
     'profile.detail.habitDaily': 'Daily',
     'profile.detail.habitDrugs': 'Drugs',

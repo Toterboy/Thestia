@@ -1,6 +1,6 @@
 // Der Busy-Guard der Passkey-Zeremonie.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/services/auth/passkey_auth.dart 101 offene Zeilen. Der Guard
 // (nur EINE Zeremonie gleichzeitig) war ungetestet - und er ist der
 // Unterschied zwischen "der Nutzer muss einmal klicken" und "der
@@ -9,14 +9,14 @@
 // DER GRUND: Ein Doppel-Tap auf "Passkey erstellen" startete zwei
 // Registrierungen parallel - die zweite brach die erste ab, und die
 // Challenge-Verrechnung endete in "credential verification failed".
-// Der Guard verhindert das. ABER: Ein Guard, der haengen bleibt
-// (weil eine Zeremonie mit einem Fehler endet), wuerde jeden weiteren
-// Passkey-Versuch des Nutzers blockieren - fuer immer. Das ist
+// Der Guard verhindert das. ABER: Ein Guard, der hängen bleibt
+// (weil eine Zeremonie mit einem Fehler endet), würde jeden weiteren
+// Passkey-Versuch des Nutzers blockieren - für immer. Das ist
 // beides getestet.
 //
 // ANMERKUNG: Der Test braucht KEINEN Server. Ohne Supabase-Anbindung
 // bricht die Zeremonie sofort ab - und genau das reicht, um den
-// Guard zu pruefen: der Fehler darf den Guard NICHT festsitzen
+// Guard zu prüfen: der Fehler darf den Guard NICHT festsitzen
 // lassen.
 import 'package:flutter_test/flutter_test.dart';
 
@@ -24,7 +24,7 @@ import 'package:thestia/services/auth/auth_exception.dart';
 import 'package:thestia/services/auth/passkey_auth.dart';
 
 void main() {
-  /// Passt der Fehler zur Meldung "laeuft bereits"?
+  /// Passt der Fehler zur Meldung "läuft bereits"?
   Matcher laeuftGerade() => predicate<AppException>(
     (e) => e.message.contains('läuft bereits'),
     'eine AppException mit "laeuft bereits"',
@@ -34,12 +34,12 @@ void main() {
     test(
       'ein zweiter Versuch waehrend einer laufenden Anfrage wird abgewiesen',
       () async {
-        // DER WEG: Die erste Anfrage laeuft noch (sie haengt an einem
+        // DER WEG: Die erste Anfrage läuft noch (sie hängt an einem
         // Fehler), die zweite kommt sofort danach.
         final erst = PasskeyAuth.signIn();
         final zweit = PasskeyAuth.signIn();
 
-        // Die Erwartungen werden VOR dem Warten angemeldet - sonst gaebe
+        // Die Erwartungen werden VOR dem Warten angemeldet - sonst gäbe
         // es eine unbehandelte Fehlermeldung.
         final h1 = expectLater(erst, throwsA(isA<AppException>()));
         final h2 = expectLater(zweit, throwsA(laeuftGerade()));
@@ -57,8 +57,8 @@ void main() {
 
     test('die Einrichtung und die Anmeldung schliessen sich aus', () async {
       // DER GRUND: Zwei Zeremonien gleichzeitig (eine Anmeldung und
-      // eine Einrichtung) wuerden sich gegenseitig ins Gehege
-      // kommen - der native Dialog gehoert nur einer davon.
+      // eine Einrichtung) würden sich gegenseitig ins Gehege
+      // kommen - der native Dialog gehört nur einer davon.
       final anmeldung = PasskeyAuth.signIn();
       final einrichtung = PasskeyAuth.register();
 
@@ -72,16 +72,16 @@ void main() {
     });
 
     test('der Guard wird nach einem Fehler wieder frei', () async {
-      // DER GRUND: Wenn der Guard nach einem Fehler haengen bliebe,
-      // koennte der Nutzer nie wieder einen Passkey einrichten oder
-      // anmelden - die App waere fuer ihn tot.
+      // DER GRUND: Wenn der Guard nach einem Fehler hängen bliebe,
+      // kännte der Nutzer nie wieder einen Passkey einrichten oder
+      // anmelden - die App wäre für ihn tot.
       await expectLater(
         PasskeyAuth.signIn(),
         throwsA(isA<AppException>()),
         reason: 'Ohne Server muss die Anmeldung scheitern.',
       );
 
-      // Der naechste Versuch darf NICHT am Guard scheitern, sondern
+      // Der nächste Versuch darf NICHT am Guard scheitern, sondern
       // wieder am fehlenden Server.
       await expectLater(
         PasskeyAuth.signIn(),

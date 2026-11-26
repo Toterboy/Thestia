@@ -1,12 +1,12 @@
 // Die Passkey-Kachel in den Einstellungen.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/settings/parts/passkeytilestate.dart 45 offene Zeilen bei
 // 15 % Abdeckung. Die Kachel registriert einen Passkey - und der Weg
 // dorthin hat eine Besonderheit: liegt auf dem Konto schon einer, fragt
-// die App nach (der alte Eintrag kann die Neuregistrierung stoeren).
+// die App nach (der alte Eintrag kann die Neuregistrierung stören).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Kachel bietet die Einrichtung an,
 //   * bei vorhandenem Passkey fragt die App nach (mit der Anzahl) und
 //     bricht auf "Abbrechen" ab - es wird NICHTS registriert,
@@ -79,7 +79,7 @@ class _Keystore implements SecureProfileStore {
 }
 
 /// Der Eltern-Dienst als Ersatz (sonst legt der Provider einen Timer auf,
-/// der nach dem Test noch weiterlaeuft).
+/// der nach dem Test noch weiterläuft).
 class _GuardianDienst extends GuardianService {
   _GuardianDienst(super.client);
 
@@ -186,7 +186,7 @@ void main() {
     await scrolleZuText(tester, L10n.tWithoutContext('settings.passkeyCreate'));
   }
 
-  /// Laesst die echte Ereignisschleife laufen.
+  /// Lässt die echte Ereignisschleife laufen.
   Future<void> lassServerArbeiten(WidgetTester tester) async {
     for (var i = 0; i < 10; i++) {
       await tester.runAsync(() async {

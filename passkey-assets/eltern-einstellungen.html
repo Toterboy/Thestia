@@ -82,15 +82,15 @@
 
     /* Web-Design (tool/helpers/web_theme.py) */
     /* ---------------------------------------------------------------
-       Eine Quelle fuer alle Seiten.
+       Eine Quelle für alle Seiten.
 
-       Die Farben kommen aus der App: Primaer #E9457B, heller
-       Grund #F7F7FB, Karten weiss, dunkler Grund #121212, Karten
+       Die Farben kommen aus der App: Primär #E9457B, heller
+       Grund #F7F7FB, Karten weiß, dunkler Grund #121212, Karten
        #1E1E1E. Die Linkfarbe ist eine dunklere Variante des Rosa
-       (#d62d6c), damit sie auf weiss den Kontrast-Anspruch von 4,5:1
+       (#d62d6c), damit sie auf weiß den Kontrast-Anspruch von 4,5:1
        erreicht.
        --------------------------------------------------------------- */
-    /* --- Farben: zwei Paletten, vier Zustaende --------------------- */
+    /* --- Farben: zwei Paletten, vier Zustände --------------------- */
     /*
      * (1) Die Seite folgt der Systemeinstellung - ohne Zutun.
      * (2) Der Schalter dreht um: hell -> dunkel, dunkel -> hell.
@@ -103,9 +103,9 @@
      *   System dunkel + Schalter aus -> dunkel
      *   System dunkel + Schalter an  -> hell
      *
-     * Specificitaet: alle vier Selektoren haben (0,2,0) - `:root:has(...)`
+     * Specificität: alle vier Selektoren haben (0,2,0) - `:root:has(...)`
      * gewinnt gegen `:root` (0,1,0), und die beiden Media-Query-Varianten
-     * entscheiden sich ueber die Reihenfolge (die letzte gewinnt).
+     * entscheiden sich über die Reihenfolge (die letzte gewinnt).
      */
     :root {
       color-scheme: light;
@@ -187,20 +187,20 @@
       -webkit-text-size-adjust: 100%;
       /* --- Der Scrollstrich rechts ---------------------------------
          BEFUND (14.11.2026, Betreiber): "Nutzungsbedingungen,
-         Datenschutzerklaerung und Impressum sollen rechts diesen
+         Datenschutzerklärung und Impressum sollen rechts diesen
          Scrollstrich haben, woran man erkennen kann wie weit die Seite
-         noch geht und man soll damit auch scrollen koennen mit dem
+         noch geht und man soll damit auch scrollen können mit dem
          Strich."
 
-         Drei Stuecke, die zusammenspielen:
+         Drei Stöcke, die zusammenspielen:
            * `overflow-y: scroll` - die Leiste ist IMMER da. Ohne das
              blendet der Browser sie auf dem Telefon aus, bis man
              scrollt; man sieht dann nicht, wie lang die Seite noch ist.
            * `::-webkit-scrollbar` - macht die Leiste sichtbar und dick
              genug, um sie mit dem Finger zu ziehen (Chrome, Safari).
-           * `scrollbar-width` / `scrollbar-color` - dasselbe fuer
+           * `scrollbar-width` / `scrollbar-color` - dasselbe für
              Firefox, das keine ::-webkit-Regeln kennt.
-         `scrollbar-gutter: stable` haelt den Platz frei, damit die
+         `scrollbar-gutter: stable` hält den Platz frei, damit die
          Seite beim Scrollen nicht springt. */
       overflow-y: scroll;
       scrollbar-gutter: stable;
@@ -238,9 +238,9 @@
       color: var(--fg);
       /* Die Reihenfolge ist wichtig: `system-ui` zuerst nimmt die
          System-Schrift (San Francisco, Segoe UI Variable, Roboto) -
-         das ist auf jedem Geraet die Schrift, fuer die die App gebaut
-         ist. Die konkreten Namen danach sind der Fallback fuer
-         aeltere Systeme, `sans-serif` der letzte Notnagel. */
+         das ist auf jedem Gerät die Schrift, für die die App gebaut
+         ist. Die konkreten Namen danach sind der Fallback für
+         ältere Systeme, `sans-serif` der letzte Notnagel. */
       font-family: system-ui, -apple-system, "Segoe UI Variable Text",
                    "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans",
                    Arial, sans-serif;
@@ -273,7 +273,7 @@
     }
 
     /* Die Checkbox bleibt im Quelltext (Tastatur!), ist aber nicht
-       sichtbar. Der Klick geht ueber das Label. */
+       sichtbar. Der Klick geht über das Label. */
     .modus-schalter {
       position: absolute;
       width: 1px;
@@ -286,10 +286,10 @@
       margin-left: auto;
       /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
          Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
-         auch diesen Knopf - er ist ja ein <label> fuer den
-         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
-         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
-         hier vollstaendig definiert: kein margin, damit keine Seite
+         auch diesen Knopf - er ist ja ein <label> für den
+         unsichtbaren Schalter. Dadurch saß er 5,6 px höher als der
+         Sprachknopf daneben. Die Kopfschaltflächen werden deshalb
+         hier vollständig definiert: kein margin, damit keine Seite
          sie versehentlich verschieben kann. */
       margin-top: 0;
       margin-bottom: 0;
@@ -322,8 +322,8 @@
 
     /* Der Sprachknopf sitzt rechts neben dem Modus-Knopf. Er ist ein
        LINK, kein Schalter: die zweite Sprache ist eine eigene Datei, und
-       ein Link laesst sich mit der Tastatur bedienen und im neuen Tab
-       oeffnen. */
+       ein Link lässt sich mit der Tastatur bedienen und im neuen Tab
+       öffnen. */
     .sprach-knopf {
       width: 42px;
       height: 42px;
@@ -391,7 +391,7 @@
       }
     }
 
-    /* --- Inhalt: eine Karte auf getoentem Grund -------------------- */
+    /* --- Inhalt: eine Karte auf getöntem Grund -------------------- */
     .inhalt {
       max-width: 46rem;
       margin: clamp(16px, 3vw, 32px) auto 0;
@@ -477,8 +477,8 @@
       border-spacing: 0;
       width: 100%;
       margin: 0;
-      /* 0,88 rem statt 0,95: die grosse Tabelle der
-         Datenschutzerklaerung brauchte 693 px, die Karte bietet 672 px.
+      /* 0,88 rem statt 0,95: die große Tabelle der
+         Datenschutzerklärung brauchte 693 px, die Karte bietet 672 px.
          Mit der kleineren Schrift passt sie in die Karte - sonst
          schneidet der Kartenrand die letzte Spalte ab. */
       font-size: .88rem;
@@ -508,7 +508,7 @@
     }
     footer p { margin-bottom: .4rem; }
 
-    /* --- Landing- und Bestaetigungsseite ---------------------------- */
+    /* --- Landing- und Bestätigungsseite ---------------------------- */
     .held { max-width: 46rem; margin: 0 auto; padding: clamp(20px, 4vw, 32px); }
     .held-karte {
       background: var(--card); border: 1px solid var(--line);
@@ -548,18 +548,18 @@
       margin: 0;
     }
     /*
-     * Die unterste der fuenf Kacheln steht allein in ihrer Zeile
+     * Die unterste der fünf Kacheln steht allein in ihrer Zeile
      * (NUTZERWUNSCH 31.10.2026: "Unten bei den 5 Kacheln soll die
-     * untere mittig sein und nicht linksbuendig").
+     * untere mittig sein und nicht linksbündig").
      *
-     * Bei fuenf Kacheln und zwei Spalten bleibt eine Kachel uebrig, die
-     * allein in der letzten Zeile steht - und die hing linksbuendig.
-     * Das sah nach einem Fehler aus: als waere die Zeile unvollstaendig.
+     * Bei fünf Kacheln und zwei Spalten bleibt eine Kachel übrig, die
+     * allein in der letzten Zeile steht - und die hing linksbündig.
+     * Das sah nach einem Fehler aus: als wäre die Zeile unvollständig.
      *
-     * `grid-column: 1 / -1` laesst sie die ganze Zeile einnehmen,
+     * `grid-column: 1 / -1` lässt sie die ganze Zeile einnehmen,
      * `justify-self: center` stellt sie mittig darin. Ihre Breite
      * bleibt dabei die einer normalen Kachel (die Spaltenbreite) -
-     * sonst waere sie plötzlich doppelt so breit wie ihre Schwestern.
+     * sonst wäre sie plötzlich doppelt so breit wie ihre Schwestern.
      */
     .held-liste > .held-link:last-child:nth-child(odd) {
       grid-column: 1 / -1;
@@ -568,7 +568,7 @@
     }
     /* Bei einer Spalte (schmale Fenster) ist die Kachel allein und
        darf die volle Breite nehmen - dort ist "mittig" nicht sinnvoll,
-       die Kachel fuellt die Zeile ohnehin aus. */
+       die Kachel füllt die Zeile ohnehin aus. */
     @media (max-width: 479px) {
       .held-liste > .held-link:last-child:nth-child(odd) {
         width: 100%;
@@ -610,13 +610,13 @@
       font-weight: 650; margin: 0 0 .35rem;
       /* KEIN Trennstrich (NUTZERWUNSCH 31.10.2026: "Bei thestia.de
        * soll der Strich zwischen dem oberen Bereich mit den Buttons
-       * (Im Play Store etc.) und der Ueberschrift Ein Blick in die App
+       * (Im Play Store etc.) und der Überschrift Ein Blick in die App
        * weg").
        *
-       * Die h2-Regel setzt einen Strich ueber jede Zwischenueberschrift
+       * Die h2-Regel setzt einen Strich über jede Zwischenüberschrift
        * - auf den Textseiten trennt er die Abschnitte voneinander, das
        * ist richtig. Hier aber trennt er zwei Dinge, die zusammen
-       * gehoeren: die Karte mit den Buttons und die Galerie direkt
+       * gehören: die Karte mit den Buttons und die Galerie direkt
        * darunter. Der Strich sah aus wie ein Rest der Karte. */
       border-top: none;
       padding-top: 0;
@@ -630,14 +630,14 @@
      * werden").
      *
      * Bei acht Bildern und drei Spalten bleiben in der letzten Reihe
-     * zwei uebrig - im Grid standen die linksbuendig, als waeren sie
-     * nicht dazugehoerig. Mit Flex und `justify-content: center`
+     * zwei übrig - im Grid standen die linksbündig, als wären sie
+     * nicht dazugehörig. Mit Flex und `justify-content: center`
      * richtet Flex jede Zeile einzeln aus: die letzte Reihe mit zwei
      * Bildern steht damit automatisch mittig.
      *
      * Flex ist hier robuster als Grid: bei einer anderen Bildzahl
      * (sieben, neun, zehn) stimmt die Zentrierung immer - im Grid
-     * muesste man die Positionen hart codieren, und das passte dann
+     * müste man die Positionen hart codieren, und das passte dann
      * nur bei genau acht Bildern.
      *
      * Die Breite ist fest (kein wachsen): `flex: 0 0 <breite>`
@@ -653,7 +653,7 @@
       max-width: calc(50% - 7px);
     }
     /* Ab Tablet-Breite: drei Spalten statt zwei. Die Bilder sind dann
-       gross genug, dass man sie ohne Zooming lesen kann, und die
+       groß genug, dass man sie ohne Zooming lesen kann, und die
        Bildunterschrift passt in zwei Zeilen. */
     @media (min-width: 640px) {
       .galerie-bild {

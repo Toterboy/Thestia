@@ -1,14 +1,14 @@
 // "Find your Spark" nach Interessens-Kategorie - bisher ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/find_your_match_category_screen.dart 119 offene Zeilen
-// bei 120 Zeilen gesamt - der Bildschirm, ueber den man jemanden nach
+// bei 120 Zeilen gesamt - der Bildschirm, über den man jemanden nach
 // einem Interesse kennenlernt, war komplett ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Kategorien kommen vom Server (mit ihren Zahlen),
-//   * die Kandidaten der gewaehlten Kategorie werden gezeigt,
-//   * der Like geht an den Server und der Nutzer bekommt eine Rueckmeldung,
+//   * die Kandidaten der gewählten Kategorie werden gezeigt,
+//   * der Like geht an den Server und der Nutzer bekommt eine Rückmeldung,
 //   * eine leere Kategorie ist keine Sackgasse (die App sagt, wo es
 //     Menschen gibt).
 import 'package:flutter/material.dart';
@@ -70,7 +70,7 @@ class _Keystore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {
-    // Der Test loescht kein Profil im Keystore.
+    // Der Test löscht kein Profil im Keystore.
   }
 }
 
@@ -215,7 +215,7 @@ void main() {
             'Der Like muss beim Server ankommen - sonst entsteht kein '
             'Funke.',
       );
-      // Und der Nutzer bekommt eine Rueckmeldung.
+      // Und der Nutzer bekommt eine Rückmeldung.
       expect(find.byType(SnackBar), findsOneWidget);
     });
 

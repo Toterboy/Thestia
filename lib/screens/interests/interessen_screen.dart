@@ -119,14 +119,14 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
   /// durch das Öffnen nach unten geschoben.
   int? _openPanel;
 
-  /// Schluessel fuer die Abschnitte - sie muessen ueberleben, wenn
-  /// der Reiter wechselt (sonst waere die Liste bei jedem Wechsel
-  /// neu geladen und der Pull-to-Refresh waere hin).
+  /// Schlüssel für die Abschnitte - sie müssen überleben, wenn
+  /// der Reiter wechselt (sonst wäre die Liste bei jedem Wechsel
+  /// neu geladen und der Pull-to-Refresh wäre hin).
   final _sentKey = GlobalKey<_OwnLikesTabState>();
   final _receivedKey = GlobalKey<_ReceivedLikesTabState>();
   final _matchesKey = GlobalKey<_MatchesTabState>();
 
-  /// Anker des Funken-Abschnitts (fuer den Sprung aus dem Chat).
+  /// Anker des Funken-Abschnitts (für den Sprung aus dem Chat).
   final _funkenAnker = GlobalKey();
 
   final _scrollController = ScrollController();
@@ -142,13 +142,13 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
     final gewaehlt = ref.read(interessenInitialTabProvider);
     if (gewaehlt == 1) _openPanel = 1;
     if (gewaehlt == 1) {
-      // Einmal-Auftrag: beim naechsten ├ûffnen startet die Seite wieder
+      // Einmal-Auftrag: beim nächsten ├ûffnen startet die Seite wieder
       // zugeklappt, nicht dauerhaft auf "Erhalten".
       ref.read(interessenInitialTabProvider.notifier).state = 0;
     }
     // Der alte Initial-Reiter "2" war der Funken-Tab. Funken sind
     // jetzt immer sichtbar - deshalb springt die Seite dorthin,
-    // statt einen Reiter zu waehlen.
+    // statt einen Reiter zu wählen.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (gewaehlt == 2) {
@@ -160,7 +160,7 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
 
   /// Springt zum Funken-Abschnitt.
   ///
-  /// Von dort aus wird der "Funke kühlen"-Weg geoeffnet (Chat-Screens
+  /// Von dort aus wird der "Funke kühlen"-Weg geöffnet (Chat-Screens
   /// setzen den Initial-Reiter auf 2 und navigieren dann hierher).
   void _scrollToFunken() {
     final ziel = _funkenAnker.currentContext;
@@ -196,7 +196,7 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Der Stift gehoert zum Verwalten der Funken - also nur, wenn es
+    // Der Stift gehört zum Verwalten der Funken - also nur, wenn es
     // Funken gibt. Auf "Gesendet" und "Erhalten" tut er nichts, und
     // genau das war der Befund: "Der Stift funktioniert nicht, wenn
     // keine Daten dort vorhanden sind."
@@ -237,8 +237,8 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
       // immer drinnen".
       //
       // Ein Reiter, der in den Bereich hineinragt, IST in ihm - egal,
-      // ob er ueberlappt oder sich nur beruehrt. Der Bereich ist ein
-      // eigenes Fenster, die Reiter gehoeren davor. Deshalb liegt
+      // ob er überlappt oder sich nur berührt. Der Bereich ist ein
+      // eigenes Fenster, die Reiter gehören davor. Deshalb liegt
       // der Bereich jetzt unter ihnen (mit einem kleinen Abstand), und
       // die Reiter werden nach der Liste gemalt.
       body: Stack(
@@ -252,10 +252,10 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
           // Reiter nur als INNEREN Abstand (padding). Sobald man in der
           // Liste scrollte, wanderte der Inhalt UNTER den fixierten
           // Reitern hindurch und die Knöpfe lagen optisch IM Panel. Das
-          // war der Grund fuer die wiederholte Meldung: die Geometrie
-          // war richtig, die Ueberlappung beim Scrollen nicht.
+          // war der Grund für die wiederholte Meldung: die Geometrie
+          // war richtig, die Überlappung beim Scrollen nicht.
           //
-          // Die Loesung: Die Liste beginnt raeumlich UNTER den Reitern
+          // Die Lösung: Die Liste beginnt räumlich UNTER den Reitern
           // (Positioned.top). Ihr Inhalt kann gar nicht mehr unter ihnen
           // durchlaufen - die Reiter stehen immer vor dem Fenster.
           Positioned(
@@ -272,8 +272,8 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
                 children: [
                   // clipBehavior: Clip.hardEdge - OHNE das war die
-                  // Blase waehrend des Aufklappens nicht beschnitten:
-                  // sie stand in voller Hoehe da, waehrend der Kasten
+                  // Blase während des Aufklappens nicht beschnitten:
+                  // sie stand in voller Höhe da, während der Kasten
                   // darunter wuchs. Das sah ruckelig aus (NUTZERWUNSCH
                   // 01.11.2026: "Die Aufklapptanimation ist auch noch
                   // etwas ruckelig").
@@ -288,11 +288,11 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
                             duration: const Duration(milliseconds: 240),
                             switchInCurve: Curves.easeOutCubic,
                             switchOutCurve: Curves.easeInCubic,
-                            // Die ausgehenden Panels duerfen die Hoehe
+                            // Die ausgehenden Panels dürfen die Höhe
                             // NICHT bestimmen: sonst springt der
-                            // Kasten, wenn das neue Panel kuerzer ist.
+                            // Kasten, wenn das neue Panel kürzer ist.
                             // Sie werden deshalb positioniert - und
-                            // zaehlen nicht mit.
+                            // zählen nicht mit.
                             layoutBuilder: (current, previous) => Stack(
                               alignment: Alignment.topCenter,
                               children: [
@@ -385,20 +385,20 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
   }
 }
 
-/// Die Hoehe der Reiter-Pille: 40 px im Normalfall.
+/// Die Höhe der Reiter-Pille: 40 px im Normalfall.
 ///
-/// Die Pille hat eine FESTE Hoehe - nur so sitzt der aufgeklappte
-/// Bereich genau darunter (siehe [_reiterUeberlappung]). Bei grosser
-/// Schriftgroesse waere eine feste Hoehe aber zu klein: der Text
-/// laege dann ueber (der Render-Test prueft 3,2-fache Schriftgroesse).
+/// Die Pille hat eine FESTE Höhe - nur so sitzt der aufgeklappte
+/// Bereich genau darunter (siehe [_reiterUeberlappung]). Bei großer
+/// Schriftgrösse wäre eine feste Höhe aber zu klein: der Text
+/// läge dann über (der Render-Test prüft 3,2-fache Schriftgrösse).
 ///
-/// Deshalb waechst die Hoehe mit dem Textfaktor mit.
+/// Deshalb wächst die Höhe mit dem Textfaktor mit.
 double _pillenHoehe(BuildContext context) {
   final skala = MediaQuery.textScalerOf(context).scale(1.0);
   return 40 * (skala < 1.0 ? 1.0 : skala);
 }
 
-/// Der Rand ueber der Reiter-Zeile.
+/// Der Rand über der Reiter-Zeile.
 const double _reiterRandOben = 4;
 
 /// Der Abstand zwischen den Reitern und dem aufgeklappten Bereich.
@@ -408,11 +408,11 @@ const double _reiterRandOben = 4;
 /// "sind Gesendet und Erhalten in dem Aufgeklappten noch immer drinnen".
 ///
 /// Ein Reiter, der in den Bereich hineinragt, IST in ihm - egal, ob
-/// er ueberlappt oder sich beruehrt. Der Bereich ist ein eigenes
-/// Fenster ("Pop-up"), und die Reiter gehoeren VOR das Fenster.
+/// er überlappt oder sich berührt. Der Bereich ist ein eigenes
+/// Fenster ("Pop-up"), und die Reiter gehören VOR das Fenster.
 ///
 /// Deshalb: der Bereich beginnt unter den Reitern, mit einem kleinen
-/// Abstand. Die Reiter stehen dadurch eindeutig ausserhalb.
+/// Abstand. Die Reiter stehen dadurch eindeutig außerhalb.
 const double _abstandReiterBereich = 16;
 
 /// Ein Eintrag im Personen-Menü (siehe [_PersonenMenue]).
@@ -428,11 +428,11 @@ class _MenueEintrag {
   final IconData icon;
   final String label;
 
-  /// Rote Beschriftung (loeschen, blockieren).
+  /// Rote Beschriftung (löschen, blockieren).
   final bool rot;
 }
 
-/// Blockieren mit Bestaetigung - fuer jede Person, nicht nur fuer
+/// Blockieren mit Bestätigung - für jede Person, nicht nur für
 /// Funken.
 ///
 /// Der Dialog und der Ablauf sind derselbe wie im Chat: erst fragen,

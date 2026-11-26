@@ -1,9 +1,9 @@
 // Der Teil '_PanelBubble'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -40,14 +40,14 @@ class _PanelBubble extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.fromLTRB(8, 14, 8, 6),
-      // GLEICHE HOEHE (NUTZERWUNSCH 01.11.2026: "Gesendet und
-      // Erhalten sind die Pop up maessigen Fenster nicht gleich gross
+      // GLEICHE HÖHE (NUTZERWUNSCH 01.11.2026: "Gesendet und
+      // Erhalten sind die Pop up mässigen Fenster nicht gleich groß
       // nach unten").
       //
-      // Die beiden Leertexte haben verschiedene Laenge, dadurch waren
+      // Die beiden Leertexte haben verschiedene Länge, dadurch waren
       // die Fenster unterschiedlich hoch - und beim Wechsel ruckte
-      // alles darunter nach. Die Mindesthoehe macht beide gleich
-      // hoch, solange der Inhalt nicht ueber sie hinaus waechst.
+      // alles darunter nach. Die Mindesthöhe macht beide gleich
+      // hoch, solange der Inhalt nicht über sie hinaus wächst.
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 236),
         child: child,

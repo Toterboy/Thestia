@@ -1,23 +1,23 @@
 // Die Funken-Liste: der Ladefehler, die Kachel-Aktionen und die
-// gekuehlten Funken.
+// gekühlten Funken.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/interests/parts/matchestabstate.dart 79 offene Zeilen.
 // Betroffen sind genau die Wege, die dem Betreiber im November 2026
 // auffielen: der Server antwortet nicht (der Funke schien verschwunden)
 // und die Aktionen an der Kachel.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ein fehlgeschlagener Abruf bleibt sichtbar (mit Wiederholen) -
 //     der Inhalt der Liste bleibt dabei stehen (BEFUND 13.11.2026:
 //     "Außerdem ist mein Funke verschwunden"),
-//   * der Profil-Knopf der Kachel oeffnet wirklich das Profil,
-//   * ein gekuehlter Funke laesst sich wieder entzueenden ("Re-Funke
-//     ohne Druck") und endgueltig loeschen.
+//   * der Profil-Knopf der Kachel öffnet wirklich das Profil,
+//   * ein gekühlter Funke lässt sich wieder entzüenden ("Re-Funke
+//     ohne Druck") und endgültig löschen.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
@@ -100,7 +100,7 @@ void main() {
             'weil das Abrufen fehlgeschlagen ist.',
       );
 
-      // JETZT GEHT ES WIEDER: Der Knopf "Wiederholen" laedt neu.
+      // JETZT GEHT ES WIEDER: Der Knopf "Wiederholen" lädt neu.
       service.ladeFehler = null;
       await tester.tap(find.text(L10n.tWithoutContext('common.retry')));
       await pumpFrames(tester);
@@ -139,7 +139,7 @@ void main() {
     testWidgets('"Re-Funke" zündet sie wieder', (tester) async {
       final service = await baue(tester, funken: [funke(status: 'cooled')]);
 
-      // DER KNOPF LIEGT UNTEN: Die gekuehlten Funken stehen am Ende der
+      // DER KNOPF LIEGT UNTEN: Die gekühlten Funken stehen am Ende der
       // Liste - ohne Heranschieben tappt der Test ins Leere.
       final knopf = find.text(L10n.tWithoutContext('interests.resparkBtn'));
       await tester.ensureVisible(knopf);
@@ -173,7 +173,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // DIE RUECKFRAGE: Ohne sie waere das Loeschen ein Unfall.
+      // DIE RÜCKFRAGE: Ohne sie wäre das Löschen ein Unfall.
       expect(
         find.text(L10n.tWithoutContext('interests.deleteSparkTitle')),
         findsOneWidget,
@@ -197,7 +197,7 @@ void main() {
     ) async {
       await baue(tester, funken: [funke(status: 'cooled')]);
 
-      // DER KNOPF: Die gekuehlte Kachel hat ZWEI Personensymbole (das
+      // DER KNOPF: Die gekühlte Kachel hat ZWEI Personensymbole (das
       // Bild links und der Knopf rechts) - der Knopf ist das letzte.
       final knopf = find.byIcon(Icons.person_outline).last;
       await tester.ensureVisible(knopf);

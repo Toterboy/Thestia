@@ -1,10 +1,10 @@
-"""Prueft, ob alle Migrationen aus dem Repository auch angewandt sind.
+"""Prüft, ob alle Migrationen aus dem Repository auch angewandt sind.
 
 BEFUND (07.11.2026): Die Tabelle public.chat_image_hashes wurde in
 Migration 068 angelegt (mit UNIQUE (sender_id, receiver_id,
 photo_hash)), ist auf dem Produktivsystem aber NICHT vorhanden -
 obwohl die Funktion register_chat_image_hash existiert und mit
-"relation does not exist" scheitern wuerde.
+"relation does not exist" scheitern würde.
 
 Also: Ein Teil der Migration 068 ist nie gelaufen. Das ist die Art
 Fehler, die niemand sieht, weil die Funktion "ja eh nur intern
@@ -24,8 +24,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():

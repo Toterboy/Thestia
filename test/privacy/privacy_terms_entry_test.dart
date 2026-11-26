@@ -9,12 +9,12 @@ import 'package:thestia/screens/privacy/privacy_screen.dart';
 ///
 /// Die Seiten gibt es seit dem 05.11.2026 (passkey-assets/
 /// nutzungsbedingungen.html). In der App fehlte der Link darauf - und
-/// Google Play verlangt fuer jede App eine erreichbare Adresse der
+/// Google Play verlangt für jede App eine erreichbare Adresse der
 /// Nutzungsbedingungen.
 ///
 /// HINWEIS: Die Kachel steht nicht ganz oben. Ein ListView baut nur die
-/// sichtbaren Kinder - der Test muss also scrollen. Ohne das wuerde der
-/// Test "gruen" sein, obwohl die Kachel fehlt.
+/// sichtbaren Kinder - der Test muss also scrollen. Ohne das würde der
+/// Test "grün" sein, obwohl die Kachel fehlt.
 void main() {
   Future<void> zeigeScreen(WidgetTester tester) async {
     await tester.pumpWidget(

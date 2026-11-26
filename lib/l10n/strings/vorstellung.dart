@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsVorstellung = {
@@ -128,7 +128,7 @@ const Map<String, Map<String, String>> stringsVorstellung = {
     'intro.prompt.dream.learn': 'Was möchtest du unbedingt einmal lernen?',
     'intro.prompt.dream.trip':
         'Wohin würdest du fahren, wenn Geld keine Rolle spielt?',
-    // Leitfaden fuer die Audio-Vorstellung (3 Schritte, ROADMAP 0.10.0)
+    // Leitfaden für die Audio-Vorstellung (3 Schritte, ROADMAP 0.10.0)
     'intro.guide.title': 'Leitfaden für deine Vorstellung',
     'intro.prompt.everyday.coffee':
         'Wie sieht dein idealer Kaffee aus, und wo trinkst du ihn?',
@@ -149,9 +149,9 @@ const Map<String, Map<String, String>> stringsVorstellung = {
         '{min} bis {max} Sekunden. Du kannst jede Aufnahme vor dem '
         'Speichern anhören.',
     'intro.record': 'Aufnehmen',
-    // Stille-Erkennung (v0.10.0): eine Aufnahme kann die Mindestlaenge
+    // Stille-Erkennung (v0.10.0): eine Aufnahme kann die Mindestlänge
     // haben und trotzdem nichts enthalten. Diese Texte sind die einzige
-    // Stelle, an der der Nutzer davon erfaehrt wird.
+    // Stelle, an der der Nutzer davon erfährt wird.
     'intro.silenceHint': 'Noch kein Ton - bitte sprechen',
     'intro.recordFailed': 'Aufnahme fehlgeschlagen: {error}',
     'intro.recordingState': 'Aufnahme läuft …',

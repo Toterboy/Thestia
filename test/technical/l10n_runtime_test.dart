@@ -9,11 +9,11 @@ import 'package:thestia/widgets/transit_mode_selector.dart';
 
 /// Laufzeit-Test der Sprachumschaltung.
 ///
-/// l10n_test.dart prueft die TABELLE statisch (Paritaet, Platzhalter).
-/// Dieser Test prueft das, was statisch nicht sichtbar ist: dass ein
-/// Locale-Wechsel zur Laufzeit tatsaechlich bis in die Oberflaeche
-/// durchschlaegt. Ein Fehler wie "L10n.t liest immer _strings['de']"
-/// waere in der Tabelle unsichtbar - hier faellt er auf.
+/// l10n_test.dart prüft die TABELLE statisch (Parität, Platzhalter).
+/// Dieser Test prüft das, was statisch nicht sichtbar ist: dass ein
+/// Locale-Wechsel zur Laufzeit tatsächlich bis in die Oberfläche
+/// durchschlägt. Ein Fehler wie "L10n.t liest immer _strings['de']"
+/// wäre in der Tabelle unsichtbar - hier fällt er auf.
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -87,10 +87,10 @@ void main() {
   });
 
   group('Transit Spark: beide Sprachen vollstaendig uebersetzt', () {
-    // Der Fehler, den man beim manuellen Testen leicht uebersieht: ein
-    // Schluessel ist in DE gepflegt, in EN aber leer oder fehlt - der
-    // Fallback zeigt dann den SCHLUESSEL statt Text. Beide Sprachbloecke
-    // muessen fuer jede angezeigte Zeile echten Text liefern.
+    // Der Fehler, den man beim manuellen Testen leicht übersieht: ein
+    // Schlüssel ist in DE gepflegt, in EN aber leer oder fehlt - der
+    // Fallback zeigt dann den SCHLÜSSEL statt Text. Beide Sprachblöcke
+    // müssen für jede angezeigte Zeile echten Text liefern.
     const keys = [
       'transit.modeLabel',
       'transit.mode.transit',
@@ -123,7 +123,7 @@ void main() {
       await tester.pumpWidget(host(initial: const Locale('en')));
       await tester.pumpAndSettle();
 
-      // Die sichtbaren Labels und Erklaerungen.
+      // Die sichtbaren Labels und Erklärungen.
       for (final german in [
         'Nur direkt daneben',
         'Übliche Reichweite',
@@ -149,8 +149,8 @@ void main() {
           reason: '$locale: Platzhalter nicht gefuellt',
         );
         // Die Schwelle in dBm ist seit v0.10.0 NICHT mehr sichtbar -
-        // Nutzer koennen mit dBm nichts anfangen, die Balken zeigen
-        // dasselbe Verhaeltnis. Der Wert steht nur noch in der
+        // Nutzer können mit dBm nichts anfangen, die Balken zeigen
+        // dasselbe Verhältnis. Der Wert steht nur noch in der
         // Semantics-Beschreibung der Kachel. Deshalb: KEIN sichtbarer
         // dBm-Text mehr.
         expect(
@@ -164,8 +164,8 @@ void main() {
 
   group('AppearanceSelector: beide Sprachen', () {
     // v0.9.2: Das Widget ersetzt drei SelectableTile-Radiozeilen. Es
-    // traegt je Modus eine Erklaerung - die ist der eigentliche Grund
-    // fuer den Wechsel, also wird sie hier wie beim Transit geprueft.
+    // trägt je Modus eine Erklärung - die ist der eigentliche Grund
+    // für den Wechsel, also wird sie hier wie beim Transit geprüft.
     const keys = [
       'appearance.light',
       'appearance.system',
@@ -208,8 +208,8 @@ void main() {
     });
 
     testWidgets('genau eine Option ist als gewaehlt markiert', (tester) async {
-      // v0.10.0: kein Haken mehr. Die Kachel traegt die Auswahl selbst
-      // (gefuelltes Icon-Feld, Titelfarbe, Hintergrund). Geprueft wird
+      // v0.10.0: kein Haken mehr. Die Kachel trägt die Auswahl selbst
+      // (gefülltes Icon-Feld, Titelfarbe, Hintergrund). Geprüft wird
       // das Semantics-Flag "selected" - genau eine Karte muss es haben,
       // sonst ist die Auswahl mehrdeutig.
       for (final mode in ['light', 'system', 'dark']) {
@@ -243,10 +243,10 @@ void main() {
     });
 
     testWidgets('alle drei Optionen stehen in EINER Zeile', (tester) async {
-      // Der Grund fuer das Redesign: drei Karten uebereinander schoben
+      // Der Grund für das Redesign: drei Karten übereinander schoben
       // Farbschema und Chat-Hintergrund in den Einstellungen aus dem
       // Bild. Diese Prüfung verhindert, dass jemand zur Kartenliste
-      // zurueckkehrt, ohne es zu bemerken.
+      // zurückkehrt, ohne es zu bemerken.
       await tester.pumpWidget(_appearanceHost());
       await tester.pumpAndSettle();
 
@@ -254,8 +254,8 @@ void main() {
 
       final ys = ['Hell', 'System', 'Dunkel'].map(centerOf).toList();
       for (final y in ys) {
-        // 3 px Toleranz: die gewaehlte Option ist fetter gesetzt, was die
-        // Zeilenhoehe um etwa ein Pixel aendert. Gestapelte Karten lagen
+        // 3 px Toleranz: die gewählte Option ist fetter gesetzt, was die
+        // Zeilenhöhe um etwa ein Pixel ändert. Gestapelte Karten lagen
         // dagegen rund 60 px auseinander.
         expect(
           y,
@@ -268,7 +268,7 @@ void main() {
     testWidgets('grosse Schrift bricht um, statt zu ueberlaufen', (
       tester,
     ) async {
-      // Wrap statt Row+Expanded: bei 3,2-facher Schrift waere jede
+      // Wrap statt Row+Expanded: bei 3,2-facher Schrift wäre jede
       // feste Segmentbreite ein RenderFlex-Overflow.
       tester.platformDispatcher.textScaleFactorTestValue = 3.2;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
@@ -362,7 +362,7 @@ Widget _appearanceHost({
 
 /// Abbild des Sperrbildschirms - bewusst dupliziert statt die private
 /// Methode der Radar-Seite zu testen, damit der Test nicht am
-/// Screen-Wiring haengt, sondern an der Uebersetzung.
+/// Screen-Wiring hängt, sondern an der Übersetzung.
 class _GateNotice extends StatelessWidget {
   const _GateNotice({this.missingAge = false});
   final bool missingAge;

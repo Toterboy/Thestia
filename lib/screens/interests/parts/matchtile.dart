@@ -1,9 +1,9 @@
 // Der Teil '_MatchTile'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -42,7 +42,7 @@ class _MatchTile extends ConsumerWidget {
   /// löschen").
   final VoidCallback onDelete;
 
-  /// Ist der Funke fixiert? Dann steht er oben und traegt eine Nadel.
+  /// Ist der Funke fixiert? Dann steht er oben und trägt eine Nadel.
   final bool pinned;
 
   /// Blockieren aus dem Funken-Menü (NUTZERWUNSCH): Gleicher Dialog und
@@ -66,11 +66,11 @@ class _MatchTile extends ConsumerWidget {
     // Quiz-Hinweis erst nach 50-70 Nachrichten (pro Chat deterministisch,
     // gleiche Schwelle wie im Chat-Screen).
     final threshold = 50 + (match.matchId.toString().hashCode.abs() % 21);
-    // Der QUIZ-HINWEIS bleibt unveraendert: er zaehlt die Nachrichten
+    // Der QUIZ-HINWEIS bleibt unverändert: er zählt die Nachrichten
     // in DIESEM Chat (lokaler Verlauf) - so wie es seit jeher war.
     //
-    // BEFUND (11.11.2026, Betreiber): "Also nur fuer v0.10.1 nicht
-    // drueber." Das Verhalten der bestehenden Funktionen bleibt, was es
+    // BEFUND (11.11.2026, Betreiber): "Also nur für v0.10.1 nicht
+    // drüber." Das Verhalten der bestehenden Funktionen bleibt, was es
     // ist; neu ist nur die kleine ZAHL in der Kachel.
     final lokaleNachrichten = ref
         .watch(chatProvider.notifier)
@@ -86,7 +86,7 @@ class _MatchTile extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       // BEFUND (09.11.2026, Betreiber): "Zudem sollen Chats mit
       // ungelesenen Nachrichten hervorgehoben ... sein." Der Rand und
-      // die Flaeche faellen auf, solange ungelesene Nachrichten da sind.
+      // die Fläche fällen auf, solange ungelesene Nachrichten da sind.
       color: ungelesen ? scheme.primaryContainer.withValues(alpha: 0.35) : null,
       shape: ungelesen
           ? RoundedRectangleBorder(
@@ -123,10 +123,10 @@ class _MatchTile extends ConsumerWidget {
             // die Person geschrieben hat."
             //
             // BEFUND (11.11.2026): Die Zahl kommt vom SERVER
-            // (Migration 210) - sie stimmt damit auf allen Geraeten und
-            // steht auch da, wenn der Chat hier nie geoeffnet wurde.
-            // Neu in v0.10.1; das Verhalten der uebrigen Kachel
-            // (Quiz-Hinweis u. Ae.) bleibt unveraendert.
+            // (Migration 210) - sie stimmt damit auf allen Geräten und
+            // steht auch da, wenn der Chat hier nie geöffnet wurde.
+            // Neu in v0.10.1; das Verhalten der übrigen Kachel
+            // (Quiz-Hinweis u. Ä.) bleibt unverändert.
             if (match.messageCount > 0) ...[
               const SizedBox(width: 6),
               Container(
@@ -146,7 +146,7 @@ class _MatchTile extends ConsumerWidget {
             ],
             // Der automatische Funke (Migration 177): er kam nicht von
             // beiden Seiten zustande. Das Sternchen weist darauf hin -
-            // die Rueckfrage kommt beim Antippen.
+            // die Rückfrage kommt beim Antippen.
             if (match.autoMatch) ...[
               const SizedBox(width: 6),
               const _AutoMatchBadge(),
@@ -218,8 +218,8 @@ class _MatchTile extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
-                // Archivieren (frueher "kühlen" - der Name war
-                // missverstaendlich, der Funke wird ja nicht geloescht).
+                // Archivieren (früher "kühlen" - der Name war
+                // missverständlich, der Funke wird ja nicht gelöscht).
                 PopupMenuItem(
                   value: 'cool',
                   child: ListTile(
@@ -228,7 +228,7 @@ class _MatchTile extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
-                // Endgueltig loeschen.
+                // Endgültig löschen.
                 PopupMenuItem(
                   value: 'delete',
                   child: ListTile(

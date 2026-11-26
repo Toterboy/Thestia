@@ -101,19 +101,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               return Padding(
                 padding: const EdgeInsets.all(32),
                 child: Column(
-                  // Key fuer den Store-Screenshot-Export: Logo, Titel und
+                  // Key für den Store-Screenshot-Export: Logo, Titel und
                   // Text der Seite werden als EINE Kachel gebraucht, ohne
-                  // dass sich der Aufbau des Screens aendert. Ein Key
-                  // aendert das Rendering nicht.
+                  // dass sich der Aufbau des Screens ändert. Ein Key
+                  // ändert das Rendering nicht.
                   key: const Key('welcome-page-content'),
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // GROESSER (04.11.2026): Das Logo war 120 dp - auf
+                    // GRÖSSER (04.11.2026): Das Logo war 120 dp - auf
                     // einem 360 dp breiten Screen ein kleines Bild. Im
                     // Store-Screenshot landete es dadurch bei nur 193 px,
                     // und die Wortmarke "Thestia" war im Listing nicht
                     // mehr zu lesen. 170 dp ist der Weg, der in der App
-                    // besser aussieht UND im Store schaerfer ist (die
+                    // besser aussieht UND im Store schärfer ist (die
                     // Quelle ist 941x941 px, es wird also nicht
                     // hochskaliert).
                     const AppLogo(size: 170),

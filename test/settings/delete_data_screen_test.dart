@@ -1,15 +1,15 @@
-// Die selektive Datenloeschung (DSGVO) - bisher ungetestet.
+// Die selektive Datenlöschung (DSGVO) - bisher ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/privacy/delete_data_screen.dart 131 offene Zeilen bei 132
-// Zeilen gesamt - der Bildschirm, ueber den der Nutzer einzelne Daten
-// loeschen kann, war komplett ungetestet.
+// Zeilen gesamt - der Bildschirm, über den der Nutzer einzelne Daten
+// löschen kann, war komplett ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * alle loeschbaren Kategorien stehen da,
-//   * ohne Auswahl ist der Loesch-Knopf gesperrt,
-//   * vor dem Loeschen kommt eine Rueckfrage (das ist endgueltig),
-//   * nach dem Bestaetigen geht der Auftrag an den Server,
+// WAS HIER GEPRÜFT WIRD:
+//   * alle löschbaren Kategorien stehen da,
+//   * ohne Auswahl ist der Lösch-Knopf gesperrt,
+//   * vor dem Löschen kommt eine Rückfrage (das ist endgültig),
+//   * nach dem Bestätigen geht der Auftrag an den Server,
 //   * beim Abbruch passiert nichts.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +27,7 @@ import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
 void main() {
-  /// Der Ersatz-Server (die Loeschung geht an die Edge Function).
+  /// Der Ersatz-Server (die Löschung geht an die Edge Function).
   late FakeSupabaseServer server;
 
   setUpAll(() async {
@@ -54,7 +54,7 @@ void main() {
   setUp(() {
     server.funktionsAufrufe.clear();
     server.funktionsAntworten.clear();
-    // DER SERVER: Die Loeschung war erfolgreich.
+    // DER SERVER: Die Löschung war erfolgreich.
     server.funktionsAntworten['delete-user-data'] = <String, dynamic>{
       'ok': true,
       'geloescht': <String, dynamic>{},
@@ -149,12 +149,12 @@ void main() {
     testWidgets('vor dem Loeschen kommt die Rueckfrage', (tester) async {
       await zeigeScreen(tester);
 
-      // Die erste Kategorie waehlen.
+      // Die erste Kategorie wählen.
       await tester.tap(find.byType(CheckboxListTile).first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Und den Loesch-Knopf druecken.
+      // Und den Lösch-Knopf drücken.
       final knopf = find.byType(PrimaryButton);
       await scrollZu(tester, knopf);
       await tester.tap(knopf);
@@ -171,7 +171,7 @@ void main() {
         find.text(L10n.tWithoutContext('del.irreversible')),
         findsOneWidget,
       );
-      // Und es ist noch nichts geloescht worden.
+      // Und es ist noch nichts gelöscht worden.
       expect(server.funktionsAufrufe, isEmpty);
     });
 
@@ -188,7 +188,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Bestaetigen.
+      // Bestätigen.
       final bestaetigen = find.descendant(
         of: find.byType(AlertDialog),
         matching: find.widgetWithText(
@@ -212,7 +212,7 @@ void main() {
         isNotNull,
         reason: 'Der Server muss wissen, WAS geloescht werden soll.',
       );
-      // Und der Nutzer bekommt die Bestaetigung.
+      // Und der Nutzer bekommt die Bestätigung.
       expect(find.text(L10n.tWithoutContext('del.doneTitle')), findsOneWidget);
     });
 

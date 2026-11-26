@@ -70,15 +70,15 @@ class AgeSafetyRules {
       );
     }
     // Die beidseitige Server-Regel in ihrer einfachsten Form:
-    // Minderjaehrige sehen nur Minderjaehrige, Erwachsene nur
+    // Minderjährige sehen nur Minderjährige, Erwachsene nur
     // Erwachsene.
     //
-    // WICHTIG: Der Vergleich laeuft ueber die Grenze 18, NICHT ueber
+    // WICHTIG: Der Vergleich läuft über die Grenze 18, NICHT über
     // [ageGroup]. Die Enum-Werte adult18/adult19/adult unterscheiden
     // noch die alte gestufte Regel - im Enum sind 18 und 19
     // verschiedene Gruppen, nach der beidseitigen Server-Regel sind
-    // beide schlicht "Erwachsen". Mit dem Enum-Vergleich waere ein
-    // 18-Jaehriger fuer einen 19-Jaehrigen unsichtbar - der Server
+    // beide schlicht "Erwachsen". Mit dem Enum-Vergleich wäre ein
+    // 18-Jähriger für einen 19-Jährigen unsichtbar - der Server
     // liefert ihn aber.
     final viewerMinderjaehrig = viewerAge < 18;
     final targetMinderjaehrig = targetAge < 18;
@@ -89,11 +89,11 @@ class AgeSafetyRules {
 
   /// Gibt die maximal erlaubte obere Altersgrenze für den Filter-Slider zurück.
   ///
-  /// - 16-17: maximal 17 Jahre. Der Server liefert fuer Minderjaehrige
-  ///   ausschliesslich 16 und 17 (age_compatible_bidirectional), ein
-  ///   Wert darueber waere ein toter Filter.
+  /// - 16-17: maximal 17 Jahre. Der Server liefert für Minderjährige
+  ///   ausschließlich 16 und 17 (age_compatible_bidirectional), ein
+  ///   Wert darüber wäre ein toter Filter.
   /// - 18+: maximal 99 Jahre. Die Obergrenze bleibt bewusst offen - wer
-  ///   aeltere Menschen sehen will, soll das koennen.
+  ///   ältere Menschen sehen will, soll das können.
   static int maxFilterAge(int viewerAge) {
     final group = ageGroup(viewerAge);
     if (group == AgeGroup.minor) return 17;
@@ -105,28 +105,28 @@ class AgeSafetyRules {
   /// - 16-17: 16 Jahre (untereinander ja)
   /// - 18: 18 Jahre
   /// - 19: 18 Jahre
-  /// - 20+: hoechstens 10 Jahre unter dem eigenen Alter, aber nie
+  /// - 20+: höchstens 10 Jahre unter dem eigenen Alter, aber nie
   ///   unter 18.
   ///
-  /// WICHTIG (04.11.2026): Bis hierher stand fuer 18-Jaehrige die
-  /// Grenze 16 und fuer 19-Jaehrige die Grenze 17. Das war ein TOTER
+  /// WICHTIG (04.11.2026): Bis hierher stand für 18-Jährige die
+  /// Grenze 16 und für 19-Jährige die Grenze 17. Das war ein TOTER
   /// FILTER: Der Server filtert die Discovery beidseitig (Migration
-  /// 154), ein 18-Jaehriger bekommt also NIE einen 16- oder
-  /// 17-Jaehrigen zu sehen - und ein 19-Jaehriger nie einen
-  /// 17-Jaehrigen. Wer die Grenze auf 16/17 stellte, bekam eine leere
-  /// Liste und keine Erklaerung.
+  /// 154), ein 18-Jähriger bekommt also NIE einen 16- oder
+  /// 17-Jährigen zu sehen - und ein 19-Jähriger nie einen
+  /// 17-Jährigen. Wer die Grenze auf 16/17 stellte, bekam eine leere
+  /// Liste und keine Erklärung.
   ///
-  /// Die Grenze steht hier bewusst UEBER dem, was der Server als
-  /// kleinstes Zielalter zulaesst: nach oben wegzulassen ist harmlos
+  /// Die Grenze steht hier bewusst ÜBER dem, was der Server als
+  /// kleinstes Zielalter zulässt: nach oben wegzulassen ist harmlos
   /// (der Filter grenzt nur ein), nach unten zu gehen bedeutet "gar
   /// keine Ergebnisse".
   ///
-  /// Fuer 20+ bleibt das Fenster "hoechstens 10 Jahre unter mir" - das
+  /// Für 20+ bleibt das Fenster "höchstens 10 Jahre unter mir" - das
   /// ist eine Produktentscheidung, keine Jugendschutzgrenze. Der
-  /// Server liefert dort mehr, als der Filter zulaesst.
+  /// Server liefert dort mehr, als der Filter zulässt.
   static int minFilterAge(int viewerAge) {
     if (viewerAge < 18) return 16;
-    // Ab 18 liefert der Server ausschliesslich Erwachsene
+    // Ab 18 liefert der Server ausschließlich Erwachsene
     // (age_compatible_bidirectional). Der Filter darf deshalb nicht
     // unter 18 gehen - sonst ist er tot.
     if (viewerAge <= 19) return 18;
@@ -155,7 +155,7 @@ class AgeSafetyRules {
   /// - 16-17: gesperrt
   /// - 18+: frei wählbar
   ///
-  /// Die maechtige Sperre sitzt in der Datenbank
+  /// Die mächtige Sperre sitzt in der Datenbank
   /// (`profile_distance_km`, Migration 163): sie benutzt das
   /// VERIFIZIERTE Alter. Diese Regel hier ist die freundliche Seite -
   /// damit der Schalter gar nicht erst angeboten wird.
@@ -179,7 +179,7 @@ class AgeSafetyRules {
   /// - 16-17: begrenzt (25 km ODER nur das gleiche Bundesland)
   /// - 18+: frei wählbar
   ///
-  /// Die maechtige Sperre sitzt in der Datenbank
+  /// Die mächtige Sperre sitzt in der Datenbank
   /// (`profile_discovery_visible`, Migration 164): sie benutzt das
   /// VERIFIZIERTE Alter und greift auch bei einem gepatchten Client.
   /// Diese Regel hier ist die freundliche Seite - damit gar nicht erst

@@ -1,6 +1,6 @@
 // "Mit anderen verbinden" - der Teilen-Screen.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/qr/contact_share_screen.dart 62 offene Zeilen - darunter
 // der Ladefehler (der Bildschirm blieb bei einem Fehler ohne Ausweg
 // stehen) und das Speichern der Kontaktdaten.
@@ -9,8 +9,8 @@
 // (`contactShareStoreProvider`) - der Test ersetzt ihn durch eine
 // Attrappe, die scheitern kann.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * schlaegt das Laden fehl, steht ein Fehler mit einem Knopf
+// WAS HIER GEPRÜFT WIRD:
+//   * schlägt das Laden fehl, steht ein Fehler mit einem Knopf
 //     "Wiederholen" da (kein leerer Bildschirm, kein Hängen),
 //   * der Knopf holt die Daten erneut,
 //   * die Kontaktdaten werden lokal gespeichert (nie zum Server - das
@@ -47,7 +47,7 @@ class _Speicher extends SecureContactShareStore {
   /// Wie oft wurde gespeichert?
   int speicherAufrufe = 0;
 
-  /// Das Profil, das zurueckkommt.
+  /// Das Profil, das zurückkommt.
   ContactShareProfile profil = const ContactShareProfile();
 
   @override

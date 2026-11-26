@@ -26,33 +26,33 @@ class DockTab {
 ///
 /// NUTZERWUNSCH (28.10.2026): "Die Reiterleiste unten sieht nicht
 /// wirklich anders und mehr besonders oder einzigartig aus. Sie soll
-/// vollstaendig ueberarbeitet werden. Die Icons koennen bleiben, aber
-/// das Design generell von der Leiste nicht." Und: "Ich moechte die
+/// vollständig überarbeitet werden. Die Icons können bleiben, aber
+/// das Design generell von der Leiste nicht." Und: "Ich mächte die
 /// Leiste einfach anders haben, da fast jede Android App sie so hat
-/// und damit meine App sehr aehnlich wie die anderen aussieht. Sie
+/// und damit meine App sehr ähnlich wie die anderen aussieht. Sie
 /// soll jedoch etwas besonderes sein, was immer noch sehr
 /// benutzerfreundend ist."
 ///
 /// NUTZERWUNSCH (30.10.2026): "Die Beschriftung soll immer unter dem
 /// Icon stehen, bei allen vier Reitern." Vorher trugen nur der aktive
-/// Reiter einen Text, die inaktiven zeigten ausschliesslich ihr Symbol.
+/// Reiter einen Text, die inaktiven zeigten ausschließlich ihr Symbol.
 ///
 /// WAS DIESES DOCK ANDERS MACHT:
-///   * Jeder Reiter traegt sein Symbol UND seine Beschriftung - immer.
-///   * Der aktive Reiter bekommt zusaetzlich die gefuellte Pille um das
-///     Symbol. Die Position der Symbole bleibt dabei unveraendert, weil
+///   * Jeder Reiter trägt sein Symbol UND seine Beschriftung - immer.
+///   * Der aktive Reiter bekommt zusätzlich die gefüllte Pille um das
+///     Symbol. Die Position der Symbole bleibt dabei unverändert, weil
 ///     die Pille in einem festen 40x32-Feld sitzt.
 ///   * Die Pille blendet weich um, die Beschriftung wechselt nur Farbe
 ///     und Gewicht - nichts springt.
-///   * Das Ganze sitzt als schmales Dock ueber dem Rand, nicht als
+///   * Das Ganze sitzt als schmales Dock über dem Rand, nicht als
 ///     randabfallender Balken.
 ///
-/// BEDIENBARKEIT (der Nutzerwunsch sagt ausdruecklich: "immer noch
+/// BEDIENBARKEIT (der Nutzerwunsch sagt ausdrücklich: "immer noch
 /// sehr benutzerfreundend"):
-///   * Jeder Reiter traegt seine Beschriftung - man ist nie ratlos.
-///   * Jeder Reiter hat eine Trefferflaeche von mindestens 44 dp Hoehe.
+///   * Jeder Reiter trägt seine Beschriftung - man ist nie ratlos.
+///   * Jeder Reiter hat eine Trefferfläche von mindestens 44 dp Höhe.
 ///   * Die Semantik meldet den aktiven Zustand an Screenreader.
-///   * Ein Haptik-Klick bestaetigt den Wechsel.
+///   * Ein Haptik-Klick bestätigt den Wechsel.
 class DockTabBar extends StatelessWidget {
   const DockTabBar({
     required this.index,
@@ -71,7 +71,7 @@ class DockTabBar extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   /// Radius der Pille. 999 macht aus jedem Rechteck eine Pille
-  /// unabhaengig von der Hoehe.
+  /// unabhängig von der Höhe.
   static const double _pilleRadius = 999;
 
   @override
@@ -168,14 +168,14 @@ class _DockTabItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 // Das Label: IMMER sichtbar (NUTZERWUNSCH 30.10.2026).
-                // Der aktive Reiter traegt es in der Primaerfarbe und
-                // fett, die uebrigen gedaempft. AnimatedDefaultTextStyle
-                // laesst den Wechsel weich aussehen, ohne dass die
-                // Leiste ihre Hoehe aendert.
+                // Der aktive Reiter trägt es in der Primärfarbe und
+                // fett, die übrigen gedämpft. AnimatedDefaultTextStyle
+                // lässt den Wechsel weich aussehen, ohne dass die
+                // Leiste ihre Höhe ändert.
                 //
-                // Die Hoehe ist eine MINDESThoehe: Bei grosser Schrift
-                // (bis 3,2x) waere der Text in einer festen 16-Pixel-
-                // Box abgeschnitten - der Label waere dann unlesbar.
+                // Die Höhe ist eine Mindesthöhe: Bei großer Schrift
+                // (bis 3,2x) wäre der Text in einer festen 16-Pixel-
+                // Box abgeschnitten - der Label wäre dann unlesbar.
                 ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: 16),
                   child: AnimatedDefaultTextStyle(

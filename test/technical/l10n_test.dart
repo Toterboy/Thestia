@@ -42,12 +42,12 @@ bool _sameElements(Set<String> a, Set<String> b) =>
 /// Die Dateien mit den Texten.
 ///
 /// DIE TEXTE LIEGEN NACH THEMEN GETRENNT: `lib/l10n/app_strings.dart` ist
-/// nur noch die Zusammenfuehrung - die Texte selbst stehen je Thema in
+/// nur noch die Zusammenführung - die Texte selbst stehen je Thema in
 /// einer Datei unter `lib/l10n/strings/`.
 List<File> _textDateien() {
   final ordner = Directory('lib/l10n/strings');
   if (!ordner.existsSync()) {
-    // Der Test darf nicht stillschweigend nichts pruefen.
+    // Der Test darf nicht stillschweigend nichts prüfen.
     throw StateError(
       'Der Ordner lib/l10n/strings/ fehlt - die Texte wurden verschoben?',
     );
@@ -92,7 +92,7 @@ Set<String> _usedKeys() {
   for (final entity in Directory('lib').listSync(recursive: true)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
     // Die Textdateien selbst sind keine Verwendung (dort stehen die
-    // Schluessel, nicht ihre Nutzung).
+    // Schlüssel, nicht ihre Nutzung).
     if (entity.path.contains(
       '${Platform.pathSeparator}l10n${Platform.pathSeparator}',
     )) {
@@ -191,10 +191,10 @@ void main() {
         'safetyOnboarding.edu\${n}Body',
         'safetyOnboarding.edu\${n}Hint',
         // Die Werte der Merkmale mit Werteliste (Migration 187):
-        // Haarlaenge und Frisur.
+        // Haarlänge und Frisur.
         'transit.value.\$wert',
         // BEFUND (11.11.2026): Die Ortsarten (Zug, Messe, ...) sind
-        // dynamisch - der Screen waehlt sie aus einer Liste.
+        // dynamisch - der Screen wählt sie aus einer Liste.
         'transit.place.\$art',
       };
       final unknown = dynamic
@@ -226,7 +226,7 @@ void main() {
         expect(deKeys, contains('transit.preset.$preset'));
       }
       // Die Werte der Merkmale mit Werteliste (Migration 187):
-      // Haarlaenge und Frisur.
+      // Haarlänge und Frisur.
       for (final wert in const [
         'kurz',
         'schulterlang',
@@ -259,9 +259,9 @@ void main() {
       }
       expect(deKeys, contains('verify.challenge.action.smile'));
 
-      // AppearanceSelector (v0.9.2): Wert + Erklaerung je Modus. Fehlt
+      // AppearanceSelector (v0.9.2): Wert + Erklärung je Modus. Fehlt
       // eine der sechs Zeilen, zeigt das Widget im Store-Screenshot
-      // bzw. in den Einstellungen statt Text den Schluessel an.
+      // bzw. in den Einstellungen statt Text den Schlüssel an.
       for (final mode in ['light', 'system', 'dark']) {
         expect(deKeys, contains('appearance.$mode'));
         expect(enKeys, contains('appearance.$mode'));

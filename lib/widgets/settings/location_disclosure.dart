@@ -7,27 +7,27 @@ import 'package:thestia/providers/settings/settings_provider.dart';
 
 /// Die prominente Standort-Offenlegung.
 ///
-/// WARUM (06.11.2026): Google Play verlangt fuer EMPFINDLICHE
+/// WARUM (06.11.2026): Google Play verlangt für EMPFINDLICHE
 /// Berechtigungen (Kamera, Mikrofon, Standort) eine sichtbare
-/// Begruendung IN DER APP, bevor der Systemdialog erscheint. Die App
-/// hatte das fuer Kamera und Mikrofon - fuer den Standort fehlte es.
+/// Begründung IN DER APP, bevor der Systemdialog erscheint. Die App
+/// hatte das für Kamera und Mikrofon - für den Standort fehlte es.
 ///
 /// Das ist relevant geworden, weil die App den genauen Standort auf
-/// Android 11 und aelter fuer den BLE-Scan anfragt (dort ist er
-/// Pflicht). Ohne Offenlegung kann die Play-Pruefung das ablehnen.
+/// Android 11 und älter für den BLE-Scan anfragt (dort ist er
+/// Pflicht). Ohne Offenlegung kann die Play-Prüfung das ablehnen.
 ///
 /// DIE REGEL: Die Offenlegung erscheint nur, wenn die Berechtigung
 /// wirklich angefragt wird - also wenn sie noch nicht erteilt ist.
 /// Wer die Berechtigung schon hat, wird nicht behelligt.
 ///
-/// Rueckgabe: true = der Nutzer hat zugestimmt (oder die Berechtigung
+/// Rückgabe: true = der Nutzer hat zugestimmt (oder die Berechtigung
 /// war schon da), false = abgelehnt (der Aufrufer bricht ab).
 Future<bool> ensureLocationDisclosure(
   BuildContext context,
   WidgetRef ref,
 ) async {
   // Ist die Berechtigung schon erteilt? Dann wird nichts angefragt und
-  // es braucht auch keine Begruendung.
+  // es braucht auch keine Begründung.
   final status = await Permission.location.status;
   if (status.isGranted || status.isLimited) return true;
 

@@ -1,24 +1,24 @@
-// Gemeinsame Helfer fuer die Live-Nachweise.
+// Gemeinsame Helfer für die Live-Nachweise.
 //
-// WOFUER: Zwei Tests sprechen mit dem echten Server (echte Konten,
-// echte Schluessel, echte Krypto). Beide brauchen dieselben vier
-// Dinge: die .env lesen, eine Sitzung fuer ein Konto, einen
+// WOFÜR: Zwei Tests sprechen mit dem echten Server (echte Konten,
+// echte Schlüssel, echte Krypto). Beide brauchen dieselben vier
+// Dinge: die .env lesen, eine Sitzung für ein Konto, einen
 // RPC-Aufruf und das PreKey-Bundle des Partners.
 //
 // DIE REGEL: Die Live-Tests sind die EINZIGEN Tests, die das
-// Produktivsystem anruehren. Deshalb steht hier auch die Regel, wie
+// Produktivsystem anrühren. Deshalb steht hier auch die Regel, wie
 // sie ihre Testdaten wieder loswerden:
 //
 //     tool/db/cleanup_transit_testdata.sql
 //
-// Die Tests raeumen selbst ab, was sie ablegen koennen (die
-// Relay-Zeile ueber relay_ack). Die Likes und der Match bleiben
-// stehen, weil die App keine Funktion hat, sie zu loeschen - das
+// Die Tests räumen selbst ab, was sie ablegen können (die
+// Relay-Zeile über relay_ack). Die Likes und der Match bleiben
+// stehen, weil die App keine Funktion hat, sie zu löschen - das
 // Skript nimmt sie danach weg.
 //
 // WICHTIG: Der PreKey-Endpunkt gibt das Bundle eines Partners nur
 // heraus, wenn zwischen beiden eine BEZIEHUNG besteht (Match oder
-// Transit-Signal). Ohne sie antwortet er mit 404 "nicht verfuegbar".
+// Transit-Signal). Ohne sie antwortet er mit 404 "nicht verfügbar".
 // Die Tests bauen die Beziehung deshalb vorher auf.
 
 import 'dart:convert';
@@ -29,9 +29,9 @@ import 'package:http/http.dart' as http;
 /// Die zwei Testkonten (echte Konten auf dem Projekt).
 ///
 /// WICHTIG: Das sind die Konten des Betreibers. Der Live-Test legt
-/// dort Likes und einen Match an und raeumt sie danach ueber
+/// dort Likes und einen Match an und räumt sie danach über
 /// tool/db/cleanup_transit_testdata.sql wieder weg. Die Konten selbst
-/// werden NICHT veraendert.
+/// werden NICHT verändert.
 const String kontoA = '46f3f558-b134-4d25-946b-4e052a8ab3b5';
 const String kontoB = 'd177d5f9-f2d0-420e-981b-4d6ef5b77056';
 
@@ -49,14 +49,14 @@ Map<String, String> envLesen() {
   return werte;
 }
 
-/// Sind alle Schluessel da? Ohne sie ueberspringen die Live-Tests
-/// (der CI hat keine Schluessel).
+/// Sind alle Schlüssel da? Ohne sie überspringen die Live-Tests
+/// (der CI hat keine Schlüssel).
 ///
-/// **ACHTUNG, LEERER WERT:** Ein Schluessel, der in der .env zwar
+/// **ACHTUNG, LEERER WERT:** Ein Schlüssel, der in der .env zwar
 /// NOTIERT, aber leer ist, gilt als **nicht vorhanden** (BEFUND
 /// 13.11.2026: die .env hatte nach der Wiederherstellung die Zeile
 /// `SUPABASE_SECRET_KEY_NEW =` - leer. Die Live-Tests liefen trotzdem
-/// und scheiterten mit 401, statt sich ueberzuppringen).
+/// und scheiterten mit 401, statt sich überzuppringen).
 bool hatSchluessel(Map<String, String> env) {
   bool hat(String schluessel) => (env[schluessel] ?? '').trim().isNotEmpty;
   return hat('SUPABASE_URL') &&
@@ -66,43 +66,43 @@ bool hatSchluessel(Map<String, String> env) {
           hat('SUPABASE_SERVICE_ROLE_KEY'));
 }
 
-/// Duerfen die Live-Tests ueberhaupt laufen?
+/// Dürfen die Live-Tests überhaupt laufen?
 ///
 /// ZWEI Bedingungen:
-///   1. Die .env muss die Schluessel enthalten (die CI hat keine).
+///   1. Die .env muss die Schlüssel enthalten (die CI hat keine).
 ///   2. `THESTIA_SKIP_LIVE_TESTS=1` schaltet sie ab.
 ///
 /// **WARUM (13.11.2026):** Der lokale CI-Spiegel
-/// (tool/checks/check_local_ci.ps1) hat frueher die .env des Entwicklers
+/// (tool/checks/check_local_ci.ps1) hat früher die .env des Entwicklers
 /// durch die .env.example ersetzt - damit die Live-Tests nicht gegen
-/// das Produktivsystem laufen - und sie danach **nicht** zurueckgespielt.
+/// das Produktivsystem laufen - und sie danach **nicht** zurückgespielt.
 /// Die echten Werte waren damit weg (sie mussten aus dem Release-Build
 /// und der Supabase-API wiederhergestellt werden).
 ///
-/// Jetzt wird nichts mehr ueberschrieben: der Spiegel setzt nur diese
-/// Umgebungsvariable, und die Live-Tests springen sich selbst ueber.
+/// Jetzt wird nichts mehr überschrieben: der Spiegel setzt nur diese
+/// Umgebungsvariable, und die Live-Tests springen sich selbst über.
 /// Die .env des Entwicklers bleibt unangetastet.
 bool liveTestsLaufen(Map<String, String> env) =>
     hatSchluessel(env) &&
     Platform.environment['THESTIA_SKIP_LIVE_TESTS'] != '1';
 
-/// Der Schluessel, mit dem die App den Server anspricht.
+/// Der Schlüssel, mit dem die App den Server anspricht.
 String? publishableKey(Map<String, String> env) =>
     env['SUPABASE_PUBLISHABLE_KEY'];
 
-/// Der Schluessel fuer die Admin-Operationen (Session-Erzeugung).
+/// Der Schlüssel für die Admin-Operationen (Session-Erzeugung).
 String? adminKey(Map<String, String> env) =>
     env['SUPABASE_SECRET_KEY_NEW'] ??
     env['SUPABASE_SECRET_KEY'] ??
     env['SUPABASE_SERVICE_ROLE_KEY'];
 
-/// Eine echte Sitzung fuer ein Konto (ueber den Admin-Magic-Link).
+/// Eine echte Sitzung für ein Konto (über den Admin-Magic-Link).
 ///
 /// WARUM DER WIEDERHOLUNSLAUF: `flutter test` startet die Testdateien
-/// parallel. Jede Live-Test-Datei erzeugt fuer DIESELBEN beiden Konten
-/// einen Magic-Link - und ein zweiter Link fuer dieselbe Adresse
+/// parallel. Jede Live-Test-Datei erzeugt für DIESELBEN beiden Konten
+/// einen Magic-Link - und ein zweiter Link für dieselbe Adresse
 /// entwertet den ersten. Ohne Wiederholung schlug deshalb ab und zu
-/// einer der beiden Live-Tests mit "Keine Sitzung fuer A/B" fehl
+/// einer der beiden Live-Tests mit "Keine Sitzung für A/B" fehl
 /// (gemessen am 08.11.2026). Der Link wird deshalb bei einem
 /// fehlgeschlagenen verify neu erzeugt.
 Future<String?> sitzung(
@@ -187,15 +187,15 @@ Future<Map<String, dynamic>?> bundleHolen(
   return jsonDecode(antwort.body) as Map<String, dynamic>;
 }
 
-/// Sorgt fuer die Beziehung zwischen den beiden Testkonten.
+/// Sorgt für die Beziehung zwischen den beiden Testkonten.
 ///
 /// WARUM: Der PreKey-Endpunkt gibt das Bundle nur heraus, wenn eine
-/// Beziehung besteht. Ohne sie waere der Live-Nachweis nicht
-/// moeglich - und genau deshalb ist das auch ein Test: die Kette
+/// Beziehung besteht. Ohne sie wäre der Live-Nachweis nicht
+/// möglich - und genau deshalb ist das auch ein Test: die Kette
 /// "Like -> Match -> Bundle -> Nachricht" muss von Anfang bis Ende
 /// funktionieren.
 ///
-/// DER RUECKGABE-WERT: true, wenn der zweite Like einen Match erzeugt
+/// DER RÜCKGABE-WERT: true, wenn der zweite Like einen Match erzeugt
 /// hat (der beidseitige Like), false, wenn nur der erste Like steht.
 Future<bool> beziehungAufbauen(
   Map<String, String> env,

@@ -4,29 +4,29 @@ tool/images/generate_launcher_icon.py
 Erzeugt das Android-Launcher-Icon als echtes adaptives Icon aus dem
 Thestia-Basis-Icon (`assets/images/thestia_icon_base.png`, EINZIGE Logo-Quelle).
 
-Problem, das dieses Tool loest
+Problem, das dieses Tool löst
 ------------------------------
 Das Basis-Logo ist ein abgerundetes Quadrat, in dem der Schriftzug "Thestia"
-ueber die volle Breite laeuft. Adaptive Icons werden vom Launcher auf eine
+über die volle Breite läuft. Adaptive Icons werden vom Launcher auf eine
 KREISFLAECHE maskiert (72 dp von 108 dp Leinwand). Ein Quadrat, das die
-Safe-Zone (66 dp) ausfuellt, schiebt seine Ecken dabei weit ueber den
+Safe-Zone (66 dp) ausfällt, schiebt seine Ecken dabei weit über den
 Sichtkreis hinaus - der Kreis schneidet die Enden des Schriftzugs ab
 ("Thestia" wurde zu "hestia").
 
-Loesung
+Lösung
 -------
 Das Logo wird in seine Bestandteile zerlegt:
 
-  * Hintergrund  = Markenverlauf, vollflaechig 108 dp
+  * Hintergrund  = Markenverlauf, vollflächig 108 dp
   * Vordergrund  = Herz + Schriftzug, transparent, so skaliert, dass die
                    Diagonale in einen Kreis mit 66 dp Durchmesser passt
 
 Damit liegt das komplette Artwork garantiert in der Safe-Zone: Kreis-,
 Squircle- oder Rounded-Square-Maske schneiden NICHTS ab, und der Name
-bleibt immer lesbar. Zusaetzlich:
+bleibt immer lesbar. Zusätzlich:
 
-  * `monochrome`-Layer fuer Android 13+ (themed icons)
-  * Legacy-`ic_launcher.png` als echtes RUNDES Icon fuer aeltere Launcher
+  * `monochrome`-Layer für Android 13+ (themed icons)
+  * Legacy-`ic_launcher.png` als echtes RUNDES Icon für ältere Launcher
     (vor Android 8 kennt das System keine adaptive Icons)
 
 Aufruf:
@@ -45,8 +45,8 @@ from PIL import Image, ImageDraw, ImageFilter
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -80,14 +80,14 @@ CANVAS_PX = 1024
 # Adaptive-Icons werden mit diesen Dpi-Werten ausgeliefert.
 DENSITIES = {'mdpi': 108, 'hdpi': 162, 'xhdpi': 216, 'xxhdpi': 324,
              'xxxhdpi': 432}
-# Legacy-Launcher (ohne adaptive Icons) erwarten die klassischen Icon-Groessen.
+# Legacy-Launcher (ohne adaptive Icons) erwarten die klassischen Icon-Größen.
 LEGACY_SIZES = {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144,
                 'xxxhdpi': 192}
 
 RES = ROOT / 'android' / 'app' / 'src' / 'main' / 'res'
 
 # --- Trennung Artwork / Verlauf -------------------------------------------
-# Das Artwork (Herz, Kopf-Silhouetten, Funken, Schriftzug) ist weiss bis
+# Das Artwork (Herz, Kopf-Silhouetten, Funken, Schriftzug) ist weiß bis
 # hellrosa, der Verlauf ist satt (min(r,g,b) <= ~60). `min(r,g,b)` trennt
 # die beiden sauber: HIGH = volle Deckkraft, LOW = kein Artwork.
 #
@@ -98,13 +98,13 @@ RES = ROOT / 'android' / 'app' / 'src' / 'main' / 'res'
 # DER GRUND: HI war 168. Alles zwischen min=88 und min=168 bekam einen
 # TEIL-ALPHA. Das betraf auch die magentafarbene Lippe des Herzens (sie
 # liegt bei min=104-169) - sie wurde halbtransparent und damit blass:
-# Ueber dem Verlauf eingeblendet sieht sie nach rosa Milchglas aus statt
+# Über dem Verlauf eingeblendet sieht sie nach rosa Milchglas aus statt
 # nach Magenta. Gemessen: 81 % der opaken Pixel lagen unterhalb 0,95
 # Deckkraft.
 #
-# JETZT: HI = 104. Das Artwork (weiss und hellrosa, min >= 104) ist
-# VOLL deckend; nur der Verlauf (min <= 88) faellt weg, und der schmale
-# Uebergang dazwischen (88-104) bleibt die Anti-Aliasing-Kante. Die
+# JETZT: HI = 104. Das Artwork (weiß und hellrosa, min >= 104) ist
+# VOLL deckend; nur der Verlauf (min <= 88) fällt weg, und der schmale
+# Übergang dazwischen (88-104) bleibt die Anti-Aliasing-Kante. Die
 # weiche Kante der Herzkanten kommt ohnehin aus dem Alpha-Kanal des
 # Quellbilds - die Farb-Schwelle muss sie nicht noch einmal weichzeichnen.
 ARTWORK_LO = 88.0
@@ -128,27 +128,27 @@ def build_background(src: Image.Image, rgb: np.ndarray,
                      art_a: np.ndarray, size: int) -> Image.Image:
     """Baut den Hintergrund des adaptiven Icons als smooth Gradient.
 
-    Frueher wurde der Verlauf aus dem Quellbild rekonstruiert: die
+    Früher wurde der Verlauf aus dem Quellbild rekonstruiert: die
     Nicht-Artwork-Pixel wurden auf ein 24x24-Gitter gemittelt und
-    hochskaliert. Das hatte einen Fehler, der auf dem Geraet als
+    hochskaliert. Das hatte einen Fehler, der auf dem Gerät als
     SCHATTEN zu sehen war:
 
-    Eine Gitterzelle, in der fast nur Artwork liegt (Herz, Koepfe,
+    Eine Gitterzelle, in der fast nur Artwork liegt (Herz, Köpfe,
     Schriftzug), hat nur wenige Nicht-Artwork-Pixel - und ihr Mittelwert
     ist dadurch deutlich dunkler als der Verlauf an der Stelle. Das
     Ergebnis war ein Hintergrund mit dunklen Stellen GENAU DA, WO DAS
-    ARTWORK LIEGT. Da das Artwork halbtransparente Raender hat, schimmerte
+    ARTWORK LIEGT. Da das Artwork halbtransparente Ränder hat, schimmerte
     das durch - die "komischen Schatten".
 
-    Gemessen: 7,8 % der Flaeche unter Luma 40, und der Bereich deckte
+    Gemessen: 7,8 % der Fläche unter Luma 40, und der Bereich deckte
     sich mit dem Artwork.
 
     Jetzt wird der Verlauf nicht mehr gemittelt, sondern GEPASST: aus den
     Pixeln des Aussenrings (dort gibt es kein Artwork, nur Verlauf) wird
     je Farbkanal eine Ebene farbe = a*x + b*y + c per kleinster Quadrate
     bestimmt. Ein smooth Gradient in einer Richtung ist damit exakt
-    beschrieben, und es gibt keine Zellen, die durch Artwork verfaelscht
-    werden koennen.
+    beschrieben, und es gibt keine Zellen, die durch Artwork verfälscht
+    werden können.
 
     Voraussetzung ist, dass der Verlauf in der Tat smooth ist - das ist er
     (pink -> magenta -> violett, diagonal).
@@ -167,7 +167,7 @@ def build_background(src: Image.Image, rgb: np.ndarray,
     if ring.sum() < 100:
         raise SystemExit('Aussenring zu duenn - Schwellen pruefen.')
 
-    # Kleinste Quadrate fuer farbe = a*x + b*y + c, je Kanal.
+    # Kleinste Quadrate für farbe = a*x + b*y + c, je Kanal.
     x = xs[ring].astype(np.float64)
     y = ys[ring].astype(np.float64)
     ones = np.ones_like(x)
@@ -197,25 +197,25 @@ def _rund(rgb: Image.Image, size: int, weich: float = 1.2) -> Image.Image:
     """Schneidet ein Quadrat zu einem Kreis mit weichem Rand.
 
     WARUM: `android:background` einer adaptiven Datei ist ein RECHTECK.
-    Der Launcher legt seine eigene Form darueber - je nach Geraet ein
+    Der Launcher legt seine eigene Form darüber - je nach Gerät ein
     Squircle, ein Kreis, ein abgerundetes Quadrat. Der Verlauf im
-    Hintergrund fuellt aber die ganze Leinwand, also zeigt das Icon
+    Hintergrund füllt aber die ganze Leinwand, also zeigt das Icon
     IMMER in der Form des Launchers. Wer ein rundes Icon will, kann das
     dem Launcher nicht vorschreiben: der legt die Form fest.
 
-    Der Weg, der unabhaengig vom Launcher rund aussieht: der Hintergrund
+    Der Weg, der unabhängig vom Launcher rund aussieht: der Hintergrund
     ist selbst schon ein Kreis und die Ecken sind transparent. Dann
     beschnitten die meisten Masken nichts Sichtbares - der sichtbare
-    Teil ist der Kreis, gleichgueltig ob die Maske rund oder
+    Teil ist der Kreis, gleichgültig ob die Maske rund oder
     squirclig ist.
 
     Der Rand ist weich, weil der Launcher die Maske bei den meisten
-    Geraeten noch zusaetzlich antialiaset. Ein harter Alphaschnitt
+    Geräten noch zusätzlich antialiaset. Ein harter Alphaschnitt
     zeigte sich sonst als helle oder dunkle Linie am Kreis.
 
-    Der Kreis sitzt zentriert und fuellt die Leinwand zu 100 %. Das ist
-    Absicht: kleiner ergaebe ringsum eine Luecke, in der die Form des
-    Launchers wieder sichtbar wuerde - also genau das, was hier
+    Der Kreis sitzt zentriert und füllt die Leinwand zu 100 %. Das ist
+    Absicht: kleiner ergäbe ringsum eine Lücke, in der die Form des
+    Launchers wieder sichtbar würde - also genau das, was hier
     vermieden werden soll.
     """
     mask = Image.new('L', (size, size), 0)
@@ -241,7 +241,7 @@ def build_foreground(src: Image.Image, rgb: np.ndarray, art_a: np.ndarray,
 
     # Un-Mix: die halbtransparenten Randpixel des Originals enthalten noch
     # den dunklen Verlauf. Ohne Korrektur entsteht ein dunkler Halo um Herz
-    # und Schrift. Aus "beobachtet = a*Artwork + (1-a)*Hintergrund" loesen
+    # und Schrift. Aus "beobachtet = a*Artwork + (1-a)*Hintergrund" lösen
     # wir die echte Artwork-Farbe.
     alpha = np.clip(art_a[y0:y1, x0:x1] / 255.0, 0.0, 1.0)[..., None]
     bg_crop = np.asarray(
@@ -255,7 +255,7 @@ def build_foreground(src: Image.Image, rgb: np.ndarray, art_a: np.ndarray,
         .astype(np.uint8), 'RGBA')
 
     # Skalierung so, dass die Diagonale in den Safe-Zone-Kreis passt -
-    # nur so bleibt der breite Schriftzug bei Kreis-Maske vollstaendig.
+    # nur so bleibt der breite Schriftzug bei Kreis-Maske vollständig.
     safe_px = SAFE_DP / CANVAS_DP * size
     s = safe_px / math.hypot(bw, bh)
     nw, nh = max(1, round(bw * s)), max(1, round(bh * s))
@@ -268,10 +268,10 @@ def build_foreground(src: Image.Image, rgb: np.ndarray, art_a: np.ndarray,
 
 
 def build_monochrome(fg: Image.Image, size: int) -> Image.Image:
-    """Weisse Silhouette fuer Android 13+ (themed icons)."""
+    """Weisse Silhouette für Android 13+ (themed icons)."""
     arr = np.asarray(fg, dtype=np.float64)
     a = arr[:, :, 3]
-    # Alpha leicht betonen, damit auch die duennen Striche der Schrift
+    # Alpha leicht betonen, damit auch die dünnen Striche der Schrift
     # in der monochrome-Darstellung nicht verschwinden.
     a = np.clip(a * 1.15, 0, 255)
     return Image.fromarray(
@@ -280,7 +280,7 @@ def build_monochrome(fg: Image.Image, size: int) -> Image.Image:
 
 
 def build_legacy(fg: Image.Image, bg: Image.Image, size: int) -> Image.Image:
-    """Rundes Icon fuer Launcher ohne Adaptive-Icon-Support.
+    """Rundes Icon für Launcher ohne Adaptive-Icon-Support.
 
     BEFUND (09.11.2026, Betreiber): "Das Runde sollte dabei auch die
     Farben von dem Abgerundeten haben (Hier muss das Bild Rund sein)."
@@ -289,11 +289,11 @@ def build_legacy(fg: Image.Image, bg: Image.Image, size: int) -> Image.Image:
     (Radius = halbe Leinwand) in eine kleinere Maske (Radius = 72/108
     der Leinwand). Sichtbar blieb damit nur die **Mitte** des
     Verlaufs - die satten Randbereiche (pink oben links, violett
-    unten rechts) lagen ausserhalb. Dazu kam das halbtransparente
+    unten rechts) lagen außerhalb. Dazu kam das halbtransparente
     Herz (die Alpha-Schwelle, siehe ARTWORK_HI).
 
     JETZT: Das Icon ist das runde ThestiaIcon aus derselben Quelle
-    (`tool/images/logo_round.py`): der vollstaendige Verlauf im Kreis und das
+    (`tool/images/logo_round.py`): der vollständige Verlauf im Kreis und das
     deckende Artwork. Damit hat es genau die Farben des abgerundeten
     Originals.
     """
@@ -335,7 +335,7 @@ def main() -> None:
     print(f'Artwork {bw}x{bh}px -> {nw}x{nh}px = {dp_w:.1f}dp breit '
           f'(Sichtkreis {MASK_DP:.0f}dp, Safe-Zone {SAFE_DP:.0f}dp)')
 
-    # Flutter-Assets (auch fuer Splash/Notifications verwendbar)
+    # Flutter-Assets (auch für Splash/Notifications verwendbar)
     write_png(fg, ROOT / 'assets' / 'images' / 'thestia_icon_foreground.png')
     write_png(bg, ROOT / 'assets' / 'images' / 'thestia_icon_background.png')
 

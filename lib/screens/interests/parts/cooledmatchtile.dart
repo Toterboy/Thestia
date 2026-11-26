@@ -1,9 +1,9 @@
 // Der Teil '_CooledMatchTile'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -28,7 +28,7 @@ class _CooledMatchTile extends StatelessWidget {
 
   /// Endgültig löschen (NUTZERWUNSCH, 28.10.2026: "Funke
   /// löschen"). Bei einem archivierten Funke ist das die einzige
-  /// Möglichkeit, ihn wegzuräumen - "Archivieren" waere
+  /// Möglichkeit, ihn wegzuräumen - "Archivieren" wäre
   /// sinnlos, er ist ja schon archiviert.
   final VoidCallback onDelete;
 
@@ -46,7 +46,7 @@ class _CooledMatchTile extends StatelessWidget {
           onTap: onProfile,
           child: const CircleAvatar(child: Icon(Icons.person_outline)),
         ),
-        // NUTZERWUNSCH (31.10.2026): "Verifizierung soll fuer alle
+        // NUTZERWUNSCH (31.10.2026): "Verifizierung soll für alle
         // Personen sichtbar sein" - auch in der Funken-Liste.
         //
         // NUTZERWUNSCH (22.11.2026): "Name und Alter nicht nebeneinander
@@ -73,7 +73,7 @@ class _CooledMatchTile extends StatelessWidget {
                   ),
                 ],
                 // Der automatische Funke (Migration 177) - auch hier
-                // sichtbar, die Rueckfrage kommt beim Antippen.
+                // sichtbar, die Rückfrage kommt beim Antippen.
                 if (match.autoMatch) ...[
                   const SizedBox(width: 6),
                   const _AutoMatchBadge(),
@@ -104,7 +104,7 @@ class _CooledMatchTile extends StatelessWidget {
               icon: const Icon(Icons.local_fire_department, size: 18),
               label: Text(L10n.t(context, 'interests.resparkBtn')),
             ),
-            // Endgueltig loeschen (NUTZERWUNSCH, 28.10.2026).
+            // Endgültig löschen (NUTZERWUNSCH, 28.10.2026).
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Colors.red),
               tooltip: L10n.t(context, 'interests.deleteSpark'),

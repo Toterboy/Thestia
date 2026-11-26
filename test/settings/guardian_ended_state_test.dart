@@ -5,15 +5,15 @@ import 'package:thestia/models/verification/guardian_status.dart';
 import 'package:thestia/providers/settings/guardian_provider.dart';
 import 'package:thestia/widgets/settings/guardian_section.dart';
 
-/// Tests fuer den Zustand "die Freigabe ist beendet".
+/// Tests für den Zustand "die Freigabe ist beendet".
 ///
 /// BEFUND 04.11.2026: Bis hierher sah dieser Fall in der App aus wie
 /// "es gab nie eine Freigabe" - der Jugendliche wusste nicht, dass
 /// seine Freigabe endete, und erst recht nicht, dass dabei die
-/// E-Mail-Adresse des Elternteils geloescht wurde (Migration 179).
+/// E-Mail-Adresse des Elternteils gelöscht wurde (Migration 179).
 ///
-/// Der Test prueft den SICHTBAREN Zustand: Titel und Text. Ein Fehler
-/// dort faellt nicht als Absturz auf, sondern als falsche Aussage an
+/// Der Test prüft den SICHTBAREN Zustand: Titel und Text. Ein Fehler
+/// dort fällt nicht als Absturz auf, sondern als falsche Aussage an
 /// der falschen Stelle.
 class _TestNotifier extends GuardianNotifier {
   _TestNotifier(super.ref, this._status);
@@ -91,9 +91,9 @@ void main() {
     testWidgets('ohne Loeschvermerk steht der vorsichtige Text', (
       tester,
     ) async {
-      // Der Server weiss noch nicht, dass geloescht wurde (z. B. bei
+      // Der Server weiß noch nicht, dass gelöscht wurde (z. B. bei
       // einem alten Datensatz). Dann darf die App NICHT behaupten, es
-      // sei geloescht worden.
+      // sei gelöscht worden.
       await _pump(tester, _status(status: 'revoked', age: 17));
 
       expect(

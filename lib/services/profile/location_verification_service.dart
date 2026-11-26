@@ -33,22 +33,22 @@ class LocationVerificationService {
 
   /// Holt den aktuellen Standort - auf dem 5-km-Raster der App.
   ///
-  /// `LocationAccuracy.high` war falsch fuer diesen Zweck und verlangte
+  /// `LocationAccuracy.high` war falsch für diesen Zweck und verlangte
   /// faktisch ACCESS_FINE_LOCATION: Geolocator kann dann keine
   /// Netzwerkmessung mehr machen und liefert nur mit GPS eine Position -
   /// auf einem Gerät ohne GPS-Signal bleibt `null`, und die
-  /// Standortverifikation waere unmoeglich.
+  /// Standortverifikation wäre unmöglich.
   ///
   /// DER STANDORT WIRD GERASTET (BEFUND 06.11.2026): Die App holt die
   /// Position auf dem 5-km-Raster ([LocationPrivacy.snapToGrid]) - auf
-  /// JEDER Systemversion. Grund: Auf Android 11 und aelter ist die genaue
-  /// Standort-Berechtigung Pflicht (fuer den BLE-Scan), und dort gibt es
-  /// keine Wahl zwischen "ungefaehr" und "genau" - die Wahl kam erst mit
-  /// Android 12. Ohne das Raster wuerde die App auf aelteren Geraeten
+  /// JEDER Systemversion. Grund: Auf Android 11 und älter ist die genaue
+  /// Standort-Berechtigung Pflicht (für den BLE-Scan), und dort gibt es
+  /// keine Wahl zwischen "ungefähr" und "genau" - die Wahl kam erst mit
+  /// Android 12. Ohne das Raster würde die App auf älteren Geräten
   /// einen genauen Standort bekommen und lokal speichern, obwohl sie
   /// verspricht, den genauen Standort NICHT zu speichern. Das Raster ist
   /// genau die Genauigkeit, die die App braucht (sie leitet daraus die
-  /// Stadt ab) - und es ist dieselbe Regel, die fuer das Profil gilt.
+  /// Stadt ab) - und es ist dieselbe Regel, die für das Profil gilt.
   Future<Position?> getCurrentLocation() async {
     if (!await hasLocationPermission()) {
       final granted = await requestLocationPermission();
@@ -69,9 +69,9 @@ class LocationVerificationService {
     }
   }
 
-  /// Die Position auf das 5-km-Raster der App zurueckgeben.
+  /// Die Position auf das 5-km-Raster der App zurückgeben.
   ///
-  /// OEFFENTLICH, damit der Test pruefen kann: der gespeicherte
+  /// ÖFFENTLICH, damit der Test prüfen kann: der gespeicherte
   /// Verifizierungs-Standort ist ein Rasterpunkt und kein exakter
   /// Standort (BEFUND 06.11.2026).
   static Position aufRaster(Position position) {

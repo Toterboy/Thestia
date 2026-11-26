@@ -1,16 +1,16 @@
 // Der Teil '_LocationNotice'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
 
 part of '../profile_edit_screen.dart';
 
-/// Dezent gestylter Hinweis-/Fehlerkasten fuer Standort-Meldungen.
+/// Dezent gestylter Hinweis-/Fehlerkasten für Standort-Meldungen.
 class _LocationNotice extends StatelessWidget {
   const _LocationNotice({required this.text});
 

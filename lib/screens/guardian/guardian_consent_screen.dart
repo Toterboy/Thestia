@@ -7,14 +7,14 @@ import 'package:thestia/providers/settings/guardian_provider.dart';
 import 'package:thestia/services/auth/supabase_service.dart';
 import 'package:thestia/widgets/common/buttons.dart';
 
-/// Screen fuer die Elternfreigabe (16 und 17 Jahre).
+/// Screen für die Elternfreigabe (16 und 17 Jahre).
 ///
 /// Er wird direkt nach dem Willkommens-Screen gezeigt. Die Freigabe ist
-/// FREIWILLIG: wer sie nicht will, kann sie ueberspringen - nach § 3a JUG
+/// FREIWILLIG: wer sie nicht will, kann sie überspringen - nach § 3a JUG
 /// kann eine Person ab dem vollendeten 16. Lebensjahr selbst einwilligen.
 ///
-/// Die eigentliche Entscheidung faellt der Elternteil: er bekommt eine
-/// E-Mail mit einem Link und bestaetigt dort. Diese Seite verschickt
+/// Die eigentliche Entscheidung fällt der Elternteil: er bekommt eine
+/// E-Mail mit einem Link und bestätigt dort. Diese Seite verschickt
 /// nur die Anfrage.
 class GuardianConsentScreen extends ConsumerStatefulWidget {
   const GuardianConsentScreen({super.key});
@@ -41,7 +41,7 @@ class _GuardianConsentScreenState extends ConsumerState<GuardianConsentScreen> {
     final email = _emailCtrl.text.trim().toLowerCase();
 
     // Die eigene Kontoadresse kann nicht Elternteil sein. Der Server
-    // prueft das ebenfalls - hier nur die freundliche Meldung.
+    // prüft das ebenfalls - hier nur die freundliche Meldung.
     final eigene = SupabaseService.currentUser?.email?.toLowerCase();
     if (eigene != null && eigene.isNotEmpty && eigene == email) {
       _fehler(L10n.t(context, 'guardian.errorSameEmail'));
@@ -152,7 +152,7 @@ class _GuardianConsentScreenState extends ConsumerState<GuardianConsentScreen> {
   }
 }
 
-/// Der Zustand nach dem Absenden: "Bitte warte auf die Bestaetigung".
+/// Der Zustand nach dem Absenden: "Bitte warte auf die Bestätigung".
 class _Fertig extends StatelessWidget {
   const _Fertig({required this.email, required this.onDone});
 

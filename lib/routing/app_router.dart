@@ -80,16 +80,16 @@ class AppRoutes {
   // Kurzer Willkommensscreen nach E-Mail-Bestätigung (v0.9.1, einmalig).
   static const String signupWelcome = '/welcome-new';
 
-  /// Selektive Datenloeschung (das Konto bleibt).
+  /// Selektive Datenlöschung (das Konto bleibt).
   static const String deleteData = '/delete-data';
 
   /// Elternfreigabe anfordern (16 und 17 Jahre).
   static const String guardianConsent = '/guardian-consent';
 
-  /// Entscheidung ueber den Elternzugriff mit 18.
+  /// Entscheidung über den Elternzugriff mit 18.
   static const String guardianTransition = '/guardian-transition';
 
-  /// Die Elterneinstellungen (PIN-geschuetzt) - eigener Screen.
+  /// Die Elterneinstellungen (PIN-geschützt) - eigener Screen.
   static const String guardianSettings = '/guardian-settings';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
@@ -100,7 +100,7 @@ class AppRoutes {
   static const String unbanRequest = '/unban-request';
   static const String home = '/';
   static const String findYourMatch = '/find-your-match';
-  // Das Stoebern nach Interessens-Kategorien (v0.11.0).
+  // Das Stöbern nach Interessens-Kategorien (v0.11.0).
   static const String findYourMatchCategory = '/find-your-match/kategorie';
   static const String interessen = '/interessen';
   static const String quiz = '/quiz/:matchId';
@@ -142,7 +142,7 @@ class AppRoutes {
 
   /// Das Impressum als Text IN der App (nicht nur als Link).
   ///
-  /// BEFUND (20.11.2026): Der Link auf thestia.de/impressum oeffnete
+  /// BEFUND (20.11.2026): Der Link auf thestia.de/impressum öffnete
   /// die App selbst - thestia.de ist ein verifizierter App-Link.
   static const String imprint = '/privacy/imprint';
   static const String safetyCenter = '/safety-center';
@@ -174,7 +174,7 @@ class AppRoutes {
   // Community-Regeln
   static const String communityGuidelines = '/community-guidelines';
 
-  // Geschuetzter Admin-Bereich (nur ueber versteckten Zugang, nur fuer Admin-ID)
+  // Geschützter Admin-Bereich (nur über versteckten Zugang, nur für Admin-ID)
   static const String admin = '/admin';
 
   /// Baut die konkrete Chat-Detail-URL für ein Match (ersetzt den
@@ -228,10 +228,10 @@ final routeObserver = RouteObserver<ModalRoute<void>>();
 
 /// Route-Parameter sicher auslesen.
 ///
-/// Deep-Links und Push-Notifications koennen beliebige URIs liefern. Ein
+/// Deep-Links und Push-Notifications können beliebige URIs liefern. Ein
 /// `int.parse(param!)` im Page-Builder wirft dann mitten im Build eine
 /// FormatException - der Nutzer sieht statt des Screens einen roten
-/// ErrorWidget-Screen. Mit diesen Helfern landen ungueltige Links per
+/// ErrorWidget-Screen. Mit diesen Helfern landen ungültige Links per
 /// `redirect` auf einer sinnvollen Seite.
 int? _intRouteParam(GoRouterState state, String name) =>
     int.tryParse(state.pathParameters[name] ?? '');
@@ -257,7 +257,7 @@ String? _requireStringParam(
 /// Die Logik steckte vorher direkt im `redirect`-Callback des Routers.
 /// Dort war sie nicht testbar: der Callback bekommt nur einen
 /// [GoRouterState], den ein Test nicht bauen kann. Als eigene Funktion
-/// nimmt sie den Pfad und den [Ref] - so laesst sich genau pruefen, WAS
+/// nimmt sie den Pfad und den [Ref] - so lässt sich genau prüfen, WAS
 /// der Router entscheidet (siehe test/app_router_redirect_test.dart).
 ///
 /// [pfad] ist der Pfad, den der Nutzer ansteuert (z. B. `/welcome`).
@@ -307,8 +307,8 @@ Future<String?> umleitung(Ref ref, String pfad) async {
   final goingToDatingHour = pfad == AppRoutes.datingHourEvent;
   final goingToWhatsNew = pfad == AppRoutes.whatsNew;
 
-  // -- Admin-Bereich: NUR fuer die konfigurierte Admin-ID --
-  // Normale Nutzer duerfen diesen Screen unter keinen Umstaenden
+  // -- Admin-Bereich: NUR für die konfigurierte Admin-ID --
+  // Normale Nutzer dürfen diesen Screen unter keinen Umständen
   // erreichen. Direkter URL-Aufruf wird zur Startseite umgeleitet.
   if (pfad == AppRoutes.admin && !isCurrentUserAdmin()) {
     return AppRoutes.home;
@@ -318,28 +318,28 @@ Future<String?> umleitung(Ref ref, String pfad) async {
   //
   // Defense in Depth (v0.10.0, Security-Audit 31.10.2026).
   //
-  // Die Verifikationspflicht fuer Find your Spark, Dating Hour und
-  // Transit Spark wird im Modus-Auswahlbildschirm geprueft
+  // Die Verifikationspflicht für Find your Spark, Dating Hour und
+  // Transit Spark wird im Modus-Auswahlbildschirm geprüft
   // (swipe_mode_selection_screen.dart). Das ist eine UI-Sperre -
   // die Routen selbst waren frei navigierbar.
   //
-  // Zwei Gruende fuer die Pruefung HIER:
+  // Zwei Gründe für die Prüfung HIER:
   //
-  // 1) Ein Deep-Link (App-Links, Passwort-Zuruecksetzen-Mail,
+  // 1) Ein Deep-Link (App-Links, Passwort-Zurücksetzen-Mail,
   //    ein gespeicherter Verlauf) umgeht den Auswahlbildschirm
-  //    vollstaendig. Wer den Bildschirm ueberspringt, kommt an
+  //    vollständig. Wer den Bildschirm überspringt, kommt an
   //    den Bildschirm.
   // 2) Der Server erzwingt die Sperfe erst seit Migration 161
-  //    (vorher nur im Client). Diese Pruefung faengt den
-  //    Rest ab - unabhaengig vom Serverstand.
+  //    (vorher nur im Client). Diese Prüfung fängt den
+  //    Rest ab - unabhängig vom Serverstand.
   //
   // Wichtig: Das ist die ZWEITE Sperre, nicht die einzige. Der
-  // Server bleibt die maechtige (Migration 161) - ein gepatchter
+  // Server bleibt die mächtige (Migration 161) - ein gepatchter
   // Client kommt an der Servergrenze nicht vorbei.
   if (loggedIn && routeNeedsVerification(pfad)) {
     final state2 = ref.read(profileProvider).verificationState;
     if (state2 != VerificationState.verified) {
-      // Zurueck zur Modus-Auswahl: dort steht die Begruendung
+      // Zurück zur Modus-Auswahl: dort steht die Begründung
       // ("so kannst du das anbieten") und der Weg zur
       // Verifikation.
       return AppRoutes.swipeModeSelection;
@@ -426,7 +426,7 @@ Future<String?> umleitung(Ref ref, String pfad) async {
     return pfad == AppRoutes.login ? null : AppRoutes.login;
   }
 
-  // Schritt 0: E-Mail-Bestaetigung fuer eingeloggte Nutzer erzwingen –
+  // Schritt 0: E-Mail-Bestätigung für eingeloggte Nutzer erzwingen –
   // VOR der Einrichtung. So kommt nach der Registrierung zuerst die
   // Bestätigung und erst danach Settings/Privacy, Persönlichkeitstest etc.
   // Ausnahmen: Bug-Report und andere Utility-Seiten brauchen keine
@@ -666,7 +666,7 @@ GoRouter createRouter(Ref ref) {
 /// DER WEG (19.11.2026, gefunden vom Rauchtest): Die Tabelle stand
 /// direkt in [createRouter]. Ein Test konnte sie deshalb nicht ohne
 /// Umleitung benutzen - und die Umleitung schickt den Nutzer je nach
-/// Zustand auf andere Seiten. So blieb der groesste Teil der Bildschirme
+/// Zustand auf andere Seiten. So blieb der größte Teil der Bildschirme
 /// ungetestet. Als eigene Funktion kann der Test jetzt JEDE Route
 /// ansteuern (test/screens/router_rauchtest_test.dart).
 ///
@@ -686,14 +686,14 @@ List<RouteBase> appRoutes() {
       path: AppRoutes.signupWelcome,
       builder: (context, state) => const SignupWelcomeScreen(),
     ),
-    // Selektive Datenloeschung: einzelne Kategorien loeschen, ohne
+    // Selektive Datenlöschung: einzelne Kategorien löschen, ohne
     // das Konto aufzugeben.
     GoRoute(
       path: AppRoutes.deleteData,
       builder: (context, state) => const DeleteDataScreen(),
     ),
     // Elternfreigabe (16/17). Freiwillig - wer sie nicht will,
-    // ueberspringt sie und kommt direkt ins Setup.
+    // überspringt sie und kommt direkt ins Setup.
     GoRoute(
       path: AppRoutes.guardianConsent,
       builder: (context, state) => const GuardianConsentScreen(),
@@ -769,9 +769,9 @@ List<RouteBase> appRoutes() {
       path: AppRoutes.communityGuidelines,
       builder: (context, state) => const CommunityGuidelinesScreen(),
     ),
-    // Geschuetzter Admin-Bereich (nur ueber verstecketen Zugang erreichbar,
-    // Zugriff nur fuer AppConstants.adminUserId). Der redirect unten
-    // blockt den Aufruf fuer alle anderen Nutzer.
+    // Geschützter Admin-Bereich (nur über verstecketen Zugang erreichbar,
+    // Zugriff nur für AppConstants.adminUserId). Der redirect unten
+    // blockt den Aufruf für alle anderen Nutzer.
     GoRoute(
       path: AppRoutes.admin,
       builder: (context, state) => const AdminScreen(),
@@ -810,7 +810,7 @@ List<RouteBase> appRoutes() {
       builder: (context, state) => const TermsTextScreen(),
     ),
     // Volltext des Impressums (BEFUND 20.11.2026: "Das Impressum in der
-    // App funktioniert nicht" - der Link auf thestia.de oeffnete die
+    // App funktioniert nicht" - der Link auf thestia.de öffnete die
     // App selbst, weil die Domain ein verifizierter App-Link ist).
     GoRoute(
       path: AppRoutes.imprint,
@@ -818,7 +818,7 @@ List<RouteBase> appRoutes() {
     ),
     // Safety Center: Hilfe bei Belästigung/Stalking + In-App-Maßnahmen.
     // Die drei Routen liegen in `safety_routes.dart` (die Datei hier
-    // waechst sonst ueber die 1000-Zeilen-Grenze).
+    // wächst sonst über die 1000-Zeilen-Grenze).
     ...safetyRoutes(),
     // Geräte & Sitzungen ("Wo bin ich eingeloggt?" + Überall-Abmelden)
     GoRoute(
@@ -947,7 +947,7 @@ List<RouteBase> appRoutes() {
         // sein."
         //
         // DER GRUND: Diese Routen lagen VOR der ShellRoute - also
-        // ausserhalb des Haupt-Navigators, in dem `MainNavigation`
+        // außerhalb des Haupt-Navigators, in dem `MainNavigation`
         // (mit der Reiter-Leiste) sitzt. Sie waren dadurch
         // Vollbild-Screens ohne Leiste.
         //

@@ -1,7 +1,7 @@
 Passkey-Fix in zwei Teilen:
 - Doku: docs/technik/PASSKEYS_SERVER_SETUP.md - Server muss den apk-key-hash-Origin
-  der installierten APK in GOTRUE_WEBAUTHN_RP_ORIGINS fuehren (exakte Werte
-  fuer beide Signatur-Keys enthalten)
+  der installierten APK in GOTRUE_WEBAUTHN_RP_ORIGINS führen (exakte Werte
+  für beide Signatur-Keys enthalten)
 - Debug-Diagnose: App loggt jetzt den gesendeten WebAuthn-Origin
 
-Server: GOTRUE_WEBAUTHN_RP_ORIGINS ergaenzen (siehe Doku), dann Passkey neu anlegen.
+Server: GOTRUE_WEBAUTHN_RP_ORIGINS ergänzen (siehe Doku), dann Passkey neu anlegen.

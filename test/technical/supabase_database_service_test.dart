@@ -1,11 +1,11 @@
 // Der Datenbank-Zugriff (Supabase) - bisher weitgehend ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/services/server/supabase_database_service.dart 239 offene Zeilen. Hier
 // liegt die ganze Datenbank-Kommunikation der App: das eigene Profil,
-// die Praeferenzen, die Setup-Flags, die Geraete, die Transit-Spans,
-// die Admin-Listen, die Likes. Ein Fehler hier faellt dem Nutzer nicht
-// sofort auf - die Einrichtung verschwindet, die Praeferenz geht
+// die Präferenzen, die Setup-Flags, die Geräte, die Transit-Spans,
+// die Admin-Listen, die Likes. Ein Fehler hier fällt dem Nutzer nicht
+// sofort auf - die Einrichtung verschwindet, die Präferenz geht
 // verloren, der Like kommt nicht an.
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
@@ -22,7 +22,7 @@ import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
 /// Die ID der anderen Person (eine UUID - der Server akzeptiert nur
-/// gueltige Peer-IDs).
+/// gültige Peer-IDs).
 const String _peerId = '00000000-0000-0000-0000-000000000001';
 
 void main() {
@@ -106,7 +106,7 @@ void main() {
       expect(profil.bio, 'Liest gern');
       expect(profil.id, 'ich');
       expect(profil.interests, contains('wandern'));
-      // Die Lieblings-Musik und der Geburtstagsstil wurden frueher nicht
+      // Die Lieblings-Musik und der Geburtstagsstil wurden früher nicht
       // gelesen - dadurch waren sie nach dem ersten Start weg.
       expect(profil.favoriteSong, 'Flieder');
       expect(profil.favoriteBand, 'Kraftwerk');
@@ -655,7 +655,7 @@ void main() {
         (s) => s['tabelle'] == 'matches',
       );
       // Die beiden Nutzer stehen in fester Reihenfolge in der Zeile
-      // (sonst wuerde jeder sie anders anlegen).
+      // (sonst würde jeder sie anders anlegen).
       expect(
         <String?>{schreib['user_one_id'], schreib['user_two_id']},
         <String?>{'ich', _peerId},

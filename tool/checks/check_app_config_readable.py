@@ -1,26 +1,26 @@
-"""Prueft: die app_config-Schalter, die die App liest, sind fuer sie erreichbar.
+"""Prüft: die app_config-Schalter, die die App liest, sind für sie erreichbar.
 
 BEFUND (08.11.2026): ZWEI Sicherheitsmechanismen waren STUMM, weil die
-App `app_config` direkt ueber PostgREST liest, die Policy aber
+App `app_config` direkt über PostgREST liest, die Policy aber
 `USING (false)` hatte:
 
-* `min_app_version_build` - der Update-Hinweis fuer zu alte Clients
+* `min_app_version_build` - der Update-Hinweis für zu alte Clients
   erschien nie. Damit liefen alte Builds weiter, deren
-  Zertifikatspruefung die gesperrten Zwischenzertifikate noch
+  Zertifikatsprüfung die gesperrten Zwischenzertifikate noch
   akzeptiert (Advisory GHSA-frr6-h895-5pxp, High).
-* `transit_spark_enabled` - die NOTBREMSE fuer Transit Spark. Der
+* `transit_spark_enabled` - die NOTBREMSE für Transit Spark. Der
   Schalter, mit dem der Betreiber das Feature abschalten kann, wenn der
-  BLE-Geraetetest nicht besteht.
+  BLE-Gerätetest nicht besteht.
 
 Der Fehler war nicht sichtbar: die App behandelt beide Werte als
 "fail-open" (kein Update-Hinweis, Feature an). Man konnte also weder
 am Bildschirm noch im Log erkennen, dass die Schalter nicht ankommen.
 
-DAS GATE holt eine echte Sitzung fuer ein Testkonto und fragt genau so
-ab, wie es die App tut. Es schlaegt an, wenn:
-* ein Wert fehlt, den die App braucht (die Schlaege kommen nicht an),
-* oder ein Wert lesbar ist, der NICHT fuer den Client gedacht ist
-  (die interne Konfiguration waere ausgeliefert).
+DAS GATE holt eine echte Sitzung für ein Testkonto und fragt genau so
+ab, wie es die App tut. Es schlägt an, wenn:
+* ein Wert fehlt, den die App braucht (die Schlüge kommen nicht an),
+* oder ein Wert lesbar ist, der NICHT für den Client gedacht ist
+  (die interne Konfiguration wäre ausgeliefert).
 
 Aufruf:
     python tool/checks/check_app_config_readable.py
@@ -37,8 +37,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -58,7 +58,7 @@ KONTO = "46f3f558-b134-4d25-946b-4e052a8ab3b5"
 # Was die App braucht (lib/services/storage/app_config_service.dart).
 BRAUCHT = ["min_app_version_build", "transit_spark_enabled"]
 
-# Was NICHT fuer den Client gedacht ist: interne Flags.
+# Was NICHT für den Client gedacht ist: interne Flags.
 INTERN = ["enforce_aal2", "enforce_email_confirmed",
           "location_retention_days", "quiz_cooldown_seconds"]
 
@@ -106,7 +106,7 @@ def main() -> int:
     admin = {"apikey": secret, "Authorization": "Bearer %s" % secret,
              "Content-Type": "application/json"}
 
-    # 1) Eine Sitzung fuer das Testkonto (wie im Live-Test).
+    # 1) Eine Sitzung für das Testkonto (wie im Live-Test).
     status, body = hole("%s/auth/v1/admin/users?per_page=50" % url, kopf=admin)
     if status != 200:
         print("  FEHLER: Die Nutzerliste liess sich nicht lesen (HTTP %s)." % status)

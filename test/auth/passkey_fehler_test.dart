@@ -1,18 +1,18 @@
-// Die Fehler-Uebersetzung der Passkey-Zeremonie.
+// Die Fehler-Übersetzung der Passkey-Zeremonie.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/services/auth/passkey_auth.dart 78 offene Zeilen. Das meiste davon
-// steckt in der Uebersetzung der Fehler: der Nutzer sieht nur eine
+// steckt in der Übersetzung der Fehler: der Nutzer sieht nur eine
 // Meldung, und die muss ihm SAGEN, was er tun kann.
 //
 // WARUM DAS WICHTIG IST: Die Meldung "Passkey-Einrichtung fehlgeschlagen"
-// sagt nichts aus. Ob der Sperrbildschirm fehlt, die Domain-Verknuepfung
+// sagt nichts aus. Ob der Sperrbildschirm fehlt, die Domain-Verknüpfung
 // nicht stimmt, die Play Services alt sind oder der Server die Anfrage
-// ablehnt - fuer den Nutzer sieht alles gleich aus. Genau deshalb hat
-// die App eine eigene Uebersetzung mit einer Liste von Schluesseln
-// (messageKey), die die Oberflaeche zweisprachig aufloest.
+// ablehnt - für den Nutzer sieht alles gleich aus. Genau deshalb hat
+// die App eine eigene Übersetzung mit einer Liste von Schlüsseln
+// (messageKey), die die Oberfläche zweisprachig auflöst.
 //
-// WAS HIER GEPRUEFT WIRD: jeder bekannte Fehler landet in seiner eigenen
+// WAS HIER GEPRÜFT WIRD: jeder bekannte Fehler landet in seiner eigenen
 // Meldung (und nicht in der generischen), die generische Meldung
 // bekommt nur, was wirklich unbekannt ist, der Server-Grund wird
 // durchgereicht, und der Sicherheitscheck wird erkannt.
@@ -22,7 +22,7 @@ import 'package:thestia/services/auth/auth_exception.dart';
 import 'package:thestia/services/auth/passkey_auth.dart';
 
 void main() {
-  /// Uebersetzt einen Fehler und gibt den Schluessel zurueck.
+  /// Übersetzt einen Fehler und gibt den Schlüssel zurück.
   String keyOf(Object fehler, {required bool login}) =>
       PasskeyAuth.explainError(fehler, login: login).messageKey ?? '';
 

@@ -28,12 +28,12 @@ prefixes = sys.argv[1:] or [
 ]
 
 # BUG (gefunden am 22.10.2026): dieses Skript hat nie einen Exit-Code
-# gesetzt und nur ausgegeben, wie viele Keys es je Praefix fand. Ein
-# fehlender englischer Schluessel fiel dadurch nicht auf.
+# gesetzt und nur ausgegeben, wie viele Keys es je Präfix fand. Ein
+# fehlender englischer Schlüssel fiel dadurch nicht auf.
 #
-# JETZT: fuer jeden Praefix muessen DE und EN dieselben Keys haben. Ein
-# Schluessel, der nur in einer Sprache existiert, bricht die Anzeige in
-# der anderen Sprache (L10n.faellt auf den Schluesselnamen zurueck).
+# JETZT: für jeden Präfix müssen DE und EN dieselben Keys haben. Ein
+# Schlüssel, der nur in einer Sprache existiert, bricht die Anzeige in
+# der anderen Sprache (L10n.fällt auf den Schlüsselnamen zurück).
 findings = []
 
 for prefix in prefixes:

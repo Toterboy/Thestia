@@ -1,4 +1,4 @@
-// Tests fuer die beiden App-Buttons.
+// Tests für die beiden App-Buttons.
 //
 // ANLASS: Die Buttons tragen die halbe App. Zwei Dinge sind leicht
 // falsch und fallen nie auf, wenn niemand sie antippt:
@@ -6,8 +6,8 @@
 //   1. Der Ladezustand: Der Knopf muss den Text AUSBLENDEN und
 //      gesperrt sein. Sonst kann der Nutzer zweimal tippen und die
 //      Aktion twice laufen lassen.
-//   2. Ein langer Text: "Persoenlichkeitstest starten" muss den Knopf
-//      nicht aus dem Bild schieben - er wird gekuerzt.
+//   2. Ein langer Text: "Persönlichkeitstest starten" muss den Knopf
+//      nicht aus dem Bild schieben - er wird gekürzt.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -134,7 +134,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      // Der Text ist noch da - nur gekuerzt.
+      // Der Text ist noch da - nur gekürzt.
       expect(find.text('Persönlichkeitstest starten'), findsOneWidget);
     });
   });

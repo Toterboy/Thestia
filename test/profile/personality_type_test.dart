@@ -1,12 +1,12 @@
-// Die MBTI-Persoenlichkeitstypen und ihre Kompatibilitaet.
+// Die MBTI-Persönlichkeitstypen und ihre Kompatibilität.
 //
 // ANLASS (19.11.2026): `lib/models/profile/personality_type.dart` war zu 0 %
-// abgedeckt - die Datei wird im Matching benutzt, aber nie geprueft.
+// abgedeckt - die Datei wird im Matching benutzt, aber nie geprüft.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * es sind genau die 16 MBTI-Typen,
 //   * ein unbekannter Code liefert null (kein Absturz),
-//   * die Kompatibilitaet liegt immer zwischen 0 und 1,
+//   * die Kompatibilität liegt immer zwischen 0 und 1,
 //   * gleiche Typen passen besser zueinander als verschiedene,
 //   * die Matrix ist symmetrisch (A zu B ist B zu A).
 import 'package:flutter_test/flutter_test.dart';
@@ -87,7 +87,7 @@ void main() {
     });
 
     test('eine verstellte Uhr veraendert den Wert nicht', () {
-      // Der Wert haengt nur an den vier Buchstaben, nicht an der Zeit.
+      // Der Wert hängt nur an den vier Buchstaben, nicht an der Zeit.
       final einmal = MbtiCompatibility.score('INTJ', 'ESFP');
       expect(einmal, MbtiCompatibility.score('INTJ', 'ESFP'));
       expect(einmal, isNot(MbtiCompatibility.score('INTJ', 'INTJ')));

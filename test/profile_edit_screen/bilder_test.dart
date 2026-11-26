@@ -1,21 +1,21 @@
 // Die Bildauswahl im Profil-Editor - und der NSFW-Weg.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/profile/parts/profileditbilder.dart 98 offene Zeilen bei
 // 107 gesamt - der ganze Weg vom Bild zum Avatar war ungetestet.
 //
 // DER GRUND: Der Profil-Editor ist die einzige Stelle, an der der
-// Nutzer sein Bild waehlt. Und dort gibt es eine heikle Kette:
-//   * das Bild wird lokal auf "anstoessige Inhalte" geprueft (es
-//     verlaesst das Geraet dabei NICHT),
-//   * bei einem Befund wird der Nutzer zurueckgewiesen - mit drei
-//     Wegen: "Verstanden" (verwerfen), "Anderes Bild" (neu waehlen)
-//     und "Einspruch" (das Team prueft es).
+// Nutzer sein Bild wählt. Und dort gibt es eine heikle Kette:
+//   * das Bild wird lokal auf "anstössige Inhalte" geprüft (es
+//     verlässt das Gerät dabei NICHT),
+//   * bei einem Befund wird der Nutzer zurückgewiesen - mit drei
+//     Wegen: "Verstanden" (verwerfen), "Anderes Bild" (neu wählen)
+//     und "Einspruch" (das Team prüft es).
 // Wird der Einspruch nicht oder falsch behandelt, ist entweder ein
 // anstossiges Bild im Profil oder ein Nutzer ohne Bild.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ohne Befund wird das Bild ueberhaupt erst angenommen,
+// WAS HIER GEPRÜFT WIRD:
+//   * ohne Befund wird das Bild überhaupt erst angenommen,
 //   * bei einem Befund erscheint der Dialog mit allen drei Wegen,
 //   * der Dialog nennt den Befund (das Modell-Vertrauen), aber NICHT
 //     das Bild selbst (es bleibt lokal),
@@ -28,7 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 // Das Plattform-Interface wird von image_picker exportiert, aber nicht
-// weitergereicht - der Test setzt die Attrappe darueber.
+// weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:image_cropper_platform_interface/image_cropper_platform_interface.dart';
 // ignore: depend_on_referenced_packages
@@ -52,7 +52,7 @@ class _FakeImagePicker extends ImagePickerPlatform {
   }) async => XFile(datei);
 }
 
-/// Der Zuschneider-Ersatz (liefert dieselbe Datei zurueck).
+/// Der Zuschneider-Ersatz (liefert dieselbe Datei zurück).
 class _FakeCropper extends ImageCropperPlatform {
   _FakeCropper(this.datei);
 
@@ -82,13 +82,13 @@ void main() {
   tearDown(() {
     ImagePickerPlatform.instance = originalPicker;
     ImageCropperPlatform.instance = originalCropper;
-    // DER TEST-HAKEN: Der Befund der Bildpruefung muss wieder weg -
-    // sonst wuerde der naechste Test den Befund des vorigen sehen.
+    // DER TEST-HAKEN: Der Befund der Bildprüfung muss wieder weg -
+    // sonst würde der nächste Test den Befund des vorigen sehen.
     ImageSafetyService.classifyOverride = null;
   });
 
   /// Legt ein echtes Bild an (der Bildweg liest die Datei wirklich und
-  /// laesst die Metadaten entfernen - das braucht echte Bilddaten).
+  /// lässt die Metadaten entfernen - das braucht echte Bilddaten).
   String legeDatei() {
     final ordner = Directory.systemTemp.createTempSync('profil_bild');
     final datei = File('${ordner.path}/bild.jpg');
@@ -101,20 +101,20 @@ void main() {
           ordner.deleteSync(recursive: true);
         }
       } catch (e) {
-        // Der Temp-Ordner wird ohnehin irgendwann vom System geraeumt -
-        // das Loeschen darf den Test aber nicht scheitern lassen.
+        // Der Temp-Ordner wird ohnehin irgendwann vom System geräumt -
+        // das Löschen darf den Test aber nicht scheitern lassen.
         debugPrint('Der Temp-Ordner blieb liegen: $e');
       }
     });
     return datei.path;
   }
 
-  /// Tippt auf den Knopf, der das Hauptbild waehlt.
+  /// Tippt auf den Knopf, der das Hauptbild wählt.
   ///
-  /// DER WEG: Der Bildweg liest eine echte Datei und laesst sie in
-  /// einem eigenen Isolate verarbeiten. Im Test laeuft die Zeit aber in
-  /// der Test-Zone - dort wuerde das Lesen nie fertig werden. Darum
-  /// laeuft der Griff in der echten Zone (`runAsync`).
+  /// DER WEG: Der Bildweg liest eine echte Datei und lässt sie in
+  /// einem eigenen Isolate verarbeiten. Im Test läuft die Zeit aber in
+  /// der Test-Zone - dort würde das Lesen nie fertig werden. Darum
+  /// läuft der Griff in der echten Zone (`runAsync`).
   Future<void> bildWaehlen(WidgetTester tester) async {
     final knopf = find.byIcon(Icons.camera_alt).first;
     await tester.ensureVisible(knopf);
@@ -134,8 +134,8 @@ void main() {
       final pfad = legeDatei();
       ImagePickerPlatform.instance = _FakeImagePicker(pfad);
       ImageCropperPlatform.instance = _FakeCropper(pfad);
-      // DER BEFUND: kein Befund (die lokale Pruefung ist nicht
-      // verfuegbar) - das Bild darf normal gespeichert werden.
+      // DER BEFUND: kein Befund (die lokale Prüfung ist nicht
+      // verfügbar) - das Bild darf normal gespeichert werden.
       ImageSafetyService.classifyOverride = (Uint8List bytes) => null;
 
       await profileEditScreenPump(tester, profileEditScreenProfil);
@@ -159,7 +159,7 @@ void main() {
       final pfad = legeDatei();
       ImagePickerPlatform.instance = _FakeImagePicker(pfad);
       ImageCropperPlatform.instance = _FakeCropper(pfad);
-      // DER BEFUND: das Bild ist zu 80 % anstoessig.
+      // DER BEFUND: das Bild ist zu 80 % anstössig.
       ImageSafetyService.classifyOverride = (Uint8List bytes) =>
           const ImageSafetyResult(nsfl: 0.1, nsfw: 0.8, sfw: 0.1);
 
@@ -257,8 +257,8 @@ void main() {
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Die Bildauswahl wird erneut geoeffnet - der Nutzer darf ein
-      // anderes Bild waehlen, ohne den Bildschirm zu verlassen.
+      // Die Bildauswahl wird erneut geöffnet - der Nutzer darf ein
+      // anderes Bild wählen, ohne den Bildschirm zu verlassen.
       expect(find.byType(AlertDialog), findsOneWidget);
 
       await aufraeumen(tester);

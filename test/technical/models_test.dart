@@ -334,7 +334,7 @@ void main() {
       expect(s.onboardingCompleted, isTrue);
       expect(s.maxDistanceKm, equals(50));
       // v0.10.0: 18-65. Vorher 16-99 - das war praktisch keine
-      // Grenze, ein 20-Jaehriger bekam 99-Jaehrige vorgeschlagen.
+      // Grenze, ein 20-Jähriger bekam 99-Jährige vorgeschlagen.
       expect(s.ageRangeMin, 18);
       expect(s.ageRangeMax, 65);
     });

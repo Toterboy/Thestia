@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Erzeugt den Impressum-Text fuer die App aus der Webfassung.
+"""Erzeugt den Impressum-Text für die App aus der Webfassung.
 
 WARUM ES DIESES SKRIPT GIBT (20.11.2026, Betreiber): "Das Impressum in
 der App funktioniert nicht."
 
 DIE URSACHE: Die App verlinkte auf https://thestia.de/impressum. Diese
 Domain ist ein VERIFIZIERTER APP-LINK (assetlinks.json, android:
-autoVerify im Manifest) - Android oeffnet einen solchen Link in der App
+autoVerify im Manifest) - Android öffnet einen solchen Link in der App
 selbst, nicht im Browser. Die App bekam also ihren eigenen Link und
 zeigte nichts. Es gab keinen Browser, keine Seite und keinen Text in
 der App.
 
-DIE LOESUNG: Wie bei den Nutzungsbedingungen (14.11.2026) steht der
+DIE LÖSUNG: Wie bei den Nutzungsbedingungen (14.11.2026) steht der
 Text jetzt IN der App. Quelle ist die Webfassung - dieselbe Datei, die
-auf thestia.de liegt. So koennen App und Website nicht auseinander-
+auf thestia.de liegt. So können App und Website nicht auseinander-
 laufen.
 
 Das Skript liest `passkey-assets/impressum.html` und
@@ -22,7 +22,7 @@ Das Skript liest `passkey-assets/impressum.html` und
     lib/generated/imprint_de.dart
     lib/generated/imprint_en.dart
 
-Die Bloecke sind dieselben wie bei Datenschutzerklaerung und
+Die Blöcke sind dieselben wie bei Datenschutzerklärung und
 Nutzungsbedingungen (PrivacyBlock), der Bildschirm ist derselbe
 (LegalTextScreen).
 
@@ -40,8 +40,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / "pubspec.yaml").exists():
@@ -63,7 +63,7 @@ QUELLEN = (
     ("passkey-assets/en/impressum.html", GEN / "imprint_en.dart", "kImprintEn"),
 )
 
-#: Die Bloecke, die der Bildschirm kennt.
+#: Die Blöcke, die der Bildschirm kennt.
 BLOECKE = ("h1", "h2", "h3", "p", "li")
 
 
@@ -78,7 +78,7 @@ def dart_quote(s: str) -> str:
 
 
 class _Parser(html.parser.HTMLParser):
-    """Liest die Absaetze aus dem <main>-Bereich einer Seite."""
+    """Liest die Absätze aus dem <main>-Bereich einer Seite."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -150,11 +150,11 @@ class _Parser(html.parser.HTMLParser):
             return
         if self._art is None:
             return
-        # Die Zeilenumbrueche im HTML-Quelltext sind weiche Umbrueche
+        # Die Zeilenumbrüche im HTML-Quelltext sind weiche Umbrüche
         # (der Quelltext ist um 80 Spalten umgebrochen) - nur <br> ist
         # ein echter Umbruch. Deshalb werden sie hier zu Leerzeichen.
         data = data.replace("\n", " ")
-        # Im Link wandert der Text nur in den Linkpuffer - sonst stuende
+        # Im Link wandert der Text nur in den Linkpuffer - sonst stünde
         # er doppelt im Absatz (Text und Linktext).
         if self._link is not None:
             self._link_text.append(data)
@@ -163,7 +163,7 @@ class _Parser(html.parser.HTMLParser):
 
 
 def _normiere(text: str) -> str:
-    """Zeilenumbrueche bleiben, alles andere wird zusammengefasst."""
+    """Zeilenumbrüche bleiben, alles andere wird zusammengefasst."""
     zeilen = []
     for zeile in text.split("\n"):
         aufgeraeumt = " ".join(zeile.split())
@@ -182,17 +182,17 @@ def parse(pfad: pathlib.Path) -> list[tuple[str, str]]:
 
 def render_dart(blöcke: list[tuple[str, str]], klasse: str, quelle: str) -> str:
     zeilen = [
-        "// GENERIERTE DATEI - NICHT VON HAND AENDERN.",
+        "// GENERIERTE DATEI - NICHT VON HAND ÄNDERN.",
         "// Quelle: %s" % quelle,
         "// Neu erzeugen mit: python tool/web/make_imprint_app.py",
         "",
         "import 'package:thestia/generated/privacy_policy_blocks.dart';",
         "",
-        "/// Das Impressum als Bloecke, in der Reihenfolge der Quelle.",
+        "/// Das Impressum als Blöcke, in der Reihenfolge der Quelle.",
         "///",
         "/// BEFUND (20.11.2026, Betreiber): \"Das Impressum in der App",
         "/// funktioniert nicht.\" thestia.de ist ein verifizierter App-Link -",
-        "/// Android oeffnete den Link in der App selbst statt im Browser.",
+        "/// Android öffnete den Link in der App selbst statt im Browser.",
         "/// Der Text steht deshalb jetzt im Binary, wie Datenschutz und",
         "/// Nutzungsbedingungen.",
         "const List<PrivacyBlock> %s = <PrivacyBlock>[" % klasse,
@@ -205,7 +205,7 @@ def render_dart(blöcke: list[tuple[str, str]], klasse: str, quelle: str) -> str
 
 
 def formatiere(pfad: pathlib.Path) -> None:
-    """Formatiert die erzeugte Datei (die CI prueft das Format)."""
+    """Formatiert die erzeugte Datei (die CI prüft das Format)."""
     for befehl in ('dart format "%s"' % pfad, 'flutter format "%s"' % pfad):
         try:
             subprocess.run(
@@ -215,15 +215,15 @@ def formatiere(pfad: pathlib.Path) -> None:
             )
         except (subprocess.CalledProcessError, FileNotFoundError):
             # Dart ist nicht installiert - der Inhalt ist trotzdem
-            # richtig, das Format holt der naechste Lauf nach.
+            # richtig, das Format holt der nächste Lauf nach.
             continue
 
 
 def bloecke_aus_dart(text: str) -> list[tuple[str, str]]:
-    """Liest die Bloecke aus einer erzeugten Dart-Datei.
+    """Liest die Blöcke aus einer erzeugten Dart-Datei.
 
     WARUM NICHT DER ROHTEXT: `dart format` bricht die Zeilen um - der
-    Vergleich muss das aushalten. Deshalb werden die Bloecke gelesen
+    Vergleich muss das aushalten. Deshalb werden die Blöcke gelesen
     und verglichen, nicht die Bytes.
     """
     muster = re.compile(
@@ -260,10 +260,10 @@ def _dart_unescape(text: str) -> str:
 
 
 def main() -> int:
-    # Der Pruefmodus: Erzeugt den Text im Speicher und vergleicht die
-    # BLOECKE mit der Datei auf der Platte. Die CI ruft ihn auf - so
+    # Der Prüfmodus: Erzeugt den Text im Speicher und vergleicht die
+    # BLÖCKE mit der Datei auf der Platte. Die CI ruft ihn auf - so
     # kann die App nicht von der Webfassung abweichen, ohne dass es
-    # auffaellt. (Der Vergleich ist formatunabhaengig: `dart format`
+    # auffällt. (Der Vergleich ist formatunabhängig: `dart format`
     # bricht die Zeilen um.)
     nur_pruefen = "--check" in sys.argv
 

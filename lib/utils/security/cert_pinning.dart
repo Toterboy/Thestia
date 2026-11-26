@@ -109,7 +109,7 @@ class CertPinning {
   /// MITM-fähig). Jetzt gilt er nur im Rotationsfenster um das Ablaufdatum
   /// des gepinnten Leaf-Zertifikats.
   ///
-  /// REINE LOGIK (ohne Zertifikat) - damit im Test pruefbar.
+  /// REINE LOGIK (ohne Zertifikat) - damit im Test prüfbar.
   @visibleForTesting
   static bool pinMismatchAllowed({required String host, DateTime? now}) {
     final pinned = _pinnedByHost[host];

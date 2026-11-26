@@ -1,31 +1,31 @@
 #!/usr/bin/env python3
 """Richtet den Admin-Posteingang ein - interaktiv, in einem Durchgang.
 
-WER (04.11.2026): "Den Posteingang moechte ich selbst einrichten
-koennen, wenn ich es dann brauche." Genau das macht dieses Skript:
-es fragt die noetigen Werte ab, legt die Secret-Datei ausserhalb des
-Projekts an, schraenkt deren Rechte ein und richtet optional den
+WER (04.11.2026): "Den Posteingang mächte ich selbst einrichten
+können, wenn ich es dann brauche." Genau das macht dieses Skript:
+es fragt die nötigen Werte ab, legt die Secret-Datei außerhalb des
+Projekts an, schränkt deren Rechte ein und richtet optional den
 Task-Planer ein.
 
 Was gemacht wird:
 
   1. Fragen: IMAP-Host, Postfach-Login, Passwort, Ordner, internes
      Secret. Vorgaaben werden angeboten, bereits Vorhandenes wird
-     unveraendert uebernommen.
+     unverändert übernommen.
   2. Schreiben: %USERPROFILE%\\.secrets\\thestia-mail.properties
-     (ausserhalb des Repos, Rechte nur fuer den Besitzer).
-  3. Pruefen: Verbindung zum IMAP-Server (Login), danach ein Probelauf
+     (außerhalb des Repos, Rechte nur für den Besitzer).
+  3. Prüfen: Verbindung zum IMAP-Server (Login), danach ein Probelauf
      ohne zu senden.
   4. Aufgabenplaner (nur Windows, mit --task): alle 5 Minuten.
 
 Aufruf:
 
-  python tool/scripts/setup_mail_inbox.py            # fragen, schreiben, pruefen
-  python tool/scripts/setup_mail_inbox.py --task     # zusaetzlich Task-Planer
+  python tool/scripts/setup_mail_inbox.py            # fragen, schreiben, prüfen
+  python tool/scripts/setup_mail_inbox.py --task     # zusätzlich Task-Planer
   python tool/scripts/setup_mail_inbox.py --status   # nur Status zeigen
-  python tool/scripts/setup_mail_inbox.py --remove   # Task-Planer wieder loeschen
+  python tool/scripts/setup_mail_inbox.py --remove   # Task-Planer wieder löschen
 
-FINGERABDRUCK DER WERTE (fuer die Fehlersuche):
+FINGERABDRUCK DER WERTE (für die Fehlersuche):
 
   IMAP_HOST             z. B. imap.ionos.de  (IMAPS, Port 993)
   IMAP_USER             die Postfach-Adresse
@@ -37,7 +37,7 @@ FINGERABDRUCK DER WERTE (fuer die Fehlersuche):
   THESTIA_FUNCTIONS_URL https://jftuigjbmmuvrckbchqo.supabase.co/functions/v1
   THESTIA_INTERNAL_SECRET  das interne Secret der Edge Functions
 
-Das interne Secret steht NICHT im Repository und laesst sich nicht
+Das interne Secret steht NICHT im Repository und lässt sich nicht
 auslesen - `supabase secrets list` zeigt nur einen Digest. Ist es
 verloren, wird ein neues gesetzt:
 
@@ -64,8 +64,8 @@ import mail_secrets  # noqa: E402
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():

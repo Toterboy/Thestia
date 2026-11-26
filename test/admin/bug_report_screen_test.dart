@@ -1,16 +1,16 @@
 // Der Bug-Report-Bildschirm - bisher ungetestet (0,6 %).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/bug_report/bug_report_screen.dart 154 offene Zeilen bei
-// 155 Zeilen gesamt - der Bildschirm, ueber den der Nutzer der App
+// 155 Zeilen gesamt - der Bildschirm, über den der Nutzer der App
 // einen Fehler meldet, war komplett ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich und bietet alle Wege (GitHub oder privat),
 //   * eine zu kurze Beschreibung wird abgewiesen (sonst kommen Reports
 //     an, die niemand zuordnen kann),
 //   * ein Report mit brauchbarer Beschreibung geht an den Server,
-//   * der Nutzer bekommt danach die Bestaetigung.
+//   * der Nutzer bekommt danach die Bestätigung.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,8 +53,8 @@ void main() {
     server.funktionsAntworten.clear();
   });
 
-  /// Oeffnet den Bildschirm (ueber einen zweiten Bildschirm - damit das
-  /// "Zurueck" nach dem Senden funktioniert).
+  /// Öffnet den Bildschirm (über einen zweiten Bildschirm - damit das
+  /// "Zurück" nach dem Senden funktioniert).
   Future<void> zeigeScreen(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -186,7 +186,7 @@ void main() {
         server.funktionsAufrufe.first['description'],
         'Der Chat laedt beim Oeffnen nicht.',
       );
-      // Und der Nutzer bekommt die Bestaetigung.
+      // Und der Nutzer bekommt die Bestätigung.
       expect(find.text(L10n.tWithoutContext('bugreport.sent')), findsOneWidget);
     });
 

@@ -100,13 +100,13 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
   ///
   /// BEFUND (13.11.2026, gefunden von einem Test): `ref.read` im
   /// `dispose()` wirft - Riverpod hat den Consumer-State da schon
-  /// abgeraeumt ("Cannot use ref after the widget was disposed"). Damit
-  /// blieb die Notification-Unterdrueckung fuer diesen Chat BIS ZUM
+  /// abgeräumt ("Cannot use ref after the widget was disposed"). Damit
+  /// blieb die Notification-Unterdrückung für diesen Chat BIS ZUM
   /// APP-ENDE stehen: die Meldungen des Partners kamen nicht an.
   ///
   /// DER WEG (14.11.2026): Die Notifier werden im `initState` geholt.
-  /// Der StateNotifier lebt laenger als der Screen - so wird die
-  /// Unterdrueckung wirklich wieder aufgehoben.
+  /// Der StateNotifier lebt länger als der Screen - so wird die
+  /// Unterdrückung wirklich wieder aufgehoben.
   late final StateController<String?> _aktiveChatId;
   late final StateController<String?> _aktiveChatPeerId;
 
@@ -115,7 +115,7 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Die Notifier jetzt holen: im dispose() ist `ref` nicht mehr
-    // benutzbar (siehe die Erklaerung beim Feld).
+    // benutzbar (siehe die Erklärung beim Feld).
     _aktiveChatId = ref.read(activeChatIdProvider.notifier);
     _aktiveChatPeerId = ref.read(activeChatPeerIdProvider.notifier);
     Future.microtask(_join);
@@ -123,24 +123,24 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
 
   @override
   void dispose() {
-    // Aktiven Chat freigeben (Notification-Unterdrueckung nur solange der
+    // Aktiven Chat freigeben (Notification-Unterdrückung nur solange der
     // Chat sichtbar ist).
     //
     // BEFUND (13.11.2026, gefunden von einem Test): `ref.read` im
     // dispose() wirft - Riverpod hat den Consumer-State da schon
-    // abgeraeumt ("Cannot use ref after the widget was disposed"). Damit
-    // blieb die Notification-Unterdrueckung fuer diesen Chat BIS ZUM
+    // abgeräumt ("Cannot use ref after the widget was disposed"). Damit
+    // blieb die Notification-Unterdrückung für diesen Chat BIS ZUM
     // APP-ENDE stehen: die Meldungen des Partners kamen nicht an.
     // Der Chat-Screen macht es seit langem richtig (mit try/catch).
     //
-    // DER WEG (14.11.2026): Ueber die Notifier, die schon im initState
-    // geholt wurden - damit wird die Markierung WIRKLICH geloescht.
+    // DER WEG (14.11.2026): Über die Notifier, die schon im initState
+    // geholt wurden - damit wird die Markierung WIRKLICH gelöscht.
     //
-    // DER WEG (18.11.2026, gefunden von einem Test): Das Ruecksetzen
-    // muss einen Frame warten. Wird der Bildschirm waehrend eines
-    // Routenwechsels abgeraeumt (der Nutzer beendet den Chat), passiert
+    // DER WEG (18.11.2026, gefunden von einem Test): Das Rücksetzen
+    // muss einen Frame warten. Wird der Bildschirm während eines
+    // Routenwechsels abgeräumt (der Nutzer beendet den Chat), passiert
     // das dispose() MITTEN IM AUFBAU - und Riverpod verbietet das
-    // Aendern eines Providers waehrend des Aufbaus ("Tried to modify a
+    // Ändern eines Providers während des Aufbaus ("Tried to modify a
     // provider while the widget tree was building"). Die Markierung
     // blieb dann stehen: die Meldungen des Partners kamen nicht an.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -198,7 +198,7 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
   /// verlorene Pings ab. Ein Chat ohne Verkehr ist der Normalfall, deshalb
   /// wird das Intervall bei leerem Ergebnis gestreckt (2 s -> 6 s -> 15 s)
   /// statt 1800 RPCs pro Stunde zu feuern. Kommt etwas an, geht es sofort
-  /// auf 2 s zurueck.
+  /// auf 2 s zurück.
   static const List<Duration> _relayIntervals = [
     Duration(seconds: 2),
     Duration(seconds: 6),
@@ -235,16 +235,16 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
     final bubbleGroups = computeBubbleGroups(messages);
 
     return PopScope(
-      // BEFUND (13.11.2026, Betreiber: "Wenn man zurueck wischt bei
+      // BEFUND (13.11.2026, Betreiber: "Wenn man zurück wischt bei
       // Zufallschat, wird man nicht nochmal gefragt, ob man ihn beenden
-      // moechte"): Das System-Zurueck (Wischen vom Rand oder der
-      // Zurueck-Knopf des Systems) sprang ohne Rueckfrage aus dem
+      // mächte"): Das System-Zurück (Wischen vom Rand oder der
+      // Zurück-Knopf des Systems) sprang ohne Rückfrage aus dem
       // Zufallschat - der Partner blieb auf der Plattform stehen und die
       // Sitzung lief weiter.
       //
       // Der Knopf oben links fragt schon - jetzt fragt auch das Wischen.
-      // `canPop: false` ist noetig, damit der System-Zurueck ueberhaupt
-      // bei uns landet (sonst wuerde Flutter poppen, ohne uns zu fragen).
+      // `canPop: false` ist nötig, damit der System-Zurück überhaupt
+      // bei uns landet (sonst würde Flutter poppen, ohne uns zu fragen).
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
@@ -493,7 +493,7 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
   ///
   /// DER GRUND: In einer Erweiterung darf `setState` nicht aufgerufen
   /// werden (der Analyser erlaubt es nur in Instanzmitgliedern einer
-  /// State-Klasse). Diese Methode gehoert zur Klasse - die Erweiterung
+  /// State-Klasse). Diese Methode gehört zur Klasse - die Erweiterung
   /// ruft sie auf.
   void _setzeState(VoidCallback fn) => setState(fn);
 }

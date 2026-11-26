@@ -60,7 +60,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
 
   void _reload() {
     // BEFUND (13.11.2026, Test): `setState(() => _future = _load())` gibt
-    // das Future des Ladens zurueck - und Flutter verbietet das
+    // das Future des Ladens zurück - und Flutter verbietet das
     // ("setState() callback argument returned a Future"). Im Debug-Bau
     // wirft der Tastendruck, der Bildschirm zeichnet nicht neu, und im
     // Fehlerfall bleibt der Fehlerzustand stehen.

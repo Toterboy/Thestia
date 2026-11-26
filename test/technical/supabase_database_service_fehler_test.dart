@@ -1,6 +1,6 @@
-// Die Datenbank-Wege: die Fehlerfaelle und die Rueckwaerts-Ketten.
+// Die Datenbank-Wege: die Fehlerfälle und die Rückwärts-Ketten.
 //
-// ANLASS (25.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (25.11.2026): Die Coverage-Messung zeigte für
 // lib/services/server/supabase_database_service.dart 62 offene Zeilen.
 // Das sind fast alles die WEGE, die nur im Fehlerfall laufen: der
 // Server, der eine Spalte noch nicht kennt, und der Server, der gar
@@ -11,9 +11,9 @@
 // so stellt der Test einen Server dar, der eine Spalte noch nicht
 // kennt.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * das eigene Profil kommt auch ohne die Foto-Spalte,
-//   * die Schalter und die Praeferenzen kommen auch ohne die neuen
+//   * die Schalter und die Präferenzen kommen auch ohne die neuen
 //     Spalten (sonst verliert der Nutzer seinen ganzen Stand),
 //   * ein Server, der gar nicht antwortet, wird gemeldet (nicht
 //     verschwiegen),
@@ -196,7 +196,7 @@ void main() {
           mode: 'nearby',
           // DER EIGENE TOKEN: Er ist Pflicht - ohne ihn kann der Server
           // keinen Match finden (der Nutzer bliebe mit einem stillen
-          // "kein Match" im Glauben, es sei niemand in der Naehe).
+          // "kein Match" im Glauben, es sei niemand in der Nähe).
           selfToken: 'mein-token',
         ),
         throwsA(
@@ -222,7 +222,7 @@ void main() {
           mode: 'nearby',
           // DER EIGENE TOKEN: Er ist Pflicht - ohne ihn kann der Server
           // keinen Match finden (der Nutzer bliebe mit einem stillen
-          // "kein Match" im Glauben, es sei niemand in der Naehe).
+          // "kein Match" im Glauben, es sei niemand in der Nähe).
           selfToken: 'mein-token',
         ),
         throwsA(anything),

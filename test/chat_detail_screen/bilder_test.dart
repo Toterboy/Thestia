@@ -1,22 +1,22 @@
 // Das Senden von Bildern im Chat.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/parts/chatbilder.dart 89 offene Zeilen bei 91
 // gesamt - der ganze Bildversand war ungetestet.
 //
 // DER GRUND: Ein Bild im Chat ist der heikelste Moment der App:
-//   * es verlaesst das Geraet (ueber den Datenkanal, E2E-verschluesselt),
+//   * es verlässt das Gerät (über den Datenkanal, E2E-verschlüsselt),
 //   * seine Metadaten (GPS!) werden vorher entfernt,
-//   * sein Hash wird serverseitig registriert (damit eine spaetere
+//   * sein Hash wird serverseitig registriert (damit eine spätere
 //     Meldung dieses Bildes nachweisbar ist).
 // Fehler in diesem Weg fallen niemandem auf: das Bild geht einfach
 // nicht raus.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * das Menue fragt nach der Quelle (Kamera oder Galerie),
+// WAS HIER GEPRÜFT WIRD:
+//   * das Menü fragt nach der Quelle (Kamera oder Galerie),
 //   * "Abbrechen" sendet nichts (die Bildauswahl wird gar nicht
-//     geoeffnet),
-//   * ohne Auswahl wird nichts gesendet (und nichts stuerzt ab),
+//     geöffnet),
+//   * ohne Auswahl wird nichts gesendet (und nichts stürzt ab),
 //   * ein Bild, das nicht vorbereitet werden kann, wird abgewiesen und
 //     dem Nutzer gemeldet.
 import 'dart:io';
@@ -27,7 +27,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Das Plattform-Interface wird von image_picker exportiert, aber nicht
-// weitergereicht - der Test setzt die Attrappe darueber.
+// weitergereicht - der Test setzt die Attrappe darüber.
 // ignore: depend_on_referenced_packages
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
@@ -44,9 +44,9 @@ import 'hilfen.dart';
 
 /// Der Bildauswahl-Ersatz.
 ///
-/// DER GRUND: Das echte Plugin oeffnet auf dem Testrechner eine Datei-
+/// DER GRUND: Das echte Plugin öffnet auf dem Testrechner eine Datei-
 /// auswahl (oder gar nichts). Der Ersatz liefert eine feste Datei - oder
-/// gar keine (so verhaelt sich ein Geraet, auf dem der Nutzer abbricht).
+/// gar keine (so verhält sich ein Gerät, auf dem der Nutzer abbricht).
 class _FakeImagePicker extends ImagePickerPlatform {
   _FakeImagePicker(this.datei);
 
@@ -69,7 +69,7 @@ class _FakeImagePicker extends ImagePickerPlatform {
 
 void main() {
   // DER STIMMUNGS-DIENST: Der Chat zeigt die Stimmungskarte - ohne den
-  // Client schlaegt der Aufbau fehl.
+  // Client schlägt der Aufbau fehl.
   moodClient = supabase.SupabaseClient(
     'https://example.supabase.co',
     'test-key',
@@ -78,7 +78,7 @@ void main() {
     await moodClient.dispose();
   });
 
-  /// Der Ersatz fuer die Bildauswahl (der echte waere das Plugin).
+  /// Der Ersatz für die Bildauswahl (der echte wäre das Plugin).
   late ImagePickerPlatform original;
 
   setUpAll(() async {
@@ -89,7 +89,7 @@ void main() {
     // Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
     // DER KEYSTORE und HIVE: der Signal-Dienst (Sicherheitsnummer) liest
-    // seine verschluesselten Boxen aus dem Keystore und aus Hive.
+    // seine verschlüsselten Boxen aus dem Keystore und aus Hive.
     mockKeystore();
     await mockHive();
     // DER ADAPTER: Der Meldungs-Store legt seine Zeilen als
@@ -100,8 +100,8 @@ void main() {
     mockAufnahme();
     mockAudioPlayer();
     mockZeitzone();
-    // DER SERVER: die Aktionen, die auf dem Server etwas aendern, gehen
-    // ueber den Client.
+    // DER SERVER: die Aktionen, die auf dem Server etwas ändern, gehen
+    // über den Client.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -159,7 +159,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// Der Aufraeum am Testende.
+  /// Der Aufräum am Testende.
   ///
   /// DER GRUND: Der Chat startet im Hintergrund Timer (der
   /// Schreib-Indikator, die Sicherheitsnummer). Die laufen in der App
@@ -167,9 +167,9 @@ void main() {
   /// Uhr weiterlaufen, sonst meldet der Test "A Timer is still
   /// pending".
   ///
-  /// DER WEG: Der Baum wird NICHT abgebaut - ein Abbau waehrend
-  /// laufender Hintergrundarbeit wuerde im Bildschirm selbst einen
-  /// Fehler ausloesen ("Cannot use ref after dispose").
+  /// DER WEG: Der Baum wird NICHT abgebaut - ein Abbau während
+  /// laufender Hintergrundarbeit würde im Bildschirm selbst einen
+  /// Fehler auslösen ("Cannot use ref after dispose").
   Future<void> raeumeAuf(WidgetTester tester) async {
     await tester.runAsync(() async {
       await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -253,12 +253,12 @@ void main() {
     });
 
     testWidgets('die Auswahl wird angenommen', (tester) async {
-      // DER FALL: Der Nutzer waehlt ein Bild aus der Galerie. Die
-      // Bildauswahl wird geoeffnet - und der Bildversand beginnt.
+      // DER FALL: Der Nutzer wählt ein Bild aus der Galerie. Die
+      // Bildauswahl wird geöffnet - und der Bildversand beginnt.
       //
-      // DER WEG: Der Test prueft nur, dass die Auswahl angenommen wird
-      // (der Bildversand selbst liest eine echte Datei - das laeuft im
-      // Test nicht zuverlaessig).
+      // DER WEG: Der Test prüft nur, dass die Auswahl angenommen wird
+      // (der Bildversand selbst liest eine echte Datei - das läuft im
+      // Test nicht zuverlässig).
       final ordner = Directory.systemTemp.createTempSync('chat_bild_leer');
       final datei = File('${ordner.path}/leer.jpg');
       datei.writeAsBytesSync(<int>[]);
@@ -268,8 +268,8 @@ void main() {
             ordner.deleteSync(recursive: true);
           }
         } catch (e) {
-          // Der Temp-Ordner wird ohnehin irgendwann vom System geraeumt -
-          // das Loeschen darf den Test aber nicht scheitern lassen.
+          // Der Temp-Ordner wird ohnehin irgendwann vom System geräumt -
+          // das Löschen darf den Test aber nicht scheitern lassen.
           debugPrint('Der Temp-Ordner blieb liegen: $e');
         }
       });

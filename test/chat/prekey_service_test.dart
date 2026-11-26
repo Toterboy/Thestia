@@ -1,16 +1,16 @@
 // Der Aufbau der Ende-zu-Ende-Session (PreKey-Bundle).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/prekey_service.dart 61 offene Zeilen bei 18 %
-// Abdeckung. Der Dienst holt das Schluessel-Bundle des Partners und baut
-// daraus die Session - schlaegt das fehl, kommt keine Nachricht an.
+// Abdeckung. Der Dienst holt das Schlüssel-Bundle des Partners und baut
+// daraus die Session - schlägt das fehl, kommt keine Nachricht an.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * eine manipulierte Peer-ID wird abgewiesen (Audit M1: die ID landet
-//     im Function-Pfad - ein "../" waere ein Pfad-Angriff),
+//     im Function-Pfad - ein "../" wäre ein Pfad-Angriff),
 //   * eine vorhandene Session wird verwendet (kein Bundle-Abruf - sonst
-//     ueberschreiben sich die beiden Geraete),
-//   * fehlt das Bundle, kommt eine verstaendliche Meldung statt einer
+//     überschreiben sich die beiden Geräte),
+//   * fehlt das Bundle, kommt eine verständliche Meldung statt einer
 //     nackten Fehlermeldung,
 //   * ein Serverfehler nennt den Deploy-Hinweis.
 import 'package:flutter_test/flutter_test.dart';
@@ -23,7 +23,7 @@ import 'package:thestia/services/chat/prekey_service.dart';
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
-/// Die Verschluesselung als Ersatz: sie meldet, was der Test will.
+/// Die Verschlüsselung als Ersatz: sie meldet, was der Test will.
 class _FakeVerschluesselung extends EncryptionService {
   _FakeVerschluesselung({this.sitzungen = const <String>{}});
 
@@ -54,7 +54,7 @@ class _FakeVerschluesselung extends EncryptionService {
   }
 }
 
-/// Eine gueltige Peer-ID (UUID).
+/// Eine gültige Peer-ID (UUID).
 const String peerId = '11111111-2222-3333-4444-555555555555';
 
 void main() {
@@ -92,7 +92,7 @@ void main() {
       final dienst = PreKeyService(_FakeVerschluesselung());
 
       // DER ANGRIFF: Die Peer-ID landet im Function-Pfad. Mit einem
-      // "../" koennte ein manipulierter QR-Code aus dem Pfad ausbrechen.
+      // "../" kännte ein manipulierter QR-Code aus dem Pfad ausbrechen.
       await expectLater(
         dienst.ensureSession('../../secrets'),
         throwsA(isA<StateError>()),
@@ -110,7 +110,7 @@ void main() {
     test('eine vorhandene Session wird verwendet', () async {
       // DIE SITUATION: Die Session besteht schon (sie kam aus einer
       // empfangenen PreKey-Nachricht). Dann darf der Bundle-Abruf sie
-      // NICHT ueberschreiben - sonst verschluesseln die beiden Geraete
+      // NICHT überschreiben - sonst verschlüsseln die beiden Geräte
       // mit unterschiedlichen Sessions und keine Nachricht kommt an.
       final verschluesselung = _FakeVerschluesselung(sitzungen: {peerId});
       final dienst = PreKeyService(verschluesselung);

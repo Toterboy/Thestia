@@ -77,19 +77,19 @@ class CrashJournal {
   /// Entfernt erkennbare personenbezogene Daten aus einem Text.
   ///
   /// Entfernt werden:
-  ///   * E-Mail-Adressen (der haeufigste PII-Transportweg in
+  ///   * E-Mail-Adressen (der häufigste PII-Transportweg in
   ///     Fehlermeldungen von Supabase)
-  ///   * Bearer-/JWT-Token und lange zufaellige Zeichenketten
+  ///   * Bearer-/JWT-Token und lange zufällige Zeichenketten
   ///     (Session-Token im Log, ein Echo im Fehlertext)
   ///   * `Bearer <token>`-Kombinationen
   ///
   /// Bewusst NICHT entfernt:
-  ///   * UUIDs - die eigene User-ID wird fuer die Bearbeitung des
+  ///   * UUIDs - die eigene User-ID wird für die Bearbeitung des
   ///     Bug-Reports gebraucht ("nenne dazu deine User-ID").
   ///   * Dateipfade und Zeilennummern - ohne sie ist der Absturz
   ///     nicht zuzuordnen.
   ///
-  /// Die Funktion ist oeffentlich, damit sie testbar ist: eine
+  /// Die Funktion ist öffentlich, damit sie testbar ist: eine
   /// Redigierregel, die nicht getestet wird, ist eine Regel, die
   /// irgendwann nicht mehr greift.
   @visibleForTesting
@@ -105,7 +105,7 @@ class CrashJournal {
     // Bearer-Token (mit oder ohne Prefix).
     //
     // HINWEIS: Dart kennt keine Inline-Flags wie (?i) - die
-    // Gross-/Kleinschreibung wird ueber das Argument gesteuert.
+    // Groß-/Kleinschreibung wird über das Argument gesteuert.
     out = out.replaceAll(
       RegExp(r'bearer\s+[A-Za-z0-9._\-]{20,}', caseSensitive: false),
       '<Token entfernt>',
@@ -117,7 +117,7 @@ class CrashJournal {
       ),
       '<Token entfernt>',
     );
-    // Lange zufaellige Zeichenketten (Hex-Hashes, Base64-Bloecke).
+    // Lange zufällige Zeichenketten (Hex-Hashes, Base64-Blöcke).
     out = out.replaceAll(
       RegExp(r'\b[A-Fa-f0-9]{32,}\b'),
       '<Schluessel entfernt>',

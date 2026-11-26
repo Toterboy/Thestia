@@ -1,18 +1,18 @@
 // tool/images/generate_splash_images.dart
 //
-// Erzeugt die Splash-Bilder fuer flutter_native_splash aus dem
+// Erzeugt die Splash-Bilder für flutter_native_splash aus dem
 // Basis-Logo (assets/images/thestia_icon_base.png):
 //
 //  1) thestia_splash.png            - regulierter Splash (Android < 12):
 //        Logo verkleinert (~47 %) auf transparenter 1024er-Leinwand.
 //        Ohne diese Verkleinerung rendert flutter_native_splash das
-//        920-px-Logo in Vollgroesse zentriert = "reingezoomt".
+//        920-px-Logo in Vollgrösse zentriert = "reingezoomt".
 //  2) thestia_splash_android12.png  - Android 12+ Splash:
 //        1152er-Leinwand, Logo auf ~55 % zentriert. Das System maskiert
-//        kreisfoermig (sichtbarer Kreis-Durchmesser ~768 px) - bei der
-//        Vollgroesse wurde die "Thestia"-Schrift unten abgeschnitten.
+//        kreisförmig (sichtbarer Kreis-Durchmesser ~768 px) - bei der
+//        Vollgrösse wurde die "Thestia"-Schrift unten abgeschnitten.
 //
-// Ausfuehren:  dart run tool/images/generate_splash_images.dart
+// Ausführen:  dart run tool/images/generate_splash_images.dart
 // Danach:      dart run flutter_native_splash:create
 //
 // (Bewusst ein Dart-Skript: das `image`-Paket ist bereits Dependency.)
@@ -64,7 +64,7 @@ Future<void> main() async {
     );
   }
 
-  // 1) Regulaerer Splash (Android < 12): Logo ~47 % der Leinwand.
+  // 1) Regulärer Splash (Android < 12): Logo ~47 % der Leinwand.
   generate(
     canvasSize: 1024,
     logoScale: 0.47,

@@ -6,34 +6,34 @@
 
 // Der 1:1-Chat OHNE Server (v0.10.1).
 //
-// WARUM (13.11.2026): Der Chat-Screen ist die groesste Datei der App
+// WARUM (13.11.2026): Der Chat-Screen ist die größte Datei der App
 // (rund 1.800 Zeilen) - und die Coverage-Messung zeigte: 0,1 %.
 // Genau dort sitzt auch die eigene Tastatur (Build 54). Ein Screen, den
 // niemand gerendert hat, ist geraten: der Absturz beim Wischen zwischen
-// den Reitern (31.10.2026) war nur zufaellig im Screenshot-Render
+// den Reitern (31.10.2026) war nur zufällig im Screenshot-Render
 // aufgefallen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Chat rendert mit seinen Nachrichten (kein Absturz, kein
 //     Render-Overflow),
 //   * ein Chat, den es nicht mehr gibt, zeigt den Hinweis statt eines
 //     leeren Bildschirms,
 //   * die EINGABE ist die eigene Tastatur: das Feld ist readOnly (die
-//     Systemtastatur sieht nichts) und das Tippen oeffnet die
+//     Systemtastatur sieht nichts) und das Tippen öffnet die
 //     App-Tastatur,
 //   * eine getippte Nachricht landet im Chat.
 //
 // OHNE SERVER: Die Supabase-Aufrufe des Bildschirms (P2P, Relay,
-// Loeschen, Herz-Staerken) laufen ueber bestEffort/bestEffortOr und
+// Löschen, Herz-Stärken) laufen über bestEffort/bestEffortOr und
 // brechen ohne Client still ab. Genau das ist hier der Fall - es wird
-// geprueft, was der Bildschirm ohne Server macht, nicht was er mit
+// geprüft, was der Bildschirm ohne Server macht, nicht was er mit
 // Server macht (das macht test/live_message_flow_test.dart).
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/chat/message.dart';
@@ -50,7 +50,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     // Der Supabase-Client muss initialisiert sein: der Sende-Weg holt
-    // ihn ueber den Relay-Service, und `Supabase.instance` wirft ohne
+    // ihn über den Relay-Service, und `Supabase.instance` wirft ohne
     // Initialisierung eine Assertion. Der Client zeigt auf einen nicht
     // existierenden Server - im Test laufen alle HTTP-Anfragen ins Leere
     // (der Test-Binding liefert 400), und der Sende-Weg ist in
@@ -59,8 +59,8 @@ void main() {
     // das echte Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
     // DER KEYSTORE und HIVE: der Signal-Dienst (Sicherheitsnummer)
-    // liest seine verschluesselten Boxen aus dem Keystore und aus Hive.
-    // Ohne diese beiden Ersatzwaerter bleibt der Dialog leer.
+    // liest seine verschlüsselten Boxen aus dem Keystore und aus Hive.
+    // Ohne diese beiden Ersatzwärter bleibt der Dialog leer.
     mockKeystore();
     await mockHive();
     // DER ADAPTER: Der Meldungs-Store legt seine Zeilen als
@@ -71,8 +71,8 @@ void main() {
     // Recorder wird beim Aufbau erzeugt (sonst: MissingPluginException).
     mockAufnahme();
     mockZeitzone();
-    // DER SERVER: die Aktionen, die auf dem Server etwas aendern
-    // ("Nachricht fuer alle loeschen"), gehen ueber den Client - ohne
+    // DER SERVER: die Aktionen, die auf dem Server etwas ändern
+    // ("Nachricht für alle löschen"), gehen über den Client - ohne
     // den Ersatz-Server bekommen sie keine Antwort.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
@@ -87,13 +87,13 @@ void main() {
 
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',
-      // DER SERVER: die Aktionen, die auf dem Server etwas aendern
-      // ("Nachricht fuer alle loeschen"), gehen ueber den Client - ohne
+      // DER SERVER: die Aktionen, die auf dem Server etwas ändern
+      // ("Nachricht für alle löschen"), gehen über den Client - ohne
       // den Ersatz-Server bekommen sie keine Antwort.
       httpClient: server,
     );
     // ANGEMELDET: die eigene User-ID kommt aus der Sitzung - ohne sie
-    // weiss der Bildschirm nicht, welche Nachrichten die eigenen sind.
+    // weiß der Bildschirm nicht, welche Nachrichten die eigenen sind.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
   setUp(() {
@@ -102,9 +102,9 @@ void main() {
       'https://example.supabase.co',
       'test-key',
     );
-    // Die Aufnahme: zurueck auf den Standard (kein eigener Pfad).
+    // Die Aufnahme: zurück auf den Standard (kein eigener Pfad).
     mockAufnahme();
-    // Der Audio-Player (das Blatt zum Anhoeren legt einen an).
+    // Der Audio-Player (das Blatt zum Anhören legt einen an).
     mockAudioPlayer();
   });
   tearDown(() async {
@@ -123,19 +123,19 @@ void main() {
         chat.notifier,
       );
 
-      // Das Menue oeffnen.
+      // Das Menü öffnen.
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(tester.takeException(), isNull);
-      // BEFUND (09.11.2026, Betreiber: "Bei 3 Punkte Menue ist ueber
-      // Eisbrecher Fragen ein Strich einfach so aber keine ueberschrift
-      // oder so"): JEDE Gruppe hat eine Ueberschrift - kein nackter
+      // BEFUND (09.11.2026, Betreiber: "Bei 3 Punkte Menü ist über
+      // Eisbrecher Fragen ein Strich einfach so aber keine überschrift
+      // oder so"): JEDE Gruppe hat eine Überschrift - kein nackter
       // Trennstrich.
       expect(find.text('Gespräch'), findsOneWidget);
       expect(find.text('Sicherheit'), findsOneWidget);
-      // Und die wichtigen Eingaenge stehen drin.
+      // Und die wichtigen Eingänge stehen drin.
       expect(find.text('Nutzer melden'), findsOneWidget);
       expect(find.text('Nutzer blockieren'), findsOneWidget);
 
@@ -162,7 +162,7 @@ void main() {
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Chat-Hintergrund'), findsOneWidget);
 
-      // "Spaeter" schliesst ihn - und er kommt nicht wieder.
+      // "Später" schließt ihn - und er kommt nicht wieder.
       await tester.tap(find.text('Später'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -194,7 +194,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(tester.takeException(), isNull);
-      // Das Blatt steht da (ohne Server: keine Eintraege, aber der
+      // Das Blatt steht da (ohne Server: keine Einträge, aber der
       // Aufbau muss klappen).
       expect(find.text('Erinnerungsliste'), findsWidgets);
 
@@ -202,9 +202,9 @@ void main() {
     });
 
     // ANMERKUNG: Der Dialog zur Sicherheitsnummer wird hier NICHT
-    // getestet. Er braucht den vollstaendigen Signal-Dienst
-    // (Identity-Key, PreKeys, Session-Ratchet) - der laedt im Test
-    // seine verschluesselten Boxen und rechnet, das ist im
+    // getestet. Er braucht den vollständigen Signal-Dienst
+    // (Identity-Key, PreKeys, Session-Ratchet) - der lädt im Test
+    // seine verschlüsselten Boxen und rechnet, das ist im
     // Widget-Test nicht sinnvoll nachzubauen. Die Sicherheitsnummer
     // selbst hat eigene Tests (test/safety_number_test.dart).
 
@@ -302,13 +302,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(tester.takeException(), isNull);
-      // Die Aufnahme laeuft (das Panel steht da).
+      // Die Aufnahme läuft (das Panel steht da).
       expect(
         find.text(L10n.tWithoutContext('intro.recordingState')),
         findsOneWidget,
       );
 
-      // PAUSE: die Aufnahme haelt an.
+      // PAUSE: die Aufnahme hält an.
       await tester.tap(find.text(L10n.tWithoutContext('intro.pause')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -320,7 +320,7 @@ void main() {
             'nicht, dass es weitergeht.',
       );
 
-      // UND WEITER: sie laeuft wieder.
+      // UND WEITER: sie läuft wieder.
       await tester.tap(find.text(L10n.tWithoutContext('intro.resume')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -349,7 +349,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       // Eine ECHTE Datei - das Plugin meldet sie beim Stoppen. Ohne Datei
-      // waere der Aufnahme-Pfad ein anderer (das prueft der Test nicht).
+      // wäre der Aufnahme-Pfad ein anderer (das prüft der Test nicht).
       final datei = (await tester.runAsync(aufnahmeDatei))!;
       mockAufnahme(dateiBeimStoppen: datei);
 
@@ -425,7 +425,7 @@ void main() {
       await echteZeit(tester);
 
       expect(tester.takeException(), isNull);
-      // Das Blatt zum Anhoeren steht da - gesendet wird erst danach.
+      // Das Blatt zum Anhören steht da - gesendet wird erst danach.
       expect(
         find.text(L10n.tWithoutContext('intro.review.title')),
         findsOneWidget,

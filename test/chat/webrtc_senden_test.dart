@@ -1,27 +1,27 @@
-// Das Senden ueber den Datenkanal (mit echter Signal-Sitzung).
+// Das Senden über den Datenkanal (mit echter Signal-Sitzung).
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/webrtc_service.dart 61 offene Zeilen - darunter
 // `sendMessage`, `sendControl` und `sendCallAudio`. Diese Wege brauchen
-// eine aufgebaute Signal-Sitzung (ohne sie schlaegt die Verschluesselung
+// eine aufgebaute Signal-Sitzung (ohne sie schlägt die Verschlüsselung
 // fehl und der Sendeweg ist nicht erreichbar).
 //
-// DER WEG: Der Dienst kann sein eigenes oeffentliches PreKey-Bundle
+// DER WEG: Der Dienst kann sein eigenes öffentliches PreKey-Bundle
 // exportieren. Mit diesem Bundle baut der Test eine Sitzung - der
-// "Partner" traegt dabei denselben Schluesselsatz (in einer echten
-// Sitzung waere es der des Geraets des anderen).
+// "Partner" trägt dabei denselben Schlüsselsatz (in einer echten
+// Sitzung wäre es der des Geräts des anderen).
 //
-// ACHTUNG: Mit dieser symmetrischen Sitzung laesst sich nicht wieder
-// entschluesseln (der Ratchet hat nur eine Kette - der Empfaenger
-// waere ein zweites Geraet). Geprueft wird deshalb die HUELLE, die
-// ueber den Kanal geht: Sie muss verschluesselt sein, und sie traegt die
+// ACHTUNG: Mit dieser symmetrischen Sitzung lässt sich nicht wieder
+// entschlüsseln (der Ratchet hat nur eine Kette - der Empfänger
+// wäre ein zweites Gerät). Geprüft wird deshalb die HÜLLE, die
+// über den Kanal geht: Sie muss verschlüsselt sein, und sie trägt die
 // Metadaten.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * eine Textnachricht geht verschluesselt ueber den Kanal (der
+// WAS HIER GEPRÜFT WIRD:
+//   * eine Textnachricht geht verschlüsselt über den Kanal (der
 //     Klartext darf nicht mitgehen),
 //   * eine Kontroll-Nachricht des Anrufs geht raus,
-//   * ein Sprachpaket geht als Binaerhuelle raus (mit der Art des Pakets).
+//   * ein Sprachpaket geht als Binärhülle raus (mit der Art des Pakets).
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -70,7 +70,7 @@ void main() {
     dienst.currentPeerIdForTesting = 'partner-1';
     encryption.localUserId = 'ich';
 
-    // DIE SITZUNG: Ohne sie schlaegt die Verschluesselung fehl.
+    // DIE SITZUNG: Ohne sie schlägt die Verschlüsselung fehl.
     final bundle = await encryption.exportPreKeyBundle();
     await encryption.buildSession(
       'partner-1',
@@ -88,7 +88,7 @@ void main() {
     WebRTCService.peerConnectionFactory = null;
   });
 
-  /// Oeffnet den Kanal (die Gegenseite liefert ihn).
+  /// Öffnet den Kanal (die Gegenseite liefert ihn).
   Future<void> oeffneKanal() async {
     await dienst.handleOffer('partner-1', 'v=0');
     peer.onDataChannel?.call(kanal);
@@ -96,7 +96,7 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 50));
   }
 
-  /// Die Huelle der letzten gesendeten Nachricht.
+  /// Die Hülle der letzten gesendeten Nachricht.
   Map<String, dynamic> letzteHuelle() {
     expect(kanal.gesendet, isNotEmpty);
     return jsonDecode(kanal.gesendet.last.text) as Map<String, dynamic>;

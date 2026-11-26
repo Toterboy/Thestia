@@ -1,9 +1,9 @@
 // Der Teil '_ChatImage'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -17,13 +17,13 @@ part of '../chat_detail_screen.dart';
 /// Blase zeichnete einen Farbverlauf mit einem Bild-Symbol, egal was
 /// angezeigt werden sollte.
 ///
-/// Die Bytes sind aber da: Das Bild kommt E2E-verschluesselt ueber den
+/// Die Bytes sind aber da: Das Bild kommt E2E-verschlüsselt über den
 /// DataChannel an (als Daten-URL in `mediaUrl`, Chat-Screen Zeile 910)
 /// und wird auch lokal so abgelegt (Zeile 1271). Es fehlte nur die
 /// Anzeige.
 ///
 /// Der Verpixel-Schutz bleibt: Ist [blurred] true, wird das echte Bild
-/// verpixelt - erst nach der ausdruecklichen Bestaetigung wird es
+/// verpixelt - erst nach der ausdrücklichen Bestätigung wird es
 /// scharf (Datenschutz-Einstellung "blurChatImages", Default an).
 class _ChatImage extends StatelessWidget {
   const _ChatImage({
@@ -44,9 +44,9 @@ class _ChatImage extends StatelessWidget {
   final double? width;
   final double? height;
 
-  /// Die groesste Kante eines Bildes in der Blase (px).
+  /// Die größte Kante eines Bildes in der Blase (px).
   ///
-  /// BEFUND (09.11.2026): Die Bilder waren viel zu gross im Chat.
+  /// BEFUND (09.11.2026): Die Bilder waren viel zu groß im Chat.
   static const double _maxKachel = 160;
 
   /// Der Radius der abgerundeten Ecken.
@@ -58,9 +58,9 @@ class _ChatImage extends StatelessWidget {
 
   /// Die dekodierten Bytes - mit Cache.
   ///
-  /// Der Cache ist wichtig: Ohne ihn wuerde die Blase bei JEDEM
+  /// Der Cache ist wichtig: Ohne ihn würde die Blase bei JEDEM
   /// Neuaufbau das Base64 dekodieren (die Bilder sind einige hundert
-  /// Kilobyte gross). Der Cache ist begrenzt, damit er nicht wächst.
+  /// Kilobyte groß). Der Cache ist begrenzt, damit er nicht wächst.
   static final Map<String, Uint8List> _cache = {};
 
   static Uint8List? _bytesOf(String url) {
@@ -76,7 +76,7 @@ class _ChatImage extends StatelessWidget {
       _cache[url] = bytes;
       return bytes;
     } catch (_) {
-      // Kein gueltiges Base64 - dann bleibt der Platzhalter.
+      // Kein gültiges Base64 - dann bleibt der Platzhalter.
       return null;
     }
   }
@@ -88,13 +88,13 @@ class _ChatImage extends StatelessWidget {
       return const _ImageBubblePlaceholder();
     }
     // BEFUND (09.11.2026, Betreiber): "Die Bild anzeige von Bildern,
-    // die man schickt, ist viel zu gross im Chat." Das Bild fuellte die
+    // die man schickt, ist viel zu groß im Chat." Das Bild füllte die
     // ganze Zeile der Blase aus. Es ist jetzt auf eine Feste Kachel
     // begrenzt (160 px) - ein Vorschaubild, kein Vollbild.
     //
     // NUTZERWUNSCH (22.11.2026): Die Kanten sind abgerundet - das Bild
     // soll nicht eckig wirken. Das Zuschneiden kommt VOR der
-    // Weichzeichnung: sonst laeuft der weiche Rand ueber die runden
+    // Weichzeichnung: sonst läuft der weiche Rand über die runden
     // Ecken hinaus.
     Widget bild = ClipRRect(
       borderRadius: BorderRadius.circular(_radius),
@@ -103,7 +103,7 @@ class _ChatImage extends StatelessWidget {
         fit: fit,
         width: width ?? _maxKachel,
         height: height,
-        // In der Blase reichen 600 px - ohne das waeren es mehrere MB
+        // In der Blase reichen 600 px - ohne das wären es mehrere MB
         // dekodierte Bitmap pro Bild.
         cacheWidth: fit == BoxFit.contain ? null : 600,
       ),

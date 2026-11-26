@@ -1,15 +1,15 @@
-r"""Prueft, ob das Hook-Secret in den Function-Secrets zum Dashboard-Wert passt.
+r"""Prüft, ob das Hook-Secret in den Function-Secrets zum Dashboard-Wert passt.
 
-Hintergrund (21.10.2026): Die Function send-confirmation-email prueft die
-Standard-Webhooks-Signatur von GoTrue. Dafuer muss das Secret in den
+Hintergrund (21.10.2026): Die Function send-confirmation-email prüft die
+Standard-Webhooks-Signatur von GoTrue. Dafür muss das Secret in den
 Function-Secrets DENSELBEN Wert haben, den das Dashboard anzeigt. Sind
 die beiden verschieden, antwortet die Function immer mit 401, und GoTrue
-meldet den Hook als fehlgeschlagen - die Bestaetigungs-Mails kommen
-dann nicht an, ohne dass irgendwo ein Fehler auffaellt.
+meldet den Hook als fehlgeschlagen - die Bestätigungs-Mails kommen
+dann nicht an, ohne dass irgendwo ein Fehler auffällt.
 
 Das war hier die Ursache: In den Function-Secrets stand ein 64-stelliger
 Hex-Wert, die Function hat ihn aber als Base64 dekodiert (48 Byte
-Muell) - die Signatur passte nie. Behoben ist das in der Function
+Müll) - die Signatur passte nie. Behoben ist das in der Function
 selbst (sie akzeptiert jetzt Hex, Base64 und Rohbytes). Bleibt die
 Abweichung zwischen Dashboard und Function-Secret, muss der Wert
 angeglichen werden.
@@ -19,8 +19,8 @@ AUFRUF
     python tool/checks/check_hook_secret.py
 
 Ohne Argument fragt das Skript den Wert VERSTECKT ab (getpass). So
-landet er weder im Shell-Verlauf noch auf dem Bildschirm - noetig, weil
-das Dashboard den Wert nur maskiert anzeigt. Kopieren genuegt, sehen
+landet er weder im Shell-Verlauf noch auf dem Bildschirm - nötig, weil
+das Dashboard den Wert nur maskiert anzeigt. Kopieren genügt, sehen
 muss man ihn nie.
 
 Mit Argument geht es auch:
@@ -35,21 +35,21 @@ WAS DIE AUSGABE BEDEUTET (24.10.2026)
         Das Secret passt nicht. Das ist der Fehlerfall.
 
     HTTP 400 {"error":"Missing email or token"}  = Signatur ANGENOMMEN.
-        Das Secret passt. Die Function ist nach der Signaturpruefung
-        weitergekommen und hat sich nur ueber das abgespeckte Testpayload
+        Das Secret passt. Die Function ist nach der Signaturprüfung
+        weitergekommen und hat sich nur über das abgespeckte Testpayload
         beschwert. DAS IST DER TREFFER - wer HTTP 400 als Fehler liest,
-        haelt eine korrekte Kette fuer kaputt.
+        hält eine korrekte Kette für kaputt.
 
-Das Skript sagt am Ende ausdruecklich PASS oder FAIL.
+Das Skript sagt am Ende ausdrücklich PASS oder FAIL.
 
 WENN ES NICHT PASST
 -------------------
     * Wert im Dashboard MASKIERT kopiert? Sternchen und Auslassungs-
       punkte werden von der Base64-Dekodierung stillschweigend ignoriert
-      und ergeben einen scheinbar gueltigen, aber falschen Schluessel.
+      und ergeben einen scheinbar gültigen, aber falschen Schlüssel.
       Das Kopier-Symbol nutzen, nicht den Text markieren.
-    * Die laufende Function nimmt eine Secret-Aenderung erst beim
-      naechsten Deploy an (supabase/supabase#51535). Danach muss
+    * Die laufende Function nimmt eine Secret-Änderung erst beim
+      nächsten Deploy an (supabase/supabase#51535). Danach muss
       `supabase functions deploy send-confirmation-email` laufen.
     * Am einfachsten ist alles zusammen:
       tool\set_hook_secret.ps1
@@ -74,18 +74,18 @@ BODY = json.dumps({
 
 
 def kandidaten(original):
-    """Alle moeglichen HMAC-Schluesselbytes - wie die Function sie bildet.
+    """Alle möglichen HMAC-Schlüsselbytes - wie die Function sie bildet.
 
     Der 'roh'-Kandidat nutzt den ORIGINALEN Wert (inklusive 'v1,' und
     'whsec_'), genau wie die Function in send-confirmation-email. Vorher
-    hatte der Pruefer das 'v1,' abgeschnitten und damit den Roh-Byte-
-    Kandidaten gegen einen anderen Wert geprueft als die Function -
-    die beiden konnten nie uebereinstimmen, was verwirrend aussah.
+    hatte der Prüfer das 'v1,' abgeschnitten und damit den Roh-Byte-
+    Kandidaten gegen einen anderen Wert geprüft als die Function -
+    die beiden konnten nie übereinstimmen, was verwirrend aussah.
 
     Die Reihenfolge der Kandidaten ist bewusst: 'base64' zuerst, weil
     ein 'whsec_'-Wert nach Standard-Webhooks immer Base64 ist. Die
-    anderen beiden sind Rueckfall fuer die Formate, die das Dashboard
-    frueher geliefert hat (64 Hex-Zeichen) bzw. fuer einen gar nicht
+    anderen beiden sind Rückfall für die Formate, die das Dashboard
+    früher geliefert hat (64 Hex-Zeichen) bzw. für einen gar nicht
     kodierten Wert.
     """
     out = []
@@ -114,12 +114,12 @@ def formen(secret):
     """Die Formen, in denen derselbe Wert im Dashboard auftauchen kann.
 
     Das Dashboard zeigt den Hook-Secret je nach Ansicht mit oder ohne
-    Versions-Marker "v1,". Beide muessen funktionieren - deshalb wird
-    jede Form geprueft, statt den Nutzer raten zu lassen, welche die
+    Versions-Marker "v1,". Beide müssen funktionieren - deshalb wird
+    jede Form geprüft, statt den Nutzer raten zu lassen, welche die
     richtige ist.
 
     Wichtig: die Formen werden VOR der Ableitung normalisiert, damit
-    "v1,whsec_X" und "whsec_X" dieselben Schluesselbytes ergeben. Der
+    "v1,whsec_X" und "whsec_X" dieselben Schlüsselbytes ergeben. Der
     'roh'-Kandidat bleibt dagegen bewusst der jeweilige Originalwert,
     weil die Function ihn auch so bildet.
     """
@@ -161,9 +161,9 @@ def main():
         secret = sys.argv[1].strip()
     else:
         # Ohne Argument: versteckt nachfragen. So landet der Wert weder
-        # im Shell-Verlauf noch auf dem Bildschirm. Genau fuer den Fall
+        # im Shell-Verlauf noch auf dem Bildschirm. Genau für den Fall
         # gedacht, dass das Dashboard den Wert nur maskiert anzeigt -
-        # kopieren genuegt, angezeigt werden muss er nie.
+        # kopieren genügt, angezeigt werden muss er nie.
         import getpass
         print('Dashboard-Wert einfuegen (Eingabe bleibt unsichtbar):')
         secret = getpass.getpass('> ').strip()
@@ -171,8 +171,8 @@ def main():
             print('Abgebrochen: kein Wert eingegeben.')
             return 2
 
-    # Das Dashboard zeigt den Wert teils mit "v1,"-Praefix. Der Wert
-    # wird NICHT mehr veraendert - die Ableitungen unten beruecksichtigen
+    # Das Dashboard zeigt den Wert teils mit "v1,"-Präfix. Der Wert
+    # wird NICHT mehr verändert - die Ableitungen unten berücksichtigen
     # beide Formen selbst.
     print(f'Geprueftes Secret: {len(secret)} Zeichen, '
           f'Praefix whsec_: {secret.startswith("whsec_")}, '
@@ -190,11 +190,11 @@ def main():
     #
     #   HTTP 400 {"error":"Missing email or token"}  = die Signatur wurde
     #     ANGENOMMEN. Die Function ist weitergekommen und hat nur
-    #     gemeckert, dass der Testkoerper kein Token enthaelt - genau wie
-    #     es sein soll, weil GoTrue ein vollstaendiges Payload schickt.
+    #     gemeckert, dass der Testkörper kein Token enthält - genau wie
+    #     es sein soll, weil GoTrue ein vollständiges Payload schickt.
     #     DAS IST DER TREFFER.
     #
-    # Wer HTTP 400 als Fehler liest, haelt eine korrekte Kette fuer kaputt.
+    # Wer HTTP 400 als Fehler liest, hält eine korrekte Kette für kaputt.
     getroffen = []
     for name, sig in signiere(secret, wid, ts):
         st, txt = ruf({

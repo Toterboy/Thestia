@@ -1,9 +1,9 @@
 // Der Teil '_SavedProfileAction'.
 //
 // DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
-// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// ist über `part` mit der Hauptdatei verbunden - so bleiben
 // die privaten Namen (und der Zugriff auf die privaten Felder)
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -29,7 +29,7 @@ class _SavedProfileAction extends ConsumerWidget {
     if (existing != null) {
       return IconButton(
         // NUTZERWUNSCH: Aktiv-Status farblich (gefülltes Icon in
-        // Primärfarbe statt grauem Outline-Icon).
+        // Primärfarbe statt graüm Outline-Icon).
         icon: Icon(
           Icons.bookmark,
           color: Theme.of(context).colorScheme.primary,

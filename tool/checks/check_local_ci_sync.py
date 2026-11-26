@@ -1,17 +1,17 @@
-"""Prueft, dass tool/checks/check_local_ci.ps1 dieselben Gates abbildet wie die CI.
+"""Prüft, dass tool/checks/check_local_ci.ps1 dieselben Gates abbildet wie die CI.
 
 Warum es das geben muss (04.11.2026)
 -----------------------------------
 `tool/checks/check_local_ci.ps1` ist der Spiegel der CI. Ein Spiegel, der
 nicht mehr spiegelt, ist schlimmer als gar keiner: Er meldet "alle
-Gates gruen", while er ein Gate gar nicht ausfuehrt.
+Gates grün", while er ein Gate gar nicht ausfährt.
 
 Genau das ist beim Bauen des Skripts passiert: Der Aufruf
 "Nur static-checks" lieferte eine leere Ergebnisliste - das Skript
-hatte nichts geprueft und trotzdem "ALLE GATES GRUEN" gemeldet. Der
+hatte nichts geprüft und trotzdem "ALLE GATES GRÜN" gemeldet. Der
 Fehler wurde nur sichtbar, weil die Ergebnisliste leer war.
 
-Diese Pruefung vergleicht daher zwei Listen:
+Diese Prüfung vergleicht daher zwei Listen:
 
   1) Alle Skripte, die .github/workflows/ci.yml aufruft
   2) Alle Skripte, die tool/checks/check_local_ci.ps1 aufruft
@@ -19,20 +19,20 @@ Diese Pruefung vergleicht daher zwei Listen:
 Und meldet:
 
   FEHLER  Ein Skript der CI fehlt im lokalen Spiegel. Dann kann die
-          CI rot werden, ohne dass die lokale Pruefung es merkt.
+          CI rot werden, ohne dass die lokale Prüfung es merkt.
 
-  FEHLER  Ein Skript des Spiegels laeuft in der CI nicht. Dann prueft
-          man lokal etwas, das die CI nicht prueft - mit dem
+  FEHLER  Ein Skript des Spiegels läuft in der CI nicht. Dann prüft
+          man lokal etwas, das die CI nicht prüft - mit dem
           Risiko, dass man auf ein Wegbrechen des Gates hereingeht.
 
 Ausgenommen sind Schritte mit "continue-on-error: true": Die sind in
-der CI ausdruecklich nur informativ (Netlify-Vergleich, Artefakt-
+der CI ausdrücklich nur informativ (Netlify-Vergleich, Artefakt-
 check ohne Artefakte im Checkout). Sie zu einem lokalen Gate zu
-machen waere falsch - sie brauchen Netz oder Dateien, die es lokal
+machen wäre falsch - sie brauchen Netz oder Dateien, die es lokal
 nicht gibt.
 
-Der Check laeuft in der CI selbst (als Teil von static-checks), damit
-eine Aenderung an ci.yml ohne angepassten Spiegel sofort auffaellt.
+Der Check läuft in der CI selbst (als Teil von static-checks), damit
+eine Änderung an ci.yml ohne angepassten Spiegel sofort auffällt.
 """
 import pathlib
 import re
@@ -43,8 +43,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -68,7 +68,7 @@ SPIEGEL = ROOT / "tool" / "checks/check_local_ci.ps1"
 #
 # Gruppe 1 ist der reine Skriptname ("check_x.py"), Gruppe 2 die
 # Schalter. Beide Seiten (CI und Spiegel) benutzen dieselbe Form -
-# sonst vergleicht man Aepfel mit Birnen und meldet grundlos einen
+# sonst vergleicht man Äpfel mit Birnen und meldet grundlos einen
 # Unterschied.
 AUFruf = re.compile(
     r"python3?\s+tool[/\\][\w./\\-]*(check_[a-z0-9_]+\.py)"
@@ -86,7 +86,7 @@ def _skripte_aus_ci() -> tuple[set[str], set[str]]:
 
     zeilen = CI_YML.read_text(encoding="utf-8").splitlines()
     # Ein Schritt beginnt mit "- name:" oder "- run:". Ab da gilt der
-    # Zustand "weich" bis zum naechsten Schritt.
+    # Zustand "weich" bis zum nächsten Schritt.
     weicher_schritt = False
     for zeile in zeilen:
         stripped = zeile.strip()
@@ -116,8 +116,8 @@ def vergleiche(hart: set[str], weich: set[str],
     """Vergleicht die Gates der CI mit dem Spiegel.
 
     Getrennt von main(), damit der Selbsttest die Logik ohne Dateien
-    pruefen kann - ein Selbsttest, der echte Dateien im Repository
-    veraendern muesste, waere selbst ein Risiko.
+    prüfen kann - ein Selbsttest, der echte Dateien im Repository
+    verändern müste, wäre selbst ein Risiko.
     """
     fehlt = sorted(hart - spiegel)
     extra = sorted(spiegel - hart - weich)

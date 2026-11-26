@@ -56,7 +56,7 @@ class _AppState extends ConsumerState<App> {
   /// PERFORMANCE (31.10.2026): Der Mindest-Build stand beim Start auf
   /// dem kritischen Pfad - der erste Frame wartete auf einen
   /// Server-Roundtrip. Jetzt wird der beim Start aus dem lokalen
-  /// Cache gelesen (siehe main.dart), und der Serverwert laeuft hier
+  /// Cache gelesen (siehe main.dart), und der Serverwert läuft hier
   /// im Hintergrund nach. Ist er strenger geworden, erscheint der
   /// Update-Hinweis als Deckschicht - ohne dass der Start gewartet
   /// hat.
@@ -78,15 +78,15 @@ class _AppState extends ConsumerState<App> {
     final inbox = GlobalRelayInbox(ref);
     _inbox = inbox;
     // WICHTIG (06.11.2026): Ein Provider darf im initState NICHT
-    // veraendert werden. Riverpod wirft dann "Tried to modify a
+    // verändert werden. Riverpod wirft dann "Tried to modify a
     // provider while the widget tree was building" - im Debug-Build
     // als Ausnahme (live im Emulator gesehen), im Release als
     // inkonsistenter Zustand. Die Zuweisung wartet deshalb einen
     // Frame.
     //
     // Aktuell liest niemand den Provider - die Zuweisung ist der
-    // Anker fuer den globalen Relay-Eingang. Sie bleibt, damit der
-    // Zustand fuer alle erreichbar ist, die ihn brauchen.
+    // Anker für den globalen Relay-Eingang. Sie bleibt, damit der
+    // Zustand für alle erreichbar ist, die ihn brauchen.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(globalRelayInboxProvider.notifier).state = inbox;
@@ -98,12 +98,12 @@ class _AppState extends ConsumerState<App> {
   /// Verdrahtet die Navigation aus Benachrichtigungen.
   ///
   /// BEFUND (09.11.2026, Betreiber): "Wenn man auf die Benachrichtigung
-  /// drueckt, dass man eine neue Nachricht erhalten hat, soll man zum
+  /// drückt, dass man eine neue Nachricht erhalten hat, soll man zum
   /// Interessen Screen kommen."
   ///
-  /// DER GRUND (live geprueft): Es gab keinen Tap-Handler - weder fuer
-  /// lokale Benachrichtigungen noch fuer den FCM-Push. Der Tap auf die
-  /// Benachrichtigung oeffnete die App, mehr nicht.
+  /// DER GRUND (live geprüft): Es gab keinen Tap-Handler - weder für
+  /// lokale Benachrichtigungen noch für den FCM-Push. Der Tap auf die
+  /// Benachrichtigung öffnete die App, mehr nicht.
   ///
   /// Drei Wege werden hier verbunden:
   ///  1) Lokale Benachrichtigung, App im Vordergrund -> Tap-Payload.
@@ -112,9 +112,9 @@ class _AppState extends ConsumerState<App> {
   ///
   /// Bei (2) und (3) kommt die Meldung vom SERVER (notify-user). Deren
   /// Metadaten tragen die Art ('messages', 'likes', 'matches'). Alle
-  /// drei Arten fuehren zum Interessen-Screen - dort stehen die Chats und
+  /// drei Arten führen zum Interessen-Screen - dort stehen die Chats und
   /// die Funken. Der Server kann keinen genaueren Zielpfad nennen: die
-  /// Match-ID des Empfaengers kennt nur dieser selbst.
+  /// Match-ID des Empfängers kennt nur dieser selbst.
   void _setupNotificationNavigation() {
     NotificationService.tapHandler = (payload) {
       unawaited(_navigateFromNotification(payload));
@@ -145,14 +145,14 @@ class _AppState extends ConsumerState<App> {
 
   /// Der Zielpfad einer Server-Benachrichtigung.
   ///
-  /// Alle Server-Arten (Nachricht, Like, Funke) fuehren zum
+  /// Alle Server-Arten (Nachricht, Like, Funke) führen zum
   /// Interessen-Screen: dort stehen die Chats UND die Funken. Der
-  /// Server kennt die Match-ID des Empfaengers nicht - deshalb kann er
+  /// Server kennt die Match-ID des Empfängers nicht - deshalb kann er
   /// keinen genaueren Pfad nennen.
   static String _routeForPush(Map<String, dynamic> data) {
     final kind = data['kind'] as String?;
     if (kind == 'dating_hour') return '/dating-hour';
-    // Die Freigabe der Alterspruefung (Migration 218) fuehrt auf die
+    // Die Freigabe der Altersprüfung (Migration 218) fährt auf die
     // Verifikations-Info - dort steht, was die Freigabe bedeutet.
     if (kind == 'verification') return AppRoutes.verificationInfo;
     return '/interessen';
@@ -171,15 +171,15 @@ class _AppState extends ConsumerState<App> {
     }
   }
 
-  /// Prueft den serverseitigen Mindest-Build im Hintergrund.
+  /// Prüft den serverseitigen Mindest-Build im Hintergrund.
   ///
   /// Der Wert beim Start kam aus dem lokalen Cache. Ist der Server
-  /// inzwischen strenger geworden, faellt das hier auf - der
-  /// Update-Hinweis erscheint dann als Deckschicht ueber der laufenden
+  /// inzwischen strenger geworden, fällt das hier auf - der
+  /// Update-Hinweis erscheint dann als Deckschicht über der laufenden
   /// App.
   ///
   /// Fail-open: ein Fehler beim Lesen bleibt ohne Folgen - der
-  /// Cache gilt weiter, und der naechste Start fragt wieder.
+  /// Cache gilt weiter, und der nächste Start fragt wieder.
   void _checkMinBuildInBackground() {
     unawaited(() async {
       try {
@@ -264,7 +264,7 @@ class _AppState extends ConsumerState<App> {
       'likes' => 1,
       'matches' => 2,
       'dating_hour' => 3,
-      // Die Freigabe der Alterspruefung (Migration 218). Sie geht auf
+      // Die Freigabe der Altersprüfung (Migration 218). Sie geht auf
       // den Profil-Bildschirm - dort sieht der Nutzer das Abzeichen.
       'verification' => 4,
       _ => 0,
@@ -323,19 +323,19 @@ class _AppState extends ConsumerState<App> {
         title: 'Thestia',
         debugShowCheckedModeBanner: false,
         locale: locale,
-        // Audit/Fix: Delegates fuer de+en PFLICHT. Ohne sie unterstuetzt
+        // Audit/Fix: Delegates für de+en PFLICHT. Ohne sie unterstützt
         // Flutters DefaultMaterialLocalizations nur 'en' - bei gesetzter
         // Locale 'de' wurde gar kein MaterialLocalizations geladen und
         // Material-Widgets (AppBar, PopupMenuButton, Tooltips) crashten
-        // mit "No MaterialLocalizations found" (grauer Fehler-Screen).
+        // mit "No MaterialLocalizations found" (graür Fehler-Screen).
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         supportedLocales: const [Locale('de'), Locale('en')],
-        // Gecachte Themes (AppTheme.of): stabile Identitaet, kein Neubau von
+        // Gecachte Themes (AppTheme.of): stabile Identität, kein Neubau von
         // ColorScheme.fromSeed bei jedem Settings-Change.
         theme: AppTheme.of(theme, Brightness.light),
         darkTheme: AppTheme.of(theme, Brightness.dark),
         // Sofort umschalten. Mit der Standard-Animation (200 ms) lief die
-        // ganze Oberflaeche inkl. Chat-Hintergruende erst sichtbar hinterher -
+        // ganze Oberfläche inkl. Chat-Hintergründe erst sichtbar hinterher -
         // der Wechsel wirkt dadurch "verzögert".
         themeAnimationDuration: Duration.zero,
         themeMode: brightness == null
@@ -344,11 +344,11 @@ class _AppState extends ConsumerState<App> {
                   ? ThemeMode.dark
                   : ThemeMode.light),
         routerConfig: router,
-        // Der Update-Hinweis als Deckschicht ueber der laufenden App.
+        // Der Update-Hinweis als Deckschicht über der laufenden App.
         // Er erscheint, wenn der Server strenger geworden ist, seitdem
-        // der Cache gefuellt wurde (siehe _checkMinBuildInBackground).
+        // der Cache gefüllt wurde (siehe _checkMinBuildInBackground).
         //
-        // "Trotzdem fortfahren" ist hier aktiv - die App laeuft ja
+        // "Trotzdem fortfahren" ist hier aktiv - die App läuft ja
         // bereits. Beim Start (main.dart) ist derselbe Bildschirm eine
         // Sperre; dort bleibt der Knopf ohne Wirkung.
         builder: (context, child) {

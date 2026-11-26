@@ -209,20 +209,20 @@ class AgeEstimationService {
     _ageInputNames = const [];
   }
 
-  /// SHA-256 ueber einen grossen Block - im Hintergrund-Isolate.
+  /// SHA-256 über einen großen Block - im Hintergrund-Isolate.
   ///
   /// NUTZERWUNSCH (01.11.2026): "Die App laggt extrem, wenn ich die
-  /// Videoerifizierung mache."
+  /// Videörifizierung mache."
   ///
   /// Das Altersmodell ist 81 MB. Der Hash in pure Dart dauert dort
-  /// mehrere Sekunden - auf dem UI-Isolate steht waehrenddessen die
-  /// ganze App still (Kamera, Spinner, jede Beruehrung).
+  /// mehrere Sekunden - auf dem UI-Isolate steht währenddessen die
+  /// ganze App still (Kamera, Spinner, jede Berührung).
   ///
   /// compute() legt die Arbeit in ein Hintergrund-Isolate. Der
-  /// sha256-Import bleibt fuer die Vergleichsfunktion noetig.
+  /// sha256-Import bleibt für die Vergleichsfunktion nötig.
   static Future<String> _hash(Uint8List bytes) => compute(_hashArgs, bytes);
 
-  /// Die Arbeit fuer [compute] - muss statisch und top-level sein.
+  /// Die Arbeit für [compute] - muss statisch und top-level sein.
   static String _hashArgs(Uint8List bytes) => sha256.convert(bytes).toString();
 
   Future<bool> _initInternal() async {
@@ -494,7 +494,7 @@ class AgeEstimationService {
     ];
   }
 
-  /// Überschneidungsfläche zweier Rechtecke (fuer die NMS des Detektors).
+  /// Überschneidungsfläche zweier Rechtecke (für die NMS des Detektors).
   ///
   /// Test-Zugang, s. [centerSquare].
   @visibleForTesting
@@ -536,10 +536,10 @@ class AgeEstimationService {
 
   /// Mittiges Quadrat (x1,y1,x2,y2) als Fallback-Crop.
   ///
-  /// DER GRUND FUER DEN TEST-ZUGANG (23.11.2026): Die Alterspruefung ist
+  /// DER GRUND FÜR DEN TEST-ZUGANG (23.11.2026): Die Altersprüfung ist
   /// die einzige Stelle der App, die ein Gesicht bewertet - und ihre
-  /// reinen Bild-Helfer (Crop, Tensor, Groesse) waren voellig ungetestet.
-  /// Sie sind oeffentlich, weil der Test sie aufrufen muss; benutzt
+  /// reinen Bild-Helfer (Crop, Tensor, Größe) waren völlig ungetestet.
+  /// Sie sind öffentlich, weil der Test sie aufrufen muss; benutzt
   /// werden sie trotzdem nur hier.
   @visibleForTesting
   static List<int> centerSquare(int w, int h) {

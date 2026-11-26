@@ -1,23 +1,23 @@
-// Der Screen zur E-Mail-Bestaetigung (bisher ohne jeden Test).
+// Der Screen zur E-Mail-Bestätigung (bisher ohne jeden Test).
 //
-// ANLASS (17.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (17.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/email_verification_screen.dart 314 offene Zeilen bei
 // 315 Zeilen gesamt - der Screen war komplett ungetestet. Das ist der
 // Screen, auf dem ein NEUER Nutzer nach der Registrierung landet: er
 // entscheidet hier, ob er die Mail noch einmal bekommt, ob er die
-// Adresse aendert oder die Registrierung ganz abbricht.
+// Adresse ändert oder die Registrierung ganz abbricht.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Screen baut sich und zeigt die Adresse an, an die die Mail ging
 //     (Nutzerwunsch 01.11.2026),
-//   * nach der Bestaetigung geht es weiter (zur Einrichtung),
+//   * nach der Bestätigung geht es weiter (zur Einrichtung),
 //   * "Erneut senden" schickt die Mail wirklich und startet den Cooldown,
-//   * "Registrierung abbrechen" loescht das unbestaetigte Konto beim
-//     Server (ueber die Funktion cancel-registration) und landet beim Login,
-//   * "Registrierung behalten" loescht nichts,
+//   * "Registrierung abbrechen" löscht das unbestätigte Konto beim
+//     Server (über die Funktion cancel-registration) und landet beim Login,
+//   * "Registrierung behalten" löscht nichts,
 //   * der stille Auto-Login versucht es nach der Wartezeit,
 //   * abgelaufene Registrierungsdaten werden NICHT mehr an den Server
-//     gegeben (das Passwort bleibt hoechstens 15 Minuten im Speicher),
+//     gegeben (das Passwort bleibt höchstens 15 Minuten im Speicher),
 //   * ohne Supabase (Demo-Modus) geht es direkt zur Hauptapp.
 //
 // OHNE SERVER: Der Supabase-Client zeigt auf einen Ersatz-Server aus
@@ -28,7 +28,7 @@
 // WICHTIG (Testtechnik): Die HTTP-Anfragen laufen in der ECHTEN
 // Ereignisschleife. Im Widget-Test passiert das nur in
 // `tester.runAsync(...)` - mit blossem `pump` bleibt die Anfrage
-// haengen und der Server sieht nichts.
+// hängen und der Server sieht nichts.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,7 +36,7 @@ import 'package:go_router/go_router.dart';
 // ignore: depend_on_referenced_packages
 import 'package:gotrue/gotrue.dart' show GotrueAsyncStorage;
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
@@ -49,7 +49,7 @@ import 'package:thestia/services/storage/local_storage.dart';
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
-/// In-Memory-Speicher fuer die lokalen Einstellungen.
+/// In-Memory-Speicher für die lokalen Einstellungen.
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _daten = <String, String>{};
 
@@ -113,14 +113,14 @@ class _FakeSecurePrefs extends SecurePreferencesStorage {
 }
 
 // DER PKCE-Speicher DES AUTH-CLIENTS IM RAM: Der Standard-Speicher
-// schreibt ueber die Plattform (SharedPreferences). Das kommt im
-// Widget-Test nicht voran - der Aufruf bleibt haengen (der Knopf zeigt
-// ewig "Wird gesendet..."). Mit diesem Ersatz laeuft er sofort.
+// schreibt über die Plattform (SharedPreferences). Das kommt im
+// Widget-Test nicht voran - der Aufruf bleibt hängen (der Knopf zeigt
+// ewig "Wird gesendet..."). Mit diesem Ersatz läuft er sofort.
 /// Der Sitzungs-Speicher des Auth-Clients im RAM.
 ///
 /// DER GRUND (17.11.2026): Der Standard-Speicher liest und schreibt
-/// ueber die Plattform (SharedPreferences). Im Widget-Test kommt das
-/// nicht voran - der Aufruf bleibt haengen. Mit diesem Ersatz ist die
+/// über die Plattform (SharedPreferences). Im Widget-Test kommt das
+/// nicht voran - der Aufruf bleibt hängen. Mit diesem Ersatz ist die
 /// Sitzung sofort da (und weg, wenn der Container entsorgt wird).
 class _SitzungImRam implements supabase.LocalStorage {
   String? _session;
@@ -163,7 +163,7 @@ class _SpeicherImRam extends GotrueAsyncStorage {
   }
 }
 
-/// Der Router fuer den Test: die drei Wege, die der Screen geht.
+/// Der Router für den Test: die drei Wege, die der Screen geht.
 GoRouter _router() {
   return GoRouter(
     initialLocation: AppRoutes.emailVerification,
@@ -198,8 +198,8 @@ void main() {
   ///
   /// WICHTIG: Supabase.initialize darf pro Testlauf nur EINMAL
   /// aufgerufen werden. Der erste Test (Demo-Modus) braucht deshalb
-  /// einen NICHT initialisierten Client - danach wird er fuer die
-  /// uebrigen Tests genau einmal gestartet.
+  /// einen NICHT initialisierten Client - danach wird er für die
+  /// übrigen Tests genau einmal gestartet.
   var supabaseGestartet = false;
 
   Future<void> starteSupabase(WidgetTester tester) async {
@@ -216,17 +216,17 @@ void main() {
         detectSessionInUri: false,
         persistSession: false,
         autoRefreshToken: false,
-        // Der PKCE-Speicher im RAM (sonst haengt der Aufruf im Test).
+        // Der PKCE-Speicher im RAM (sonst hängt der Aufruf im Test).
         pkceAsyncStorage: _SpeicherImRam(),
         // Die Sitzung ebenfalls im RAM (gleicher Grund).
         localStorage: _SitzungImRam(),
       ),
     );
-    // DER AUTH-SPEICHER AUFWAERMEN: Der Client schreibt vor jedem
+    // DER AUTH-SPEICHER AUFWÄRMEN: Der Client schreibt vor jedem
     // Aufruf den PKCE-Verifier in den Speicher. Das ist eine
     // Plattform-Kommunikation - in der Test-Zone kommt sie nicht
-    // voran, der Aufruf bleibt haengen (der Knopf zeigt ewig
-    // "Wird gesendet..."). Einmal in der echten Zone erledigt, laeuft
+    // voran, der Aufruf bleibt hängen (der Knopf zeigt ewig
+    // "Wird gesendet..."). Einmal in der echten Zone erledigt, läuft
     // der Rest.
     await tester.runAsync(() async {
       await supabase.Supabase.instance.client.auth.getSession();
@@ -241,13 +241,13 @@ void main() {
     await mockPfadProvider();
     mockKeystore();
     // HIVE: Der Keystore-Signal-Store (und der Chat-Verlauf) liegen in
-    // verschluesselten Hive-Boxen - ohne initialisiertes Hive wirft der
+    // verschlüsselten Hive-Boxen - ohne initialisiertes Hive wirft der
     // Dienst "You need to initialize Hive".
     await mockHive();
     server.pfade.clear();
     server.funktionsAufrufe.clear();
     // Die Fehlerantworten des Servers: jeder Test startet sauber
-    // (sonst wuerde der naechste Test die Fehler des vorigen sehen).
+    // (sonst würde der nächste Test die Fehler des vorigen sehen).
     server.fehlerAntworten.clear();
   });
 
@@ -272,7 +272,7 @@ void main() {
   ///
   /// [mitRegistrierung]: Legt die Registrierungsdaten VOR dem Aufbau in
   /// den Speicher - der Screen liest sie in seinem initState (die Adresse
-  /// fuer die Anzeige und die Credentials fuer den stillen Login).
+  /// für die Anzeige und die Credentials für den stillen Login).
   Future<ProviderContainer> zeigeScreen(
     WidgetTester tester, {
     bool mitRegistrierung = false,
@@ -308,14 +308,14 @@ void main() {
     return container;
   }
 
-  /// Raeumt den Screen ab - er hat Timer (Auto-Login, Cooldown, "gesendet").
+  /// Räumt den Screen ab - er hat Timer (Auto-Login, Cooldown, "gesendet").
   ///
   /// Ohne das bleibt ein Timer stehen und der Test scheitert an
   /// "A Timer is still pending".
   ///
-  /// DER CONTAINER GEHOERT DABEI: Der E-Mail-Bestaetigungs-Notifier pollt
+  /// DER CONTAINER GEHÖRT DABEI: Der E-Mail-Bestätigungs-Notifier pollt
   /// alle 3 Sekunden, und der Timer wird erst beim Dispose abgeschaltet.
-  /// Der tearDown laeuft zu spaet - die Timer-Pruefung kommt davor.
+  /// Der tearDown läuft zu spät - die Timer-Prüfung kommt davor.
   Future<void> aufraeumen(
     WidgetTester tester,
     ProviderContainer container,
@@ -329,8 +329,8 @@ void main() {
   /// unterhalb des Testfensters).
   ///
   /// WICHTIG: Ohne das trifft der Tap ins Leere (der Knopf ist zwar
-  /// gefunden, aber nicht sichtbar) - der Test laeuft dann ohne Fehler
-  /// durch und prueft gar nichts.
+  /// gefunden, aber nicht sichtbar) - der Test läuft dann ohne Fehler
+  /// durch und prüft gar nichts.
   Future<void> scrolleZu(WidgetTester tester, String text) async {
     final ziel = find.text(text);
     await tester.scrollUntilVisible(
@@ -341,13 +341,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   }
 
-  /// Laesst die echte Ereignisschleife laufen, damit HTTP-Anfragen
+  /// Lässt die echte Ereignisschleife laufen, damit HTTP-Anfragen
   /// durchgehen (im Widget-Test passiert das nur in runAsync).
   ///
   /// WICHTIG: Der Auth-Client schreibt VOR jedem Aufruf den
   /// PKCE-Verifier in den Speicher. Das ist eine Plattform-Kommunikation -
   /// in der Test-Zone kommt sie nicht voran, der Aufruf bleibt dann
-  /// haengen. Deshalb laeuft der Tap selbst in runAsync.
+  /// hängen. Deshalb läuft der Tap selbst in runAsync.
   Future<void> lassNetzLaufen(
     WidgetTester tester, {
     bool Function()? fertig,
@@ -377,7 +377,7 @@ void main() {
   }
 
   group('Der Screen zur E-Mail-Bestaetigung', () {
-    // WICHTIG: Dieser Test laeuft ZUERST - er braucht einen
+    // WICHTIG: Dieser Test läuft ZUERST - er braucht einen
     // nicht initialisierten Supabase-Client (Demo-Modus).
     testWidgets('ohne Supabase geht es direkt zur Hauptapp', (tester) async {
       final container = await zeigeScreen(tester);
@@ -387,7 +387,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Startseite'), findsOneWidget);
-      // Und es gibt nichts zu bestaetigen.
+      // Und es gibt nichts zu bestätigen.
       expect(container.read(emailConfirmedProvider), isNull);
 
       await aufraeumen(tester, container);
@@ -405,7 +405,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('neu@example.de'), findsOneWidget);
       expect(find.text(L10n.tWithoutContext('email.title')), findsOneWidget);
-      // Der Wartetext steht da (nicht bestaetigt).
+      // Der Wartetext steht da (nicht bestätigt).
       expect(find.text(L10n.tWithoutContext('email.waiting')), findsOneWidget);
 
       await aufraeumen(tester, container);
@@ -420,7 +420,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Die Bestaetigung kommt an (der Notifier meldet sie).
+      // Die Bestätigung kommt an (der Notifier meldet sie).
       container.read(emailConfirmedProvider.notifier).state = true;
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
@@ -444,9 +444,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Der Tap laeuft in der echten Zone: der Auth-Client schreibt sonst
+      // Der Tap läuft in der echten Zone: der Auth-Client schreibt sonst
       // den PKCE-Verifier nie in den Speicher und der Aufruf bleibt
-      // haengen.
+      // hängen.
       await tester.runAsync(() async {
         await tester.tap(find.text(L10n.tWithoutContext('email.resend')));
         await Future<void>.delayed(const Duration(milliseconds: 200));
@@ -482,7 +482,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
 
         // DER WEG: Der Nutzer hat einen Tippfehler in seiner Adresse
-        // bemerkt. Er soll sie hier aendern koennen - ohne das ganze
+        // bemerkt. Er soll sie hier ändern können - ohne das ganze
         // Konto neu zu machen.
         await scrolleZu(tester, L10n.tWithoutContext('email.changeAddress'));
         await tester.tap(
@@ -627,7 +627,7 @@ void main() {
     ) async {
       await starteSupabase(tester);
       // Die Daten sind 20 Minuten alt - das Passwort darf nicht mehr
-      // an den Server gehen (Audit M1: hoechstens 15 Minuten).
+      // an den Server gehen (Audit M1: höchstens 15 Minuten).
       final container = await zeigeScreen(
         tester,
         mitRegistrierung: true,
@@ -657,7 +657,7 @@ void main() {
     ) async {
       await starteSupabase(tester);
       // DER FALL: Der Server lehnt den stillen Login ab (die E-Mail ist
-      // noch nicht bestaetigt). Jeder Versuch kostet Budget im
+      // noch nicht bestätigt). Jeder Versuch kostet Budget im
       // Rate-Limit des Auth-Servers - deshalb verdoppelt der Screen
       // die Wartezeit nach jedem Fehler (5 -> 10 -> 20 -> 30 Sekunden).
       server.fehlerAntworten['/auth/v1/token'] = (
@@ -665,10 +665,10 @@ void main() {
         body: '{"error":"invalid_credentials"}',
       );
 
-      // DIE SESSION WEG: Ein frueherer Test hat sich angemeldet, und
+      // DIE SESSION WEG: Ein früherer Test hat sich angemeldet, und
       // die Session bleibt im RAM-Client des ganzen Testlaufs. Mit einer
-      // vorhandenen Session prueft der Bildschirm gar nicht erst (der
-      // normale Poller ist dann zustaendig) - der Auto-Login faellt
+      // vorhandenen Session prüft der Bildschirm gar nicht erst (der
+      // normale Poller ist dann zuständig) - der Auto-Login fällt
       // aus, und es ginge gar nichts zu testen.
       await supabase.Supabase.instance.client.auth.signOut();
 
@@ -678,10 +678,10 @@ void main() {
       int versuche() =>
           server.pfade.where((p) => p.contains('/auth/v1/token')).length;
 
-      /// Laesst die Zeit laufen und das Netz arbeiten, bis [bedingung]
+      /// Lässt die Zeit laufen und das Netz arbeiten, bis [bedingung]
       /// eintritt (oder [sekunden] vorbei sind).
       ///
-      /// DER WEG: Die Zeit laeuft in der Test-Zone (der Timer des
+      /// DER WEG: Die Zeit läuft in der Test-Zone (der Timer des
       /// Bildschirms), das Netz in der echten Zone (die Anfrage muss
       /// wirklich ankommen). Beides wird hier getrieben.
       Future<bool> warteAuf(int sekunden, bool Function() bedingung) async {
@@ -705,7 +705,7 @@ void main() {
       );
       final erster = versuche();
 
-      // DER BACKOFF: Nach dem Fehler wartet der naechste Versuch 10
+      // DER BACKOFF: Nach dem Fehler wartet der nächste Versuch 10
       // statt 5 Sekunden. Nach 6 Sekunden darf es also NOCH keinen
       // zweiten Versuch geben.
       await tester.pump(const Duration(seconds: 6));

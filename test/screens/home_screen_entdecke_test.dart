@@ -1,6 +1,6 @@
 // Die "Entdecke"-Karte auf dem Startbildschirm.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/home/home_screen.dart offene Zeilen - darunter die Karte
 // "hat dir jemand geschrieben" und den Provider, der sie entscheidet.
 //
@@ -8,10 +8,10 @@
 // die Chats: hat dort jemand der eigenen ID geschrieben, steht die
 // Karte da.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * hat jemand geschrieben, steht die Karte da (mit dem Hinweis, was
 //     sie bedeutet),
-//   * die eigene Nachricht zaehlt nicht (der Nutzer hat sich selbst
+//   * die eigene Nachricht zählt nicht (der Nutzer hat sich selbst
 //     geschrieben - das ist kein "jemand hat dir geschrieben").
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,18 +1,18 @@
-"""Prueft die .gitignore auf Luecken in beide Richtungen.
+"""Prüft die .gitignore auf Lücken in beide Richtungen.
 
-Eine .gitignore ist nur eine Seite. Zu pruefen sind zwei Fragen, und die
-zweite wird routinemaessig vergessen:
+Eine .gitignore ist nur eine Seite. Zu prüfen sind zwei Fragen, und die
+zweite wird routinemässig vergessen:
 
   1) Kommt alles Reinliche NICHT ins Repo?  (zu breite Regeln)
   2) Kommt nichts Geheimes INS Repo?         (zu schmale Regeln)
 
-Fuer (2) ist die entscheidende Einsicht: .gitignore wirkt nur auf
-UNVERSIONIERTE Dateien. Wer eine Datei einmal committet hat, laeuft
+Für (2) ist die entscheidende Einsicht: .gitignore wirkt nur auf
+UNVERSIONIERTE Dateien. Wer eine Datei einmal committet hat, läuft
 dauerhaft aus jeder Ignore-Regel heraus. Genau daran ist im Projekt ein
 Firebase-API-Key gescheitert: android/app/google-services.json lag im
-Initial-Commit und ist heute im oeffentlichen Verlauf sichtbar, obwohl
+Initial-Commit und ist heute im öffentlichen Verlauf sichtbar, obwohl
 die Regel in Zeile 74 steht. Deshalb wird hier beides getrennt
-geprueft und bei Trackern-Dateien ausdruecklich unterschieden.
+geprüft und bei Trackern-Dateien ausdrücklich unterschieden.
 
 Aufruf:
     python tool/checks/check_gitignore.py
@@ -29,8 +29,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -70,17 +70,17 @@ ALLOWED_TRACKED = {
     '.env.example',
     'android/app/google-services.json.example',
     # Beide Modelle sind laut .gitignore eine bewusste Betreiber-Entscheidung
-    # (9f843fa): das 81-MB-Altersschaetzer-Modell bleibt draussen, die zwei
+    # (9f843fa): das 81-MB-Altersschätzer-Modell bleibt draussen, die zwei
     # kleineren bleiben drin, damit die On-Device-Moderation im Repo
     # nachvollziehbar ist. Ohne Ausnahme meldet der Audit sie als
-    # Beanstandung und wird damit bei jeder spaeteren echten Luecke
-    # uebergangen.
+    # Beanstandung und wird damit bei jeder späteren echten Lücke
+    # übergangen.
     'assets/models/face_detector.onnx',
     'assets/models/image-safety-classifier-xs.onnx',
 }
 
 # ---------------------------------------------------------------
-# 2) Build-Artefakte: MUESSEN ignoriert sein (Groesse, Binaries)
+# 2) Build-Artefakte: MÜSSEN ignoriert sein (Größe, Binaries)
 # ---------------------------------------------------------------
 BUILD_PATTERNS = [
     (r'\.apk$', 'Release-APK'),
@@ -93,19 +93,19 @@ BUILD_PATTERNS = [
 ]
 
 # Verzeichnisse, in denen nicht gesucht wird.
-# .dart_tool gehoert ausdruecklich dazu: ohne diesen Eintrag laeuft der
+# .dart_tool gehört ausdrücklich dazu: ohne diesen Eintrag läuft der
 # Audit durch den kompletten Werkzeugcache und meldet several tausend
-# "OK ignoriert"-Zeilen fuer Dateien, die ohnehin niemanden interessieren.
-# Der Cache ist per .gitignore abgedeckt - Abschnitt A prueft Regeln, nicht
+# "OK ignoriert"-Zeilen für Dateien, die ohnehin niemanden interessieren.
+# Der Cache ist per .gitignore abgedeckt - Abschnitt A prüft Regeln, nicht
 # Cache-Inhalte.
 SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '.dart_tool',
              '.gradle', '.kotlin', 'ephemeral', 'Pods', '.symlinks'}
 
-# Beide Listen auf dieselbe Form bringen: (muster, label, begruendung).
-# SECRET_PATTERNS hat drei Felder, BUILD_PATTERNS zwei - das Zusammenfuehren
+# Beide Listen auf dieselbe Form bringen: (muster, label, begründung).
+# SECRET_PATTERNS hat drei Felder, BUILD_PATTERNS zwei - das Zusammenführen
 # mit anschliessendem Entpacken als Paar ist der Fehler, der hier zuerst
 # aufgetreten ist. Eine gemeinsame Form ist die Ursache, nicht die
-# Zusammenfuehrung.
+# Zusammenführung.
 ALL_PATTERNS: list[tuple[str, str, str]] = list(SECRET_PATTERNS) + [
     (pat, label, 'Build-Ausgabe, regenerierbar') for pat, label in BUILD_PATTERNS
 ]
@@ -125,43 +125,43 @@ def ignored(path: str) -> bool:
 # ---------------------------------------------------------------------
 # PERFORMANCE (01.11.2026)
 #
-# BEFUND: Diese Pruefung hat den CI-Lauf minutenlang blockiert. Der
+# BEFUND: Diese Prüfung hat den CI-Lauf minutenlang blockiert. Der
 # Grund war nicht die Logik, sondern der Weg, wie sie gearbeitet hat:
 #
-#   Fuer JEDE Datei, die auf ein Muster passte, wurde ein eigener
+#   Für JEDE Datei, die auf ein Muster passte, wurde ein eigener
 #   `git check-ignore`-Prozess gestartet. Nach einem Release-Build
-#   liegen unter build/ ueber 44 000 Dateien - und fast jede davon
+#   liegen unter build/ über 44 000 Dateien - und fast jede davon
 #   passt auf `(^|/)build/` oder auf `\.so$`. Das waren also rund
 #   44 000 git-Prozesse, jeder mit seinem eigenen Start, seiner
 #   eigenen Index-Ladung und seiner eigenen Ausgabe.
 #
 #   Ein Hintergrundlauf war nach 15 Minuten noch nicht durch - und
-#   zwei parallele Laeufe machten es nicht schneller.
+#   zwei parallele Läufe machten es nicht schneller.
 #
 # ZWEI GEGENMASSNAHMEN:
 #
-#   1) Die Ignore-Pruefung laeuft GESAMMELT. `git check-ignore
+#   1) Die Ignore-Prüfung läuft GESAMMELT. `git check-ignore
 #      --stdin` nimmt viele Pfade auf einmal entgegen und liefert
-#      die ignorierten zurueck. Aus 44 000 Prozessen wird EINE.
+#      die ignorierten zurück. Aus 44 000 Prozessen wird EINE.
 #
 #   2) Die Traversierung beschneidet die Ordner, in denen ohnehin
 #      nichts gefunden werden kann: build/ und releases/ sind
 #      ignoriert - eine Datei dort kann also nie "NICHT IGNORIERT"
-#      sein. os.walk mit dirs[:]-Beschneidung laeuft gar nicht erst
+#      sein. os.walk mit dirs[:]-Beschneidung läuft gar nicht erst
 #      in sie hinein.
 #
-# BEIDES aendert das Ergebnis nicht: die Befunde sind dieselben. Was
-# sich aendert, ist die Zahl in der Kopfzeile ("N Dateien
+# BEIDES ändert das Ergebnis nicht: die Befunde sind dieselben. Was
+# sich ändert, ist die Zahl in der Kopfzeile ("N Dateien
 # durchsucht") - sie bezieht sich jetzt auf die durchsuchten Ordner
 # und nicht mehr auf den Build-Ordner.
 # ---------------------------------------------------------------------
 
 
 def ignored_batch(paths: list[str]) -> set[str]:
-    """Welche der uebergebenen Pfade sind ignoriert? EIN git-Aufruf.
+    """Welche der übergebenen Pfade sind ignoriert? EIN git-Aufruf.
 
     Verwendet `git check-ignore -z --stdin`: die Pfade kommen
-    NUL-getrennt ueber stdin, die Antwort ebenfalls. Ohne -z waere
+    NUL-getrennt über stdin, die Antwort ebenfalls. Ohne -z wäre
     die Zeilentrennung (und damit ein Pfad mit Zeilenumbruch) der
     stille Fehler.
     """
@@ -178,13 +178,13 @@ def ignored_batch(paths: list[str]) -> set[str]:
 def check_ignore_verbose(paths: list[str]) -> dict[str, tuple[str, str, str]]:
     """Regel, Zeilennummer und Muster je Pfad. EIN git-Aufruf.
 
-    Rueckgabe: Pfad -> (quelle, zeilennummer, muster).
+    Rückgabe: Pfad -> (quelle, zeilennummer, muster).
 
     ACHTUNG - das Ausgabeformat mit -z ist VIERFELDERIG:
 
         <quelle>\\0<zeilennummer>\\0<muster>\\0<pfad>\\0
 
-    Ohne -z waere es "<quelle>:<nummer>:<muster><TAB><pfad>". Wer die
+    Ohne -z wäre es "<quelle>:<nummer>:<muster><TAB><pfad>". Wer die
     beiden Formen verwechselt, findet NICHTS - der Check meldet dann
     nie eine Inkonsistenz und ist genau damit blind. Das ist an dieser
     Stelle schon einmal passiert (der Test oben).
@@ -211,7 +211,7 @@ def check_ignore_verbose(paths: list[str]) -> dict[str, tuple[str, str, str]]:
     return ergebnis
 
 
-# Ordner, in denen nicht gesucht wird - ZUSAETZLICH zu SKIP_DIRS.
+# Ordner, in denen nicht gesucht wird - ZUSÄTZLICH zu SKIP_DIRS.
 #
 # build/ und releases/ sind komplett ignoriert. Eine Datei dort kann
 # also nie "NICHT IGNORIERT" sein, und der Weg in sie hinein kostet
@@ -220,10 +220,10 @@ EXTRA_SKIP_DIRS = {'build', 'releases'}
 
 
 def dateien_unter_root() -> list[pathlib.Path]:
-    """Alle Dateien unter ROOT, ohne die uebersprungenen Ordner.
+    """Alle Dateien unter ROOT, ohne die übersprungenen Ordner.
 
-    os.walk mit dirs[:]-Beschneidung: die uebersprungenen Ordner
-    werden nicht betreten. pathlib.rglob laeuft in sie hinein und
+    os.walk mit dirs[:]-Beschneidung: die übersprungenen Ordner
+    werden nicht betreten. pathlib.rglob läuft in sie hinein und
     liefert sie trotzdem - das war der Unterschied zwischen "wird
     nicht ausgewertet" und "wird ausgewertet und kostet 44 000
     git-Prozesse".
@@ -251,7 +251,7 @@ def main() -> int:
     findings_a: list[str] = []
     ok_count = 0
     scanned = 0
-    # Die Ignore-Pruefung wird GESAMMELT nachgeholt (siehe ignored_batch).
+    # Die Ignore-Prüfung wird GESAMMELT nachgeholt (siehe ignored_batch).
     # Deshalb sammelt dieser Durchlauf erst einmal die Kandidaten.
     # Die Reihenfolge der Befunde bleibt dabei erhalten.
     eintraege: list[tuple[str, str, str, str]] = []
@@ -270,7 +270,7 @@ def main() -> int:
                     eintraege.append((rel, 'offen', label, why))
                 break
 
-    # EIN git-Aufruf fuer alle Kandidaten statt eines je Datei.
+    # EIN git-Aufruf für alle Kandidaten statt eines je Datei.
     kandidaten = [rel for rel, art, _, _ in eintraege if art == 'offen']
     ignoriert = ignored_batch(kandidaten)
 
@@ -293,7 +293,7 @@ def main() -> int:
 
     # ---- B) Versionsierte Datei, die eine Ignore-Regel trifft
     # WICHTIG --no-index: ohne diesen Schalter meldet git check-ignore
-    # versionierte Dateien grundsaetzlich NICHT als ignoriert, weil sie
+    # versionierte Dateien grundsätzlich NICHT als ignoriert, weil sie
     # es real auch nicht sind. Genau dadurch ist beim ersten Lauf die
     # zentrale Inkonsistenz durchgerutscht: die Store-Screenshots sind
     # versioniert, gleichzeitig greift die Regel in Zeile 130. Wer die
@@ -304,8 +304,8 @@ def main() -> int:
     out.append('    (Pruefung mit --no-index; ohne ihn sieht git versionierte')
     out.append('     Dateien grundsaetzlich nie als ignoriert an.)')
     findings_b: list[str] = []
-    # EIN git-Aufruf fuer alle versionierten Dateien (vorher einer
-    # je Datei - bei ueber 500 Dateien sind das 500 Prozesse).
+    # EIN git-Aufruf für alle versionierten Dateien (vorher einer
+    # je Datei - bei über 500 Dateien sind das 500 Prozesse).
     regeln = check_ignore_verbose(sorted(tracked))
     for rel in sorted(tracked):
         eintrag = regeln.get(rel)
@@ -362,7 +362,7 @@ def main() -> int:
     findings_e: list[str] = []
     env_dateien = [p for p in dateien_unter_root()
                    if p.name.startswith('.env')]
-    # EIN git-Aufruf fuer alle .env-Kandidaten.
+    # EIN git-Aufruf für alle .env-Kandidaten.
     offen = [p.relative_to(ROOT).as_posix() for p in env_dateien]
     nicht_ignoriert = ignored_batch(offen)
     for rel in offen:

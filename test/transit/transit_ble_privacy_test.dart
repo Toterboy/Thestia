@@ -54,7 +54,7 @@ void main() {
     });
 
     test('KRITISCH: streut um die Basis, statt exakt 10 min zu treffen', () {
-      // Ohne Jitter waere jeder Rotationszeitpunkt exakt 10 min - selbst
+      // Ohne Jitter wäre jeder Rotationszeitpunkt exakt 10 min - selbst
       // ein Fingerprint. Der exakte Basiswert darf also selten sein.
       final exact = <int>{};
       for (int seed = 0; seed < 400; seed++) {
@@ -102,8 +102,8 @@ void main() {
     });
 
     test('Duty-Cycle bleibt ueber 50 % (sonst verlieren wir Begegnungen)', () {
-      // on=12s, off im Mittel 14s -> ~46 %. Wir wollen aber sicher ueber
-      // die Haelfte kommen, sonst leidet die Match-Quote.
+      // on=12s, off im Mittel 14s -> ~46 %. Wir wollen aber sicher über
+      // die Hälfte kommen, sonst leidet die Match-Quote.
       final offSum = <int>{};
       var total = 0;
       const n = 500;
@@ -121,7 +121,7 @@ void main() {
         greaterThan(0.40),
         reason: 'Duty-Cycle $duty zu niedrig - Begegnungen werden verpasst',
       );
-      // Gegenprobe: die Konstanten selbst duerfen nicht zu pessimistisch sein
+      // Gegenprobe: die Konstanten selbst dürfen nicht zu pessimistisch sein
       expect(
         kScanPulseOffMax.inMilliseconds,
         lessThanOrEqualTo(kScanPulseOn.inMilliseconds * 2),
@@ -131,7 +131,7 @@ void main() {
 
   group('Hersteller-ID: muss zum nativen Advertising passen', () {
     test('0xFFFF ist der Wert, den MainActivity.addManufacturerData nutzt', () {
-      // Regressionstest: aendert jemand die ID im Kotlin, faellt das hier auf.
+      // Regressionstest: ändert jemand die ID im Kotlin, fällt das hier auf.
       expect(kThestiaManufacturerId, 0xFFFF);
     });
 
@@ -146,7 +146,7 @@ void main() {
       // Ohne injizierten Random muss jeder Aufruf neu würfeln.
       final a = TransitBlePrivacy.tokenRotationDelay();
       final b = TransitBlePrivacy.tokenRotationDelay();
-      // statistisch: die Chance auf Gleichheit ist vernachlaessigbar
+      // statistisch: die Chance auf Gleichheit ist vernachlässigbar
       expect(a == b, isFalse);
     });
 

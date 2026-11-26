@@ -124,10 +124,10 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
   /// (EXIF/GPS). Rückgabe `null` bei Fehlschlag - die Originalbytes mit
   /// potenziellen GPS-/Gerätedaten werden NIE durchgereicht.
   Future<Uint8List?> _compressImage(Uint8List bytes) async {
-    // AKKU (03.11.2026): Die Bildverarbeitung laeuft im Hintergrund-
+    // AKKU (03.11.2026): Die Bildverarbeitung läuft im Hintergrund-
     // Isolate (compute). Das `image`-Paket ist reines Dart - ohne
     // compute() blockiert das Dekodieren und Neu-Encodieren den
-    // UI-Thread; bei einem grossen Foto ist der Bildschirm dann weder
+    // UI-Thread; bei einem großen Foto ist der Bildschirm dann weder
     // bedienbar noch flüssig.
     try {
       final compressed = await compute(_compressImageTask, bytes);
@@ -137,7 +137,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
     }
   }
 
-  /// Die eigentliche Bildarbeit - laeuft im Isolate.
+  /// Die eigentliche Bildarbeit - läuft im Isolate.
   ///
   /// Top-Level-Funktion: compute() braucht eine Funktion, die nicht auf
   /// den Zustand der Klasse zugreift.

@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -36,12 +36,12 @@ extension _ChatDialoge on _ChatDetailScreenState {
 
   /// Zeigt vor der ersten Sprachnachricht die prominente Offenlegung.
   ///
-  /// Google Play verlangt fuer RECORD_AUDIO, dass die App sichtbar
-  /// erklaert, warum aufgenommen wird, BEVOR der Systemdialog erscheint.
+  /// Google Play verlangt für RECORD_AUDIO, dass die App sichtbar
+  /// erklärt, warum aufgenommen wird, BEVOR der Systemdialog erscheint.
   /// Ein Aufruf von `hasPermission()` mit anschliessendem Start reicht
   /// nicht: das Plugin fragt an, ohne dass vorher etwas gesagt wurde.
   ///
-  /// `true` heisst: weitermachen darf. `false` heisst: nichts aufnehmen.
+  /// `true` heißt: weitermachen darf. `false` heißt: nichts aufnehmen.
   /// Ein Nein wird nicht erinnert - wer zweimal ablehnt, wird nicht
   /// weiter gefragt.
   Future<bool> _ensureMicDisclosure() async {
@@ -149,27 +149,27 @@ extension _ChatDialoge on _ChatDetailScreenState {
 
   /// Bietet den Vergleich der Sicherheitsnummer aktiv an.
   ///
-  /// DER GRUND (Audit 16.11.2026): Die Safety-Number-Pruefung gab es,
-  /// sie war aber nur im Menue "Sicherheit" versteckt. Beim ersten
+  /// DER GRUND (Audit 16.11.2026): Die Safety-Number-Prüfung gab es,
+  /// sie war aber nur im Menü "Sicherheit" versteckt. Beim ersten
   /// Kontakt vertraut die App dem Identity-Key, den der Server
   /// ausliefert (TOFU) - ein kompromittierter Server kann ihn
-  /// einschleusen, und ohne Hinweis faellt das niemandem auf. Der
+  /// einschleusen, und ohne Hinweis fällt das niemandem auf. Der
   /// Hinweis bietet den Vergleich an (einmal je Kontakt).
   Future<void> _maybeOfferSafetyNumber() async {
     if (!mounted) return;
     // Der Partner kommt aus dem Provider (der Match wird beim Bauen
-    // gesetzt - hier nicht ueber _match, das erst im Build gefuellt wird).
+    // gesetzt - hier nicht über _match, das erst im Build gefüllt wird).
     final match = ref.read(chatProvider.notifier).getMatchById(widget.matchId);
     final partnerId = match?.partner.id;
     if (partnerId == null || partnerId.isEmpty) return;
 
     final encryption = ref.read(encryptionServiceProvider);
-    // Ohne Schluessel (z. B. weil der Keystore nicht offen ist) gibt es
+    // Ohne Schlüssel (z. B. weil der Keystore nicht offen ist) gibt es
     // keine Sicherheitsnummer - dann gibt es auch keinen Hinweis.
     if (!encryption.bereit) return;
     if (!mounted) return;
     // Nur wenn es eine Sicherheitsnummer gibt (die Session steht) und
-    // der Kontakt noch nicht bestaetigt ist.
+    // der Kontakt noch nicht bestätigt ist.
     if (encryption.safetyNumberFor(partnerId) == null) return;
     if (encryption.isPeerIdentityVerified(partnerId)) return;
     if (encryption.safetyHintShown(partnerId)) return;
@@ -194,20 +194,20 @@ extension _ChatDialoge on _ChatDetailScreenState {
 
   /// Zeigt beim ersten Chat einmalig den Hinweis auf den Hintergrund.
   ///
-  /// v0.10.0: Der Hintergrund liess sich bisher nur ueber die Einstellungen
+  /// v0.10.0: Der Hintergrund ließ sich bisher nur über die Einstellungen
   /// oder die Einrichtung setzen. Wer direkt in einen Chat tappt, sah
   /// nie, dass es die Option gibt.
   ///
   /// Bewusst ein Dialog mit dem Picker statt eines Snackbars: die Auswahl
-  /// braucht Platz, und ein Snackbar waere nach einer Sekunde weg, bevor
-  /// jemand entschieden hat. "Spaeter" ist ein gleichwertiger Weg
-  /// raus - der Hinweis kommt beim naechsten Chat wieder, aber erst,
+  /// braucht Platz, und ein Snackbar wäre nach einer Sekunde weg, bevor
+  /// jemand entschieden hat. "Später" ist ein gleichwertiger Weg
+  /// raus - der Hinweis kommt beim nächsten Chat wieder, aber erst,
   /// wenn jemand ihn wegklickt.
   Future<void> _maybeShowBackgroundHint() async {
     // Warten, bis die Einstellungen wirklich geladen sind. Sie kommen
     // asynchron aus dem Speicher - ohne dieses Warten sieht der Screen
     // nur die Vorgabewerte und zeigt den Dialog auch dann, wenn die
-    // Person den Hintergrund schon gewaehlt und weggedrueckt hat.
+    // Person den Hintergrund schon gewählt und weggedrückt hat.
     final settings = await ref.read(settingsProvider.notifier).whenLoaded();
     if (!mounted) return;
     if (settings.chatBackgroundSeen) return;
@@ -223,8 +223,8 @@ extension _ChatDialoge on _ChatDetailScreenState {
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         // scrollable: Der Inhalt (Text + Hintergrund-Auswahl) ist bei
-        // grosser Systemschrift hoeher als der Dialog. Ohne
-        // Scrollview laeuft die Column unten ueber (RenderFlex-Overflow).
+        // großer Systemschrift höher als der Dialog. Ohne
+        // Scrollview läuft die Column unten über (RenderFlex-Overflow).
         scrollable: true,
         title: Text(L10n.t(ctx, 'chatbg.hintTitle')),
         content: Column(
@@ -254,7 +254,7 @@ extension _ChatDialoge on _ChatDetailScreenState {
       ),
     );
 
-    // Auch bei "Spaeter" merken: sonst kommt derselbe Dialog bei jedem
+    // Auch bei "Später" merken: sonst kommt derselbe Dialog bei jedem
     // Chat erneut, und das nervt schneller als der Hinweis selbst.
     await settingsNotifier.markChatBackgroundSeen();
     if (gewaehlt == true && mounted) {
@@ -345,7 +345,7 @@ extension _ChatDialoge on _ChatDetailScreenState {
     final safetyNumber = encryption.safetyNumberFor(peerId);
     // SECURITY (Audit 2026-09-26): Das `verified`-Flag wurde vorher nur
     // angezeigt, aber NIRGENDS ausgewertet. Der Schalter macht die
-    // Out-of-Band-Bestaetigung praktisch erzwingbar.
+    // Out-of-Band-Bestätigung praktisch erzwingbar.
     var requireVerified = encryption.requiresPeerVerification(peerId);
 
     if (!mounted) return;

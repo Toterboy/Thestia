@@ -1,6 +1,6 @@
 // Die Auswahl-Felder im Profil-Editor.
 //
-// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/profile/parts/profileditaufbau.dart 77 offene Zeilen. Die
 // Felder selbst (Name, Bio, Chips, Bilder, Speichern) sind getestet -
 // offen waren die AUSWAHL-Felder: Geschlecht, Beziehungstyp, Land,
@@ -9,12 +9,12 @@
 // DER WEG: Die Helfer liegen in test/profile_edit_screen/hilfen.dart
 // (Aufbau des Bildschirms, Warten, Aufräumen).
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * das Geschlecht laesst sich waehlen und wird gemerkt,
-//   * der Beziehungstyp laesst sich waehlen,
-//   * ein anderes Land leert das Bundesland (sonst waere der Bezug
-//     falsch - "Berlin" in "Oesterreich" waere Unsinn),
-//   * der Suchradius laesst sich zwischen "Entfernung" und
+// WAS HIER GEPRÜFT WIRD:
+//   * das Geschlecht lässt sich wählen und wird gemerkt,
+//   * der Beziehungstyp lässt sich wählen,
+//   * ein anderes Land leert das Bundesland (sonst wäre der Bezug
+//     falsch - "Berlin" in "Österreich" wäre Unsinn),
+//   * der Suchradius lässt sich zwischen "Entfernung" und
 //     "Ganz Deutschland" umschalten.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,7 +30,7 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
   });
 
-  /// Oeffnet ein Auswahl-Feld (das Label steht daneben).
+  /// Öffnet ein Auswahl-Feld (das Label steht daneben).
   Future<void> oeffneAuswahl(WidgetTester tester, String labelKey) async {
     final label = find.text(L10n.tWithoutContext(labelKey));
     await tester.scrollUntilVisible(
@@ -50,7 +50,7 @@ void main() {
 
       await oeffneAuswahl(tester, 'profile.edit.gender');
 
-      // DIE AUSWAHL: Das Menue ist offen - ein Eintrag muss tippbar sein.
+      // DIE AUSWAHL: Das Menü ist offen - ein Eintrag muss tippbar sein.
       expect(find.byType(AlertDialog), findsNothing);
       final eintraege = find.byType(DropdownMenuItem<Gender>);
       expect(eintraege, findsWidgets);
@@ -99,8 +99,8 @@ void main() {
     testWidgets('ein anderes Land leert das Bundesland', (tester) async {
       await profileEditScreenPump(tester, profileEditScreenProfil);
 
-      // DAS LANDFELD: Es wird ueber sein Label gefunden (die
-      // Dropdown-Auswahl liegt in einem Ueberlauf, den man erst scrollen
+      // DAS LANDFELD: Es wird über sein Label gefunden (die
+      // Dropdown-Auswahl liegt in einem Überlauf, den man erst scrollen
       // muss).
       final land = find.byWidgetPredicate(
         (w) =>

@@ -3,15 +3,15 @@
 // ANLASS (19.11.2026): `lib/services/verification/verification_service.dart`
 // war nur zu 28 % abgedeckt. Gerade der Speicher ist heikel: das Video
 // zeigt Gesicht und Stimme und ist damit biometrie-nahe personenbezogene
-// Daten (DSGVO). Wer es loescht, muss es WIRKLICH loeschen.
+// Daten (DSGVO). Wer es löscht, muss es WIRKLICH löschen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Aufnahme wird in den App-Support-Ordner kopiert und der
 //     Cache-Original wird entfernt,
-//   * bei erneuter Aufnahme kommt die NEUESTE zurueck (der alte Bug
-//     lieferte das alte Video und liess das frische liegen),
-//   * der Status "verifiziert" und das Loeschen funktionieren,
-//   * "alles loeschen" entfernt auch verwaiste Videodateien.
+//   * bei erneuter Aufnahme kommt die NEUESTE zurück (der alte Bug
+//     lieferte das alte Video und ließ das frische liegen),
+//   * der Status "verifiziert" und das Löschen funktionieren,
+//   * "alles löschen" entfernt auch verwaiste Videodateien.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -79,7 +79,7 @@ void main() {
       expect(video.filePath, contains('verification_'));
       expect(video.filePath, endsWith('.mp4'));
       expect(File(video.filePath).existsSync(), isTrue);
-      // Das Cache-Original gehoert dem Kamera-Plugin und wird entfernt.
+      // Das Cache-Original gehört dem Kamera-Plugin und wird entfernt.
       expect(quelle.existsSync(), isFalse);
       // Bei 'Zahl vorlesen' steht die Zahl im Text-Feld.
       expect(video.challengeText, '4821');
@@ -122,7 +122,7 @@ void main() {
         challengeData: 'smile',
       );
       // Der Zeitstempel kommt von DateTime.now() - eine kleine Pause
-      // reicht, damit die zweite Aufnahme wirklich spaeter ist.
+      // reicht, damit die zweite Aufnahme wirklich später ist.
       await Future<void>.delayed(const Duration(milliseconds: 20));
       final zweite = await _aufnahme(temp.path, 'take_new.mp4');
       final neue = await dienst.saveVerificationVideo(
@@ -156,8 +156,8 @@ void main() {
     });
 
     test('offline gilt die Einreichung lokal als erledigt', () async {
-      // DER GRUND: Der Nutzer hat seine Aufgabe erfuellt - der Upload
-      // wird beim naechsten Start nachgeholt. Ohne diesen Pfad waere
+      // DER GRUND: Der Nutzer hat seine Aufgabe erfüllt - der Upload
+      // wird beim nächsten Start nachgeholt. Ohne diesen Pfad wäre
       // die Einreichung bei kurzzeitigem Netzausfall verloren.
       final dienst = await neuerDienst();
       final quelle = await _aufnahme(temp.path, 'take_offline.mp4');

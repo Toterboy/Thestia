@@ -8,20 +8,20 @@ import 'package:thestia/providers/auth/auth_provider.dart';
 import 'package:thestia/services/verification/guardian_service.dart';
 import 'package:thestia/services/auth/supabase_service.dart';
 
-/// Der Service fuer die elterliche Freigabe.
+/// Der Service für die elterliche Freigabe.
 final guardianServiceProvider = Provider<GuardianService>((ref) {
   return GuardianService(SupabaseService.client);
 });
 
-/// Haelt den Stand der elterlichen Aufsicht.
+/// Hält den Stand der elterlichen Aufsicht.
 ///
-/// Der Server entscheidet; dieser Provider laedt, schreibt und meldet
+/// Der Server entscheidet; dieser Provider lädt, schreibt und meldet
 /// weiter. Wichtig: Der Anfangszustand ist [GuardianStatus.unknown] -
 /// "unbekannt" ist nicht "keine Aufsicht".
 class GuardianNotifier extends StateNotifier<GuardianStatus> {
   GuardianNotifier(this._ref) : super(GuardianStatus.unknown) {
     unawaited(load());
-    // BEFUND (06.11.2026, Betreiber): "Der Elternbereich laedt ewig
+    // BEFUND (06.11.2026, Betreiber): "Der Elternbereich lädt ewig
     // lang." Ursache: Dieser Provider wird beim App-Start erzeugt (der
     // UsageTimeGate schaut ihn an) - zu einem Zeitpunkt, zu dem die
     // Sitzung noch nicht wiederhergestellt sein muss. Der RPC antwortet
@@ -32,8 +32,8 @@ class GuardianNotifier extends StateNotifier<GuardianStatus> {
     // Deshalb: Bei jeder Anmeldung wird neu geladen. Das ist genau der
     // Zeitpunkt, an dem der Stand gebraucht wird.
     _ref.listen<AsyncValue<bool>>(authProvider, (prev, next) {
-      // Nur beim UEBERGANG zu "angemeldet" neu laden. Sonst wuerde
-      // jedes Token-Refresh (stuendlich) einen Serveraufruf ausloesen.
+      // Nur beim ÜBERGANG zu "angemeldet" neu laden. Sonst würde
+      // jedes Token-Refresh (stündlich) einen Serveraufruf auslösen.
       final jetztAngemeldet = next.valueOrNull ?? false;
       final vorherAngemeldet = prev?.valueOrNull ?? false;
       if (jetztAngemeldet && !vorherAngemeldet) {
@@ -46,7 +46,7 @@ class GuardianNotifier extends StateNotifier<GuardianStatus> {
 
   GuardianService get _service => _ref.read(guardianServiceProvider);
 
-  /// Wie oft wurde erfolglos neu versucht (fuer die Diagnose).
+  /// Wie oft wurde erfolglos neu versucht (für die Diagnose).
   int _versuche = 0;
 
   /// Der geplante Wiederholungsversuch (null = keiner).
@@ -62,15 +62,15 @@ class GuardianNotifier extends StateNotifier<GuardianStatus> {
     Duration(seconds: 30),
   ];
 
-  /// Laedt den Stand vom Server.
+  /// Lädt den Stand vom Server.
   ///
   /// Supabase kann noch nicht initialisiert sein (App-Start, Testlauf).
   /// Der Stand bleibt dann "unbekannt" - nicht "keine Aufsicht". Ein
-  /// Fehler darf hier niemals nach aussen schlagen: ein unbehandelter
-  /// Fehler im Provider wuerde den ganzen Bildschirm mitreissen.
+  /// Fehler darf hier niemals nach außen schlagen: ein unbehandelter
+  /// Fehler im Provider würde den ganzen Bildschirm mitreissen.
   ///
-  /// Schlaegt der Abruf fehl, wird es mit wachsender Wartezeit erneut
-  /// versucht - und der Zustand traegt den Fehler, damit der
+  /// Schlägt der Abruf fehl, wird es mit wachsender Wartezeit erneut
+  /// versucht - und der Zustand trägt den Fehler, damit der
   /// Bildschirm einen Ausweg anbietet (erneut versuchen) statt ewig zu
   /// drehen.
   Future<void> load() async {
@@ -78,7 +78,7 @@ class GuardianNotifier extends StateNotifier<GuardianStatus> {
     _wiederholung = null;
     GuardianStatus status;
     try {
-      // Der Dienst prueft selbst, ob Supabase bereit ist (und wirft
+      // Der Dienst prüft selbst, ob Supabase bereit ist (und wirft
       // dann "not_ready") - so bleibt der Fehlerpfad testbar.
       status = await _service.fetchStatus();
       _versuche = 0;
@@ -91,7 +91,7 @@ class GuardianNotifier extends StateNotifier<GuardianStatus> {
     state = status;
   }
 
-  /// Plant den naechsten Versuch (nach einem Fehler).
+  /// Plant den nächsten Versuch (nach einem Fehler).
   void _planeWiederholung() {
     _wiederholung?.cancel();
     if (_versuche >= _wartezeiten.length) return;
@@ -150,13 +150,13 @@ class GuardianNotifier extends StateNotifier<GuardianStatus> {
     return result;
   }
 
-  /// Prueft die PIN (serverseitig).
+  /// Prüft die PIN (serverseitig).
   Future<bool> verifyPin(String pin) => _service.verifyPin(pin);
 
-  /// Aendert die Einstellungen der Aufsicht - nur mit der PIN.
+  /// Ändert die Einstellungen der Aufsicht - nur mit der PIN.
   ///
-  /// Der PIN-Vergleich laeuft auf dem Server (Migration 167). Ohne die
-  /// richtige PIN aendert sich nichts.
+  /// Der PIN-Vergleich läuft auf dem Server (Migration 167). Ohne die
+  /// richtige PIN ändert sich nichts.
   Future<GuardianResult> updateSettingsWithPin({
     required String pin,
     String? notifyFrequency,
@@ -177,7 +177,7 @@ class GuardianNotifier extends StateNotifier<GuardianStatus> {
     return result;
   }
 
-  /// Markiert den Uebergang als erledigt.
+  /// Markiert den Übergang als erledigt.
   Future<void> markTransitionDone() async {
     await _service.markTransitionDone();
     await load();

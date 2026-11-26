@@ -1,16 +1,16 @@
 // Die ICE-Konfiguration des WebRTC-Dienstes - der Abruf war ungetestet.
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (18.11.2026): Die Coverage-Messung zeigte für
 // lib/services/chat/webrtc_service.dart 262 offene Zeilen. Der Abruf der
 // ICE-Konfiguration ist der erste Schritt jeder Direktverbindung - und
 // er ist genau der Teil, der im August 2026 schon einmal kaputt war
 // (401, weil der Aufruf im PostgREST-Pfad landete).
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * die Konfiguration kommt von der Edge Function,
-//   * sie wird gecacht (der Aufruf laeuft nicht bei jedem Versuch),
+//   * sie wird gecacht (der Aufruf läuft nicht bei jedem Versuch),
 //   * ohne Session / bei einem Fehler kommt die Ersatzliste (P2P bleibt
-//     moeglich - die Verbindung darf nicht daran sterben).
+//     möglich - die Verbindung darf nicht daran sterben).
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -97,7 +97,7 @@ void main() {
       expect(servers, hasLength(1));
       expect(servers.first['urls'], 'stun:stun.example.com:3478');
       // Der Aufruf ging an die Edge Function (nicht in den PostgREST-Pfad -
-      // genau dafuer gab es schon einmal eine 401).
+      // genau dafür gab es schon einmal eine 401).
       expect(client.anfragen, hasLength(1));
       expect(
         client.anfragen.first.url.path,

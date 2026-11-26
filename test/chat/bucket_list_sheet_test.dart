@@ -1,15 +1,15 @@
 // Die Erinnerungsliste im Chat (bisher ungetestet - 0 %).
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/bucket_list_sheet.dart 0 % - die gemeinsame
-// Wunschliste, die im Chat-Menue liegt.
+// Wunschliste, die im Chat-Menü liegt.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Eintraege stehen da (mit der Angabe, wer sie geschrieben hat),
+// WAS HIER GEPRÜFT WIRD:
+//   * die Einträge stehen da (mit der Angabe, wer sie geschrieben hat),
 //   * ein Haken wird abgehakt und dem Server gemeldet,
-//   * einen eigenen Eintrag kann man loeschen - einen fremden nicht,
+//   * einen eigenen Eintrag kann man löschen - einen fremden nicht,
 //   * ein neuer Eintrag wird dem Server gemeldet,
-//   * ohne Eintraege steht der Leerzustand da.
+//   * ohne Einträge steht der Leerzustand da.
 //
 // OHNE SERVER: Der Dienst ist ein Hand-Fake - es geht KEINE Anfrage raus.
 import 'package:flutter/material.dart';
@@ -25,24 +25,24 @@ import 'package:thestia/screens/chat/bucket_list_sheet.dart';
 import 'package:thestia/services/chat/chat_service.dart';
 import 'package:thestia/services/dating_hour/find_your_match_service.dart';
 
-/// Hand-Fake des Dienstes fuer die Erinnerungsliste.
+/// Hand-Fake des Dienstes für die Erinnerungsliste.
 ///
 /// Der echte Dienst spricht mit der Datenbank (RPCs). Der Fake antwortet
-/// aus dem RAM und merkt sich die Schreibvorgaenge - so ist sichtbar, OB
-/// die App wirklich etwas beim Server ausgeloest hat.
+/// aus dem RAM und merkt sich die Schreibvorgänge - so ist sichtbar, OB
+/// die App wirklich etwas beim Server ausgelöst hat.
 class _FakeBucketService extends FindYourMatchService {
   _FakeBucketService(super.client);
 
-  /// Die Eintraege, die der Server liefert.
+  /// Die Einträge, die der Server liefert.
   List<BucketItem> eintraege = const [];
 
-  /// Die Texte, die hinzugefuegt wurden.
+  /// Die Texte, die hinzugefügt wurden.
   final List<String> hinzugefuegt = [];
 
   /// Die IDs, die abgehakt wurden.
   final List<int> abgehakt = [];
 
-  /// Die IDs, die geloescht wurden.
+  /// Die IDs, die gelöscht wurden.
   final List<int> geloescht = [];
 
   @override
@@ -75,8 +75,8 @@ void main() {
 
   /// Baut das Blatt mit dem Fake.
   ///
-  /// [eintraege] stehen dem Server VOR dem Aufbau zur Verfuegung - das
-  /// Blatt laedt seine Liste beim ersten Aufbau.
+  /// [einträge] stehen dem Server VOR dem Aufbau zur Verfügung - das
+  /// Blatt lädt seine Liste beim ersten Aufbau.
   Future<_FakeBucketService> zeigeBlatt(
     WidgetTester tester, {
     List<BucketItem> eintraege = const [],
@@ -88,7 +88,7 @@ void main() {
       // DER CLIENT: Der Fake beantwortet alles selbst - der Client wird
       // nie benutzt. `autoRefreshToken: false`, weil der Client sonst
       // einen periodischen Timer startet (den der Test am Ende als
-      // "Timer is still pending" melden wuerde).
+      // "Timer is still pending" melden würde).
       supabase.SupabaseClient(
         'https://example.supabase.co',
         'test-key',
@@ -209,7 +209,7 @@ void main() {
         ],
       );
 
-      // Kein Loesch-Knopf bei einem fremden Eintrag - sonst koennte
+      // Kein Lösch-Knopf bei einem fremden Eintrag - sonst kännte
       // jeder die Liste der anderen leeren.
       expect(
         find.byTooltip(L10n.tWithoutContext('common.discard')),

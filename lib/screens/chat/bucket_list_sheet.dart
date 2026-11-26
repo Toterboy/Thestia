@@ -59,8 +59,8 @@ class _BucketListSheetState extends ConsumerState<BucketListSheet> {
     await ref
         .read(findYourMatchServiceProvider)
         .bucketAdd(widget.matchId, text);
-    // Das Blatt kann waehrend des Serveraufrufs geschlossen worden sein -
-    // dann waere das setState ein Absturz ("setState() called after
+    // Das Blatt kann während des Serveraufrufs geschlossen worden sein -
+    // dann wäre das setState ein Absturz ("setState() called after
     // dispose()").
     if (!mounted) return;
     _addCtrl.clear();

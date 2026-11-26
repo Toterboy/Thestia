@@ -1,17 +1,17 @@
 // Die Reiter-Leiste: das Wischen, die Schiene (Desktop) und die
 // gesicherte Route.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/core/main_navigation.dart 72 offene Zeilen. Der Test
 // "main_navigation_test.dart" deckt die Nachfrage bei ungespeicherten
-// Aenderungen ab - das Wischen zwischen den Reitern, die Schiene auf
+// Änderungen ab - das Wischen zwischen den Reitern, die Schiene auf
 // breiten Bildschirmen und die Sicherung der letzten Route waren
 // ungetestet.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ein Wischen nach links kommt zum naechsten Reiter,
-//   * am linken Rand geht es nicht zurueck (es gibt keinen Reiter da),
-//   * ein zu kleiner Wischen federt zurueck (nichts passiert),
+// WAS HIER GEPRÜFT WIRD:
+//   * ein Wischen nach links kommt zum nächsten Reiter,
+//   * am linken Rand geht es nicht zurück (es gibt keinen Reiter da),
+//   * ein zu kleiner Wischen federt zurück (nichts passiert),
 //   * in einem Unterscreen wischen nichts (der Reiter bleibt),
 //   * auf breiten Bildschirmen gibt es die Schiene statt der Leiste,
 //   * die Schiene schaltet genauso um wie die Leiste,
@@ -41,10 +41,10 @@ void main() {
     String startRoute = AppRoutes.home,
     Size size = const Size(390, 844),
   }) async {
-    // DIE GROESSE: Der Test-Fenster hat sonst eine Pixelratio von 3 -
-    // dann waere ein 1200-Pixel-Bildschirm nur 400 Pixel breit und die
-    // Schiene wuerde gar nicht erscheinen. Mit der Ratio 1 ist die
-    // angegebene Groesse die logische.
+    // DIE GRÖSSE: Der Test-Fenster hat sonst eine Pixelratio von 3 -
+    // dann wäre ein 1200-Pixel-Bildschirm nur 400 Pixel breit und die
+    // Schiene würde gar nicht erscheinen. Mit der Ratio 1 ist die
+    // angegebene Größe die logische.
     tester.view.devicePixelRatio = 1.0;
     tester.view.physicalSize = size;
     addTearDown(tester.view.reset);
@@ -140,7 +140,7 @@ void main() {
       await zeigeNavigation(tester);
 
       // NUR 30 PIXEL: Das ist unter der Schwelle (64 Pixel) - die Seite
-      // federt zurueck.
+      // federt zurück.
       await tester.drag(find.text('SEITE-HOME'), const Offset(-30, 0));
       await tester.pumpAndSettle();
 

@@ -1,12 +1,12 @@
 // DER KANAL VON flutter_secure_storage wird hier beantwortet.
 //
 // WARUM (14.11.2026): Der Keystore-Plugin hat auf Linux eine echte
-// Implementierung (libsecret). Im Test laeuft sie auf - und auf dem
+// Implementierung (libsecret). Im Test läuft sie auf - und auf dem
 // CI-Runner gibt es weder libsecret noch eine DBus-Sitzung. Der
-// Aufruf schlaegt dort fehl, waehrend er auf Windows (kein
+// Aufruf schlägt dort fehl, während er auf Windows (kein
 // Plugin) einfach unbeantwortet bleibt. Dieselbe Testdatei ist also
-// auf dem Entwicklerrechner gruen und in der CI rot - ohne dass der
-// Test selbst falsch waere.
+// auf dem Entwicklerrechner grün und in der CI rot - ohne dass der
+// Test selbst falsch wäre.
 //
 // DER WEG: Der Kanal wird hier beantwortet (wie in
 // test/secure_location_storage_test.dart). Damit ruft der Test nie
@@ -19,10 +19,10 @@ const MethodChannel keystoreKanal = MethodChannel(
   'plugins.it_nomads.com/flutter_secure_storage',
 );
 
-/// Der In-Memory-Keystore fuer die Tests.
+/// Der In-Memory-Keystore für die Tests.
 final Map<String, String> keystoreInhalt = <String, String>{};
 
-/// Beantwortet die Keystore-Aufrufe (Aufraeumen am Ende).
+/// Beantwortet die Keystore-Aufrufe (Aufräumen am Ende).
 ///
 /// [inhalt] setzt den Anfangsinhalt (z. B. "user_id" -> "ich").
 void mockKeystore({Map<String, String> inhalt = const {}}) {

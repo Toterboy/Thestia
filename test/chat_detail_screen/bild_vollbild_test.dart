@@ -1,18 +1,18 @@
-// Das Vollbild-Bild im Chat (und das Wischen zum Schliessen).
+// Das Vollbild-Bild im Chat (und das Wischen zum Schließen).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/chat/parts/swipetoclose.dart und
 // lib/screens/chat/parts/swipetoclosestate.dart 0 % Abdeckung.
 //
-// NUTZERWUNSCH (09.11.2026, Betreiber): "Wenn Bild geoeffnet und zurueck
-// swipe, dann im Hintergrund zurueck, aber Bild noch offen (Swipe soll
-// Bild schliessen und nicht im Hintergrund weiter machen)."
+// NUTZERWUNSCH (09.11.2026, Betreiber): "Wenn Bild geöffnet und zurück
+// swipe, dann im Hintergrund zurück, aber Bild noch offen (Swipe soll
+// Bild schließen und nicht im Hintergrund weiter machen)."
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * ein Tippen auf das Bild oeffnet die Vollbild-Ansicht,
-//   * ein kurzes Wischen schliesst NICHT (sonst waere jedes kurze
-//     Versehen ein Weg zurueck aus dem Bild),
-//   * ein deutliches Wischen schliesst das Bild - und nur das Bild.
+// WAS HIER GEPRÜFT WIRD:
+//   * ein Tippen auf das Bild öffnet die Vollbild-Ansicht,
+//   * ein kurzes Wischen schließt NICHT (sonst wäre jedes kurze
+//     Versehen ein Weg zurück aus dem Bild),
+//   * ein deutliches Wischen schließt das Bild - und nur das Bild.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,7 +35,7 @@ const String _bild =
 
 void main() {
   // DER STIMMUNGS-DIENST: Der Chat zeigt die Stimmungskarte - ohne den
-  // Client schlaegt der Aufbau fehl.
+  // Client schlägt der Aufbau fehl.
   moodClient = supabase.SupabaseClient(
     'https://example.supabase.co',
     'test-key',
@@ -70,8 +70,8 @@ void main() {
 
   /// Ein Chat mit EINER Bildnachricht von mir.
   ///
-  /// DER GRUND FUER "von mir": Nur eigene Bilder werden nicht verpixelt
-  /// - der Weg ueber die Bestaetigung waere ein zweites Thema.
+  /// DER GRUND FÜR "von mir": Nur eigene Bilder werden nicht verpixelt
+  /// - der Weg über die Bestätigung wäre ein zweites Thema.
   ({ChatNotifier notifier, String matchId}) chatMitBild() {
     final service = ChatService();
     final match = service.createMatch(chatDetailScreenPartner());
@@ -101,8 +101,8 @@ void main() {
         chat.notifier,
       );
 
-      // DAS BILD BRAUCHT EINEN FRAME: `Image.memory` kennt die Hoehe erst
-      // nach dem Dekodieren - vorher ist die Kachel hoehenlos und der Tipp
+      // DAS BILD BRAUCHT EINEN FRAME: `Image.memory` kennt die Höhe erst
+      // nach dem Dekodieren - vorher ist die Kachel höhenlos und der Tipp
       // landet daneben.
       await tester.runAsync(() async {
         await Future<void>.delayed(const Duration(milliseconds: 200));

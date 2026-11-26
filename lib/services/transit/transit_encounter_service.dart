@@ -19,8 +19,8 @@ class TransitEncounterService {
     // SECURITY (Audit 2026-09-26): Default ist jetzt der Keystore.
     //
     // Vorher bekam der Service `localStorageProvider`, im Betrieb also
-    // SharedPreferences = Klartext. Der Cache enthaelt BEGEHNACHWEISE
-    // (welche Geraete waren per BLE in Funkreichweite, wann) - das ist
+    // SharedPreferences = Klartext. Der Cache enthält BEGEHNACHWEISE
+    // (welche Geräte waren per BLE in Funkreichweite, wann) - das ist
     // ein Ortungsdatum (DSGVO Art. 9), kein "nur ein Token". Die
     // restlichen Art.-9-Preferenzen liegen bereits im Keystore
     // (user_preferences_provider.dart:374), dieser Store war die
@@ -34,21 +34,21 @@ class TransitEncounterService {
 
   /// Kryptografisch zufälliges, ephemeres Token (hex, 20 Zeichen = 10 Byte).
   ///
-  /// ACHTUNG: Die Laenge ist Teil des Protokolls. Der Scanner erkennt
+  /// ACHTUNG: Die Länge ist Teil des Protokolls. Der Scanner erkennt
   /// ein Token nur, wenn es exakt [tokenLaenge] Hexzeichen hat - und
   /// sonst nichts. Das ist Absicht (BEFUND 06.11.2026): die alte
-  /// Pruefung ("irgendetwas nach dem Marker") hat auf Android 16 jedes
-  /// fremde Bluetooth-Geraet als Thestia-Geraet gezaehlt - die Anzeige
-  /// "X Thestia-Geräte in Reichweite" zeigte ueber 100 Geraete, obwohl
-  /// hoechstens eines in der Naehe war.
+  /// Prüfung ("irgendetwas nach dem Marker") hat auf Android 16 jedes
+  /// fremde Bluetooth-Gerät als Thestia-Gerät gezählt - die Anzeige
+  /// "X Thestia-Geräte in Reichweite" zeigte über 100 Geräte, obwohl
+  /// höchstens eines in der Nähe war.
   ///
   /// Das Token geht als BLE-Manufacturer-Payload ("WST1" + Token) aufs
   /// Air - ein Legacy-Advertisement fasst max. 31 Byte (Flags + Header +
   /// Company-ID + Payload = 7 Byte Overhead, Rest 24). Mit 32-Zeichen-
-  /// Tokens (frueher) scheiterte JEDES Advertising still mit
+  /// Tokens (früher) scheiterte JEDES Advertising still mit
   /// ADVERTISE_FAILED_DATA_TOO_LARGE ("0 in Reichweite"). 80 Bit
-  /// Entropie reichen fuer 45-Minuten-Ephemeren dicke.
-  /// Server-Regex ([0-9a-fA-F-]{8,64}) und Cache akzeptieren die Laenge.
+  /// Entropie reichen für 45-Minuten-Ephemeren dicke.
+  /// Server-Regex ([0-9a-fA-F-]{8,64}) und Cache akzeptieren die Länge.
   static String generateToken() {
     final rnd = Random.secure();
     return List.generate(
@@ -57,14 +57,14 @@ class TransitEncounterService {
     ).join();
   }
 
-  /// Laenge des Tokens in Zeichen (10 Byte = 20 Hexzeichen).
+  /// Länge des Tokens in Zeichen (10 Byte = 20 Hexzeichen).
   static const int tokenLaenge = 20;
 
   /// Ist [token] ein wohlgeformtes Thestia-Token?
   ///
   /// Genau [tokenLaenge] Hexzeichen, sonst nichts. Ein echtes Token
-  /// kann nicht von einem fremden Bluetooth-Geraet erzeugt werden -
-  /// der Zufallsanteil macht eine Verwechslung praktisch unmoeglich.
+  /// kann nicht von einem fremden Bluetooth-Gerät erzeugt werden -
+  /// der Zufallsanteil macht eine Verwechslung praktisch unmöglich.
   static bool isValidToken(String token) {
     if (token.length != tokenLaenge) return false;
     for (var i = 0; i < token.length; i++) {
@@ -93,7 +93,7 @@ class TransitEncounterService {
 
   /// Trägt eine Sichtung ein (dedupe per Token, frischeste Zeit gewinnt).
   void recordEncounter(String token) {
-    // Nur echte Tokens zaehlen (BEFUND 06.11.2026): der Cache landet
+    // Nur echte Tokens zählen (BEFUND 06.11.2026): der Cache landet
     // in der Anzeige "X Thestia-Geräte in Reichweite" UND wird beim
     // Senden als Token-Liste an den Server geschickt. Unbekannte Werte
     // haben dort keine Entsprechung.
@@ -102,8 +102,8 @@ class TransitEncounterService {
     _cache[token] = TransitEncounter(token: token, seenAt: DateTime.now());
   }
 
-  /// Frische Encounters sortiert (neueste zuerst) - fuer die
-  /// Gruessen-Sektion im Radar (Soft-Ping, v0.9.1).
+  /// Frische Encounters sortiert (neueste zuerst) - für die
+  /// Grüßen-Sektion im Radar (Soft-Ping, v0.9.1).
   List<TransitEncounter> freshList() {
     _purgeExpired();
     final list = _cache.values.where((e) => e.isFresh).toList()
@@ -131,14 +131,14 @@ class TransitEncounterService {
   /// werden beim Zugriff aussortiert).
   int get count => _cache.length;
 
-  /// Die Begegnungen, die noch zaehlen - also die FRISCHEN (45
+  /// Die Begegnungen, die noch zählen - also die FRISCHEN (45
   /// Minuten). Das ist genau das Fenster, in dem der Server sie noch
   /// zuordnen kann.
   ///
   /// BEFUND (06.11.2026, Betreiber): "Es werden immer mehr (aktuell
-  /// ueber 100 gefunden)." Der Zaehler nahm alle Eintraege (zwei
-  /// Stunden) und nannte sie "Geraete" - dabei liefert ein einziges
-  /// Geraet mehrere Signale, weil sein Token alle 6-14 Minuten
+  /// über 100 gefunden)." Der Zähler nahm alle Einträge (zwei
+  /// Stunden) und nannte sie "Geräte" - dabei liefert ein einziges
+  /// Gerät mehrere Signale, weil sein Token alle 6-14 Minuten
   /// wechselt.
   int get freshCount {
     _purgeExpired();

@@ -1,15 +1,15 @@
 // Die Anmeldung (bisher kaum getestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/login_screen.dart 379 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * im Anmelde-Modus gibt es E-Mail und Passwort (aber kein Namens-
 //     feld - das kommt erst mit der Registrierung dazu),
-//   * das Passwort ist verdeckt und laesst sich zeigen,
+//   * das Passwort ist verdeckt und lässt sich zeigen,
 //   * der Wechsel zur Registrierung zeigt die Zusatzfelder (Name,
-//     Geburtsdatum, Geschlecht) und die Alters-Bestaetigung.
+//     Geburtsdatum, Geschlecht) und die Alters-Bestätigung.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,8 +23,8 @@ import '../support/plugin_mocks.dart';
 
 void main() {
   setUpAll(() async {
-    // DER SPEICHER DES GERAETS: der Auth-Client holt sich daraus die
-    // Sitzung - ohne den Mock schlaegt der Aufbau fehl.
+    // DER SPEICHER DES GERÄTS: der Auth-Client holt sich daraus die
+    // Sitzung - ohne den Mock schlägt der Aufbau fehl.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     await mockPfadProvider();
@@ -55,7 +55,7 @@ void main() {
   }
 
   /// Scrollt, bis das Passwort-Feld gebaut ist (die Liste baut nur die
-  /// sichtbaren Eintraege).
+  /// sichtbaren Einträge).
   Future<void> scrolleZumPasswort(WidgetTester tester) async {
     for (var i = 0; i < 12; i++) {
       final felder = tester.widgetList<TextField>(find.byType(TextField));
@@ -113,7 +113,7 @@ void main() {
     expect(find.text(L10n.tWithoutContext('auth.name')), findsWidgets);
     expect(find.text(L10n.tWithoutContext('auth.birthDate')), findsWidgets);
     expect(find.text(L10n.tWithoutContext('auth.gender')), findsWidgets);
-    // ... und die Alters-Bestaetigung (Jugendschutz).
+    // ... und die Alters-Bestätigung (Jugendschutz).
     expect(
       find.text(L10n.tWithoutContext('auth.ageConfirmTitle')),
       findsWidgets,

@@ -1,26 +1,26 @@
 // Regressionstest: die Werte, die der Server kennt (Befund vom 13.11.2026).
 //
-// BEFUND (Betreiber): "Server Sync schlaegt fehl, wenn ich mein Profil
+// BEFUND (Betreiber): "Server Sync schlägt fehl, wenn ich mein Profil
 // anpasse."
 //
 // DIE URSACHE: Der Profil-Editor schickte `distance_filter_mode` mit dem
 // Dart-Enum-Namen `distanceKm`. Die Spalte akzeptiert aber nur
 // `distance_km`, `state` oder `germany` (CHECK-Constraint
 // `profiles_distance_filter_mode_check`). Ein PostgREST-UPDATE ist
-// ATOMAR: EIN verletztes Feld macht das GANZE Update unmoeglich - der
+// ATOMAR: EIN verletztes Feld macht das GANZE Update unmöglich - der
 // Nutzer sah "Server-Sync fehlgeschlagen" und KEINE seiner
-// Profilaenderungen wurde gespeichert.
+// Profiländerungen wurde gespeichert.
 //
-// ZWEITER FUND DERSELBEN KLASSE: `preferred_state` wird fuer zwei
-// Dinge benutzt (Beziehungsform und gewuenschtes Bundesland). Der
+// ZWEITER FUND DERSELBEN KLASSE: `preferred_state` wird für zwei
+// Dinge benutzt (Beziehungsform und gewünschtes Bundesland). Der
 // CHECK-Constraint kennt nur die Beziehungswerte - das Bundesland
-// "Bremen" faellt durch und hat das Update ebenfalls gekippt.
+// "Bremen" fällt durch und hat das Update ebenfalls gekippt.
 //
-// DIESER TEST haelt beides fest:
-//   1. Jeder Wert, den die App schickt, liegt in der DB-Domaene.
-//      Die Domaene wird aus den MIGRATIONEN gelesen - nicht hart
-//      im Test wiederholt (sonst waere der Test blind fuer
-//      Aenderungen am Server).
+// DIESER TEST hält beides fest:
+//   1. Jeder Wert, den die App schickt, liegt in der DB-Domäne.
+//      Die Domäne wird aus den MIGRATIONEN gelesen - nicht hart
+//      im Test wiederholt (sonst wäre der Test blind für
+//      Änderungen am Server).
 //   2. Die beiden Stellen, die auf den Server schreiben, benutzen die
 //      Abbildungen und nicht die Dart-Namen.
 import 'dart:io';
@@ -48,8 +48,8 @@ Set<String> dbDomain(String constraintName) {
   );
 }
 
-/// Der Dart-Code ohne Kommentare (sonst schlaegt der eigene
-/// Erklaerungskommentar den Test an).
+/// Der Dart-Code ohne Kommentare (sonst schlägt der eigene
+/// Erklärungskommentar den Test an).
 String codeOhneKommentare(String text) => text
     .split('\n')
     .map((zeile) {

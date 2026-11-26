@@ -1,16 +1,16 @@
 // Die Video-Verifizierung (der Screen mit der Kamera).
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/verification/parts/verificationvideoscreenstate.dart 144
 // offene Zeilen bei 57 % Abdeckung. Der Screen ist die einzige Stelle,
-// an der die App Beweise fuer das Alter sammelt - und er hat drei Wege,
+// an der die App Beweise für das Alter sammelt - und er hat drei Wege,
 // die niemand kannte: die Kamera-Offenlegung, der Fehlerfall und die
 // Herausgabe der Kamera, wenn die App in den Hintergrund geht.
 //
-// WAS HIER GEPRUEFT WIRD:
-//   * die Kamera wird NICHT geoeffnet, bevor der Nutzer die Offenlegung
-//     bestaetigt hat (Google Play verlangt das),
-//   * ein Ablehnen fuehrt zu einem erklaerenden Zustand (kein Absturz),
+// WAS HIER GEPRÜFT WIRD:
+//   * die Kamera wird NICHT geöffnet, bevor der Nutzer die Offenlegung
+//     bestätigt hat (Google Play verlangt das),
+//   * ein Ablehnen fährt zu einem erklärenden Zustand (kein Absturz),
 //   * die Kamera kommt an und der Screen zeigt die Aufgabe (die Zahl, die
 //     gesagt werden soll),
 //   * die Kamera wird beim Wechsel in den Hintergrund freigegeben.
@@ -76,7 +76,7 @@ class _Keystore implements SecureProfileStore {
 ///
 /// DER GRUND: Das echte Kamera-Plugin gibt es im Test nicht - ohne
 /// diesen Ersatz bliebe der Bildschirm im Ladekreis und die Kamera-Pfade
-/// waeren ungetestet.
+/// wären ungetestet.
 class _KameraPlattform extends CameraPlatform {
   _KameraPlattform();
 
@@ -84,7 +84,7 @@ class _KameraPlattform extends CameraPlatform {
   final List<int> erzeugt = <int>[];
   final List<int> freigegeben = <int>[];
 
-  /// Der Strom, der die "Kamera ist bereit"-Meldung traegt.
+  /// Der Strom, der die "Kamera ist bereit"-Meldung trägt.
   final StreamController<int> _bereit = StreamController<int>.broadcast();
 
   /// Die Ströme, die NIE etwas melden.
@@ -105,11 +105,11 @@ class _KameraPlattform extends CameraPlatform {
   final StreamController<DeviceOrientationChangedEvent> _lage =
       StreamController<DeviceOrientationChangedEvent>.broadcast();
 
-  /// Schliesst alle Ströme (am Ende des Tests).
+  /// Schließt alle Ströme (am Ende des Tests).
   ///
   /// WICHTIG: Die beiden Ströme, von denen sich das camera-Plugin das
   /// ERSTE Element holt (Kamera bereit und Kamera-Fehler), bekommen vor
-  /// dem Schliessen noch ein Ereignis - ein geschlossener leerer Strom
+  /// dem Schließen noch ein Ereignis - ein geschlossener leerer Strom
   /// liefert sonst "Bad state: No element".
   Future<void> schliessen() async {
     if (!_bereit.isClosed) _bereit.add(1);
@@ -207,8 +207,8 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     mockKeystore();
-    // HIVE: der Verschluesselungs-Dienst oeffnet seine Boxen - ohne
-    // initialisiertes Hive schlaegt der Aufbau fehl.
+    // HIVE: der Verschlüsselungs-Dienst öffnet seine Boxen - ohne
+    // initialisiertes Hive schlägt der Aufbau fehl.
     await mockHive();
   });
 
@@ -241,7 +241,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Bestaetigt die Kamera-Offenlegung und wartet auf die Kamera.
+  /// Bestätigt die Kamera-Offenlegung und wartet auf die Kamera.
   Future<void> kameraFreigeben(WidgetTester tester) async {
     await tester.tap(
       find.widgetWithText(

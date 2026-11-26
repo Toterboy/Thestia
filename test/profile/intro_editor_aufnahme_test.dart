@@ -1,6 +1,6 @@
 // Die Aufnahme-Steuerung des Vorstellungs-Editors.
 //
-// ANLASS (19.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (19.11.2026): Die Coverage-Messung zeigte für
 // lib/widgets/profile/intro_editor.dart 104 offene Zeilen. Genau die
 // Aufnahme-Steuerung war ungetestet: die Mikrofon-Ablehnung, das
 // Anhalten und das Fortsetzen.
@@ -8,7 +8,7 @@
 // DER GRUND: Der Nutzer stellt sich mit einem Audio vor. Wenn das
 // Mikrofon fehlt, muss er das ERFAHREN (sonst passiert beim Tippen
 // nichts). Und wenn er beim Sprechen unterbrochen wird, muss er
-// anhalten koennen - ohne dass die Uhr weiterzaehlt: eine Aufnahme
+// anhalten können - ohne dass die Uhr weiterzählt: eine Aufnahme
 // darf nicht still im Hintergrund weiterlaufen, nur weil der Nutzer
 // kurz Pause gemacht hat.
 //
@@ -31,11 +31,11 @@ import '../support/plugin_mocks.dart';
 ///
 /// DER GRUND: Der echte Dienst braucht eine Anmeldung und den
 /// Supabase-Client. Im Test reicht der Ersatz: er meldet das
-/// Hochladen und das Loeschen zurueck.
+/// Hochladen und das Löschen zurück.
 class _FakeStorage extends SupabaseStorageService {
   _FakeStorage() : super(_dummyClient);
 
-  /// Der Client wird nie benutzt (alle Methoden sind ueberschrieben).
+  /// Der Client wird nie benutzt (alle Methoden sind überschrieben).
   static final _dummyClient = supabase.Supabase.instance.client;
 
   @override
@@ -44,7 +44,7 @@ class _FakeStorage extends SupabaseStorageService {
 
   @override
   Future<void> deleteIntroAudio() async {
-    // Der Test loescht keine Aufnahme vom Server.
+    // Der Test löscht keine Aufnahme vom Server.
   }
 }
 
@@ -107,7 +107,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   }
 
-  /// Tippt auf den Aufnahme-Knopf und wartet, bis die Aufnahme laeuft.
+  /// Tippt auf den Aufnahme-Knopf und wartet, bis die Aufnahme läuft.
   Future<void> aufnahmeStarten(WidgetTester tester) async {
     await knopfTippen(tester, L10n.tWithoutContext('intro.record'));
     // Das Mikrofon wird angefragt (das Plugin ist ein Ersatz).
@@ -197,20 +197,20 @@ void main() {
       await baueEditor(tester);
       await aufnahmeStarten(tester);
 
-      // Die Uhr laeuft.
+      // Die Uhr läuft.
       await tester.pump(const Duration(seconds: 2));
       expect(find.text('0:02'), findsOneWidget);
 
-      // Anhalten: ab jetzt zaehlt die Uhr nicht mehr. Sonst waere die
-      // Aufnahme nach dem Anhalten laenger, obwohl der Nutzer nicht
-      // gesprochen hat - und sie koennte dadurch zu kurz oder zu lang
+      // Anhalten: ab jetzt zählt die Uhr nicht mehr. Sonst wäre die
+      // Aufnahme nach dem Anhalten länger, obwohl der Nutzer nicht
+      // gesprochen hat - und sie kännte dadurch zu kurz oder zu lang
       // werden.
       await knopfTippen(tester, L10n.tWithoutContext('intro.pause'));
       await tester.pump(const Duration(seconds: 3));
 
       expect(find.text('0:02'), findsOneWidget);
 
-      // Nach dem Fortsetzen laeuft sie weiter.
+      // Nach dem Fortsetzen läuft sie weiter.
       await knopfTippen(tester, L10n.tWithoutContext('intro.resume'));
       await tester.pump(const Duration(seconds: 2));
       expect(find.text('0:04'), findsOneWidget);

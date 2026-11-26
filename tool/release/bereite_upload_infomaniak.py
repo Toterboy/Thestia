@@ -1,4 +1,4 @@
-"""Bereitet die zwei Upload-Ordner fuer Infomaniak vor.
+"""Bereitet die zwei Upload-Ordner für Infomaniak vor.
 
 WARUM (23.11.2026, Betreiber): "Ich kann selbst den Upload machen." Der
 Umzug auf Infomaniak ist damit eine Sache des Betreibers - aber das
@@ -32,7 +32,7 @@ DANACH (im Infomaniak-Panel):
     * "Website auth.thestia.de" -> dasselbe mit auth.thestia.de.zip.
 
 ACHTUNG PUNKT-FDATEIEN: Die .htaccess beginnt mit einem Punkt. Manche
-Upload-Werkzeuge ueberspringen Punkt-Dateien. Im Zweifel ueber
+Upload-Werkzeuge überspringen Punkt-Dateien. Im Zweifel über
 SFTP/FTP hochladen (die Datei liegt im fertigen Ordner bereit).
 
 DIE ZUGANGSDATEN braucht dieses Skript NICHT - es schreibt nur lokal.
@@ -72,7 +72,7 @@ ZIEL = ROOT / "build" / "informaniak"
 #: Diese Dateien liest nur Netlify - auf Apache sind sie Ballast.
 NUR_NETLIFY = ("netlify.toml", "_headers", "_redirects")
 
-#: Die gesperrte robots.txt (im Publish-Ordner) fuer den Auth-Host.
+#: Die gesperrte robots.txt (im Publish-Ordner) für den Auth-Host.
 GESPERRTE_ROBOTS = "robots-auth.txt"
 
 #: Die beiden Ziele: (Name des Ordners, bekommt die gesperrte robots.txt)
@@ -83,7 +83,7 @@ ZIELE = (
 
 
 def _kopiere_inhalt(ordner: pathlib.Path) -> int:
-    """Kopiert den Publish-Ordner (ohne die Netlify-Dateien) und zaehlt."""
+    """Kopiert den Publish-Ordner (ohne die Netlify-Dateien) und zählt."""
     if not PUBLISH.is_dir():
         raise SystemExit(
             f"FEHLT: der Publish-Ordner {PUBLISH}\n"
@@ -131,7 +131,7 @@ def main() -> int:
         anzahl = _kopiere_inhalt(ordner)
 
         # DIE APACHE-REGELN: in beide Ordner (sie unterscheiden die
-        # Hosts von selbst ueber RewriteCond %{HTTP_HOST}).
+        # Hosts von selbst über RewriteCond %{HTTP_HOST}).
         shutil.copy2(HTACCESS, ordner / ".htaccess")
 
         if gesperrt:

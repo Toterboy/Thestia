@@ -1,15 +1,15 @@
-// "Nachricht fuer alle loeschen" im 1:1-Chat (bisher ungetestet).
+// "Nachricht für alle löschen" im 1:1-Chat (bisher ungetestet).
 //
 // ANLASS (15.11.2026): Die Funktion ist eine Anforderung des
 // Betreibers (11.11.2026) - und sie ist heikel: wer fremde Nachrichten
-// loeschen koennte, waere eine Rechteausweitung.
+// löschen kännte, wäre eine Rechteausweitung.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ein langer Druck auf eine EIGENE Textnachricht fragt nach,
-//   * "Abbrechen" loescht nicht,
-//   * "Fuer alle loeschen" meldet es an den Server UND ersetzt die
+//   * "Abbrechen" löscht nicht,
+//   * "Für alle löschen" meldet es an den Server UND ersetzt die
 //     Nachricht durch den Hinweis,
-//   * eine FREMDE Nachricht laesst sich gar nicht erst loeschen.
+//   * eine FREMDE Nachricht lässt sich gar nicht erst löschen.
 //
 // DER SERVER: Der Client zeigt auf den Ersatz-Server aus
 // test/support/fake_supabase_server.dart - so ist sichtbar, OB der
@@ -103,8 +103,8 @@ void main() {
       ),
     );
 
-    // HIVE: die verschluesselten Schluessel (Signal-Protokoll) liegen in
-    // Hive-Boxen. Ohne initialisierten Hive schlaegt der Aufbau fehl.
+    // HIVE: die verschlüsselten Schlüssel (Signal-Protokoll) liegen in
+    // Hive-Boxen. Ohne initialisierten Hive schlägt der Aufbau fehl.
     final tempDir = await Directory.systemTemp.createTemp('thesia_chat');
     Hive.init(tempDir.path);
   });
@@ -117,14 +117,14 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     server.pfade.clear();
     // DIE EIGENE ID: Ohne sie kennt der Screen seine eigenen Nachrichten
-    // nicht (und wuerde sie gar nicht erst zum Loeschen anbieten).
+    // nicht (und würde sie gar nicht erst zum Löschen anbieten).
     AppConstants.registerUserIdGetter(() => 'ich');
   });
 
   /// Baut den Chat mit einem Funke (numerische ID) und zwei Nachrichten.
   ///
   /// Die ID muss eine Zahl sein - nur bei einem echten Funke gibt es
-  /// "Fuer alle loeschen" (lokale QR-Kontakte haben keine Server-ID).
+  /// "Für alle löschen" (lokale QR-Kontakte haben keine Server-ID).
   ({ChatNotifier notifier, ChatService service}) chat() {
     final service = ChatService();
     service.restoreMatch('42', 'partner-1', 'Mira');
@@ -158,7 +158,7 @@ void main() {
 
     final storage = _FakeLocalStorage();
     // Der Hinweis auf den Chat-Hintergrund (v0.10.0) kommt beim ersten
-    // Chat - im Test stoert er nur, also ist er als "gesehen" markiert.
+    // Chat - im Test stört er nur, also ist er als "gesehen" markiert.
     storage.saveString(
       AppConstants.prefsSettingsKey,
       jsonEncode(<String, dynamic>{'chatBackgroundSeen': true}),
@@ -194,7 +194,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Meine eigene Nachricht'), findsOneWidget);
 
-      // Lang druecken (wie bei Whatsapp).
+      // Lang drücken (wie bei Whatsapp).
       await tester.longPress(find.text('Meine eigene Nachricht'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -263,8 +263,8 @@ void main() {
       final c = chat();
       await zeigeScreen(tester, c.notifier);
 
-      // Lang druecken auf die Nachricht der Partnerin: es passiert
-      // nichts - fremde Nachrichten sind nicht loeschbar.
+      // Lang drücken auf die Nachricht der Partnerin: es passiert
+      // nichts - fremde Nachrichten sind nicht löschbar.
       await tester.longPress(find.text('Nachricht der Partnerin'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -277,8 +277,8 @@ void main() {
     testWidgets('die Loeschung des Partners kommt beim Empfaenger an', (
       tester,
     ) async {
-      // Der Server meldet, dass eine Nachricht "fuer alle geloescht"
-      // wurde - der Empfaenger ersetzt sie durch den Hinweis
+      // Der Server meldet, dass eine Nachricht "für alle gelöscht"
+      // wurde - der Empfänger ersetzt sie durch den Hinweis
       // (BEFUND 11.11.2026).
       server.rpcAntworten['list_message_deletions'] = [
         <String, dynamic>{

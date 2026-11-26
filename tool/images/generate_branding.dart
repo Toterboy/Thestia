@@ -8,7 +8,7 @@ import 'package:image/image.dart' as img;
 ///
 ///  1. `drawable/notification_icon.png` – 96 px, weiß + Alpha (Android-
 ///     Statusleiste): helle Elemente des Logos werden weiß, der Rest
-///     transparent. Fällt auf eine volle Kreissilhouette zurück, wenn zu
+///     transparent. Fällt auf eine volle Kreissilhoütte zurück, wenn zu
 ///     wenige helle Pixel gefunden werden.
 ///
 /// WICHTIG: Das Adaptive-Launcher-Icon wird hier NICHT mehr erzeugt. Es muss

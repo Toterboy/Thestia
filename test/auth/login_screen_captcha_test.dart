@@ -1,6 +1,6 @@
 // Die Anmeldung mit Sicherheitscheck.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (23.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/login_screen.dart 98 offene Zeilen - darunter der
 // ganze CAPTCHA-Weg (das Fenster, der Abbruch, das Token).
 //
@@ -39,13 +39,13 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
-    // HIVE: der Verschluesselungs-Dienst oeffnet beim Anmelden seine Boxen.
+    // HIVE: der Verschlüsselungs-Dienst öffnet beim Anmelden seine Boxen.
     await mockHive();
 
     // DER SERVER EINMAL: Der Supabase-Client ist ein Singleton - ein
     // zweites "initialize" im selben Testlauf zeigt weiter auf den
     // ersten Server. Deshalb gibt es hier nur einen, und die Tests
-    // raeumen seine Liste in setUp leer.
+    // räumen seine Liste in setUp leer.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -63,7 +63,7 @@ void main() {
     server.pfade.clear();
     server.funktionsAufrufe.clear();
     webview = FakeWebViewPlattform();
-    // DAS CAPTCHA EIN: Ohne Sitekey wuerde der Weg nicht betreten.
+    // DAS CAPTCHA EIN: Ohne Sitekey würde der Weg nicht betreten.
     dotenv.loadFromString(envString: 'CAPTCHA_SITEKEY=$_sitekey');
   });
 
@@ -113,7 +113,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Fuellt E-Mail und Passwort und schickt das Formular ab.
+  /// Füllt E-Mail und Passwort und schickt das Formular ab.
   Future<void> anmelden(WidgetTester tester) async {
     final felder = find.byType(TextFormField);
     await tester.enterText(felder.at(0), 'ich@example.de');
@@ -154,7 +154,7 @@ void main() {
     // DIE SEITE MELDET DAS TOKEN.
     webview.sendeAusDerSeite('1.lAbV5RcI1e_abcdef.0123456789');
     await tester.pump();
-    // DAS NETZ: Die Anmeldung laeuft in der echten Ereignisschleife -
+    // DAS NETZ: Die Anmeldung läuft in der echten Ereignisschleife -
     // im Widget-Test passiert das nur in runAsync.
     await tester.runAsync(() async {
       await Future<void>.delayed(const Duration(milliseconds: 300));

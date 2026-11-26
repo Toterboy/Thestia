@@ -1,16 +1,16 @@
 // "Find your Match" (die Vorstellungs-Vorstellung) - bisher ungetestet.
 //
-// ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (15.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/find_your_match_screen.dart 216 offene Zeilen - der
 // Screen war gar nicht getestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * ohne eigene Vorstellung steht der Editor da (und nichts weiter),
 //   * mit Vorstellung kommt die Wahl: Zufall oder Kategorie,
 //   * die Kandidaten kommen vom Server (RPC) und werden angezeigt,
 //   * der Like meldet Erfolg, Funke, "schon Funke" oder Fehler,
-//   * das Ueberspringen nimmt den naechsten Kandidaten,
-//   * der Stift-Knopf oeffnet den Editor, und der Editor laesst sich
+//   * das Überspringen nimmt den nächsten Kandidaten,
+//   * der Stift-Knopf öffnet den Editor, und der Editor lässt sich
 //     nicht ohne Text verlassen.
 //
 // WIE DER SERVER ERSETZT WIRD: Der [FakeSupabaseServer] beantwortet die
@@ -302,7 +302,7 @@ void main() {
 
       expect(find.textContaining('Mira'), findsWidgets);
 
-      // Das Kreuz ueberspringt.
+      // Das Kreuz überspringt.
       await tester.tap(find.byIcon(Icons.close));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));

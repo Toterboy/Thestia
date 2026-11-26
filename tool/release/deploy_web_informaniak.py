@@ -1,22 +1,22 @@
-"""Laedt die Website auf das klassische Webhosting (Infomaniak, CH).
+"""Lädt die Website auf das klassische Webhosting (Infomaniak, CH).
 
-WARUM DIESES SKRIPT (23.11.2026, Betreiber): "Wir koennen jetzt auf
+WARUM DIESES SKRIPT (23.11.2026, Betreiber): "Wir können jetzt auf
 Infomaniak umziehen von Netlify. Netlify soll aber als Fallback da
-bleiben." Der Publish-Ordner ist fuer beide Wege vorbereitet - die
-`_headers`/`_redirects` bleiben fuer Netlify im Ordner (Drag & Drop),
+bleiben." Der Publish-Ordner ist für beide Wege vorbereitet - die
+`_headers`/`_redirects` bleiben für Netlify im Ordner (Drag & Drop),
 und die aus ihnen erzeugte `.htaccess` kommt nach Infomaniak.
 
 DER WEG:
-    1. Der Publish-Ordner wird geprueft (das Gate
-       `check_publish_folder.py` - es schlaegt auch rot, wenn die
+    1. Der Publish-Ordner wird geprüft (das Gate
+       `check_publish_folder.py` - es schlägt auch rot, wenn die
        `.htaccess` veraltet ist).
     2. Der Inhalt wird hochgeladen - OHNE die drei Netlify-Dateien
        (`netlify.toml`, `_headers`, `_redirects`): auf Apache sind sie
        toter Ballast, und die Regeln stecken bereits in der
        `.htaccess`.
     3. Die `.htaccess` wird danach einzeln hochgeladen (sie beginnt mit
-       einem Punkt - manche SFTP-Clients ueberspringen Punkt-Dateien).
-    4. Optional wird der Live-Stand geprueft
+       einem Punkt - manche SFTP-Clients überspringen Punkt-Dateien).
+    4. Optional wird der Live-Stand geprüft
        (`check_websites_live.py --host ...`).
 
 ZWEI HOSTS, ZWEI VERZEICHNISSE (--getrennt):
@@ -26,11 +26,11 @@ ZWEI HOSTS, ZWEI VERZEICHNISSE (--getrennt):
     zeigt (`passkey-assets/index.html`).
     Bei Infomaniak kann der Betreiber die beiden Adressen trennen: zwei
     Websites, zwei Verzeichnisse, je ein Zertifikat. Der Inhalt ist
-    derselbe (die App verlinkt die Rechtsseiten ueber
-    `auth.thestia.de/...` - die muessen dort weiterhin existieren),
+    derselbe (die App verlinkt die Rechtsseiten über
+    `auth.thestia.de/...` - die müssen dort weiterhin existieren),
     aber die Verzeichnisse sind getrennt, und im Verzeichnis des
     Auth-Hosts liegt die gesperrte `robots.txt`.
-    Ohne `--getrennt` wird nur ein Verzeichnis befuellt (die Variante
+    Ohne `--getrennt` wird nur ein Verzeichnis befällt (die Variante
     "eine Website + Alias-Domain", bei der beide Hosts dasselbe
     Wurzelverzeichnis teilen).
 
@@ -49,11 +49,11 @@ als Parameter (die landen sonst in der Shell-History):
     python tool/release/deploy_web_informaniak.py --dry-run
     python tool/release/deploy_web_informaniak.py
     python tool/release/deploy_web_informaniak.py --getrennt
-    python tool/release/deploy_web_informaniak.py --pruefen
+    python tool/release/deploy_web_informaniak.py --prüfen
 
 DER FALLBACK (Netlify): Das Projekt auf Netlify bleibt unangetastet -
-der Publish-Ordner traegt die Netlify-Dateien weiterhin, und der
-Upload dorthin ist ein Drag & Drop. Zurueckwechseln heisst: im DNS
+der Publish-Ordner trägt die Netlify-Dateien weiterhin, und der
+Upload dorthin ist ein Drag & Drop. Zurückwechseln heißt: im DNS
 (Spaceship) die A-Records wieder auf Netlify setzen. Siehe
 `docs/betrieb/WEBSITE-HOSTING.md`.
 """
@@ -68,11 +68,11 @@ import sys
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-#: Die oeffentliche Adresse und der Auth-Host (beide stehen im DNS).
+#: Die öffentliche Adresse und der Auth-Host (beide stehen im DNS).
 #:
-#: DER GRUND FUER DIE KONSTANTEN: Sie sind keine Geheimnisse, und sie
+#: DER GRUND FÜR DIE KONSTANTEN: Sie sind keine Geheimnisse, und sie
 #: stehen in `passkey-assets/_headers` und `_redirects` ohnehin. Der
-#: Upload muss sie kennen, um den Live-Stand zu pruefen - und die
+#: Upload muss sie kennen, um den Live-Stand zu prüfen - und die
 #: Zugangsdaten kommen trotzdem nur aus der Umgebung.
 OEFFENTLICHER_HOST = "thestia.de"
 AUTH_HOST = "auth.thestia.de"
@@ -95,7 +95,7 @@ def _projektwurzel() -> pathlib.Path:
 
 ROOT = _projektwurzel()
 
-#: Der Ordner, der hochgeladen wird (er enthaelt index.html und Co.).
+#: Der Ordner, der hochgeladen wird (er enthält index.html und Co.).
 PUBLISH = ROOT / "passkey-assets"
 
 #: Die Apache-Konfiguration (wird getrennt hochgeladen - Punkt-Dateien
@@ -103,7 +103,7 @@ PUBLISH = ROOT / "passkey-assets"
 HTACCESS = ROOT / "webhosting" / ".htaccess"
 
 #: Diese drei Dateien liest nur Netlify. Auf dem klassischen Webhosting
-#: sind sie ueberfluessig - ihre Regeln stecken in der `.htaccess`.
+#: sind sie überflüssig - ihre Regeln stecken in der `.htaccess`.
 NUR_NETLIFY = ("netlify.toml", "_headers", "_redirects")
 
 
@@ -140,7 +140,7 @@ def _hole(getrennt: bool) -> dict:
         daten["pfad"] = f"/home/clients/{daten['user']}/sites/{OEFFENTLICHER_HOST}/"
     if not daten["pfad"].endswith("/"):
         daten["pfad"] += "/"
-    # Ein eigenes Verzeichnis fuer den Auth-Host schaltet die Trennung
+    # Ein eigenes Verzeichnis für den Auth-Host schaltet die Trennung
     # selbst ein - dann muss kein Schalter gesetzt werden.
     if daten["auth_pfad"]:
         daten["getrennt"] = True
@@ -152,12 +152,12 @@ def _hole(getrennt: bool) -> dict:
 
 
 def _ziele(daten: dict) -> list[dict]:
-    """Die Verzeichnisse, die befuellt werden."""
+    """Die Verzeichnisse, die befällt werden."""
     ziele = [
         {
             "name": OEFFENTLICHER_HOST,
             "pfad": daten["pfad"],
-            # Die gesperrte robots.txt gehoert NUR in das Verzeichnis des
+            # Die gesperrte robots.txt gehört NUR in das Verzeichnis des
             # Auth-Hosts.
             "gesperrte_robots": False,
         }
@@ -192,7 +192,7 @@ def _publish_dateien() -> list[pathlib.Path]:
 
 
 def _gate() -> None:
-    """Prueft den Publish-Ordner (bricht bei Rot ab)."""
+    """Prüft den Publish-Ordner (bricht bei Rot ab)."""
     print("==> Pruefe den Publish-Ordner ...", flush=True)
     ergebnis = subprocess.run(
         [sys.executable, str(ROOT / "tool" / "checks" / "check_publish_folder.py")],
@@ -221,7 +221,7 @@ def _rsync_befehl(daten: dict, ziel: dict, probe: bool) -> list[str]:
 
 
 def _sftp_befehl(daten: dict, ziel: dict, dateien: list[pathlib.Path]) -> tuple[list[str], str]:
-    """Baut den sftp-Aufruf (Stapeldatei) und liefert sie zurueck."""
+    """Baut den sftp-Aufruf (Stapeldatei) und liefert sie zurück."""
     zeilen = [
         f"# Von dem Skript erzeugt - der Inhalt fuer {ziel['name']}.",
         f"lcd {PUBLISH.relative_to(ROOT).as_posix()}",
@@ -234,12 +234,12 @@ def _sftp_befehl(daten: dict, ziel: dict, dateien: list[pathlib.Path]) -> tuple[
         # Die gesperrte robots.txt landet im Auth-Host als robots.txt.
         zeilen.append(f"put {GESPERRTE_ROBOTS} robots.txt")
     # Die .htaccess kommt zuletzt: sie ist eine Punkt-Datei, und manche
-    # SFTP-Clients ueberspringen Punkt-Dateien - einzeln geht es immer.
+    # SFTP-Clients überspringen Punkt-Dateien - einzeln geht es immer.
     #
-    # WICHTIG: Im Verzeichnis des oeffentlichen Hosts bleibt die
+    # WICHTIG: Im Verzeichnis des öffentlichen Hosts bleibt die
     # normale robots.txt liegen. Der Auth-Host bekommt seine gesperrte
-    # Fassung ueber die Regel in der `.htaccess` (RewriteCond auf den
-    # Host) und ueber die Datei `robots.txt` oben.
+    # Fassung über die Regel in der `.htaccess` (RewriteCond auf den
+    # Host) und über die Datei `robots.txt` oben.
     zeilen.append("lcd webhosting")
     zeilen.append("put .htaccess .htaccess")
     stapel = ROOT / "build" / f"informaniak-upload-{ziel['name']}.txt"
@@ -253,7 +253,7 @@ def _sftp_befehl(daten: dict, ziel: dict, dateien: list[pathlib.Path]) -> tuple[
 
 
 def _fuehre(befehl: list[str]) -> None:
-    """Fuehrt einen Befehl aus (die Ausgabe geht durch)."""
+    """Fährt einen Befehl aus (die Ausgabe geht durch)."""
     print("  " + " ".join(befehl), flush=True)
     ergebnis = subprocess.run(befehl, cwd=str(ROOT))
     if ergebnis.returncode != 0:
@@ -263,7 +263,7 @@ def _fuehre(befehl: list[str]) -> None:
 
 
 def _lade_hoch(daten: dict, ziel: dict, dateien: list[pathlib.Path], probe: bool) -> None:
-    """Laedt ein Verzeichnis hoch (rsync, sonst sftp)."""
+    """Lädt ein Verzeichnis hoch (rsync, sonst sftp)."""
     if shutil.which("rsync"):
         befehl = _rsync_befehl(daten, ziel, probe)
         if probe:

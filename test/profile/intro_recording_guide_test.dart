@@ -38,9 +38,9 @@ void main() {
 
     test('die Schrittdauer ist so gewaehlt, dass alle drei Winkel in eine '
         'kurze Vorstellung passen', () {
-      // Mindestlaenge der Aufnahme sind 10 Sekunden. Mit 15 Sekunden je
+      // Mindestlänge der Aufnahme sind 10 Sekunden. Mit 15 Sekunden je
       // Schritt braucht der dritte Winkel 30 Sekunden - das ist bewusst
-      // mehr als die Mindestlaenge: die ersten beiden Winkel sind fuer
+      // mehr als die Mindestlänge: die ersten beiden Winkel sind für
       // den Einstieg da, der dritte darf entfallen.
       expect(IntroRecordingGuide.stepSeconds, greaterThanOrEqualTo(5));
       expect(IntroRecordingGuide.stepSeconds, lessThanOrEqualTo(30));
@@ -64,7 +64,7 @@ void main() {
       'nach dem dritten Schritt bleibt der dritte stehen (keine Schleife)',
       () {
         // Die Aufnahme darf bis 5 Minuten laufen. Ein Leitfaden, der immer
-        // wieder zurueckspringt, wuerde den Sprecher verwirren.
+        // wieder zurückspringt, würde den Sprecher verwirren.
         for (final s in [45, 60, 120, 299, 300, 5000]) {
           expect(
             IntroRecordingGuide.stepForSeconds(s),
@@ -106,7 +106,7 @@ void main() {
     testWidgets('markiert genau einen Schritt als aktiv', (tester) async {
       await tester.pumpWidget(_app(elapsed: 0));
 
-      // Der aktive Schritt traegt das Symbol am Zeilenende.
+      // Der aktive Schritt trägt das Symbol am Zeilenende.
       expect(find.byIcon(Icons.graphic_eq), findsOneWidget);
       expect(
         find.descendant(
@@ -138,7 +138,7 @@ void main() {
 
     testWidgets('ein Tipp uebernimmt die Steuerung', (tester) async {
       await tester.pumpWidget(_app(elapsed: 30));
-      // Schritt 3 ist aktiv (30 Sekunden). Der Nutzer will zurueck auf
+      // Schritt 3 ist aktiv (30 Sekunden). Der Nutzer will zurück auf
       // Schritt 1 - das muss gehen und muss bleiben.
       await tester.tap(find.text('Wer bist du?'));
       await tester.pumpAndSettle();

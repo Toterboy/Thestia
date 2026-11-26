@@ -1,13 +1,13 @@
-"""Zugangsdaten fuer den Admin-Posteingang (IMAP) - aufgeloest an einer Stelle.
+"""Zugangsdaten für den Admin-Posteingang (IMAP) - aufgelöst an einer Stelle.
 
 GRUND (04.11.2026): Der Betreiber will den Posteingang SELBST
-einrichten koennen, wenn er ihn braucht - nicht vorher. Deshalb ist
-alles hier vorbereitet: eine Secret-Datei ausserhalb des Projekts, ein
+einrichten können, wenn er ihn braucht - nicht vorher. Deshalb ist
+alles hier vorbereitet: eine Secret-Datei außerhalb des Projekts, ein
 Einrichtungs-Skript und ein Status-Check.
 
 DIE REIHENFOLGE (dieselbe Logik wie bei den Keystore-Secrets):
 
-  1. Umgebungsvariablen - der Weg fuer CI und Cron/Task-Planer:
+  1. Umgebungsvariablen - der Weg für CI und Cron/Task-Planer:
        IMAP_HOST, IMAP_PORT, IMAP_USER, IMAP_PASSWORD, IMAP_FOLDER,
        THESTIA_FUNCTIONS_URL, THESTIA_INTERNAL_SECRET
   2. Secret-Datei AUSSERHALB des Projekts:
@@ -15,13 +15,13 @@ DIE REIHENFOLGE (dieselbe Logik wie bei den Keystore-Secrets):
        %USERPROFILE%\\.secrets\\thestia-mail.properties
        bzw. ~/.secrets/thestia-mail.properties
 
-VORGABEN (muessen nicht eingegeben werden):
+VORGABEN (müssen nicht eingegeben werden):
   * IMAP_PORT            993 (IMAPS)
   * IMAP_FOLDER          INBOX
   * THESTIA_FUNCTIONS_URL https://jftuigjbmmuvrckbchqo.supabase.co/functions/v1
 
 Das Passwort wird weder geloggt noch gespeichert - ausser in dieser
-Secret-Datei, und die liegt ausserhalb des Repos. Uebertragen wird es
+Secret-Datei, und die liegt außerhalb des Repos. Übertragen wird es
 nur an den IMAP-Server.
 """
 
@@ -32,8 +32,8 @@ import sys
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -51,10 +51,10 @@ ROOT = _projektwurzel()
 SECRET_FILE_NAME = 'thestia-mail.properties'
 ENV_SECRET_FILE = 'THESTIA_MAIL_PROPERTIES'
 
-# Schluessel, die eingegeben werden muessen.
+# Schlüssel, die eingegeben werden müssen.
 PFLICHT = ('IMAP_HOST', 'IMAP_USER', 'IMAP_PASSWORD')
 
-# Schluessel mit Vorgabe.
+# Schlüssel mit Vorgabe.
 VORGABEN = {
     'IMAP_PORT': '993',
     'IMAP_FOLDER': 'INBOX',
@@ -91,7 +91,7 @@ def _read(path: pathlib.Path) -> dict:
 
 
 def read_settings() -> dict:
-    """Alle Einstellungen, aufgeloest nach der Reihenfolge oben."""
+    """Alle Einstellungen, aufgelöst nach der Reihenfolge oben."""
     settings: dict = {}
     secret = secret_file_path()
     if secret is not None:
@@ -117,7 +117,7 @@ def vollstaendig(settings: dict | None = None) -> bool:
 
 
 def beschreibe(settings: dict | None = None) -> str:
-    """Kurzstatus ohne Geheimnisse - fuer Logs und Bildschirme."""
+    """Kurzstatus ohne Geheimnisse - für Logs und Bildschirme."""
     s = read_settings() if settings is None else settings
     secret = secret_file_path()
     quelle = 'Umgebungsvariablen' if os.environ.get('IMAP_HOST') else (

@@ -1,9 +1,9 @@
 // Der Zufallschat (bisher kaum getestet).
 //
-// ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (14.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/swipe/random_chat_screen.dart 399 offene Zeilen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Bildschirm baut sich (kein Absturz, kein Render-Overflow),
 //   * ohne Server kommt die Meldung "nicht verfügbar" - nicht ein
 //     endloses Warten,
@@ -82,7 +82,7 @@ class _FakeP2PChatService extends P2PChatService {
 /// Hand-Fake des Zufallschat-Dienstes.
 ///
 /// Der echte Dienst spricht mit der Datenbank (RPCs). Der Fake antwortet
-/// aus dem RAM und zaehlt die Aufrufe - so wird sichtbar, ob die App
+/// aus dem RAM und zählt die Aufrufe - so wird sichtbar, ob die App
 /// wirklich sucht oder nur so tut.
 class _FakeRandomChatService extends RandomChatService {
   _FakeRandomChatService(super.client);
@@ -119,8 +119,8 @@ class _FakeRandomChatService extends RandomChatService {
 void main() {
   /// Der Client, den der Fake braucht.
   ///
-  /// WICHTIG: `autoRefreshToken: false` - sonst laeuft ein periodischer
-  /// Timer (alle 10 s), an dem der Test am Ende scheitern wuerde
+  /// WICHTIG: `autoRefreshToken: false` - sonst läuft ein periodischer
+  /// Timer (alle 10 s), an dem der Test am Ende scheitern würde
   /// ("A Timer is still pending").
   late supabase.SupabaseClient client;
 
@@ -132,14 +132,14 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     // DER KEYSTORE und HIVE: der Chat holt sich den Verlauf und die
-    // Schluessel aus dem Speicher - ohne diese Ersatzwaerter bleibt
-    // der Aufbau haengen.
+    // Schlüssel aus dem Speicher - ohne diese Ersatzwärter bleibt
+    // der Aufbau hängen.
     mockKeystore();
     await mockHive();
     // DER CLIENT: der Bildschirm liest `Supabase.instance` (den
-    // globalen Client) - ein eigener Client waere dort nicht sichtbar
+    // globalen Client) - ein eigener Client wäre dort nicht sichtbar
     // (und die Edge-Funktionen brauchen eine Sitzung).
-    // DER SERVER: die Anmeldung geht ueber den Client - ohne den
+    // DER SERVER: die Anmeldung geht über den Client - ohne den
     // Ersatz-Server antwortet der Test-Client mit 400.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
@@ -174,8 +174,8 @@ void main() {
   /// EIGENER Container (nicht das ProviderScope): der Container lebt
   /// weiter, wenn der Bildschirm abgebaut wird - so kann der Test
   /// danach noch sehen, ob die "aktiver Chat"-Markierung wirklich
-  /// geloescht wurde (beim Wegwerfen des Containers wuerde sie
-  /// automatisch auf null zurueckspringen - das waere ein
+  /// gelöscht wurde (beim Wegwerfen des Containers würde sie
+  /// automatisch auf null zurückspringen - das wäre ein
   /// Scheintest).
   ProviderContainer? screenContainer;
 
@@ -214,8 +214,8 @@ void main() {
         else if (ohneDienst)
           randomChatServiceProvider.overrideWithValue(null),
         // DER P2P-Fake: die echte Direktverbindung braucht das
-        // WebRTC-Plugin - ohne sie bleibt `connect()` haengen und der
-        // Bildschirm kommt ueber die Markierung nie hinaus.
+        // WebRTC-Plugin - ohne sie bleibt `connect()` hängen und der
+        // Bildschirm kommt über die Markierung nie hinaus.
         p2pChatServiceProvider.overrideWith((ref) {
           final dienst = _FakeP2PChatService(
             ref.watch(webRTCServiceProvider),
@@ -342,7 +342,7 @@ void main() {
           );
       await zeigeScreen(tester, dienst: dienst);
       await pumpFrames(tester);
-      // Der Partner-Aufruf geht ueber den Server - also warten, bis der
+      // Der Partner-Aufruf geht über den Server - also warten, bis der
       // Chat steht.
       for (var i = 0; i < 20; i++) {
         await tester.runAsync(() async {
@@ -371,14 +371,14 @@ void main() {
       }
 
       expect(tester.takeException(), isNull);
-      // Der Server hat den Like bekommen - sonst weiss die Person nicht,
+      // Der Server hat den Like bekommen - sonst weiß die Person nicht,
       // dass jemand interestant ist.
       expect(
         server.rpcAufrufe.any((c) => c['funktion'] == 'like_user'),
         isTrue,
         reason: 'Der Like muss beim Server ankommen.',
       );
-      // Und der Nutzer bekommt die Bestaetigung.
+      // Und der Nutzer bekommt die Bestätigung.
       expect(
         find.textContaining(
           L10n.tWithoutContext('random.likeSentWaiting').split(' ').first,
@@ -395,7 +395,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
-      // Ohne Rueckfrage waere der Chat weg - und der Nutzer weiss nicht,
+      // Ohne Rückfrage wäre der Chat weg - und der Nutzer weiß nicht,
       // ob das Beenden durchging.
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(
@@ -411,7 +411,7 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.block));
       await pumpFrames(tester);
-      // Bestaetigen.
+      // Bestätigen.
       await tester.tap(
         find.widgetWithText(
           FilledButton,
@@ -445,7 +445,7 @@ void main() {
         status: RandomChatStatus.ended,
       );
 
-      // Der Status-Poll tickt alle fuenf Sekunden.
+      // Der Status-Poll tickt alle fünf Sekunden.
       await tester.pump(const Duration(seconds: 6));
       await pumpFrames(tester);
 
@@ -473,7 +473,7 @@ void main() {
 
       final container = screenContainer!;
 
-      // Das Match braucht echte Zeit (der Partner-Aufruf geht ueber den
+      // Das Match braucht echte Zeit (der Partner-Aufruf geht über den
       // Server) - also warten, bis die Markierung steht.
       for (var i = 0; i < 20; i++) {
         await tester.runAsync(() async {

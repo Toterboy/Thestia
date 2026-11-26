@@ -1,4 +1,4 @@
-"""Selbsttest fuer check_namespace_migration.py.
+"""Selbsttest für check_namespace_migration.py.
 
 Sechs Mutationen, die alle einen echten Release-Blocker erzeugen:
   A) signals komplett aus der Migrationsliste entfernen
@@ -6,15 +6,15 @@ Sechs Mutationen, die alle einen echten Release-Blocker erzeugen:
   C) session aus der Migrationsliste entfernen
   D) extraSessionKeys-Parameter entfernen
   E) contacts nicht mehr als "neu ohne Migration" deklariert
-  F) einen MIGRierten Namespace zusaetzlich als "neu" deklariert
+  F) einen MIGRierten Namespace zusätzlich als "neu" deklariert
 
-Alle MUESSEN den Checker zum Scheitern bringen. Ein Checker, der einen
+Alle MÜSSEN den Checker zum Scheitern bringen. Ein Checker, der einen
 Datenverlust beim Update nicht sieht, ist schlimmer als keiner.
 
 WICHTIG: Die Mutationen suchen per REGEX, nicht per exaktem Text. Sonst
-bricht der Selbsttest bei der naechsten Formatierungs-Aenderung des
-Quelltextes (Zeilenumbrueche, Einrueckung) - ein Selftest, der an
-Formatierung klebt, prueft die Sache nicht mehr, sondern nur noch den
+bricht der Selbsttest bei der nächsten Formatierungs-Änderung des
+Quelltextes (Zeilenumbrüche, Einrückung) - ein Selftest, der an
+Formatierung klebt, prüft die Sache nicht mehr, sondern nur noch den
 Formatierer.
 """
 import pathlib
@@ -27,8 +27,8 @@ import tempfile
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -96,7 +96,7 @@ def drop_session(t):
 
 
 def drop_hive_key_param(t):
-    # extraSessionKeys-Parameter entfernen -> session laeuft leer
+    # extraSessionKeys-Parameter entfernen -> session läuft leer
     return _sub(t, r'List<String>\s+extraSessionKeys\s*=\s*const\s*\[\],\s*', '')
 
 
@@ -109,7 +109,7 @@ def drop_new_declaration(t):
 
 def declare_migrated_as_new(t):
     # signals als "neu" deklarieren, obwohl es migriert wird:
-    # das ist widerspruechlich und muss auffallen.
+    # das ist widersprüchlich und muss auffallen.
     def repl(m):
         inhalt = m.group(1)
         return 'withoutMigration = <String>{' + inhalt + ', signals}'

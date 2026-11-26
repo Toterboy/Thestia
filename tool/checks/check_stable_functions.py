@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Prueft: Keine STABLE-Funktion darf in die Datenbank schreiben.
+"""Prüft: Keine STABLE-Funktion darf in die Datenbank schreiben.
 
 BEFUND (20.11.2026, Betreiber): "Die Funken beim Interessen-Screen
-koennen nicht geladen werden."
+können nicht geladen werden."
 
 DIE URSACHE (live gemessen): Der Aufruf von
-public.list_my_matches_with_state() ueber die Data-API antwortete mit
+public.list_my_matches_with_state() über die Data-API antwortete mit
 
     HTTP 405  {"code":"25006","message":"cannot execute INSERT in a
     read-only transaction"}
 
 Die Kette:
 
-  * Die Funktion war STABLE. PostgREST fuehrt STABLE-Aufrufe in einer
+  * Die Funktion war STABLE. PostgREST fährt STABLE-Aufrufe in einer
     READ-ONLY-Transaktion aus.
-  * Die Funktion berechnet die Entfernung ueber
+  * Die Funktion berechnet die Entfernung über
     public.profile_distance_km(...).
   * profile_distance_km() ruft public.consume_rate_limit() auf (der
     Trilaterationsschutz) - und DIE schreibt in public.rate_limit_hits.
@@ -22,24 +22,24 @@ Die Kette:
 
 WARUM EIN WERKZEUG STATT EINES EINZELFIXES: Der Fehler ist still. Die
 App zeigte "Laden fehlgeschlagen", der Server loggte nichts, alle
-Migrationen waren gruen. Und er kann wieder passieren: wer eine neue
+Migrationen waren grün. Und er kann wieder passieren: wer eine neue
 STABLE-Funktion baut, die den Rate-Limit benutzt, baut denselben
 Fehler erneut - in einer Liste, die man nicht im Blick hat.
 
 DAS WERKZEUG hat zwei Teile:
 
-  1) STATISCH (ohne Datenbank, laeuft in der CI): Es liest die
+  1) STATISCH (ohne Datenbank, läuft in der CI): Es liest die
      Migrationsdateien und meldet jede STABLE-Funktion, die einen der
      Schreiber benutzt. Damit sieht man den Fehler BEVOR er live geht.
 
   2) LIVE (nur mit Zugang zur Produktivdatenbank): Es fragt die
      Produktivdatenbank ab - dort kann eine Funktion auch von Hand
-     veraendert worden sein.
+     verändert worden sein.
 
 Aufruf::
 
     python tool/checks/check_stable_functions.py            # nur statisch
-    python tool/checks/check_stable_functions.py --live     # zusaetzlich live
+    python tool/checks/check_stable_functions.py --live     # zusätzlich live
 """
 
 import json
@@ -53,8 +53,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> pathlib.Path:
     for kandidat in pathlib.Path(__file__).resolve().parents:
         if (kandidat / "pubspec.yaml").exists():
@@ -73,7 +73,7 @@ MIG = ROOT / "supabase" / "migrations"
 #: Die Muster, die einen SCHREIBER erkennen.
 #:
 #: WARUM GENAU DIESE: public.consume_rate_limit() ist der Rate-Limit-
-#: Zaehler (er schreibt in public.rate_limit_hits) - er wird ueber
+#: Zähler (er schreibt in public.rate_limit_hits) - er wird über
 #: profile_distance_km() benutzt. Beide sind im Quelltext erkennbar.
 #: Die drei SQL-Befehle decken den Rest ab (direkte Schreiber).
 SCHREIBER = (
@@ -99,11 +99,11 @@ def schreibt(text: str) -> bool:
 
 
 def normalisiere_argumente(argumente: str) -> str:
-    """Nur die Typen - die Parameternamen sind fuer den Schluessel egal.
+    """Nur die Typen - die Parameternamen sind für den Schlüssel egal.
 
     WARUM: "ALTER FUNCTION profile_distance_km(uuid)" und
     "CREATE FUNCTION profile_distance_km(p_other uuid)" sind DIESELBE
-    Funktion - der Schluessel muss beides zusammenbringen.
+    Funktion - der Schlüssel muss beides zusammenbringen.
     """
     argumente = ohne_kommentare(argumente).strip()
     if not argumente:
@@ -217,11 +217,11 @@ def alters_aus_datei(sql: str) -> list[dict]:
 
 
 def statisch_pruefen(ordner: pathlib.Path | None = None) -> list[str]:
-    """Prueft die Migrationsdateien (ohne Datenbank).
+    """Prüft die Migrationsdateien (ohne Datenbank).
 
-    DER ENDLUSTAND ZAEHLT: Die Migrationen werden in Reihenfolge
+    DER ENDLUSTAND ZÄHLT: Die Migrationen werden in Reihenfolge
     gelesen. Eine CREATE OR REPLACE setzt die Funktion (und ihre
-    Volatilitaet), ein ALTER FUNCTION ... VOLATILE aendert sie. Genau so
+    Volatilität), ein ALTER FUNCTION ... VOLATILE ändert sie. Genau so
     entsteht auch der Zustand in der Datenbank - Migration 221 hat die
     drei Funktionen auf VOLATILE gesetzt.
     """
@@ -270,7 +270,7 @@ def statisch_pruefen(ordner: pathlib.Path | None = None) -> list[str]:
 
 
 def live_pruefen() -> list[str]:
-    """Prueft die Produktivdatenbank (nur mit Zugang)."""
+    """Prüft die Produktivdatenbank (nur mit Zugang)."""
     sql_text = """
 select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' as sig,
        p.provolatile

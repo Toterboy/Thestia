@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-r"""Prueft, in welcher Supabase-Region das Projekt liegt.
+r"""Prüft, in welcher Supabase-Region das Projekt liegt.
 
-WARUM (Sicherheits-Audit 16.11.2026, P1): Die Datenschutzerklaerung
+WARUM (Sicherheits-Audit 16.11.2026, P1): Die Datenschutzerklärung
 behauptet, die Verarbeitung erfolge "in der EU-Region von Supabase" und
 nennt "Supabase Europe B.V." als Auftragsverarbeiter. Das ist aus dem
 Repository heraus NICHT belegbar - die Projekt-URL sieht auf jedem
 Projekt gleich aus. Stimmt die Aussage nicht, passt der
-Auftragsverarbeitungsvertrag nicht zum tatsaechlichen Verarbeiter.
+Auftragsverarbeitungsvertrag nicht zum tatsächlichen Verarbeiter.
 
 DER WEG: Mit einem Personal Access Token (PAT) von
-https://supabase.com/dashboard/account/tokens laesst sich die Region
-abfragen. Der Token wird NIE gespeichert, nur fuer diesen Aufruf
+https://supabase.com/dashboard/account/tokens lässt sich die Region
+abfragen. Der Token wird NIE gespeichert, nur für diesen Aufruf
 verwendet.
 
     $env:SUPABASE_ACCESS_TOKEN = 'sbp_...'
@@ -22,7 +22,7 @@ Projekt -> Settings -> General) und beendet sich ohne Fehler - es ist
 ein Handwerkzeug, kein CI-Gate.
 
 EXIT-CODES: 0 = alles in Ordnung (oder kein Token: nur Hinweis),
-1 = Region passt NICHT zur Aussage der Datenschutzerklaerung.
+1 = Region passt NICHT zur Aussage der Datenschutzerklärung.
 """
 
 from __future__ import annotations
@@ -38,8 +38,8 @@ from pathlib import Path
 #: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
 #:
 #: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
-#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
-#: Pfade nicht, wenn sich die Tiefe aendert.
+#: feste Ebenen zu zählen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe ändert.
 def _projektwurzel() -> Path:
     for kandidat in Path(__file__).resolve().parents:
         if (kandidat / 'pubspec.yaml').exists():
@@ -55,10 +55,10 @@ def _projektwurzel() -> Path:
 ROOT = _projektwurzel()
 
 
-# Die Region, die die Datenschutzerklaerlung behauptet.
+# Die Region, die die Datenschutzerklärlung behauptet.
 ERWARTETE_REGION = "eu-central-1"
 
-# Regionen, die als EU gelten (fuer die Warnung, nicht fuer den Fehler).
+# Regionen, die als EU gelten (für die Warnung, nicht für den Fehler).
 EU_REGIONEN = {
     "eu-central-1",
     "eu-central-2",
@@ -72,7 +72,7 @@ EU_REGIONEN = {
 
 
 def lies_env() -> dict:
-    """Liest die .env (ohne sie zu veraendern)."""
+    """Liest die .env (ohne sie zu verändern)."""
     werte: dict = {}
     datei = ROOT / ".env"
     if not datei.exists():

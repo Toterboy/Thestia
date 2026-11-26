@@ -1,14 +1,14 @@
-// Tests fuer den ruhigen Ladeindikator.
+// Tests für den ruhigen Ladeindikator.
 //
-// ANLASS (NUTZERWUNSCH 31.10.2026): "der kurze Ladekreis ist stoerend
-// fuer die Animation dort". Ein Ring, der nach 200 ms wieder verschwindet,
+// ANLASS (NUTZERWUNSCH 31.10.2026): "der kurze Ladekreis ist störend
+// für die Animation dort". Ein Ring, der nach 200 ms wieder verschwindet,
 // ist ein Blitzer - er zieht den Blick auf sich und macht aus einem weichen
-// Ueberblenden einen harten Schnitt. Der [CalmLoading] ist der Ersatz:
+// Überblenden einen harten Schnitt. Der [CalmLoading] ist der Ersatz:
 // drei Balken, die langsam ein- und ausblenden.
 //
-// Geprueft wird deshalb das WESENTLICHE des Widgets:
-//   * Es ist KEIN Ladekreis (sonst waere der Blitzer wieder da),
-//   * die Balken atmen wirklich (die Deckkraft aendert sich),
+// Geprüft wird deshalb das WESENTLICHE des Widgets:
+//   * Es ist KEIN Ladekreis (sonst wäre der Blitzer wieder da),
+//   * die Balken atmen wirklich (die Deckkraft ändert sich),
 //   * sie atmen NACHECINANDER (versetzte Phasen), und
 //   * sie werden nicht breiter als erlaubt.
 import 'package:flutter/material.dart';
@@ -26,7 +26,7 @@ Widget _huelle(Widget kind) {
 /// Die Deckkraft des n-ten Balkens.
 ///
 /// WICHTIG: der Finder muss auf den [CalmLoading]-Teilbaum
-/// eingeschraenkt werden - das MaterialApp benutzt fuer den
+/// eingeschränkt werden - das MaterialApp benutzt für den
 /// Seitenwechsel selbst eine FadeTransition, die sonst gefunden wird.
 double _opazitaet(WidgetTester tester, int index) {
   final balken = tester.widget<FadeTransition>(
@@ -93,7 +93,7 @@ void main() {
       final spaeter = _opazitaet(tester, 0);
 
       expect(spaeter, isNot(start), reason: 'Der Balken muss atmen.');
-      // Der Balken ist nie ganz weg und nie ueberstrahlt.
+      // Der Balken ist nie ganz weg und nie überstrahlt.
       expect(start, inInclusiveRange(0.3, 1.0));
       expect(spaeter, inInclusiveRange(0.3, 1.0));
     });
@@ -101,7 +101,7 @@ void main() {
     testWidgets('die Balken atmen nacheinander, nicht im Gleichtakt', (
       tester,
     ) async {
-      // Der Grund fuer die versetzten Phasen: gleich laufende Balken
+      // Der Grund für die versetzten Phasen: gleich laufende Balken
       // lesen sich als Ladekreislauf. Versetzt lesen sie sich als
       // "hier passiert gerade etwas".
       await tester.pumpWidget(_huelle(const CalmLoading(lines: 3)));

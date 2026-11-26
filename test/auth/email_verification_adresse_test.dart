@@ -1,15 +1,15 @@
-// Das Aendern der E-Mail-Adresse auf dem Bestaetigungs-Screen.
+// Das Ändern der E-Mail-Adresse auf dem Bestätigungs-Screen.
 //
-// ANLASS (22.11.2026): Die Coverage-Messung zeigte fuer
+// ANLASS (22.11.2026): Die Coverage-Messung zeigte für
 // lib/screens/auth/email_verification_screen.dart 83 offene Zeilen. Der
-// Weg "Adresse aendern" (NUTZERWUNSCH 01.11.2026: "Bei Email bestaetigen
+// Weg "Adresse ändern" (NUTZERWUNSCH 01.11.2026: "Bei Email bestätigen
 // soll die Emailadresse nochmal angezeigt werden. Falls man einen Fehler
-// bemerkt, soll man an dieser Stelle die Emailadresse nochmal aendern")
+// bemerkt, soll man an dieser Stelle die Emailadresse nochmal ändern")
 // war gar nicht getestet.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Dialog nimmt eine neue Adresse an,
-//   * das alte, unbestätigte Konto wird GELÖSCHT (sonst schlaegt die
+//   * das alte, unbestätigte Konto wird GELÖSCHT (sonst schlägt die
 //     Neuregistrierung mit "bereits registriert" fehl),
 //   * die neue Adresse steht danach im Bildschirm.
 import 'package:flutter/material.dart';
@@ -53,7 +53,7 @@ class _SitzungImRam implements supabase.LocalStorage {
   }
 }
 
-/// In-Memory-Speicher fuer die lokalen Einstellungen.
+/// In-Memory-Speicher für die lokalen Einstellungen.
 class _Speicher implements LocalStorage {
   final Map<String, String> _daten = <String, String>{};
 
@@ -84,7 +84,7 @@ class _Speicher implements LocalStorage {
       _daten[key] == null ? null : int.tryParse(_daten[key]!);
 }
 
-/// Der Router fuer den Test.
+/// Der Router für den Test.
 GoRouter _router() {
   return GoRouter(
     initialLocation: AppRoutes.emailVerification,
@@ -172,7 +172,7 @@ void main() {
     return container;
   }
 
-  /// Raeumt den Screen ab - er hat Timer (Auto-Login, Cooldown).
+  /// Räumt den Screen ab - er hat Timer (Auto-Login, Cooldown).
   Future<void> aufraeumen(
     WidgetTester tester,
     ProviderContainer container,
@@ -182,7 +182,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
-  /// Laesst die echte Ereignisschleife laufen (die Serverantworten
+  /// Lässt die echte Ereignisschleife laufen (die Serverantworten
   /// kommen nur dort an).
   Future<void> lassServerArbeiten(
     WidgetTester tester, {
@@ -198,14 +198,14 @@ void main() {
 
   group('Das Aendern der Adresse', () {
     testWidgets('der Dialog nimmt die neue Adresse an', (tester) async {
-      // DER SERVER ANTWORTET: Das alte Konto wird geloescht.
+      // DER SERVER ANTWORTET: Das alte Konto wird gelöscht.
       server.funktionsAntworten['cancel-registration'] = <String, dynamic>{
         'deleted': true,
       };
 
       final container = await zeigeScreen(tester);
       // DER KNOPF: Die Adresse steht auf der Karte - daneben liegt der
-      // Knopf zum Aendern.
+      // Knopf zum Ändern.
       final knopf = find.widgetWithText(
         TextButton,
         L10n.tWithoutContext('email.changeAddress'),

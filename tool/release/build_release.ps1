@@ -1,6 +1,6 @@
 # tool/release/build_release.ps1
 #
-# Baut die Release-APKs fuer Thestia korrekt (mit Product Flavors!)
+# Baut die Release-APKs für Thestia korrekt (mit Product Flavors!)
 # und legt sie benannt unter releases/<version>/ ab.
 #
 # HINTERGRUND: Das Projekt definiert zwei Product Flavors ("play" und
@@ -49,8 +49,8 @@ param(
 
     # Universelle APKs bauen (ohne --split-per-abi). Mit
     # -SplitPerAbi kombinierbar: Flutter liefert bei --split-per-abi
-    # NUR Splits, fuer den vollstaendigen Satz braucht es zwei
-    # Durchlaeufe - das Skript erledigt beides in einem Lauf.
+    # NUR Splits, für den vollständigen Satz braucht es zwei
+    # Durchläufe - das Skript erledigt beides in einem Lauf.
     [switch]$UniversalApk,
     # Admin-UUID (entspricht dem ADMIN_UUID-Secret der admin-ban-Function):
     # Baut play+fdroid als universelle APKs mit --dart-define=ADMIN_UUID=...
@@ -68,8 +68,8 @@ param(
     # Der Fix ist kein Code, sondern ein Build-Flag:
     # THESTIA_ALLOW_SCREENSHOTS=true setzt im Manifest das Meta-Flag
     # "allowScreenshots", und MainActivity setzt FLAG_SECURE nur, wenn
-    # dieses Flag NICHT gesetzt ist. Der Build laeuft deshalb mit der
-    # Umgebungsvariable - und NUR fuer diesen einen Build.
+    # dieses Flag NICHT gesetzt ist. Der Build läuft deshalb mit der
+    # Umgebungsvariable - und NUR für diesen einen Build.
     [switch]$ScreenshotApk,
 
     [string]$OutRoot = "releases"
@@ -79,8 +79,8 @@ $ErrorActionPreference = "Stop"
 # Die Projektwurzel - der Ordner mit der pubspec.yaml.
 #
 # DER WEG: Das Skript liegt jetzt in tool/release//. Statt
-# feste Ebenen zu zaehlen, wird die Wurzel gesucht - so bricht der
-# Bau nicht, wenn sich die Tiefe aendert.
+# feste Ebenen zu zählen, wird die Wurzel gesucht - so bricht der
+# Bau nicht, wenn sich die Tiefe ändert.
 $projectRoot = $PSScriptRoot
 while ($projectRoot -and -not (Test-Path (Join-Path $projectRoot 'pubspec.yaml'))) {
     $projectRoot = Split-Path -Parent $projectRoot
@@ -91,9 +91,9 @@ Set-Location -LiteralPath $projectRoot
 # ---------------------------------------------------------------------
 # Gating: Geheimnisse nie als Parameter
 # ---------------------------------------------------------------------
-# ABBRUCH vor JEDER Ausfuehrung, nicht erst vor dem Admin-Block. Ein
+# ABBRUCH vor JEDER Ausführung, nicht erst vor dem Admin-Block. Ein
 # Parameter landet im Klartext in der PowerShell-History (unredigiert,
-# ueber Jahre) und ist waehrend des Laufs in der Prozessliste sichtbar.
+# über Jahre) und ist während des Laufs in der Prozessliste sichtbar.
 # Beides ist bei einem Geheimnis, das Admin-Zugriff freischaltet, keine
 # Kleinigkeit - und auf diesem Rechner stand der Wert achtmal in der
 # History, ohne dass jemand es bemerkt hat.
@@ -118,20 +118,20 @@ $VersionName = $pubspecLine.Matches[0].Groups[1].Value.Trim()
 $VersionCode = $pubspecLine.Matches[0].Groups[2].Value.Trim()
 $OutDir = Join-Path $OutRoot "v$VersionName"
 
-# Eigenes Build-Nummern-Fenster fuer den Admin-Build.
+# Eigenes Build-Nummern-Fenster für den Admin-Build.
 #
 # BEFUND (07.11.2026, Betreiber): "Aktuell ist bei Transit Spark bei
 # der Aussehen auswahl die Schrift noch immer in der Statusleiste.
 # Sind die APKs veraltet?" - Ja. Getestet wurde eine Admin-APK, die
-# noch Build 33 war, waehrend der Fix im Build 38 steckte. Beide
-# heissen "v0.10.0", beide sehen gleich aus, und die App zeigte
-# nirgends einen Build, mit dem man sie haette unterscheiden koennen.
+# noch Build 33 war, während der Fix im Build 38 steckte. Beide
+# heißen "v0.10.0", beide sehen gleich aus, und die App zeigte
+# nirgends einen Build, mit dem man sie hätte unterscheiden können.
 #
 # Der Admin-Build bekommt deshalb eine eigene Build-Nummer: Basis +
-# 9000. Er ist damit auf dem Geraet erkennbar (die Fusszeile zeigt
-# "Version 0.10.0 (9038)") und laesst sich ueber dem oeffentlichen
+# 9000. Er ist damit auf dem Gerät erkennbar (die Fusszeile zeigt
+# "Version 0.10.0 (9038)") und lässt sich über dem öffentlichen
 # Build installieren - Android verweigert ein Update, wenn die
-# Build-Nummer nicht groesser ist.
+# Build-Nummer nicht größer ist.
 #
 # Wichtig: Der Admin-Build geht NICHT in den Store. Die 9000 sind
 # nur ein Erkennungsmerkmal, keine Versionsplanung.
@@ -146,10 +146,10 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 # ---------------------------------------------------------------------
 # Konfiguration als --dart-define injizieren (Security 2026-09-26)
 # ---------------------------------------------------------------------
-# Hintergrund: `.env` ist KEIN App-Asset mehr. Eine gebuendelte
+# Hintergrund: `.env` ist KEIN App-Asset mehr. Eine gebündelte
 # Konfigurationsdatei liegt extrahierbar im APK/IPA. Die Werte werden
 # hier beim Bauen aus der lokalen `.env` gelesen und als Defines
-# uebergeben - das Ergebnis ist identisch im Build, aber nichts davon
+# übergeben - das Ergebnis ist identisch im Build, aber nichts davon
 # liegt als Datei im Bundle.
 #
 # `.env` fehlt -> harter Fehler statt "Bot-Schutz stillschweigend aus".
@@ -160,11 +160,11 @@ if (Test-Path -LiteralPath $EnvFile) {
         if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$') {
             $key = $Matches[1]
             $val = $Matches[2].Trim('"').Trim("'")
-            # Nur die vier oeffentlichen Konfigurationswerte - KEINE Secrets.
+            # Nur die vier öffentlichen Konfigurationswerte - KEINE Secrets.
             #
-            # ICE_FALLBACK_URLS: die oeffentlichen STUN-Server als
-            # Rueckfall fuer den Verbindungsaufbau (siehe
-            # docs/technik/TURN-SERVER.md). LEER = keine oeffentlichen STUN-
+            # ICE_FALLBACK_URLS: die öffentlichen STUN-Server als
+            # Rückfall für den Verbindungsaufbau (siehe
+            # docs/technik/TURN-SERVER.md). LEER = keine öffentlichen STUN-
             # Server - der Zustand, wenn Thestia einen eigenen TURN-
             # Server betreibt (dann soll die IP-Adresse niemand fremdes
             # sehen). Der Wert darf deshalb auch leer sein; dann wird
@@ -178,7 +178,7 @@ if ($key -in @("SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY",
     }
 }
 # Kein Release ohne Instanz-URL: sonst baut die App "unkonfiguriert" aus und
-# scheitert spaeter zur Laufzeit statt beim Build.
+# scheitert später zur Laufzeit statt beim Build.
 if (-not ($ConfigDefines | Where-Object { $_ -like "--dart-define=SUPABASE_URL=*" })) {
   Write-Warning "Keine SUPABASE_URL in .env gefunden."
   throw "Keine SUPABASE_URL in .env gefunden. Der Release-Build bricht bewusst ab, damit nicht unkonfiguriert ausgeliefert wird."
@@ -186,7 +186,7 @@ if (-not ($ConfigDefines | Where-Object { $_ -like "--dart-define=SUPABASE_URL=*
 
 # SECURITY: Ein Build ohne CAPTCHA-Sitekey liefert captchaEnabled == false,
 # also ein Release ganz ohne Bot-Schutz. Das war bisher still (CI, fremder
-# Rechner). Deshalb Abbruch - ABER nur, wenn laut Konfiguration ueberhaupt
+# Rechner). Deshalb Abbruch - ABER nur, wenn laut Konfiguration überhaupt
 # Bot-Schutz gewollt ist. `CAPTCHA_PROVIDER=none` ist der dokumentierte
 # Ausweg (z. B. F-Droid-Build) und darf nicht blockiert werden.
 $captchaProvider = "turnstile"
@@ -204,11 +204,11 @@ Write-Host "    Config: $($ConfigDefines.Count) Defines aus .env (nicht gebuende
 
 # WOHER KOMMEN DIE SIGNIER-ANGABEN? (04.11.2026)
 #
-# Die Passwoerter des Release-Keystores liegen nicht mehr in
-# android/key.properties, sondern in einer Secret-Datei ausserhalb des
-# Projekts (bzw. in Umgebungsvariablen fuer CI). Der Build sagt hier,
+# Die Passwörter des Release-Keystores liegen nicht mehr in
+# android/key.properties, sondern in einer Secret-Datei außerhalb des
+# Projekts (bzw. in Umgebungsvariablen für CI). Der Build sagt hier,
 # woher er sie genommen hat - ein Release, der ohne Signatur gebaut
-# wuerde, faellt damit sofort auf.
+# würde, fällt damit sofort auf.
 try {
     # Die Geheimnis-Hilfe liegt in tool/hilfen/.
     $secretStatus = & python (Join-Path $projectRoot 'tool\hilfen\keystore_secrets.py') --status 2>$null
@@ -258,7 +258,7 @@ function Test-ContainsText {
 
 function Get-AdminMarkerPath {
     # Datei, die protokolliert, welche Artefakte aus einem Admin-Build
-    # stammen. Sie enthaelt KEIN Geheimnis, nur Hashes - sie darf also
+    # stammen. Sie enthält KEIN Geheimnis, nur Hashes - sie darf also
     # gefahrlos im Arbeitsverzeichnis liegen.
     Join-Path "build" ".admin-artifacts.json"
 }
@@ -285,7 +285,7 @@ function Register-AdminArtifact {
             $raw = Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json
             foreach ($p in $raw.PSObject.Properties) { $list[$p.Name] = $p.Value }
         } catch {
-            # Beschaedigte Markerdatei ist kein Grund weiterzuarbeiten:
+            # Beschädigte Markerdatei ist kein Grund weiterzuarbeiten:
             # dann verlieren wir die Provenienz.
             throw "Admin-Marker nicht lesbar ($marker). Bitte loeschen: $marker"
         }
@@ -293,8 +293,8 @@ function Register-AdminArtifact {
     $list[$hash] = (Split-Path $Path -Leaf)
     # Ohne BOM schreiben. Windows PowerShell 5.1 setzt bei
     # Set-Content -Encoding UTF8 ein BOM, und JSON mit BOM lehnt der
-    # Python-Parser ab - die Datei waere danach unlesbar und der
-    # Check meldete "Provenienz nicht pruefbar", obwohl sie korrekt
+    # Python-Parser ab - die Datei wäre danach unlesbar und der
+    # Check meldete "Provenienz nicht prüfbar", obwohl sie korrekt
     # geschrieben wurde.
     [System.IO.File]::WriteAllText(
         (Join-Path (Get-Location) $marker),
@@ -411,7 +411,7 @@ function Copy-SplitApks {
 function Copy-Aab {
     param([string]$FlavorName)
     # Ab Flutter 3.35 mit Product Flavors: outputs/bundle/<flavor>Release/
-    # Aelter ohne Flavor: outputs/bundle/release/
+    # Älter ohne Flavor: outputs/bundle/release/
     $candidates = @(
         (Join-Path "build\app\outputs\bundle" "$FlavorName`Release\app-$FlavorName-release.aab"),
         (Join-Path "build\app\outputs\bundle\release" "app-$FlavorName-release.aab")
@@ -447,12 +447,12 @@ function Copy-Aab {
 # Ohne -UniversalApk und ohne -SplitPerAbi baut dieses Skript GAR NICHTS
 # und meldet am Ende trotzdem "Fertig". Ein Lauf ohne diese Schalter hat
 # die Universal-APKs unangetastet gelassen, sodass .apk und .aab aus
-# verschiedenen Staenden stammten. -SplitPerAbi allein baut NUR die
+# verschiedenen Ständen stammten. -SplitPerAbi allein baut NUR die
 # Split-APKs, die universellen werden dabei nicht angefasst.
 #
 # Deshalb vor und nach dem Bauen die Zeitstempel der Artefakte lesbar
 # ausgeben. Bei Release-Artefakten ist ein gemischter Build-Stand das
-# teuerstemoegliche Detail: man glaubt, man haette eine Aenderung
+# teuerstemoegliche Detail: man glaubt, man hätte eine Änderung
 # ausgeliefert, und hat sie nicht.
 $vorher = @{}
 if (Test-Path $OutDir) {
@@ -501,13 +501,13 @@ if ($SkipBuild) {
         Copy-SplitApks -FlavorName "fdroid"
     }
 
-    # --- 3) Play-App-Bundle (Pflichtformat fuer den Store) ---
+    # --- 3) Play-App-Bundle (Pflichtformat für den Store) ---
     if ($Aab -and $Flavor -in @("both", "play")) {
         Write-Host "==> Baue Play App-Bundle (.aab)..." -ForegroundColor Cyan
-        # Das alte Bundle vorher loeschen. Grund: Gradle haelt den
-        # Task sonst fuer "up-to-date" und schreibt die Datei NICHT
+        # Das alte Bundle vorher löschen. Grund: Gradle hält den
+        # Task sonst für "up-to-date" und schreibt die Datei NICHT
         # neu - der Zeitstempel des AAB blieb dann vom letzten Build
-        # stehen. Die Frische-Pruefung meldete daraufhin einen
+        # stehen. Die Frische-Prüfung meldete daraufhin einen
         # veralteten Store-Upload, obwohl der Inhalt aktuell war
         # (28.10.2026).
         $bundleDir = Join-Path "build\app\outputs" "bundle"
@@ -522,15 +522,15 @@ if ($SkipBuild) {
     # --- 4) Screenshot-APK (intern, Screenshots ERLAUBT) ---
     if ($ScreenshotApk) {
         Write-Host "==> Baue SCREENSHOT-APK (Screenshots erlaubt, nur intern)..." -ForegroundColor Cyan
-        # Die Umgebungsvariable muss WAEHREND des Builds gesetzt sein:
+        # Die Umgebungsvariable muss WÄHREND des Builds gesetzt sein:
         # Gradle liest sie beim Konfigurieren des Projekts und setzt
         # daraus den Manifest-Platzhalter "allowScreenshots".
         #
-        # Sie wird im finally-Zweig garantiert zurueckgesetzt. Sonst
-        # wuerde der unmittelbar folgende Admin-Build (und jeder
-        # spaetere Lauf im selben Prozess) ebenfalls mit
-        # Screenshot-Freigabe gebaut - und die Admin-APK waere damit
-        # eine APK, in der jeder Screenshot moeglich ist.
+        # Sie wird im finally-Zweig garantiert zurückgesetzt. Sonst
+        # würde der unmittelbar folgende Admin-Build (und jeder
+        # spätere Lauf im selben Prozess) ebenfalls mit
+        # Screenshot-Freigabe gebaut - und die Admin-APK wäre damit
+        # eine APK, in der jeder Screenshot möglich ist.
         $env:THESTIA_ALLOW_SCREENSHOTS = "true"
         try {
             flutter build apk --release --flavor play @ConfigDefines --obfuscate --split-debug-info=build/symbols/screenshot
@@ -563,7 +563,7 @@ if ($SkipBuild) {
         }
     }
 
-    # WICHTIG - Reihenfolge: die oeffentlichen Kopien oben passieren VOR
+    # WICHTIG - Reihenfolge: die öffentlichen Kopien oben passieren VOR
     # diesem Block, nie danach. Flutter leert build\app\outputs bei jedem
     # Aufruf, deshalb wird nach jedem Bau sofort kopiert.
     #
@@ -579,9 +579,9 @@ if ($SkipBuild) {
             if ($adminFlavor -eq "fdroid") { $defineArgs += "--dart-define=FDROID=true" }
             # Eigenes Symbolverzeichnis. Vorher landeten die
             # Admin-Symbole in build/symbols/<flavor> - demselben Ordner
-            # wie die oeffentlichen. Die Zeitstempel haben gezeigt, dass
-            # der Admin-Build sie ueberschrieben hat: die
-            # Crash-Symbolisierung des oeffentlichen Releases laeuft dann
+            # wie die öffentlichen. Die Zeitstempel haben gezeigt, dass
+            # der Admin-Build sie überschrieben hat: die
+            # Crash-Symbolisierung des öffentlichen Releases läuft dann
             # gegen die falschen Symbole. Gleiche Fehlerklasse wie bei
             # den APKs, nur unsichtbarer.
             $adminSymbols = "build/symbols/admin-$adminFlavor"
@@ -589,13 +589,13 @@ if ($SkipBuild) {
             if ($LASTEXITCODE -ne 0) { throw "Admin-Build ($adminFlavor) fehlgeschlagen." }
             $src = Join-Path "build\app\outputs\flutter-apk" "app-$adminFlavor-release.apk"
 
-            # Erste Schicht gegen die UUID im oeffentlichen Ablageort.
+            # Erste Schicht gegen die UUID im öffentlichen Ablageort.
             #
             # REIHENFOLGE WICHTIG (Security-Audit 2026-10-19): der Marker
             # wird VOR dem Kopieren registriert. Vorher stand die
             # Registrierung danach - wirft sie, bleibt der Admin-Build
             # im Flutter-Output liegen, ist NICHT im Marker, und ein
-            # spaeterer -SkipBuild-Lauf kopiert ihn unter oeffentlichem
+            # späterer -SkipBuild-Lauf kopiert ihn unter öffentlichem
             # Namen. Der Provenienz-Check ist genau der Check, der ohne
             # Kenntnis des Geheimnisses greifen soll - er muss also
             # VOR der Kopie stehen.
@@ -607,8 +607,8 @@ if ($SkipBuild) {
 
             # Admin-Baum restlos entfernen, NICHT nur die flutter-apk-
             # Kopie. Flutter kopiert outputs\apk\** nach
-            # outputs\flutter-apk\** - wer nur die Kopie loescht, hat
-            # beim naechsten Gradle-Lauf die Quelle wieder da, und
+            # outputs\flutter-apk\** - wer nur die Kopie löscht, hat
+            # beim nächsten Gradle-Lauf die Quelle wieder da, und
             # `flutter install` oder "Analyze APK" im Studio liefert
             # sie direkt aus. Genau so ist der v0.9.1-Fehler entstanden.
             $toRemove = @(

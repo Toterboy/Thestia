@@ -8,18 +8,18 @@ import 'package:thestia/generated/privacy_policy_en.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/screens/privacy/privacy_policy_text_screen.dart';
 
-/// Publish-Verzeichnis des Netlify-Projekts fuer thestia.de. Dieselbe
-/// Datei wird live ausgeliefert, deshalb wird sie hier geprueft und
-/// nicht nur der Dart-Text fuer die App.
+/// Publish-Verzeichnis des Netlify-Projekts für thestia.de. Dieselbe
+/// Datei wird live ausgeliefert, deshalb wird sie hier geprüft und
+/// nicht nur der Dart-Text für die App.
 final String publishPath =
     '${Directory.current.path}/passkey-assets/datenschutz.html';
 
-/// Google Play verlangt die Datenschutzerklaerung an ZWEI Stellen:
+/// Google Play verlangt die Datenschutzerklärung an ZWEI Stellen:
 ///
-/// 1. als oeffentlich erreichbare URL im Store-Eintrag und
+/// 1. als öffentlich erreichbare URL im Store-Eintrag und
 /// 2. als **Link oder Text innerhalb der App selbst**.
 ///
-/// Punkt 2 ist der hier abgesicherte. Ein Link allein genuegt nicht -
+/// Punkt 2 ist der hier abgesicherte. Ein Link allein genügt nicht -
 /// und ein Link ist genau die Form, die ausfallen kann: falsch
 /// eingetragen, umgezogen, nicht erreichbar. Deshalb steht der Text im
 /// Binary und wird gerendert.
@@ -31,8 +31,8 @@ void main() {
       reason: 'Ohne Bloecke gibt es keinen Text in der App.',
     );
 
-    // Mehr als eine Ueberschrift und ein Absatz: Play verlangt eine
-    // Erklaerung, keinen Satz.
+    // Mehr als eine Überschrift und ein Absatz: Play verlangt eine
+    // Erklärung, keinen Satz.
     expect(
       kPrivacyPolicyDe.where((b) => b.kind == 'h2').length,
       greaterThanOrEqualTo(5),
@@ -67,10 +67,10 @@ void main() {
 
   test('Die veroeffentlichte HTML-Datei hat keine Doppelungen', () {
     // Ein echter Fehler: im Renderer fehlte nach dem Heading-Zweig ein
-    // `continue`, wodurch jede Ueberschrift ZWEIMAL ausgegeben wurde -
+    // `continue`, wodurch jede Überschrift ZWEIMAL ausgegeben wurde -
     // einmal als h2 und einmal als Absatz mit demselben Text. Im
-    // Play-Eintrag steht so eine Erklaerung, in der jeder Abschnitt
-    // zweimal beginnt. Der Dart-Text fuer die App war nicht betroffen.
+    // Play-Eintrag steht so eine Erklärung, in der jeder Abschnitt
+    // zweimal beginnt. Der Dart-Text für die App war nicht betroffen.
     final html = File(publishPath).readAsStringSync();
 
     final headings = RegExp(
@@ -113,7 +113,7 @@ void main() {
       expect(html, isNot(contains('<script')));
       expect(RegExp(r'src\s*=\s*"http').hasMatch(html), isFalse);
       // Erlaubt sind Links zur eigenen Domain - auch Unterseiten wie
-      // auth.thestia.de. Vorher stand hier "(?!thestia)": das liess nur
+      // auth.thestia.de. Vorher stand hier "(?!thestia)": das ließ nur
       // Links, die mit "thestia" BEGINNEN, und flaggerte den Link auf
       // die eigene Seite auth.thestia.de als "externen Request".
       expect(
@@ -153,8 +153,8 @@ void main() {
   test('Kein Block bricht mitten im Satz ab', () {
     // Umbrochene Listenzeilen nicht mitzunehmen war ein echter Fehler
     // im Generator: der Satz zerfiel mitten im Wort. Ein Text, der mit
-    // einem Kleinbuchstaben endet und mit einem Grossbuchstaben oder
-    // klein beginnt, sieht danach aus - hart zu pruefen ist das nicht,
+    // einem Kleinbuchstaben endet und mit einem Großbuchstaben oder
+    // klein beginnt, sieht danach aus - hart zu prüfen ist das nicht,
     // aber ein Text darf nicht mit einem Komma-Fragment enden.
     for (final block in kPrivacyPolicyDe) {
       if (block.kind == 'table' || block.kind == 'table_head') continue;
@@ -217,7 +217,7 @@ void main() {
     );
     await tester.pump();
 
-    // Die Sterne duerfen nirgends im sichtbaren Text landen. Sie sind
+    // Die Sterne dürfen nirgends im sichtbaren Text landen. Sie sind
     // Auszeichnung, kein Inhalt.
     expect(find.textContaining('**'), findsNothing);
   });

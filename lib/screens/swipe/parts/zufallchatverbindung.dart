@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -84,7 +84,7 @@ extension _ZufallChatVerbindung on _RandomChatScreenState {
 
     // Eigene ID strikt aus der Supabase-Session (Fix): Stale Secure-Store-
     // Werte (alter Account, Demo-'me') erzeugen ein Signaling-Topic, das
-    // die echte auth.uid() nicht enthaelt -> Realtime-RLS verweigert den
+    // die echte auth.uid() nicht enthält -> Realtime-RLS verweigert den
     // Join und das Peer-Pinning verwirft jede Nachricht. Ohne Session
     // gibt es hier bewusst KEINEN Fallback mehr, sondern einen Fehler.
     final myId = SupabaseService.currentUser?.id;

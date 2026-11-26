@@ -24,7 +24,7 @@ class SecureTokenStore {
 
   // Security (Audit 2026-09-26): eigener Keystore-Namespace. Ohne ihn
   // teilten sich sechs Stores denselben Alias - und `resetOnError: true`
-  // (v11-Default) loeschte beim ersten Dekrypt-Fehler ALLES (globaler
+  // (v11-Default) löschte beim ersten Dekrypt-Fehler ALLES (globaler
   // Logout). Werte werden einmalig per migrateLegacyNamespaces() verschoben.
   static const _androidOptions = AndroidOptions(
     // flutter_secure_storage verschlüsselt automatisch über den Keystore.

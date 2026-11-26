@@ -453,7 +453,7 @@ class ChatService {
   /// BEFUND (09.11.2026, Betreiber): "Zudem sollen Chats mit
   /// ungelesenen Nachrichten hervorgehoben und oben in der Liste sein."
   ///
-  /// DER GRUND (live geprueft): Der Zähler wurde NIE erhöht - die
+  /// DER GRUND (live geprüft): Der Zähler wurde NIE erhöht - die
   /// einzige Fundstelle war [markRead] (das Zurücksetzen auf 0). Damit
   /// konnten Badge, Hervorhebung und Sortierung nie greifen.
   ///
@@ -470,11 +470,11 @@ class ChatService {
   /// Ersetzt eine Nachricht durch einen Hinweis („Diese Nachricht wurde
   /// gelöscht").
   ///
-  /// BEFUND (11.11.2026): "Nachricht fuer alle loeschen, aber ein Hinweis
+  /// BEFUND (11.11.2026): "Nachricht für alle löschen, aber ein Hinweis
   /// steht dann da" - wie bei Whatsapp. Der Server speichert nur die
   /// Tatsache; hier wird die NACHRICHT im lokalen Verlauf ersetzt.
   ///
-  /// Gibt true zurueck, wenn sich etwas geaendert hat.
+  /// Gibt true zurück, wenn sich etwas geändert hat.
   bool applyDeletion(
     String matchId,
     String messageId, {
