@@ -504,6 +504,22 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _persist();
   }
 
+  /// Der Ruhemodus: die App schweigt bis [bis] (null = der Ruhemodus
+  /// ist vorbei).
+  ///
+  /// DER WEG (Plan 0.11.0, "Begegnung statt Bildschirm"): Nach einem
+  /// Treffen, das beide bestätigt haben, kann der Nutzer die App für
+  /// den Abend stumm schalten: "Genießt die Zeit - Thestia schweigt bis
+  /// morgen." Die App feiert damit Abwesenheit statt Bindung zu erzeugen.
+  ///
+  /// LOKAL: Der Zustand bleibt auf diesem Gerät - er wird nicht auf den
+  /// Server gespiegelt (das ist eine Sache zwischen dem Nutzer und
+  /// seinem Telefon).
+  Future<void> setzeRuhemodus(DateTime? bis) async {
+    state = state.copyWith(ruhemodusBis: bis);
+    await _persist();
+  }
+
   /// Kurzer Willkommensscreen nach Registrierung wurde gezeigt.
   Future<void> markSignupWelcomeSeen() async {
     state = state.copyWith(signupWelcomeSeen: true);

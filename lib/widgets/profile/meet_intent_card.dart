@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/providers/dating_hour/meet_intent_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
 /// Vorschlag-Karte für ein echtes Treffen im Chat.
@@ -65,6 +66,7 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
         color: Colors.green,
         title: L10n.t(context, 'meet.metTitle'),
         body: L10n.t(context, 'meet.metBody'),
+        actions: <Widget>[_ruheAktion(context)],
       );
     }
 
@@ -122,6 +124,48 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
         ),
       ],
     );
+  }
+
+  /// Der Ruhemodus-Knopf (Plan 0.11.0, "Begegnung statt Bildschirm").
+  ///
+  /// DER WEG: "Nach einem Treffen, das BEIDE Personen bestätigt haben,
+  /// erscheint der sanfte Vorschlag 'Genießt die Zeit - Thestia schweigt
+  /// bis morgen': Benachrichtigungen stumm für den Abend, ruhiger
+  /// Bildschirm. Die App feiert Abwesenheit statt Bindung zu erzeugen."
+  ///
+  /// Der Ruhemodus endet am nächsten Morgen (acht Uhr). Er sitzt nur auf
+  /// diesem Gerät - er wird nicht auf den Server gespiegelt.
+  Widget _ruheAktion(BuildContext context) {
+    final settings = ref.watch(settingsProvider);
+    final bis = settings.ruhemodusBis;
+    final aktiv = bis != null && bis.isAfter(DateTime.now());
+    final notifier = ref.read(settingsProvider.notifier);
+
+    if (aktiv) {
+      return OutlinedButton.icon(
+        icon: const Icon(Icons.notifications_active_outlined),
+        label: Text(L10n.t(context, 'meet.ruheEndBtn')),
+        onPressed: () => notifier.setzeRuhemodus(null),
+      );
+    }
+
+    return OutlinedButton.icon(
+      icon: const Icon(Icons.nights_stay_outlined),
+      label: Text(L10n.t(context, 'meet.ruheBtn')),
+      onPressed: () {
+        final bisNeu = _bisMorgenMorgen();
+        notifier.setzeRuhemodus(bisNeu);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.t(context, 'meet.ruheBody'))),
+        );
+      },
+    );
+  }
+
+  /// Der Ruhemodus endet am nächsten Morgen um acht Uhr.
+  static DateTime _bisMorgenMorgen() {
+    final jetzt = DateTime.now();
+    return DateTime(jetzt.year, jetzt.month, jetzt.day + 1, 8);
   }
 
   Widget _planningCard(MeetIntentNotifier notifier) {

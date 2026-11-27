@@ -19,10 +19,42 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/widgets/profile/meet_intent_card.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
+
+/// Der Speicher im RAM (die Karte liest die Einstellungen daraus).
+class _FakeLocalStorage implements LocalStorage {
+  final Map<String, String> _daten = <String, String>{};
+
+  @override
+  Future<void> saveString(String key, String value) async =>
+      _daten[key] = value;
+
+  @override
+  Future<String?> getString(String key) async => _daten[key];
+
+  @override
+  Future<void> saveBool(String key, bool value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<bool?> getBool(String key) async =>
+      _daten[key] == null ? null : _daten[key] == 'true';
+
+  @override
+  Future<void> remove(String key) async => _daten.remove(key);
+
+  @override
+  Future<void> saveInt(String key, int value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<int?> getInt(String key) async =>
+      _daten[key] == null ? null : int.tryParse(_daten[key]!);
+}
 
 void main() {
   /// Der Ersatz-Server (der Stand kommt von dort).
@@ -73,6 +105,11 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: <Override>[
+          // DER SPEICHER: Die Karte liest die Einstellungen (der
+          // Ruhemodus nach dem Treffen).
+          localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+        ],
         child: MaterialApp(
           theme: ThemeData(useMaterial3: true),
           home: Scaffold(
@@ -242,6 +279,70 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text(L10n.tWithoutContext('meet.metTitle')), findsOneWidget);
+    });
+
+    // DER RUHEMODUS (Plan 0.11.0, "Begegnung statt Bildschirm"): Nach
+    // dem Treffen kann der Nutzer die App bis zum Morgen stumm schalten.
+    testWidgets('nach dem Treffen kann die App stumm schalten', (tester) async {
+      await zeigeKarte(
+        tester,
+        stand: <String, dynamic>{
+          'matchId': 7,
+          'eligible': true,
+          'myWants': true,
+          'partnerWants': true,
+          'metConfirmed': true,
+        },
+      );
+
+      expect(tester.takeException(), isNull);
+      final knopf = find.text(L10n.tWithoutContext('meet.ruheBtn'));
+      expect(
+        knopf,
+        findsOneWidget,
+        reason:
+            'Nach dem bestaetigten Treffen muss der Knopf kommen - '
+            '"Geniesst die Zeit, Thestia schweigt bis morgen".',
+      );
+
+      await tester.tap(knopf);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // Der Ruhemodus ist an - der Knopf bietet jetzt das Beenden an.
+      expect(
+        find.text(L10n.tWithoutContext('meet.ruheEndBtn')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('der Ruhemodus laesst sich wieder beenden', (tester) async {
+      await zeigeKarte(
+        tester,
+        stand: <String, dynamic>{
+          'matchId': 7,
+          'eligible': true,
+          'myWants': true,
+          'partnerWants': true,
+          'metConfirmed': true,
+        },
+      );
+
+      await tester.tap(find.text(L10n.tWithoutContext('meet.ruheBtn')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.text(L10n.tWithoutContext('meet.ruheEndBtn')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('meet.ruheBtn')),
+        findsOneWidget,
+        reason: 'Nach dem Beenden kommt der Knopf zum Einschalten zurueck.',
+      );
     });
   });
 }

@@ -16,6 +16,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Passkey;
 import 'package:thestia/providers/auth/auth_provider.dart';
 import 'package:thestia/providers/chat/chat_provider.dart';
 import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/models/settings/app_settings.dart';
 import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/privacy/delete_account_action.dart'
@@ -59,6 +60,16 @@ part 'parts/chathistorytilestate.dart';
 /// best effort.
 void _persistUiPrefs(WidgetRef ref) {
   scheduleUiPrefsServerSync(ref.read(settingsProvider));
+}
+
+/// Läuft der Ruhemodus noch (die App schweigt)?
+///
+/// DER RUHEMODUS (Plan 0.11.0, "Begegnung statt Bildschirm"): Nach einem
+/// Treffen schaltet der Nutzer die App bis zum Morgen stumm. Hier sieht
+/// er das und kann es beenden.
+bool _ruhemodusAktiv(AppSettings settings) {
+  final bis = settings.ruhemodusBis;
+  return bis != null && bis.isAfter(DateTime.now());
 }
 
 /// Einstellungen: Blind Mode, Foto-Freigabe, Sichtbarkeit, Theme, Logout.
@@ -280,6 +291,31 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   const Divider(),
                   const _UnifiedPushTile(),
+                  // DER RUHEMODUS (Plan 0.11.0, "Begegnung statt
+                  // Bildschirm"): Der Knopf im Chat schaltet die App nach
+                  // einem Treffen stumm. Hier sieht der Nutzer, dass sie
+                  // stumm ist, und kann sie wieder laut machen.
+                  if (_ruhemodusAktiv(settings)) ...[
+                    const Divider(),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.notifications_off_outlined),
+                      title: Text(L10n.t(context, 'meet.ruheTitle')),
+                      subtitle: Text(
+                        L10n.tf(context, 'meet.ruheAktiv', {
+                          'zeit':
+                              '${settings.ruhemodusBis!.day}.'
+                              '${settings.ruhemodusBis!.month}. '
+                              '${settings.ruhemodusBis!.hour.toString().padLeft(2, '0')}:'
+                              '${settings.ruhemodusBis!.minute.toString().padLeft(2, '0')}',
+                        }),
+                      ),
+                      trailing: TextButton(
+                        onPressed: () => notifier.setzeRuhemodus(null),
+                        child: Text(L10n.t(context, 'meet.ruheEndBtn')),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

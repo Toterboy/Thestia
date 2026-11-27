@@ -2,6 +2,7 @@ import 'package:thestia/models/profile/profile_visibility.dart';
 import 'package:thestia/models/settings/nachricht_ueberdenken.dart';
 import 'package:thestia/models/settings/tastatur_einstellungen.dart';
 import 'package:thestia/utils/common/constants.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 
 /// App-Einstellungen inkl. Blind-Mode und Privatsphäre-Optionen.
 ///
@@ -160,6 +161,23 @@ class AppSettings {
   /// Einmalig: nach dem Schließen bleibt es in den Einstellungen
   /// erreichbar und wird nicht erneut angeboten.
   final bool chatBackgroundSeen;
+
+  /// Bis wann die App schweigt (der Ruhemodus nach einem Treffen).
+  ///
+  /// DER WEG (Plan 0.11.0, "Begegnung statt Bildschirm"): "Nach einem
+  /// Treffen, das BEIDE Personen bestätigt haben, erscheint der sanfte
+  /// Vorschlag 'Genießt die Zeit - Thestia schweigt bis morgen':
+  /// Benachrichtigungen stumm für den Abend, ruhiger Bildschirm. Die App
+  /// feiert Abwesenheit statt Bindung zu erzeugen."
+  ///
+  /// Solange dieser Zeitpunkt in der Zukunft liegt, kommen keine
+  /// Benachrichtigungen mehr. Die Anrufe kommen trotzdem an - ein
+  /// Anruf ist eine Einladung, keine Forderung.
+  ///
+  /// LOKAL: Der Ruhemodus steht nur auf diesem Gerät. Er wird nicht
+  /// gespiegelt - das ist eine Sache zwischen dem Nutzer und seinem
+  /// Telefon.
+  final DateTime? ruhemodusBis;
 
   /// Veröffentlichen, dass andere meine (grobe) Entfernung sehen
   /// dürfen (v0.10.0)?
@@ -335,6 +353,9 @@ class AppSettings {
     this.signupWelcomeSeen = false,
     this.datingSafetyEducationCompleted = false,
     this.chatBackgroundSeen = false,
+    // Der Ruhemodus nach einem Treffen (Plan 0.11.0) - standardmäßig
+    // aus.
+    this.ruhemodusBis,
     // v0.10.0: Datenschutz-Vorgabe. Nichts veröffentlichen, was der
     // Nutzer nicht ausdrücklich erlaubt hat.
     this.showDistance = false,
@@ -414,6 +435,7 @@ class AppSettings {
       datingSafetyEducationCompleted:
           json['datingSafetyEducationCompleted'] as bool? ?? false,
       chatBackgroundSeen: json['chatBackgroundSeen'] as bool? ?? false,
+      ruhemodusBis: dateOf(json, ['ruhemodusBis']),
       // Fehlende Schlüssel (alte Installation) gelten als "aus" -
       // das ist die datenschutzfreundliche Richtung.
       showDistance: json['showDistance'] as bool? ?? false,
@@ -481,6 +503,7 @@ class AppSettings {
     'signupWelcomeSeen': signupWelcomeSeen,
     'datingSafetyEducationCompleted': datingSafetyEducationCompleted,
     'chatBackgroundSeen': chatBackgroundSeen,
+    'ruhemodusBis': ruhemodusBis?.toIso8601String(),
     'showDistance': showDistance,
     'transitShowName': transitShowName,
     'transitShowNameSet': transitShowNameSet,
@@ -516,6 +539,10 @@ class AppSettings {
   /// Sentinel für [tastaturFarbe]: null bedeutet "Farbe löschen"
   /// (zurück auf keine eigene Farbe).
   static const _tastaturFarbeUnset = Object();
+
+  /// Sentinel für [ruhemodusBis]: null bedeutet "der Ruhemodus ist
+  /// vorbei" (der Nutzer hat ihn beendet).
+  static const _ruhemodusBisUnset = Object();
 
   AppSettings copyWith({
     bool? blindModeEnabled,
@@ -568,6 +595,7 @@ class AppSettings {
     String? tastaturBelegung,
     String? tastaturStil,
     Object? tastaturFarbe = _tastaturFarbeUnset,
+    Object? ruhemodusBis = _ruhemodusBisUnset,
   }) {
     return AppSettings(
       // Blind Mode ist fest AN - der übergebene Wert wird
@@ -620,6 +648,9 @@ class AppSettings {
       datingSafetyEducationCompleted:
           datingSafetyEducationCompleted ?? this.datingSafetyEducationCompleted,
       chatBackgroundSeen: chatBackgroundSeen ?? this.chatBackgroundSeen,
+      ruhemodusBis: identical(ruhemodusBis, _ruhemodusBisUnset)
+          ? this.ruhemodusBis
+          : ruhemodusBis as DateTime?,
       showDistance: showDistance ?? this.showDistance,
       transitShowName: transitShowName ?? this.transitShowName,
       transitShowNameSet: transitShowNameSet ?? this.transitShowNameSet,

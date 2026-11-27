@@ -134,6 +134,15 @@ const Map<String, Map<String, String>> stringsBegegnungen = {
         'statt nur Online-Reden.',
     'meet.metBtn': 'Wir haben uns getroffen',
     'meet.metTitle': 'Schön, dass ihr euch getroffen habt! 🎉',
+    // Der Ruhemodus nach dem Treffen (Plan 0.11.0).
+    'meet.ruheBody':
+        'Thestia schweigt bis morgen - keine Benachrichtigungen, kein '
+        'Drängen. Genießt die Zeit zusammen.',
+    'meet.ruheBtn': 'Thestia schweigt bis morgen',
+    'meet.ruheTitle': 'Ruhemodus an',
+    'meet.ruheEndBtn': 'Ruhe beenden',
+    'meet.ruheAktiv':
+        'Thestia schweigt gerade (bis {zeit}) - keine Benachrichtigungen.',
     'meet.noThanks': 'Doch lieber nicht',
     'meet.noteHint': 'Notiz (z. B. "Samstag, 15 Uhr, Café X")',
     'meet.planningTitle': 'Ihr wollt euch treffen! 🎉',
@@ -320,6 +329,15 @@ const Map<String, Map<String, String>> stringsBegegnungen = {
         'chatting online.',
     'meet.metBtn': 'We have met',
     'meet.metTitle': 'Great that you met! 🎉',
+    // The quiet mode after the meeting (plan 0.11.0).
+    'meet.ruheBody':
+        'Thestia stays quiet until tomorrow - no notifications, no '
+        'nagging. Enjoy the time together.',
+    'meet.ruheBtn': 'Thestia stays quiet until tomorrow',
+    'meet.ruheTitle': 'Quiet mode on',
+    'meet.ruheEndBtn': 'End the quiet',
+    'meet.ruheAktiv':
+        'Thestia is quiet right now (until {zeit}) - no notifications.',
     'meet.noThanks': 'Rather not',
     'meet.noteHint': 'Note (e.g. "Saturday, 3pm, café X")',
     'meet.planningTitle': 'You want to meet! 🎉',

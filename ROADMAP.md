@@ -216,6 +216,18 @@ Wünsche stehen noch aus.
 
 ### Wünsche
 
+- [x] **Der Offline-Knopf nach dem echten Treffen** (Plan 0.11.0,
+  „Begegnung statt Bildschirm"): Wenn BEIDE das Treffen bestätigt haben,
+  kommt der sanfte Vorschlag „Thestia schweigt bis morgen" – die App
+  stellt die Benachrichtigungen bis zum nächsten Morgen (8 Uhr) stumm.
+  Die App feiert damit Abwesenheit statt Bindung zu erzeugen. Die Anrufe
+  kommen trotzdem an (ein Anruf ist eine Einladung, keine Forderung).
+  Der Zustand bleibt auf dem Gerät und ist in den Einstellungen sichtbar
+  (und dort auch vorzeitig zu beenden).
+  *Umsetzung:* `lib/widgets/profile/meet_intent_card.dart` (der Knopf),
+  `lib/services/server/notification_service.dart` (die Stille),
+  `lib/models/settings/app_settings.dart` (der Stand). Ohne Server-
+  änderung: das bestätigte Treffen gibt es schon (`metConfirmed`).
 - [x] **Die App-Tastatur sieht jetzt aus wie die Tastatur des Systems.**
   Vorher sah sie „nicht ansatzweise so aus wie die normale von Android":
   die Buchstaben waren klein und fett, alle Tasten sahen gleich aus und

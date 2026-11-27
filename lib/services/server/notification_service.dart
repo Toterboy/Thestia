@@ -206,6 +206,17 @@ class NotificationService {
   bool _isEnabledFor(WidgetRef ref, NotificationType type) {
     final settings = ref.read(settingsProvider);
     if (!settings.notificationsEnabled) return false;
+    // DER RUHEMODUS (Plan 0.11.0, "Begegnung statt Bildschirm"): Nach
+    // einem echten Treffen kann der Nutzer die App stumm schalten - "bis
+    // morgen". Die App soll Abwesenheit feiern statt Bindung zu erzeugen.
+    //
+    // Die Anrufe kommen trotzdem an (ein Anruf ist eine Einladung, keine
+    // Forderung) - sie laufen über das Signaling, nicht über den
+    // Benachrichtigungsdienst.
+    final ruhemodusBis = settings.ruhemodusBis;
+    if (ruhemodusBis != null && ruhemodusBis.isAfter(DateTime.now())) {
+      return false;
+    }
     switch (type) {
       case NotificationType.matches:
         return settings.notifyMatches;

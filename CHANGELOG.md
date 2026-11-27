@@ -122,6 +122,22 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   einem schmalen Telefon zwei Pixel über den Rand (Flutter malte die
   gelb-schwarzen Streifen daneben).
 
+### Neu (27.11.2026) – Der Offline-Knopf nach dem Treffen
+
+- **Nach einem echten Treffen kann die App bis zum Morgen schweigen.**
+  Haben BEIDE das Treffen bestätigt, kommt im Chat der sanfte Vorschlag
+  „Thestia schweigt bis morgen": Bis zum nächsten Morgen (8 Uhr) kommen
+  keine Benachrichtigungen mehr. Die App soll damit Abwesenheit feiern
+  statt Bindung zu erzeugen – der Nutzer ist beim Treffen, nicht am
+  Bildschirm. Die Anrufe kommen trotzdem an: ein Anruf ist eine
+  Einladung, keine Forderung.
+- Der Zustand bleibt auf dem Gerät (er wird nicht auf den Server
+  gespiegelt) und ist in den Einstellungen zu sehen – dort lässt er sich
+  auch vorzeitig beenden.
+- Der Knopf steht auf der Karte, die das bestätigte Treffen ohnehin
+  schon zeigt. Es ist keine neue Server-Datenstruktur nötig: dass beide
+  das Treffen bestätigt haben, weiß die App schon.
+
 ### Neu (27.11.2026) – Die Tastatur wird zur Systemtastatur
 
 - **Die eigene App-Tastatur sieht jetzt aus wie die Tastatur des

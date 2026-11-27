@@ -239,6 +239,8 @@ void main() {
     bool notifyLikes = true,
     bool notifyMatches = true,
     bool notifyDatingHour = true,
+    // DER RUHEMODUS: Die App schweigt bis zu diesem Zeitpunkt.
+    DateTime? ruhemodusBis,
   }) async {
     final container = ProviderContainer(
       overrides: [localStorageProvider.overrideWithValue(_FakeLocalStorage())],
@@ -250,6 +252,7 @@ void main() {
     await notifier.setNotifyLikes(notifyLikes);
     await notifier.setNotifyMatches(notifyMatches);
     await notifier.setNotifyDatingHour(notifyDatingHour);
+    await notifier.setzeRuhemodus(ruhemodusBis);
 
     late WidgetRef ref;
     await tester.pumpWidget(
@@ -445,6 +448,64 @@ void main() {
         '/dating-hour',
         reason: 'Die Event-Erinnerung gehoert zum Dating-Hour-Screen',
       );
+    });
+  });
+
+  // DER RUHEMODUS (Plan 0.11.0, "Begegnung statt Bildschirm"): Nach
+  // einem Treffen schweigt die App bis zum Morgen - "die App feiert
+  // Abwesenheit statt Bindung zu erzeugen".
+  testWidgets('im Ruhemodus kommen keine Benachrichtigungen', (tester) async {
+    await alsAndroid(() async {
+      final ref = await mitEinstellungen(
+        tester,
+        ruhemodusBis: DateTime.now().add(const Duration(hours: 8)),
+      );
+
+      await NotificationService.instance.showMatchNotification(
+        id: 1,
+        title: 'Match',
+        body: 'Neuer Match',
+        ref: ref,
+      );
+      await NotificationService.instance.showLikeNotification(
+        id: 2,
+        title: 'Like',
+        body: 'Mag dich',
+        ref: ref,
+      );
+      await NotificationService.instance.showMessageNotification(
+        id: 3,
+        title: 'Nachricht',
+        body: 'Hallo',
+        ref: ref,
+      );
+
+      expect(
+        plugin.gezeigt,
+        isEmpty,
+        reason:
+            'Im Ruhemodus schweigt die App - sonst bringt jede Meldung '
+            'zurueck zum Bildschirm.',
+      );
+    });
+  });
+
+  testWidgets('nach dem Ruhemodus kommen die Meldungen wieder', (tester) async {
+    await alsAndroid(() async {
+      final ref = await mitEinstellungen(
+        tester,
+        // Der Ruhemodus ist VORBEI - die Benachrichtigungen laufen wieder.
+        ruhemodusBis: DateTime.now().subtract(const Duration(hours: 1)),
+      );
+
+      await NotificationService.instance.showMatchNotification(
+        id: 1,
+        title: 'Match',
+        body: 'Neuer Match',
+        ref: ref,
+      );
+
+      expect(plugin.gezeigt, hasLength(1));
     });
   });
 
