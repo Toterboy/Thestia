@@ -1,0 +1,11 @@
+Die Tastatur wird zur Systemtastatur - und du kannst wechseln
+
+Die eigene Tastatur der App sieht jetzt aus wie die Tastatur deines Handys: helle Buchstabentasten, dunklere Funktionstasten, eine farbige Eingabetaste und ein Schatten unter jeder Taste. Mit dem Knopf neben dem Eingabefeld wechselst du jederzeit zwischen der Tastatur der App und der deines Systems - die App-Tastatur sieht dabei weiterhin keinen einzigen Buchstaben deiner Nachrichten.
+
+Und: die Sync-Dates (Begegnung statt Bildschirm)
+
+Zwei Menschen, die weit auseinander wohnen, treffen sich zur selben Zeit an verschiedenen Orten: Beide gehen spazieren und telefonieren dabei, beide starten denselben Film, beide kochen dasselbe Rezept. Das Ideen-Rad schlägt das immer vor, und während des Dates ist nur dieser Chat benutzbar - die App soll Abwesenheit feiern statt Bindung zu erzeugen. Der Anruf-Screen zeigt jetzt, wie lange man schon telefoniert.
+
+Drei Fehler aus dem Testen behoben
+
+Im Interessen-Bereich stand der Text neben dem Knopf "Re-Funke" untereinander - jeder Buchstabe in einer eigenen Zeile. Die Vorschau deines eigenen Profils hatte keinen Hintergrund (man sah durch sie auf den Profil-Screen dahinter). Und die Tastatur-Einstellung galt nicht überall.

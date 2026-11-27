@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:thestia/models/dating_hour/sync_date.dart';
 import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// Lädt und ändert das Sync-Date eines Matches.
 ///
@@ -79,14 +80,12 @@ class SyncDateService {
   Future<void> decline(String matchId) async {
     final id = int.tryParse(matchId);
     if (id == null || !SupabaseService.isInitialized) return;
-    try {
+    await bestEffort('syncDateService.decline', () async {
       await _client.rpc(
         'set_sync_date',
         params: {'p_match_id': id, 'p_decline': true},
       );
-    } catch (e) {
-      // Der Serverstand ist dann eben noch da - kein Absturz.
-    }
+    });
   }
 }
 
