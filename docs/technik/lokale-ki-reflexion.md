@@ -9,27 +9,46 @@ Aus der Roadmap (Stand 23.11.2026) in ein eigenes Dokument verschoben.
 > Konto, keine Weitergabe: Was im Sanctuary geschrieben wird, bleibt im
 > RAM (optional lokal AES-verschlüsselt).
 
-### 1. Modell-Management & Download-Pipeline
+### 1. Modell-Management & Import
+
+> **ENTSCHEIDUNG (Betreiber, 27.11.2026): "KI Modelle muss man einfach
+> selbst herunterladen. Ein paar könnte man aber vielleicht als
+> Empfehlung nennen oder so."**
+>
+> Die App lädt **kein** Modell selbst herunter. Der Nutzer holt die
+> GGUF-Datei selbst (Browser, Dateimanager, PC) und importiert sie in
+> die App. Die App nennt dazu ein paar **Empfehlungen** – Name,
+> Größe, RAM-Bedarf, Lizenz und woher man das Modell bekommt.
+>
+> **WARUM DAS ALSO GUT IST:** Damit ruft die App keinen fremden Dienst
+> ab – kein Metadatenabruf, keine IP-Adresse an einen US-Anbieter. Das
+> Drittlandproblem (0.12.0 führt US-Cloud-Abhängigkeit als
+> Ausschlusskriterium) stellt sich damit nicht. Wer das Modell
+> herunterlädt, entscheidet das selbst – und kann einen eigenen Spiegel
+> nehmen.
 
 - [ ] **Stufenbasierte Modellauswahl**:
       * Stufe 1 (Kompakt / Akkusparend): Gemma 4 E2B, Spark-X2.5-1.7B
         (Text-only)
       * Stufe 2 (Erweitert / Tiefgründig): Qwen 3.5-4B, Gemma 4 E4B,
         Spark-X2.5-4B
-- [ ] **Quantisierungs-Varianten**: Jedes Modell ist wählbar in
+- [ ] **Quantisierungs-Varianten**: Jedes Modell gibt es in
       Q4_K_M (Standard, Balance), Q5_K_M / Q6_K (höhere Qualität) und
-      Q3_K_S / IQ3 (wenig Speicher) – der Downloader zeigt Größe/RAM-
-      Bedarf je Variante und warnt bei zu knappem Speicher
+      Q3_K_S / IQ3 (wenig Speicher) – die **Empfehlungsliste** zeigt
+      Größe und RAM-Bedarf je Variante und warnt vor zu knappem
+      Speicher
 - [ ] **Multimodal-Kennzeichnung (Vision-Badge)**: Modelle mit
       Bilderkennung werden optisch gekennzeichnet, um Screenshots von
       Chats zwecks Interpretation und Formulierungshilfe analysieren zu
       können
-- [ ] **Hugging-Face-Downloader**: Direkter Download der GGUF-Dateien mit
-      Fortschrittsanzeige, Hash-Prüfung, Abbruch-/Fortsetzungslogik und
-      Speicherwarnung
-- [ ] **Eigener Modell-Import**: Manuelle Eingabe beliebiger
-      Hugging-Face-Repo-URLs oder lokaler Import von GGUF-Dateien aus dem
-      Smartphone-Speicher
+- [ ] **Die Empfehlungsliste** (die einzige Stelle, an der die App
+      auf Modelle hinweist): Name, Herkunft, Größe, RAM-Bedarf, Lizenz
+      und ein Hinweis, woher man die Datei bekommt. Reine Information –
+      die App lädt nichts.
+- [ ] **Eigener Modell-Import**: Der Nutzer wählt die GGUF-Datei aus dem
+      Smartphone-Speicher (Downloads, Dateimanager, PC-Kabel). Die App
+      kopiert sie in ihr eigenes Verzeichnis, prüft sie (gültiges GGUF,
+      Größe, freier Speicher) und bietet sie an
 - [ ] **Eigene-Modell-Erkennung**: Wird ein importiertes Modell erkannt,
       das einem der kuratierten Vorschlagsmodelle entspricht (Datei-Hash
       bzw. Repo-/Dateiname-Muster), übernimmt die App automatisch dessen
@@ -47,15 +66,12 @@ Aus der Roadmap (Stand 23.11.2026) in ein eigenes Dokument verschoben.
       llama.cpp-Build auskommt – der gehört als Alternative geprüft,
       weil er RAM und Akku deutlich schont. Beides ohne jede externe
       Serververbindung
-- [ ] **Hugging-Face-Downloader: Drittlandproblem lösen.** Modelle über
-      Hugging Face zu beziehen ist die einfachste Variante und die
-      bequemste, aber der Anbieter ist US-gestützt, während 0.12.0
-      US-Cloud-Abhängigkeit ausdrücklich als Ausschlusskriterium führt
-      (CLOUD Act). Zusätzlich übermittelt jeder Metadatenabruf die
-      IP-Adresse des Nutzers an einen US-Dienst. Zu entscheiden:
-      eigener EU-Spiegel, oder die Aussage in 0.12.0 relativieren.
-      Spark-X2.5 stammt von iFlytek (CN) – die Governance-Frage ist
-      damit nicht auf US-Anbieter begrenzt
+- [x] **Drittlandproblem: entschieden (27.11.2026).** Die App lädt
+      kein Modell herunter – der Nutzer tut das selbst. Damit gibt es
+      keinen Metadatenabruf und keine IP-Adresse bei einem US-Anbieter
+      durch die App. Die Empfehlungsliste nennt nur, woher man die
+      Datei bekommt; die Wahl des Anbieters liegt beim Nutzer. (Wer
+      will, nimmt einen eigenen Spiegel – die App ist dabei neutral.)
 - [ ] **Modellgrößen gegen den Speicher dokumentieren** (Gemma 4 E2B
       mobil ca. 1,1 GB, E4B mobil ca. 2,5 GB; Q4_0 2,9 bzw. 4,5 GB):
       der Downloader warnt bisher nur vor RAM-Mangel, nicht vor

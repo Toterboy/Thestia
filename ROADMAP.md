@@ -142,6 +142,12 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
 
 ### 0.11.0 – Emotionaler Rückzugsort (Sanctuary) & lokaler KI-Reflexions-Chat
 
+> **Entschieden am 27.11.2026:** Die App lädt **kein** KI-Modell selbst
+> herunter – der Nutzer lädt es selbst und importiert es. Die App nennt
+> ein paar **Empfehlungen** (Name, Größe, RAM-Bedarf, Lizenz, Herkunft).
+> Damit ruft die App keinen US-Dienst ab (das Drittlandproblem stellt
+> sich nicht).
+
 - Ein **vollständig offline** geschützter Raum zur Selbstreflexion bei
   Frust, Zurückweisung oder emotionalen Tiefs – betrieben von rein lokalen
   Sprachmodellen. Kein Server, kein Konto, keine Weitergabe: Was im
@@ -247,12 +253,11 @@ Wünsche stehen noch aus.
   das Blenden der Kacheln, die Reaktion auf das Senden, der Wechsel
   zwischen den Reitern).
 
-### Dazu die Frage des Betreibers
+### Die Frage des Betreibers ist beantwortet
 
-- [ ] **Die Profilvorschau soll zu den Profileinstellungen unter „Mein
-  Profil" gehören** und dort zeigen, was andere über mich sehen. Die
-  genaue Zuordnung (Vorschau in den Einstellungen oder ein Weg dorthin
-  aus dem Profilmenü) ist noch nicht entschieden.
+- [x] **Die Profilvorschau bleibt, wo sie ist** (im Profilmenü unter
+  „Profil Vorschau" – „So sehen dich andere"). *Entschieden am
+  27.11.2026.*
 
 ## Ideen (nicht eingeplant)
 
