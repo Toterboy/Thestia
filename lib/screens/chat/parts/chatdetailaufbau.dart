@@ -130,6 +130,10 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
       dismissed: _milestoneDismissed,
     );
 
+    // DIE ANTIZIPATION (Plan 0.11.0): Der Termin steht unter der
+    // Kopfzeile - statt Chat-Metriken.
+    final syncDate = termin;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -227,6 +231,7 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
             ],
           ),
         ),
+        bottom: SyncDateAntizipation.unten(syncDate),
         actions: [
           // NUTZERWUNSCH "zu viele Symbole, Name abgeschnitten": Die
           // AppBar-Buttons sind auf ZWEI kompakte reduziert (Anruf +
@@ -749,15 +754,9 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
                   matchId: widget.matchId,
                   partnerName: partner.name,
                 ),
-              // Das Sync-Date (Plan 0.11.0, "Begegnung statt Bildschirm"):
-              // Zwei Menschen, die weit auseinander wohnen, treffen sich zur
-              // selben Zeit an verschiedenen Orten. Die Karte steht im Chat
-              // (mit dem gemeinsamen Countdown und dem Anruf-Knopf).
-              SyncDateCard(
-                matchId: widget.matchId,
-                partnerName: partner.name,
-                onCall: _call,
-              ),
+              // Das Sync-Date (Plan 0.11.0): die Karte mit dem
+              // gemeinsamen Countdown und dem Anruf-Knopf.
+              syncDateKarte,
               // Vorstellung des Partners (Text + Audio): Beide Seiten können
               // die Vorstellung im Chat anhören (v0.9.0-Feedback - die Person,
               // die den Funke erhalten hat, hörte sie bisher nur im

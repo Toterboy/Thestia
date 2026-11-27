@@ -13,6 +13,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/dating_hour/sync_date.dart';
@@ -50,6 +52,24 @@ class _FakeService implements SyncDateService {
 }
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await SharedPreferences.getInstance();
+    // DER SERVER: Die Karte liest den Termin über den Server - ohne
+    // initialisierten Supabase gibt es keinen Client (und die Karte
+    // bleibt leer).
+    await supabase.Supabase.initialize(
+      url: 'https://example.supabase.co',
+      publishableKey: 'test-key',
+      authOptions: const supabase.FlutterAuthClientOptions(
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUri: false,
+      ),
+    );
+  });
+
   /// Das Date (so sieht der Serverstand aus).
   SyncDate date({
     bool proposedByMe = false,

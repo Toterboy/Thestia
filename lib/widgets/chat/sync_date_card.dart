@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/providers/dating_hour/sync_date_provider.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
 
 /// Die Karte des Sync-Dates im Chat.
 ///
@@ -109,6 +110,11 @@ class _SyncDateCardState extends ConsumerState<SyncDateCard> {
     // LOKALE KONTAKTE (QR) haben keine Datenbank-Match-ID - für sie
     // gibt es kein Sync-Date (und überhaupt keinen Serverstand).
     if (int.tryParse(widget.matchId) == null) {
+      return const SizedBox.shrink();
+    }
+    // OHNE SERVER (im Test, im Demo-Modus) gibt es keinen Client - und
+    // ohne Client kein Sync-Date.
+    if (!SupabaseService.isInitialized) {
       return const SizedBox.shrink();
     }
     // DIE SPERRE: Solange das Date läuft, ist nur dieser Chat

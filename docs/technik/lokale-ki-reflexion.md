@@ -152,9 +152,13 @@ Aus der Roadmap (Stand 23.11.2026) in ein eigenes Dokument verschoben.
 > * **Das Date endet mit dem Anruf.** Der Anruf-Screen zeigt, wie lange
 >   man schon telefoniert.
 >
-> **Noch offen:** die Antizipation (der Chat-Header zeigt die Vorfreude,
-> wenn ein Termin steht) - sie braucht dieselbe Zeitangabe und kommt mit
-> dem nächsten Stück.
+> **Die Antizipation steht in der Chat-Kopfzeile:** sobald ein Termin
+> steht, steht die Vorfreude da ("Termin: 27.11. 20:00 - freut euch auf
+> das Date!"), läuft das Date gerade, steht das da. Der Termin ist das,
+> worauf man sich freut - nicht die Chat-Metriken.
+>
+> **Noch offen:** der sanfte Nudge zu Anruf und Sprachnachricht bei
+> Distanz-Funken (die zweite Hälfte der Antizipation).
 
 - [ ] **Sync-Dates** (Distanz-taugliche Mini-Dates im Ideen-Rad): Katalog
       von gemeinsamen Aktivitäten für denselben Zeitpunkt trotz Distanz –

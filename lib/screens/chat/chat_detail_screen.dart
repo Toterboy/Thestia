@@ -57,6 +57,7 @@ import 'package:thestia/widgets/profile/intro_audio_player.dart';
 import 'package:thestia/widgets/profile/meet_intent_card.dart';
 import 'package:thestia/widgets/profile/profile_widgets.dart';
 import 'package:thestia/widgets/chat/secure_composer.dart';
+import 'package:thestia/widgets/chat/sync_date_antizipation.dart';
 import 'package:thestia/widgets/chat/sync_date_card.dart';
 import 'package:thestia/widgets/chat/sync_date_zeitwahl.dart';
 import 'package:thestia/models/dating_hour/sync_date.dart';
@@ -91,6 +92,7 @@ part 'parts/swipetoclosestate.dart';
 part 'parts/chatimage.dart';
 part 'parts/imagebubbleplaceholder.dart';
 part 'parts/chatdetailaufbau.dart';
+part 'parts/chatdetailsyncdate.dart';
 
 /// Präfix für geteilte Eisbrecher-Fragen im Textkanal (v0.9.1): Beide Seiten
 /// stellen solche Nachrichten als gemeinsame mittige Bubble dar.

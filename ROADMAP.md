@@ -198,9 +198,14 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   `lib/widgets/chat/sync_date_card.dart`,
   `lib/widgets/chat/sync_date_zeitwahl.dart`, die Migration 223 und die
   Umleitung in `lib/routing/app_router.dart`.
-- **Offen:** die Antizipation (der Chat-Header zeigt die Vorfreude, wenn
-  ein Termin steht) und der Offline-Knopf nach dem echten Treffen (die
-  Grundlage steht: der Ruhemodus).
+- **Die Vorfreude steht in der Chat-Kopfzeile:** sobald ein Termin steht,
+  steht er da ("Termin: 27.11. 20:00 - freut euch auf das Date!"), und
+  läuft das Date gerade, steht das da. Das ist die Antizipation statt
+  Chat-Metriken: der Termin ist das, worauf man sich freut.
+- **Offen:** der sanfte Nudge zu Anruf und Sprachnachricht bei
+  Distanz-Funken (die zweite Hälfte der Antizipation) und der
+  Offline-Knopf nach dem echten Treffen (die Grundlage steht: der
+  Ruhemodus).
 
 ### 0.12.0 – Web-Bridge, Transit-Reachability & Zero-Install-Gast-Verbindungen
 

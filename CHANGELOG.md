@@ -140,6 +140,10 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   ist, soll nicht vom Handy weggezogen werden.
 - **Das Date endet mit dem Anruf.** Der Anruf-Screen zeigt, wie lange man
   schon telefoniert (groß und gut lesbar, mit Stunden nach einer Stunde).
+- **Die Vorfreude steht in der Chat-Kopfzeile:** sobald ein Termin steht,
+  steht er da („Termin: 27.11. 20:00 - freut euch auf das Date!"), und
+  läuft das Date gerade, steht das da. Das ist die Antizipation statt
+  Chat-Metriken: der Termin ist das, worauf man sich freut.
 - *Hinweis für den Betrieb:* Die neue Migration 223 muss auf dem Server
   angewandt werden – erst dann kennen die beiden Seiten die Sync-Dates.
 
