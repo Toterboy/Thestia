@@ -595,7 +595,9 @@ WORTE: list[tuple[str, str]] = [
     (r"ueberleben", "überleben"),
     (r"waehlbar", "wählbar"),
     (r"drueckt", "drückt"),
-    (r"grauer", "graür"),
+    # ACHTUNG: Das Adjektiv heißt "grau" (ohne Umlaut) - grau, graue,
+    # grauer, grauem. Die früheren Einträge "grauer" -> "graür" usw.
+    # waren falsch und meldeten einen Fehler, den es nicht gab (27.11.2026).
     (r"zurueckgefallen", "zurückgefallen"),
     (r"juenger", "jünger"),
     (r"schaedlicher", "schädlicher"),
@@ -663,7 +665,6 @@ WORTE: list[tuple[str, str]] = [
     (r"prioritaet", "priorität"),
     (r"zurueckwechseln", "zurückwechseln"),
     (r"verlaengern", "verlängern"),
-    (r"graue", "graü"),
     (r"eingeloest", "eingelöst"),
     (r"ergaenzen", "ergänzen"),
     (r"erklaerenden", "erklärenden"),
@@ -1108,7 +1109,6 @@ WORTE: list[tuple[str, str]] = [
     (r"ruecken", "rücken"),
     (r"plausibilitaet", "plausibilität"),
     (r"zurueckersetzen", "zurückersetzen"),
-    (r"grauem", "graüm"),
     (r"unguenstigste", "ungünstigste"),
     (r"verzoegerter", "verzögerter"),
     (r"pruefungsort", "prüfungsort"),
