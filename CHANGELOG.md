@@ -76,6 +76,30 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Dateinamen (`geraete.dart`), Schlüssel (`del.geraete`) und die gesperrte
   Schrift (in Großbuchstaben steht das „ss" als „SS")
 
+### Tests (26.11.2026) – Der Testausbau geht weiter
+
+- **Neun neue Testdateien für die Wege, die bisher ungetestet waren.**
+  Gemessen an der Abdeckung lagen die größten Lücken beim Server-Weg des
+  Dating Hour, bei „Find your Match", beim Radar von Transit Spark, bei
+  der Warteschlange des P2P-Chats, bei der Umstellung der alten Chat-Boxen
+  auf den Konto-Namensraum, bei der Einreichung der Altersprüfung, bei
+  den Bildern im Speicher und bei der Server-Spiegelung der Einstellungen.
+  Diese Wege sind jetzt einzeln geprüft: jede Aktion ruft die RPC mit dem
+  richtigen Namen und den richtigen Parametern, ein Fehler stört den
+  Nutzer nie, und die Sicherheitsregeln (etwa: die App folgt der
+  Bild-Adresse eines Partners nur auf den eigenen Servern) haben einen
+  eigenen Test.
+- **Zwei sicherheitsrelevante Regeln waren bisher ungetestet und sind
+  es jetzt:** die Bild-Adresse eines Match-Partners folgt die App nur
+  über HTTPS und nur zu den eigenen Servern, und die alte Chat-Box
+  wandert beim Kontowechsel in die Box des Kontos (sonst sähe ein
+  zweites Konto auf demselben Gerät noch den Verlauf des ersten).
+  Beides stand schon so im Code - die Tests halten es nun fest.
+- **Der Kern-Bereich ist abgedeckt:** der „Neu in dieser Version"-Bildschirm
+  (er zeigt die Änderungen, fragt den Geburtstags-Stil ab und führt danach
+  zur Startseite) und der „Update nötig"-Bildschirm (beim Start ist er eine
+  Sperre, während der laufenden App nur ein Hinweis).
+
 ## [0.10.2] – Fehlerbehebungen aus dem Alltag und mehr Tests
 (Build 56, 57, 58 und 59, 2026-11-14, 2026-11-22, 2026-11-24 und 2026-11-25)
 

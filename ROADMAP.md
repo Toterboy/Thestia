@@ -111,7 +111,16 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   Pausieren das richtige Token, das Bundesland-Feld der Ersteinrichtung
   läuft nicht mehr aus dem Rahmen, eine zweite Instanz des
   Verschlüsselungs-Dienstes lässt keinen Fehler ungehandelt laufen, die
-  Restzeit der Dating Hour passt bei großer Schrift)
+  Restzeit der Dating Hour passt bei großer Schrift; Build 60: neun neue
+  Testdateien für die bisher ungetesteten Wege (der Dating Hour zum Server,
+  „Find your Match", der Transit-Radar, die Warteschlange des P2P-Chats,
+  die Umstellung der alten Chat-Boxen auf den Konto-Namensraum, die
+  Einreichung der Altersprüfung, die Bilder im Speicher und die
+  Server-Spiegelung der Einstellungen) - dabei sind zwei Regeln festgehalten,
+  die im Code schon standen, aber ungetestet waren: die Bild-Adresse eines
+  Match-Partners wird nur über HTTPS und nur zu den eigenen Servern
+  geprüft, und die alte Chat-Box wandert beim Kontowechsel in die Box des
+  Kontos)
 
 ## In Arbeit
 
@@ -170,6 +179,63 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   interaktive Web-Visitenkarte, Treffpunkt-Orchestrator („Mittendrin“)
 - **Gruppen und Foren** kommen danach
 - Details: [docs/technik/web-bridge.md](docs/technik/web-bridge.md)
+
+## Gemeldet am 27.11.2026 (noch nicht angefangen)
+
+Aus dem Testen der App gemeldet. Erst notiert, dann gearbeitet – die
+Punkte stehen in der Reihenfolge der Meldung.
+
+### Fehler
+
+- [ ] **Im Interessen-Screen steht der Text neben dem Re-Funke-Knopf
+  untereinander – jeder Buchstabe in einer eigenen Zeile.** Der Text
+  gehört nebeneinander (notfalls in zwei oder drei Zeilen umbrechen),
+  nicht als Buchstabenstapel. *Fundort:* die Kachel der „Erschlossenen
+  Funken" (`lib/screens/interests/parts/cooledmatchtile.dart`) – die
+  Knopf-Leiste am rechten Rand (`trailing`) ist so breit, dass der
+  Textbereich auf eine Zeichenbreite zusammengequetscht wird. Die
+  Breite gehört zwischen Text und Knopf-Leiste verteilt, nicht
+  weg vom Text.
+- [ ] **Die Profilvorschau hat keinen Hintergrund – man sieht durch sie
+  auf den Profil-Screen dahinter.** Das Blatt der Vorschau („So sehen
+  dich andere") ist durchsichtig; der Theme-Hintergrund wird nur in der
+  Geburtstags-Ansicht gemalt, in der normalen Ansicht bleibt nichts
+  übrig. *Fundort:* `lib/screens/profile/profile_screen.dart`
+  (`_showProfilePreview`: `backgroundColor: Colors.transparent` plus
+  `BirthdayStyleSurface`, das nur im Geburtstags-Fall malt). Die
+  normale Vorschau braucht einen deckenden Hintergrund, die
+  Geburtstags-Ansicht behält ihren.
+- [ ] **Die eigene Tastatur wird nicht überall angewendet.** Die Wahl
+  aus den Einstellungen (Belegung, Hintergrund, eigene Farbe) kommt
+  nur im Chat und im Zufallschat an – im Dating-Hour-Chat
+  (`lib/screens/dating_hour/parts/chatinput.dart`) fehlen die drei
+  Werte, dort gilt immer der Standard. *Merksatz:* Die App-Tastatur
+  braucht die Werte an **jeder** Stelle, an der sie auftaucht – oder
+  einen Weg, an dem sie die Werte selbst holt, damit eine neue Stelle
+  sie nicht vergessen kann.
+
+### Wünsche
+
+- [ ] **Die App-Tastatur soll auf dem Smartphone wie die Tastatur des
+  Systems aussehen.** Heute sieht sie „nicht ansatzweise so aus wie die
+  normale von Android" – sie soll sich wie die Systemtastatur anfühlen
+  und aussehen (Tastenform, Abstände, Schrift), damit der Wechsel
+  nicht wie ein fremdes Werkzeug wirkt.
+- [ ] **Zwischen der System-Tastatur und der App-Tastatur umschalten
+  können** – jederzeit, nicht nur über die Einstellung. Der Nutzer
+  entscheidet also im Chat (oder im Eingabefeld), welche Taste er
+  gerade benutzt. Das ist eine **neue Nutzerfunktion** (nach der
+  Roadmap-Regel also MINOR).
+- [ ] **Mehr Animationen** in der App (Übergänge, Rückmeldungen auf
+  Eingaben). *Offen:* Welche Bewegungen genau – das ist mit dem
+  Betreiber zu klären, bevor etwas gebaut wird.
+
+### Dazu die Frage des Betreibers
+
+- [ ] **Die Profilvorschau soll zu den Profileinstellungen unter „Mein
+  Profil" gehören** und dort zeigen, was andere über mich sehen. Die
+  genaue Zuordnung (Vorschau in den Einstellungen oder ein Weg dorthin
+  aus dem Profilmenü) ist noch nicht entschieden.
 
 ## Ideen (nicht eingeplant)
 
