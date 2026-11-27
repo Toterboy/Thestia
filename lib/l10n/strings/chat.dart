@@ -40,6 +40,7 @@ const Map<String, Map<String, String>> stringsChat = {
         'Peer zu Peer (Push to Talk).',
     'chat.callMicDenied': 'Mikrofon-Zugriff verweigert.',
     'chat.callMuted': 'Stumm',
+    'chat.callDuration': 'Gesprächsdauer',
     'chat.callNetHint':
         'Hinweis: Sprachanrufe laufen direkt zwischen den Geräten und '
         'funktionieren nur im WLAN zuverlässig. Im Mobilfunknetz sollten '
@@ -294,6 +295,26 @@ const Map<String, Map<String, String>> stringsChat = {
     'chathist.off.title': 'Gar nichts (nur Arbeitsspeicher)',
     'chathist.tileSubPrefix': 'Verschlüsselt (AES-256) auf diesem Gerät.',
     'chathist.tileTitle': 'Chat-Verlauf lokal speichern',
+    'sync.accept': 'Bin dabei',
+    'sync.accepted': 'Ihr seid dabei! {idee} startet {zeit}.',
+    'sync.cardTitle': 'Sync-Date',
+    'sync.decline': 'Lieber nicht',
+    'sync.idea.gleicherFilm': 'Denselben Film schauen',
+    'sync.idea.kochDuell': 'Koch-Duell',
+    'sync.idea.spaziergangAnruf': 'Spaziergang + Anruf',
+    'sync.idea.sterneGucken': 'Sterne gucken und telefonieren',
+    'sync.lockedBody':
+        'Während des Dates ist nur dieser Chat verfügbar - so bleibt ihr beieinander statt am Bildschirm. Die Einstellungen gehen weiterhin.',
+    'sync.lockedOpen': 'Zum Chat',
+    'sync.lockedTitle': 'Das Date läuft',
+    'sync.proposed': '{name} schlägt vor: {idee}',
+    'sync.proposedOwn': 'Vorschlag geschickt - wartet auf die Antwort.',
+    'sync.startNow': 'Jetzt anrufen',
+    'sync.time': 'Wann soll es sein?',
+    'sync.timePick': 'Anderer Zeitpunkt',
+    'sync.timeToday': 'Heute',
+    'sync.timeTomorrow': 'Morgen',
+    'sync.waiting': '{name} wartet noch auf die Antwort.',
   },
   'en': {
     'call.icebreakerHint':
@@ -327,6 +348,7 @@ const Map<String, Map<String, String>> stringsChat = {
         '(push to talk).',
     'chat.callMicDenied': 'Microphone access denied.',
     'chat.callMuted': 'Muted',
+    'chat.callDuration': 'Call duration',
     'chat.callNetHint':
         'Note: Voice calls run directly between devices and are only '
         'reliable on WiFi. Calls should not be started on mobile '
@@ -574,5 +596,25 @@ const Map<String, Map<String, String>> stringsChat = {
     'chathist.off.title': 'Nothing (RAM only)',
     'chathist.tileSubPrefix': 'Encrypted (AES-256) on this device.',
     'chathist.tileTitle': 'Save chat history locally',
+    'sync.accept': 'I\'m in',
+    'sync.accepted': 'You\'re both in! {idee} starts {zeit}.',
+    'sync.cardTitle': 'Sync date',
+    'sync.decline': 'Not for me',
+    'sync.idea.gleicherFilm': 'Watch the same film',
+    'sync.idea.kochDuell': 'Cooking duel',
+    'sync.idea.spaziergangAnruf': 'Walk + call',
+    'sync.idea.sterneGucken': 'Stargazing and talking',
+    'sync.lockedBody':
+        'During the date only this chat is available - that keeps you together instead of on the screen. The settings still work.',
+    'sync.lockedOpen': 'To the chat',
+    'sync.lockedTitle': 'The date is running',
+    'sync.proposed': '{name} suggests: {idee}',
+    'sync.proposedOwn': 'Suggestion sent - waiting for an answer.',
+    'sync.startNow': 'Call now',
+    'sync.time': 'When should it be?',
+    'sync.timePick': 'Another time',
+    'sync.timeToday': 'Today',
+    'sync.timeTomorrow': 'Tomorrow',
+    'sync.waiting': '{name} is still waiting for an answer.',
   },
 };

@@ -749,6 +749,15 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
                   matchId: widget.matchId,
                   partnerName: partner.name,
                 ),
+              // Das Sync-Date (Plan 0.11.0, "Begegnung statt Bildschirm"):
+              // Zwei Menschen, die weit auseinander wohnen, treffen sich zur
+              // selben Zeit an verschiedenen Orten. Die Karte steht im Chat
+              // (mit dem gemeinsamen Countdown und dem Anruf-Knopf).
+              SyncDateCard(
+                matchId: widget.matchId,
+                partnerName: partner.name,
+                onCall: _call,
+              ),
               // Vorstellung des Partners (Text + Audio): Beide Seiten können
               // die Vorstellung im Chat anhören (v0.9.0-Feedback - die Person,
               // die den Funke erhalten hat, hörte sie bisher nur im

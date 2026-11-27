@@ -122,6 +122,27 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   einem schmalen Telefon zwei Pixel über den Rand (Flutter malte die
   gelb-schwarzen Streifen daneben).
 
+### Neu (27.11.2026) – Die Sync-Dates (Begegnung statt Bildschirm)
+
+- **Zwei Menschen, die weit auseinander wohnen, treffen sich zur selben
+  Zeit an verschiedenen Orten:** Beide gehen spazieren und telefonieren
+  dabei, beide starten denselben Film zur selben Zeit, beide kochen
+  dasselbe Rezept. Das Ideen-Rad im Chat schlägt diese Ideen immer vor –
+  unabhängig von der Distanz.
+- **Der Zeitpunkt** kommt aus einer kurzen Liste (heute 20 Uhr, morgen
+  18 Uhr, oder der Nutzer wählt selbst). Wer das Date vorschlägt, macht
+  den Vorschlag; wer annimmt, darf ihn ändern. Beide sehen denselben
+  Termin – er steht auf dem Server (neue Tabelle `sync_dates`), damit die
+  Geräteuhren nicht entscheiden.
+- **Während des Dates ist nur dieser Chat benutzbar:** Alle anderen Chats
+  und Modi sind gesperrt, die Einstellungen bleiben offen. Die App soll
+  Abwesenheit feiern statt Bindung zu erzeugen – wer gerade unterwegs
+  ist, soll nicht vom Handy weggezogen werden.
+- **Das Date endet mit dem Anruf.** Der Anruf-Screen zeigt, wie lange man
+  schon telefoniert (groß und gut lesbar, mit Stunden nach einer Stunde).
+- *Hinweis für den Betrieb:* Die neue Migration 223 muss auf dem Server
+  angewandt werden – erst dann kennen die beiden Seiten die Sync-Dates.
+
 ### Neu (27.11.2026) – Der Offline-Knopf nach dem Treffen
 
 - **Nach einem echten Treffen kann die App bis zum Morgen schweigen.**

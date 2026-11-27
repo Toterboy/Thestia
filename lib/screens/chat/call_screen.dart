@@ -14,6 +14,9 @@ import 'package:thestia/data/icebreaker_catalog.dart';
 import 'package:thestia/services/chat/p2p_chat_service.dart';
 import 'package:thestia/services/auth/supabase_service.dart';
 import 'package:thestia/utils/common/best_effort.dart';
+import 'package:thestia/utils/common/formatters.dart';
+
+part 'parts/callscreenicebreaker.dart';
 
 /// ID des aktuell aktiven Anrufs (oder null).
 ///
@@ -555,113 +558,6 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   /// Eisbrecher-Sammlung während des Anrufs (Nutzerwunsch): Kategorien
   /// als Chips, Fragen als Karten zum Laut-Vorlesen. Reine Anzeige -
   /// nichts wird gesendet oder gespeichert.
-  Future<void> _showIcebreakerSheet() async {
-    final lang = Localizations.localeOf(context).languageCode;
-    String? selectedCategory;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          final cats = icebreakerCatalog;
-          final active = selectedCategory == null
-              ? cats
-              : cats.where((c) => c.id == selectedCategory).toList();
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              child: SizedBox(
-                height: MediaQuery.of(ctx).size.height * 0.6,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      L10n.t(ctx, 'call.icebreakerTitle'),
-                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      L10n.t(ctx, 'call.icebreakerHint'),
-                      style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(ctx).colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 40,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          ChoiceChip(
-                            label: Text(L10n.t(ctx, 'genderpref.all')),
-                            selected: selectedCategory == null,
-                            onSelected: (_) =>
-                                setSheetState(() => selectedCategory = null),
-                          ),
-                          const SizedBox(width: 6),
-                          for (final c in cats) ...[
-                            ChoiceChip(
-                              avatar: Icon(c.icon, size: 16),
-                              label: Text(c.titleFor(lang)),
-                              selected: selectedCategory == c.id,
-                              onSelected: (_) =>
-                                  setSheetState(() => selectedCategory = c.id),
-                            ),
-                            const SizedBox(width: 6),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: ListView(
-                        children: [
-                          for (final c in active) ...[
-                            if (selectedCategory == null)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 8,
-                                  bottom: 4,
-                                ),
-                                child: Text(
-                                  c.titleFor(lang),
-                                  style: Theme.of(ctx).textTheme.labelLarge
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          ctx,
-                                        ).colorScheme.primary,
-                                      ),
-                                ),
-                              ),
-                            for (final q in c.questions)
-                              Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Text(
-                                    q.textFor(lang),
-                                    style: Theme.of(ctx).textTheme.bodyMedium,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
 
   void _endAfterDelay() {
     _endTimer?.cancel();
@@ -672,11 +568,13 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     });
   }
 
-  String _formatDuration() {
-    final m = (_seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (_seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
+  /// Die Gesprächsdauer (mm:ss, ab einer Stunde mit Stunden).
+  ///
+  /// NUTZERWUNSCH (27.11.2026): "Im Anruf Screen soll aber gezeigt
+  /// werden, wie lange man schon telefoniert." Deshalb steht die Dauer
+  /// jetzt groß im Bild (und nicht klein und grau in einer Zeile mit
+  /// dem Statustext).
+  String _formatDuration() => Formatters.dauer(Duration(seconds: _seconds));
 
   String _statusText(BuildContext context) => switch (_status) {
     CallStatus.connecting => L10n.t(context, 'chat.callStatusConnecting'),
@@ -714,12 +612,44 @@ class _CallScreenState extends ConsumerState<CallScreen> {
             const SizedBox(height: 24),
             Text(widget.partnerName, style: theme.textTheme.headlineSmall),
             const SizedBox(height: 8),
+            // DIE GESPRÄCHSDAUER (27.11.2026): groß und gut lesbar -
+            // der Nutzer soll sehen, wie lange er schon telefoniert.
+            if (isConnected)
+              Text(
+                L10n.t(context, 'chat.callDuration'),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
             Text(
               isConnected ? _formatDuration() : _statusText(context),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style:
+                  (isConnected
+                          ? theme.textTheme.headlineMedium
+                          : theme.textTheme.bodyMedium)
+                      ?.copyWith(
+                        color: isConnected
+                            ? theme.colorScheme.onSurface
+                            : theme.colorScheme.onSurfaceVariant,
+                        // Die Ziffern springen nicht (Tabellenziffern) -
+                        // sonst zappelt die Anzeige jede Sekunde.
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
             ),
+            // DIE AUFNAHMEZEIT: Während einer Aufnahme stand sie nirgends
+            // (der Statustext wird im verbundenen Zustand nicht gezeigt).
+            if (isConnected && _recording)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  L10n.tf(context, 'chat.callStatusRecording', {
+                    's': '$_recordSeconds',
+                  }),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
             // Mobilfunk-Hinweis (Betreiber-Entscheidung: kein TURN -> keine
             // Relay-Sprache): dezent während des Aufbaus, prominent im
             // Fehlerzustand.

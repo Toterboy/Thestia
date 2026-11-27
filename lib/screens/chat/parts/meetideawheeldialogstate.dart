@@ -12,7 +12,7 @@ part of '../chat_detail_screen.dart';
 
 class _MeetIdeaWheelDialogState extends State<_MeetIdeaWheelDialog> {
   bool _spinning = false;
-  String? _result;
+  ({String text, SyncDateIdee? syncIdee})? _result;
   int _index = 0;
 
   Future<void> _spin() async {
@@ -72,7 +72,8 @@ class _MeetIdeaWheelDialogState extends State<_MeetIdeaWheelDialog> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                _result ?? widget.categories[_index % widget.categories.length],
+                _result?.text ??
+                    widget.categories[_index % widget.categories.length].text,
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),

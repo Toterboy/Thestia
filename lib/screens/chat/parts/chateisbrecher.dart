@@ -20,9 +20,19 @@ extension _ChatEisbrecher on _ChatDetailScreenState {
     return match.partner.interests.where(mine.contains).toList();
   }
 
-  List<String> _localizedMeetIdeas(BuildContext context) => [
+  /// Die Ideen des Rads (mit den Sync-Ideen).
+  ///
+  /// DER SYNC-TEIL (Plan 0.11.0, "Begegnung statt Bildschirm"): Die
+  /// Sync-Ideen kommen IMMER mit - unabhängig von der Distanz. Wer
+  /// 400 km entfernt wohnt, kann kein "Koch-Duell" am selben Tisch
+  /// machen - aber beide kochen zur selben Zeit.
+  List<({String text, SyncDateIdee? syncIdee})> _localizedMeetIdeas(
+    BuildContext context,
+  ) => [
     for (final key in _ChatDetailScreenState._meetIdeaCategories)
-      L10n.t(context, key),
+      (text: L10n.t(context, key), syncIdee: null),
+    for (final idee in SyncDateIdee.values)
+      (text: L10n.t(context, idee.textKey), syncIdee: idee),
   ];
 
   /// 5-Minuten-Stille-Vorschlag (Nutzerwunsch "Icebreaker-Vorschlag an
@@ -333,15 +343,24 @@ extension _ChatEisbrecher on _ChatDetailScreenState {
     final match = _match;
     if (match == null) return;
 
-    final picked = await showDialog<String>(
+    final picked = await showDialog<({String text, SyncDateIdee? syncIdee})>(
       context: context,
       builder: (ctx) =>
           _MeetIdeaWheelDialog(categories: _localizedMeetIdeas(ctx)),
     );
     if (picked == null || !mounted) return;
 
+    // EINE SYNC-IDEE: Das wird kein Text, sondern ein Date - der
+    // Zeitpunkt wird geklaert und der Vorschlag geht an den Server
+    // (Plan 0.11.0, "Begegnung statt Bildschirm").
+    final syncIdee = picked.syncIdee;
+    if (syncIdee != null) {
+      await _schlageSyncDateVor(match, syncIdee);
+      return;
+    }
+
     // Vorschlag als E2E-Nachricht senden (gleicher Weg wie _send()).
-    final text = L10n.tf(context, 'chat.dateIdea', {'idea': picked});
+    final text = L10n.tf(context, 'chat.dateIdea', {'idea': picked.text});
     final localMsg = Message(
       id: Message.newId('local'),
       senderId: _myUserId ?? AppConstants.currentUserId,
@@ -351,5 +370,27 @@ extension _ChatEisbrecher on _ChatDetailScreenState {
     );
     ref.read(chatProvider.notifier).addMessage(match.id, localMsg, ref: ref);
     await _transmitText(match, text);
+  }
+
+  /// Schlägt ein Sync-Date vor: erst der Zeitpunkt, dann der Server.
+  ///
+  /// DER WEG (Betreiber, 27.11.2026): "Die annehmende Person oder die,
+  /// die das Date vorschlägt, kann auch direkt einen Zeitvorschlag
+  /// machen." Der Zeitpunkt kommt deshalb aus einer kurzen Liste
+  /// (heute 20 Uhr, morgen 18 Uhr, selbst wählen) - und steht dann
+  /// serverseitig, damit beide Seiten denselben Termin sehen.
+  Future<void> _schlageSyncDateVor(Match match, SyncDateIdee idee) async {
+    final zeit = await zeigeSyncDateZeitwahl(context);
+    if (zeit == null || !mounted) return;
+    await ref
+        .read(syncDateProvider(match.id).notifier)
+        .propose(idee: idee, startAt: zeit);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(L10n.t(context, 'sync.proposedOwn')),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }

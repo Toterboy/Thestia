@@ -57,6 +57,10 @@ import 'package:thestia/widgets/profile/intro_audio_player.dart';
 import 'package:thestia/widgets/profile/meet_intent_card.dart';
 import 'package:thestia/widgets/profile/profile_widgets.dart';
 import 'package:thestia/widgets/chat/secure_composer.dart';
+import 'package:thestia/widgets/chat/sync_date_card.dart';
+import 'package:thestia/widgets/chat/sync_date_zeitwahl.dart';
+import 'package:thestia/models/dating_hour/sync_date.dart';
+import 'package:thestia/providers/dating_hour/sync_date_provider.dart';
 import 'package:thestia/widgets/chat/nachricht_ueberdenken.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 

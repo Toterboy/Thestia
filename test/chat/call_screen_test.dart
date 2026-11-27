@@ -171,6 +171,54 @@ void main() {
     return p2p;
   }
 
+  group('Die Gesprächsdauer', () {
+    testWidgets('sie steht im Bild, während man telefoniert', (tester) async {
+      await zeige(tester, eingehend: true);
+
+      // DER ANRUF ANNIMMEN: erst dann läuft die Uhr.
+      await tester.tap(find.byIcon(Icons.call));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump();
+
+      expect(
+        find.text(L10n.tWithoutContext('chat.callDuration')),
+        findsOneWidget,
+        reason:
+            'Die Dauer braucht einen Namen - "00:03" allein sagt nicht, '
+            'ob es Sekunden oder Minuten sind.',
+      );
+      expect(
+        find.text('00:03'),
+        findsOneWidget,
+        reason: 'Nach drei Sekunden muss die Dauer "00:03" sein.',
+      );
+    });
+
+    testWidgets('sie zaehlt mit', (tester) async {
+      await zeige(tester, eingehend: true);
+      await tester.tap(find.byIcon(Icons.call));
+      await tester.pump();
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump();
+
+      expect(find.text('00:05'), findsOneWidget);
+    });
+
+    testWidgets('vor dem Annehmen steht keine Dauer', (tester) async {
+      await zeige(tester, eingehend: true);
+
+      expect(
+        find.text(L10n.tWithoutContext('chat.callDuration')),
+        findsNothing,
+        reason:
+            'Vor dem Annehmen telefoniert niemand - eine Dauer wäre '
+            'gelogen.',
+      );
+    });
+  });
+
   group('Der Anruf-Screen', () {
     testWidgets('ohne Verbindung ist der Anruf nicht erreichbar', (
       tester,

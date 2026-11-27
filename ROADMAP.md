@@ -176,6 +176,32 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   - **umgesetzt in Build 61** (siehe oben unter „Umgesetzt")
 - Details: [docs/technik/lokale-ki-reflexion.md](docs/technik/lokale-ki-reflexion.md)
 
+### 0.11.0 – Die Sync-Dates („Begegnung statt Bildschirm")
+
+- **Zwei Menschen, die weit auseinander wohnen, treffen sich zur selben
+  Zeit an verschiedenen Orten:** Beide gehen spazieren und telefonieren
+  dabei, beide starten denselben Film, beide kochen dasselbe Rezept. Das
+  Ideen-Rad schlägt sie **immer** vor (nicht nur bei großer Distanz).
+- **Der Zeitpunkt** kommt aus einer kurzen Liste (heute 20 Uhr, morgen
+  18 Uhr, selbst wählen). Wer vorschlägt, macht den Vorschlag; wer
+  annimmt, darf ihn ändern. Beide sehen denselben Termin – er steht
+  serverseitig (Migration 223 `sync_dates`).
+- **Während des Dates ist nur dieser Chat benutzbar:** alle anderen
+  Chats und Modi sind gesperrt (die Einstellungen bleiben offen). Die
+  Sperre sitzt im Router – jeder andere Weg wird auf den Chat des Dates
+  umgeleitet. Die App soll Abwesenheit feiern statt Bindung zu erzeugen.
+- **Das Date endet mit dem Anruf**, und der Anruf-Screen zeigt, wie
+  lange man schon telefoniert.
+- *Umsetzung:* `lib/models/dating_hour/sync_date.dart`,
+  `lib/services/dating_hour/sync_date_service.dart`,
+  `lib/providers/dating_hour/sync_date_provider.dart`,
+  `lib/widgets/chat/sync_date_card.dart`,
+  `lib/widgets/chat/sync_date_zeitwahl.dart`, die Migration 223 und die
+  Umleitung in `lib/routing/app_router.dart`.
+- **Offen:** die Antizipation (der Chat-Header zeigt die Vorfreude, wenn
+  ein Termin steht) und der Offline-Knopf nach dem echten Treffen (die
+  Grundlage steht: der Ruhemodus).
+
 ### 0.12.0 – Web-Bridge, Transit-Reachability & Zero-Install-Gast-Verbindungen
 
 - **Flutter Web für Gäste ohne Konto** unter eigener Domain

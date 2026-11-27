@@ -69,6 +69,7 @@ import 'package:thestia/screens/qr/qr_profile_screen.dart';
 import 'package:thestia/screens/qr/qr_scan_screen.dart';
 import 'package:thestia/screens/legal/community_guidelines_screen.dart';
 import 'package:thestia/widgets/chat/back_to_route_scope.dart';
+import 'package:thestia/routing/sync_date_routes.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 
 /// Zentrale Routen der App.
@@ -272,6 +273,15 @@ Future<String?> umleitung(Ref ref, String pfad) async {
   // Willkommensscreens aufblitzen. Der refreshListenable stööt die
   // Auswertung erneut an, sobald beide Zustände feststehen.
   if (auth.isLoading || !settingsReady) return null;
+
+  // DIE SPERRE WÄHREND EINES SYNC-DATES (Betreiber, 27.11.2026): Nur
+  // der Chat des Dates ist benutzbar (die Einstellungen auch). Die Regel
+  // steht in sync_date_routes.dart - hier ist nur der Aufruf.
+  //
+  // DIE STELLE: Ganz vorn - die Sperre ist die stärkste Regel der App
+  // (stärker als die Passwort-Zurücksetzung und der Server-Sync).
+  final syncSperre = syncDateUmleitung(ref, pfad);
+  if (syncSperre != null) return syncSperre;
 
   // Passwort-Reset (Recovery-Deep-Link aus der E-Mail): Solange der
   // Reset aussteht, ist ausschließlich der Reset-Screen erreichbar –

@@ -136,6 +136,26 @@ Aus der Roadmap (Stand 23.11.2026) in ein eigenes Dokument verschoben.
 
 ### Begleitend in 0.11.0 – Begegnung statt Bildschirm
 
+> **Stand 27.11.2026: Die Sync-Dates sind umgesetzt** (Migration 223
+> `sync_dates`, das Modell `lib/models/dating_hour/sync_date.dart`, der
+> Dienst, die Karte im Chat, das Ideen-Rad mit den Sync-Ideen und die
+> Zeitwahl). Entschieden vom Betreiber:
+>
+> * **Immer vorschlagen**, unabhängig von der Distanz.
+> * **Während des Dates ist nur dieser Chat benutzbar** - alle anderen
+>   Chats und Modi sind gesperrt (die Einstellungen bleiben offen). Die
+>   Sperre sitzt im Router: jeder andere Weg wird auf den Chat des
+>   Dates umgeleitet.
+> * **Der Zeitpunkt** kommt aus einer kurzen Liste (heute 20 Uhr, morgen
+>   18 Uhr, selbst wählen) - wer das Date vorschlägt, macht den
+>   Vorschlag, und wer annimmt, darf ihn ändern.
+> * **Das Date endet mit dem Anruf.** Der Anruf-Screen zeigt, wie lange
+>   man schon telefoniert.
+>
+> **Noch offen:** die Antizipation (der Chat-Header zeigt die Vorfreude,
+> wenn ein Termin steht) - sie braucht dieselbe Zeitangabe und kommt mit
+> dem nächsten Stück.
+
 - [ ] **Sync-Dates** (Distanz-taugliche Mini-Dates im Ideen-Rad): Katalog
       von gemeinsamen Aktivitäten für denselben Zeitpunkt trotz Distanz –
       „Spaziergang + Anruf", „Den selben Film schauen", „Koch-Duell",

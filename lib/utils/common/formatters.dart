@@ -28,6 +28,20 @@ class Formatters {
     return 'vor ${diff.inDays} Tagen';
   }
 
+  /// Formatiert eine Dauer als mm:ss - ab einer Stunde mit Stunden.
+  ///
+  /// DER WEG (Betreiber, 27.11.2026): "Im Anruf Screen soll aber gezeigt
+  /// werden, wie lange man schon telefoniert." Die Anzeige braucht
+  /// Tabellenziffern (sonst springt die Anzeige jede Sekunde) - die
+  /// setzt der Bildschirm, hier kommt nur der Text heraus.
+  static String dauer(Duration d) {
+    final stunden = d.inHours;
+    final minuten = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final sekunden = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    if (stunden > 0) return '$stunden:$minuten:$sekunden';
+    return '$minuten:$sekunden';
+  }
+
   /// Berechnet das Alter aus einem Geburtsdatum.
   ///
   /// Delegiert an die zentrale [calculateAge]-Funktion in age_calculator.dart.

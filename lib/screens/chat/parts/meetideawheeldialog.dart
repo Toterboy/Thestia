@@ -16,7 +16,13 @@ part of '../chat_detail_screen.dart';
 class _MeetIdeaWheelDialog extends StatefulWidget {
   const _MeetIdeaWheelDialog({required this.categories});
 
-  final List<String> categories;
+  /// Die Ideen des Rads.
+  ///
+  /// DER SYNC-TEIL: Die Ideen, die über die Distanz funktionieren
+  /// (Plan 0.11.0, "Begegnung statt Bildschirm"), tragen ihre
+  /// Sync-Idee mit - landet das Rad auf einer davon, wird nicht eine
+  /// Nachricht geschickt, sondern ein Date vorgeschlagen.
+  final List<({String text, SyncDateIdee? syncIdee})> categories;
 
   @override
   State<_MeetIdeaWheelDialog> createState() => _MeetIdeaWheelDialogState();
