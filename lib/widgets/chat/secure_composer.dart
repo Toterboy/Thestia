@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/settings/tastatur_einstellungen.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 import 'package:thestia/widgets/chat/secure_keyboard.dart';
 
@@ -22,7 +25,7 @@ import 'package:thestia/widgets/chat/secure_keyboard.dart';
 ///   eingefügt. Auch dabei läuft nichts über die Systemtastatur.
 /// * **Einfügen** aus der Zwischenablage gibt es als eigene Taste -
 ///   mit `readOnly` wäre es sonst deaktiviert.
-class SecureComposer extends StatefulWidget {
+class SecureComposer extends ConsumerStatefulWidget {
   const SecureComposer({
     required this.controller,
     required this.onSend,
@@ -91,12 +94,42 @@ class SecureComposer extends StatefulWidget {
   final EdgeInsets padding;
 
   @override
-  State<SecureComposer> createState() => _SecureComposerState();
+  ConsumerState<SecureComposer> createState() => _SecureComposerState();
 }
 
-class _SecureComposerState extends State<SecureComposer> {
+class _SecureComposerState extends ConsumerState<SecureComposer> {
   final FocusNode _focus = FocusNode();
   bool _keyboardOpen = false;
+
+  /// Die System-Tastatur statt der eigenen benutzen?
+  ///
+  /// NUTZERWUNSCH (27.11.2026): "Außerdem soll man zwischen der system
+  /// und app tastatur auch wechseln können."
+  ///
+  /// DER WEG: Die eigene Tastatur ist der Default - sie sieht keinen
+  /// einzigen Buchstaben der Systemtastatur. Wer trotzdem die
+  /// Systemtastatur will (etwa für die Autokorrektur des Systems),
+  /// tippt auf den kleinen Knopf neben dem Eingabefeld.
+  bool _systemTastatur = false;
+
+  /// Zwischen der eigenen und der System-Tastatur wechseln.
+  void _wechseleTastatur() {
+    setState(() {
+      _systemTastatur = !_systemTastatur;
+      if (_systemTastatur) {
+        // Die eigene Tastatur verschwindet, die System-Tastatur kommt.
+        _keyboardOpen = false;
+        _focus.requestFocus();
+      } else {
+        // Zurück zur eigenen Tastatur: das Feld verliert kurz den
+        // Fokus (das schließt die System-Tastatur) und bekommt ihn
+        // wieder - ohne Eingabeverbindung gibt es keine Systemtastatur.
+        _focus.unfocus();
+        _focus.requestFocus();
+        _openKeyboard();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -224,6 +257,23 @@ class _SecureComposerState extends State<SecureComposer> {
             icon: Icon(widget.sendIcon),
           );
 
+    // DIE EINSTELLUNGEN DER TASTATUR (0.11.0).
+    //
+    // BEFUND (27.11.2026, Betreiber): "Die eigene Tastatur wird nicht
+    // überall angewendet." Ursache: Die drei Werte (Belegung, Stil,
+    // Farbe) mussten an jeder Stelle durchgereicht werden - im
+    // Dating-Hour-Chat fehlten sie, dort galt immer der Standard.
+    //
+    // DER WEG: Der Composer holt sie selbst. Damit kann keine neue
+    // Stelle sie vergessen - und wer sie doch einmal anders will,
+    // gibt sie als Parameter mit (der Parameter hat Vorrang).
+    final settings = ref.watch(settingsProvider);
+    final layout =
+        widget.layout ??
+        TastaturBelegungWert.ausWert(settings.tastaturBelegung);
+    final stil = widget.stil ?? TastaturStilWert.ausWert(settings.tastaturStil);
+    final farbe = widget.farbe ?? settings.tastaturFarbe;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -232,6 +282,24 @@ class _SecureComposerState extends State<SecureComposer> {
             padding: widget.padding,
             child: Row(
               children: <Widget>[
+                // DER KNOPF FÜR DIE TASTATUR (27.11.2026): Er steht
+                // immer da - die eigene Tastatur ist der Default, aber
+                // wer die Systemtastatur will, muss jederzeit dorthin
+                // wechseln können.
+                IconButton(
+                  // Das Ziel: die gefüllte Taste steht für die eigene
+                  // Tastatur der App, die offene für die des Systems.
+                  icon: Icon(
+                    _systemTastatur ? Icons.keyboard : Icons.keyboard_outlined,
+                  ),
+                  tooltip: L10n.t(
+                    context,
+                    _systemTastatur
+                        ? 'chat.keyboardToApp'
+                        : 'chat.keyboardToSystem',
+                  ),
+                  onPressed: _wechseleTastatur,
+                ),
                 ...widget.leading,
                 Expanded(
                   child: Focus(
@@ -245,8 +313,17 @@ class _SecureComposerState extends State<SecureComposer> {
                       // damit nichts. `TextInputType.none` ist die
                       // zweite Sicherung für die Plattformen, auf
                       // denen es eine Verbindung gibt.
-                      readOnly: true,
-                      keyboardType: TextInputType.none,
+                      //
+                      // AUSNAHME (27.11.2026): Wer ausdrücklich auf die
+                      // System-Tastatur umschaltet, braucht eine
+                      // Eingabeverbindung - dann ist das Feld normal
+                      // beschreibbar.
+                      readOnly: !_systemTastatur,
+                      // `multiline` passt zum Feld (es wächst mit) und
+                      // zur Enter-Taste (sie setzt einen Umbruch).
+                      keyboardType: _systemTastatur
+                          ? TextInputType.multiline
+                          : TextInputType.none,
                       enableIMEPersonalizedLearning: false,
                       autocorrect: false,
                       enableSuggestions: false,
@@ -266,7 +343,8 @@ class _SecureComposerState extends State<SecureComposer> {
                       ),
                       onTap: () {
                         _focus.requestFocus();
-                        _openKeyboard();
+                        // In der System-Tastatur ist die eigene zu.
+                        if (!_systemTastatur) _openKeyboard();
                       },
                     ),
                   ),
@@ -277,17 +355,26 @@ class _SecureComposerState extends State<SecureComposer> {
             ),
           ),
         ),
-        if (_keyboardOpen)
-          SecureKeyboard(
-            layout: widget.layout,
-            stil: widget.stil,
-            farbe: widget.farbe,
-            onCharacter: _insert,
-            onBackspace: _backspace,
-            onEnter: _enter,
-            onHide: _closeKeyboard,
-            onPaste: _paste,
-          ),
+        // DIE EINFUG-ANIMATION (27.11.2026): Die Tastatur fährt von
+        // unten ein, statt einfach da zu sein. Das ist einer der
+        // Unterschiede zur Systemtastatur - die fährt ebenfalls auf.
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.bottomCenter,
+          child: _keyboardOpen && !_systemTastatur
+              ? SecureKeyboard(
+                  layout: layout,
+                  stil: stil,
+                  farbe: farbe,
+                  onCharacter: _insert,
+                  onBackspace: _backspace,
+                  onEnter: _enter,
+                  onHide: _closeKeyboard,
+                  onPaste: _paste,
+                )
+              : const SizedBox.shrink(),
+        ),
       ],
     );
   }

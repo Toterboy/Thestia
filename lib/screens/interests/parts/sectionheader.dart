@@ -29,10 +29,17 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 8),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
+          // DER TITEL DARF NICHT ÜBERLAUFEN (27.11.2026): Auf einem
+          // schmalen Telefon (360 Pixel) schob der Titel die Zeile um
+          // fast zwei Pixel über den Rand - Flutter malte die
+          // gelb-schwarzen Streifen daneben. "Flexible" gibt ihm die
+          // Restbreite, statt die Zeile zu sprengen.
+          Flexible(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
           const SizedBox(width: 8),

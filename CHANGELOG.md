@@ -100,6 +100,50 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   zur Startseite) und der „Update nötig"-Bildschirm (beim Start ist er eine
   Sperre, während der laufenden App nur ein Hinweis).
 
+### Behoben (27.11.2026) – Drei Fehler aus dem Testen der App
+
+- **Im Interessen-Screen stand der Text neben dem Re-Funke-Knopf
+  untereinander – jeder Buchstabe in einer eigenen Zeile.** Der Knopf
+  „Re-Funke" ist allein schon 170 Pixel breit; neben dem blieb für den
+  Text nur eine Zeichenbreite, und Flutter brach ihn deshalb Buchstabe
+  für Buchstabe um. Die Aktionen stehen jetzt in einer eigenen Zeile
+  unter dem Text: er hat die ganze Breite und bricht über zwei bis
+  drei Zeilen um.
+- **Die Profilvorschau („So sehen dich andere") hatte keinen
+  Hintergrund** – man sah durch sie auf den Profil-Screen dahinter.
+  Das Blatt bekommt jetzt die Flächenfarbe der App; im Geburtstags-Fall
+  liegt der Theme-Verlauf weiterhin darüber.
+- **Die eigene Tastatur wurde nicht überall angewendet:** Im
+  Dating-Hour-Chat galt immer die Standard-Belegung, weil die drei
+  Werte (Belegung, Stil, Farbe) an jeder Stelle von Hand durchgereicht
+  werden mussten. Die Eingabeleiste holt sie sich jetzt selbst aus den
+  Einstellungen – damit kann keine neue Stelle sie vergessen.
+- **Nebenbei behoben:** Die Überschrift „Archivierte Funken" lief auf
+  einem schmalen Telefon zwei Pixel über den Rand (Flutter malte die
+  gelb-schwarzen Streifen daneben).
+
+### Neu (27.11.2026) – Die Tastatur wird zur Systemtastatur
+
+- **Die eigene App-Tastatur sieht jetzt aus wie die Tastatur des
+  Systems.** Vorher sah sie „nicht ansatzweise so aus wie die normale von
+  Android": die Buchstaben waren klein und fett, alle Tasten sahen gleich
+  aus und sie klebten aneinander. Jetzt hat sie einen grauen Grund,
+  weiße Buchstabentasten, dunklere Funktionstasten, eine farbige
+  Eingabetaste, einen feinen Schatten unter jeder Taste, etwas Abstand
+  zwischen den Tasten und große, normal gewichtete Buchstaben. Die
+  eigene Farbe des Nutzers bleibt erhalten – der Text darauf wird aus
+  der Helligkeit der Fläche berechnet (geraten wäre hier ein Fehler,
+  den der Nutzer sieht).
+- **Zwischen der System-Tastatur und der App-Tastatur kann gewechselt
+  werden** – jederzeit, nicht nur über die Einstellung. Neben dem
+  Eingabefeld steht ein Knopf (die gefüllte Taste ist die eigene
+  Tastatur der App, die offene die des Systems). Wer umschaltet,
+  bekommt ein normales Eingabefeld mit der Autokorrektur des Systems;
+  wer zurückwechselt, sieht wieder die eigene Tastatur – und die sieht
+  keinen einzigen Buchstaben der Systemtastatur.
+- **Die Tastatur fährt beim Öffnen von unten ein** – wie die des
+  Systems.
+
 ## [0.10.2] – Fehlerbehebungen aus dem Alltag und mehr Tests
 (Build 56, 57, 58 und 59, 2026-11-14, 2026-11-22, 2026-11-24 und 2026-11-25)
 

@@ -35,80 +35,130 @@ class _CooledMatchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = match.partner;
+    // BEFUND (27.11.2026, Betreiber): "Die Schrift links vom Button ist
+    // einzeln jeder Buchstabe untereinander."
+    //
+    // Die Ursache: Alle drei Aktionen standen in der `trailing`-Leiste
+    // einer ListTile. Die Leiste braucht rund 250 Pixel - auf einem
+    // kleinen Telefon blieb für den Text nur eine Zeichenbreite übrig,
+    // und Flutter brach den Text deshalb Buchstabe für Buchstabe um.
+    //
+    // Die Lösung: Der Text bekommt den ganzen Rest der Breite (er
+    // bricht über zwei oder drei Zeilen um, wie gewünscht), und die
+    // Aktionen stehen in einer eigenen Spalte daneben: der Re-Funke-
+    // Knopf oben, die beiden kleinen Knöpfe darunter.
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       color: Theme.of(
         context,
       ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-      child: ListTile(
-        onTap: onOpen,
-        leading: GestureDetector(
-          onTap: onProfile,
-          child: const CircleAvatar(child: Icon(Icons.person_outline)),
-        ),
-        // NUTZERWUNSCH (31.10.2026): "Verifizierung soll für alle
-        // Personen sichtbar sein" - auch in der Funken-Liste.
-        //
-        // NUTZERWUNSCH (22.11.2026): "Name und Alter nicht nebeneinander
-        // sondern untereinander aktuell (wenn refunke button da). So ist
-        // das nicht okay!" Der Re-Funke-Button braucht Platz - in einer
-        // Zeile wurde "Name, Alter" abgeschnitten. Der Name steht
-        // jetzt oben, das Alter darunter.
-        title: Column(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Flexible(child: Text(p.name)),
-                if (p.isVerified) ...[
-                  const SizedBox(width: 6),
-                  Tooltip(
-                    message: L10n.t(context, 'verify.badge'),
-                    child: Icon(
-                      Icons.verified,
-                      size: 18,
-                      color: Colors.lightBlue.shade400,
+                // Das Profil (ein Tap öffnet es).
+                GestureDetector(
+                  onTap: onProfile,
+                  child: const CircleAvatar(child: Icon(Icons.person_outline)),
+                ),
+                const SizedBox(width: 12),
+                // Der Text: Name, Alter und Beschreibung. Er bekommt
+                // den ganzen Rest der Breite.
+                Expanded(
+                  child: InkWell(
+                    onTap: onOpen,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // NUTZERWUNSCH (31.10.2026): "Verifizierung soll
+                          // für alle Personen sichtbar sein" - auch in der
+                          // Funken-Liste.
+                          Row(
+                            children: [
+                              Flexible(child: Text(p.name)),
+                              if (p.isVerified) ...[
+                                const SizedBox(width: 6),
+                                Tooltip(
+                                  message: L10n.t(context, 'verify.badge'),
+                                  child: Icon(
+                                    Icons.verified,
+                                    size: 18,
+                                    color: Colors.lightBlue.shade400,
+                                  ),
+                                ),
+                              ],
+                              // Der automatische Funke (Migration 177) -
+                              // auch hier sichtbar, die Rückfrage kommt
+                              // beim Antippen.
+                              if (match.autoMatch) ...[
+                                const SizedBox(width: 6),
+                                const _AutoMatchBadge(),
+                              ],
+                            ],
+                          ),
+                          Text(
+                            '${p.age ?? '?'} ${L10n.t(context, 'common.years')}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            p.bio.isNotEmpty
+                                ? p.bio
+                                : L10n.t(context, 'interests.noBio'),
+                            // ZWEI BIS DREI ZEILEN: Der Text bricht um,
+                            // aber nicht Buchstabe für Buchstabe.
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
-                // Der automatische Funke (Migration 177) - auch hier
-                // sichtbar, die Rückfrage kommt beim Antippen.
-                if (match.autoMatch) ...[
-                  const SizedBox(width: 6),
-                  const _AutoMatchBadge(),
-                ],
+                ),
               ],
             ),
-            Text(
-              '${p.age ?? '?'} ${L10n.t(context, 'common.years')}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        subtitle: Text(
-          p.bio.isNotEmpty ? p.bio : L10n.t(context, 'interests.noBio'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.person_outline),
-              tooltip: L10n.t(context, 'profile.detail.aboutMe'),
-              onPressed: onProfile,
-            ),
-            FilledButton.tonalIcon(
-              onPressed: onRespark,
-              icon: const Icon(Icons.local_fire_department, size: 18),
-              label: Text(L10n.t(context, 'interests.resparkBtn')),
-            ),
-            // Endgültig löschen (NUTZERWUNSCH, 28.10.2026).
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-              tooltip: L10n.t(context, 'interests.deleteSpark'),
-              onPressed: onDelete,
+            // DIE AKTIONEN: eine eigene Zeile unter dem Text.
+            //
+            // BEFUND (27.11.2026, Betreiber): "Die Schrift links vom
+            // Button ist einzeln jeder Buchstabe untereinander."
+            //
+            // DER GRUND: Der Knopf "Re-Funke" ist allein schon 170 Pixel
+            // breit (mit dem Wort). Neben dem Text blieb davon nur eine
+            // Zeichenbreite übrig - und Flutter brach den Text deshalb
+            // Buchstabe für Buchstabe um. Stehen die Aktionen unter dem
+            // Text, hat der Text die ganze Breite (über zwei bis drei
+            // Zeilen) - und bei großer Schrift rutschen die Knöpfe auf
+            // eine zweite Zeile, statt etwas abzuschneiden.
+            Wrap(
+              alignment: WrapAlignment.end,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: onRespark,
+                  icon: const Icon(Icons.local_fire_department, size: 18),
+                  label: Text(L10n.t(context, 'interests.resparkBtn')),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.person_outline),
+                  tooltip: L10n.t(context, 'profile.detail.aboutMe'),
+                  onPressed: onProfile,
+                ),
+                // Endgültig löschen (NUTZERWUNSCH, 28.10.2026).
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  tooltip: L10n.t(context, 'interests.deleteSpark'),
+                  onPressed: onDelete,
+                ),
+              ],
             ),
           ],
         ),

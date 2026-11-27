@@ -941,15 +941,9 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
               // (v0.10.1): die Systemtastatur des Geräts sieht dabei
               // keinen einzelnen Buchstaben.
               SecureComposer(
-                // Die Tastatur (0.11.0): Belegung und Farben kommen aus
-                // den Einstellungen.
-                layout: TastaturBelegungWert.ausWert(
-                  ref.watch(settingsProvider).tastaturBelegung,
-                ),
-                stil: TastaturStilWert.ausWert(
-                  ref.watch(settingsProvider).tastaturStil,
-                ),
-                farbe: ref.watch(settingsProvider).tastaturFarbe,
+                // Die Tastatur (0.11.0) holt sich Belegung und Farben
+                // selbst aus den Einstellungen - so kann keine Stelle
+                // sie vergessen (der Befund vom 27.11.2026).
                 controller: _ctrl,
                 hintText: _recording
                     ? L10n.tf(context, 'chat.recordingHint', {

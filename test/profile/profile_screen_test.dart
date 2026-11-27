@@ -343,5 +343,37 @@ void main() {
         findsNothing,
       );
     });
+
+    // BEFUND (27.11.2026, Betreiber): "Der Hintergrund der
+    // Profilvorschau ist unsichtbar. Ich kann auf meinen Profilscreen
+    // dahinter schauen."
+    //
+    // DER GRUND: Das Blatt war durchsichtig, und der Theme-Hintergrund
+    // wird nur im Geburtstags-Fall gemalt - in der normalen Vorschau
+    // sah man deshalb durch das Blatt auf den Profil-Screen dahinter.
+    testWidgets('die Profil-Vorschau hat einen Hintergrund', (tester) async {
+      await oeffneMenue(tester);
+
+      await tester.tap(find.text(L10n.tWithoutContext('profile.menu.preview')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      final blaetter = find.byType(BottomSheet);
+      expect(blaetter, findsWidgets);
+      final blatt = tester.widget<BottomSheet>(blaetter.last);
+      expect(
+        blatt.backgroundColor,
+        isNotNull,
+        reason: 'Die Vorschau braucht einen Hintergrund.',
+      );
+      expect(
+        blatt.backgroundColor,
+        isNot(Colors.transparent),
+        reason:
+            'Ein durchsichtiges Blatt lässt den Profil-Screen durchscheinen '
+            '- der Befund vom 27.11.2026.',
+      );
+    });
   });
 }

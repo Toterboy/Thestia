@@ -180,55 +180,60 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
 - **Gruppen und Foren** kommen danach
 - Details: [docs/technik/web-bridge.md](docs/technik/web-bridge.md)
 
-## Gemeldet am 27.11.2026 (noch nicht angefangen)
+## Gemeldet am 27.11.2026
 
-Aus dem Testen der App gemeldet. Erst notiert, dann gearbeitet – die
-Punkte stehen in der Reihenfolge der Meldung.
+Aus dem Testen der App gemeldet. Die drei Fehler sind behoben, die
+Wünsche stehen noch aus.
 
-### Fehler
+### Behoben (27.11.2026)
 
-- [ ] **Im Interessen-Screen steht der Text neben dem Re-Funke-Knopf
-  untereinander – jeder Buchstabe in einer eigenen Zeile.** Der Text
-  gehört nebeneinander (notfalls in zwei oder drei Zeilen umbrechen),
-  nicht als Buchstabenstapel. *Fundort:* die Kachel der „Erschlossenen
-  Funken" (`lib/screens/interests/parts/cooledmatchtile.dart`) – die
-  Knopf-Leiste am rechten Rand (`trailing`) ist so breit, dass der
-  Textbereich auf eine Zeichenbreite zusammengequetscht wird. Die
-  Breite gehört zwischen Text und Knopf-Leiste verteilt, nicht
-  weg vom Text.
-- [ ] **Die Profilvorschau hat keinen Hintergrund – man sieht durch sie
-  auf den Profil-Screen dahinter.** Das Blatt der Vorschau („So sehen
-  dich andere") ist durchsichtig; der Theme-Hintergrund wird nur in der
-  Geburtstags-Ansicht gemalt, in der normalen Ansicht bleibt nichts
-  übrig. *Fundort:* `lib/screens/profile/profile_screen.dart`
-  (`_showProfilePreview`: `backgroundColor: Colors.transparent` plus
-  `BirthdayStyleSurface`, das nur im Geburtstags-Fall malt). Die
-  normale Vorschau braucht einen deckenden Hintergrund, die
-  Geburtstags-Ansicht behält ihren.
-- [ ] **Die eigene Tastatur wird nicht überall angewendet.** Die Wahl
-  aus den Einstellungen (Belegung, Hintergrund, eigene Farbe) kommt
-  nur im Chat und im Zufallschat an – im Dating-Hour-Chat
-  (`lib/screens/dating_hour/parts/chatinput.dart`) fehlen die drei
-  Werte, dort gilt immer der Standard. *Merksatz:* Die App-Tastatur
-  braucht die Werte an **jeder** Stelle, an der sie auftaucht – oder
-  einen Weg, an dem sie die Werte selbst holt, damit eine neue Stelle
-  sie nicht vergessen kann.
+- [x] **Im Interessen-Screen stand der Text neben dem Re-Funke-Knopf
+  untereinander – jeder Buchstabe in einer eigenen Zeile.** *Ursache:*
+  Alle drei Aktionen standen in der `trailing`-Leiste einer ListTile.
+  Der Knopf „Re-Funke" ist allein schon 170 Pixel breit – neben dem
+  Text blieb deshalb nur eine Zeichenbreite übrig, und Flutter brach den
+  Text Buchstabe für Buchstabe um. *Lösung:* Die Aktionen stehen jetzt
+  in einer eigenen Zeile unter dem Text (`cooledmatchtile.dart`). Der
+  Text hat die ganze Breite und bricht über zwei bis drei Zeilen um;
+  bei großer Schrift rutschen die Knöpfe auf eine zweite Zeile, statt
+  etwas abzuschneiden.
+- [x] **Die Profilvorschau hatte keinen Hintergrund – man sah durch sie
+  auf den Profil-Screen dahinter.** *Ursache:* Das Blatt war
+  durchsichtig, und der Theme-Hintergrund wird nur im Geburtstags-Fall
+  gemalt. *Lösung:* Das Blatt bekommt die Flächenfarbe der App
+  (`profile_screen.dart`); im Geburtstags-Fall liegt der Theme-Verlauf
+  weiterhin darüber.
+- [x] **Die eigene Tastatur wurde nicht überall angewendet.** *Ursache:*
+  Die drei Werte (Belegung, Stil, Farbe) mussten an jeder Stelle
+  durchgereicht werden – im Dating-Hour-Chat fehlten sie. *Lösung:*
+  Der Composer holt sich die Werte selbst aus den Einstellungen
+  (`secure_composer.dart`). Damit kann keine Stelle sie vergessen;
+  wer sie doch einmal anders will, gibt sie als Parameter mit.
+- [x] **Nebenbefund:** Die Überschrift des Abschnitts „Archivierte
+  Funken" lief auf einem schmalen Telefon (360 Pixel) knapp zwei Pixel
+  über den Rand – Flutter malte die gelb-schwarzen Streifen daneben.
+  Der Titel ist jetzt flexibel (`sectionheader.dart`).
 
 ### Wünsche
 
-- [ ] **Die App-Tastatur soll auf dem Smartphone wie die Tastatur des
-  Systems aussehen.** Heute sieht sie „nicht ansatzweise so aus wie die
-  normale von Android" – sie soll sich wie die Systemtastatur anfühlen
-  und aussehen (Tastenform, Abstände, Schrift), damit der Wechsel
-  nicht wie ein fremdes Werkzeug wirkt.
-- [ ] **Zwischen der System-Tastatur und der App-Tastatur umschalten
-  können** – jederzeit, nicht nur über die Einstellung. Der Nutzer
-  entscheidet also im Chat (oder im Eingabefeld), welche Taste er
-  gerade benutzt. Das ist eine **neue Nutzerfunktion** (nach der
-  Roadmap-Regel also MINOR).
-- [ ] **Mehr Animationen** in der App (Übergänge, Rückmeldungen auf
-  Eingaben). *Offen:* Welche Bewegungen genau – das ist mit dem
-  Betreiber zu klären, bevor etwas gebaut wird.
+- [x] **Die App-Tastatur sieht jetzt aus wie die Tastatur des Systems.**
+  Vorher sah sie „nicht ansatzweise so aus wie die normale von Android":
+  die Buchstaben waren klein und fett, alle Tasten sahen gleich aus und
+  sie klebten aneinander. Jetzt: ein grauer Grund, weiße
+  Buchstabentasten, dunklere Funktionstasten, eine farbige Eingabetaste,
+  ein feiner Schatten unter jeder Taste und ein Abstand zwischen den
+  Tasten – plus große, normal gewichtete Buchstaben. Die eigene Farbe
+  des Nutzers bleibt erhalten (der Kontrast wird daraus berechnet).
+- [x] **Zwischen der System-Tastatur und der App-Tastatur umschalten.**
+  Neben dem Eingabefeld steht ein Knopf: die gefüllte Taste ist die
+  eigene Tastatur der App, die offene die des Systems. Wer umschaltet,
+  bekommt ein normales Eingabefeld (mit der Autokorrektur des
+  Systems) – und wer zurückwechselt, sieht wieder die eigene Tastatur.
+- [~] **Mehr Animationen.** Angefangen: die eigene Tastatur fährt beim
+  Öffnen von unten ein (wie die des Systems). *Offen:* Welche Bewegungen
+  noch – das ist mit dem Betreiber zu klären (die Vorschläge der App:
+  das Blenden der Kacheln, die Reaktion auf das Senden, der Wechsel
+  zwischen den Reitern).
 
 ### Dazu die Frage des Betreibers
 

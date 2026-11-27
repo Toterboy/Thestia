@@ -450,7 +450,20 @@ class ProfileScreen extends ConsumerWidget {
       // Geburtstagsthemes ist." Das Blatt bekommt deshalb KEINEN eigenen
       // Hintergrund - der Geburtstagsstil (BirthdayStyleSurface) malt
       // den Theme-Hintergrund in das ganze Blatt hinein.
-      backgroundColor: Colors.transparent,
+      //
+      // BEFUND (27.11.2026): "Der Hintergrund der Profilvorschau ist
+      // unsichtbar. Ich kann auf meinen Profilscreen dahinter schauen."
+      //
+      // DER GRUND: Das Blatt war ganz durchsichtig - und der
+      // Theme-Hintergrund wird nur im GEBURTSTAGS-Fall gemalt. In der
+      // normalen Vorschau blieb deshalb nichts übrig: man sah durch
+      // das Blatt auf den Profil-Screen dahinter.
+      //
+      // DIE LÖSUNG: Das Blatt bekommt die Flächenfarbe der App. Im
+      // Geburtstags-Fall liegt der Theme-Verlauf darüber (der ist
+      // deckend) - die normale Vorschau hat jetzt einen echten
+      // Hintergrund.
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       shape: profilDialogForm(),
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.85,

@@ -17,6 +17,7 @@
 //
 // OHNE SERVER: Der Dating-Hour-Dienst und der Datenbank-Dienst werden
 // durch Hand-Fakes ersetzt. Es geht KEINE Anfrage raus.
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -35,6 +36,7 @@ import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_chat_screen.dart';
 import 'package:thestia/services/dating_hour/dating_hour_service.dart';
 import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/utils/common/constants.dart';
 import 'package:thestia/services/chat/p2p_chat_service.dart';
 import 'package:thestia/services/chat/prekey_service.dart';
 import 'package:thestia/services/chat/relay_service.dart';
@@ -42,6 +44,7 @@ import 'package:thestia/services/chat/webrtc_service.dart';
 import 'package:thestia/services/server/supabase_database_service.dart';
 import 'package:thestia/services/storage/secure_storage.dart';
 import 'package:thestia/widgets/chat/funke_overlay.dart';
+import 'package:thestia/widgets/chat/secure_keyboard.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
@@ -367,6 +370,9 @@ void main() {
     DateTime? geburtsdatum,
     DatingHourSession? sitzung,
     _FakeDatingHourService? dienst,
+    // DIE EINSTELLUNGEN: Der Test kann so den Stand der App-Einstellungen
+    // vorgeben (etwa die Wahl der Tastatur).
+    Map<String, dynamic> settings = const <String, dynamic>{},
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -375,10 +381,19 @@ void main() {
     final router = _router();
     addTearDown(router.dispose);
 
+    // DIE EINSTELLUNGEN: Sie liegen im Speicher (wie in der App).
+    final speicher = _FakeLocalStorage();
+    if (settings.isNotEmpty) {
+      await speicher.saveString(
+        AppConstants.prefsSettingsKey,
+        jsonEncode(settings),
+      );
+    }
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+          localStorageProvider.overrideWithValue(speicher),
           datingHourServiceProvider.overrideWithValue(service),
           supabaseDatabaseServiceProvider.overrideWithValue(
             _FakeSupabaseDatabaseService(supabase.Supabase.instance.client),
@@ -428,6 +443,41 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(DatingHourChatScreen), findsOneWidget);
+    });
+
+    // BEFUND (27.11.2026, Betreiber): "Die eigene Tastatur wird nicht
+    // überall angewendet." Im Dating-Hour-Chat fehlten die drei Werte -
+    // hier galt immer die Standard-Belegung.
+    testWidgets('die eigene Tastatur nimmt die Einstellungen an', (
+      tester,
+    ) async {
+      await zeigeScreen(
+        tester,
+        settings: <String, dynamic>{'tastaturBelegung': 'englisch'},
+      );
+
+      // Die Tastatur öffnen (ein Tap auf das Eingabefeld).
+      final feld = find.byType(TextField);
+      await tester.ensureVisible(feld);
+      await tester.tap(feld);
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byType(SecureKeyboard),
+        findsOneWidget,
+        reason: 'Die eigene Tastatur muss aufgehen.',
+      );
+      // Die Einstellung sagt Englisch (QWERTY): die Umlaute gibt es
+      // nicht, dafür das Komma.
+      expect(
+        find.text('ä'),
+        findsNothing,
+        reason:
+            'Die Einstellung "englisch" muss gelten - im Dating-Hour-Chat '
+            'wurde sie vorher ignoriert.',
+      );
+      expect(find.text(','), findsOneWidget);
     });
 
     testWidgets('der Leerzustand steht da', (tester) async {

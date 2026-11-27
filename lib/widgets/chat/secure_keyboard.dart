@@ -195,16 +195,29 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
   /// Farbwelt, "eigene Farbe" den selbst gewählten Ton. Der Text
   /// darauf muss in beiden Helligkeiten lesbar bleiben - darum wird
   /// er aus der Helligkeit der Fläche berechnet, nicht geraten.
+  ///
+  /// DIE OPTIK (27.11.2026): "Die eigene App Tastatur sieht auf dem
+  /// Smartphone nicht ansatzweise so aus wie die normale von Android."
+  /// Die Systemtastatur hat einen grauen Grund, weiße Buchstabentasten,
+  /// dunklere Funktionstasten und eine farbige Eingabetaste - so sieht
+  /// sie aus, und so sieht diese Tastatur jetzt auch aus.
   _TastaturFarben _farben(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final stil = widget.stil;
     if (stil == null || stil == TastaturStil.wieApp) {
       return _TastaturFarben(
+        // Der Grund ist grau, die Tasten weiß - wie beim System.
         hintergrund: scheme.surfaceContainer,
-        taste: scheme.surfaceContainerHighest,
+        taste: scheme.surface,
+        // Die Funktionstasten (Umschaltung, Ziffern, Löschen) sind
+        // einen Tick dunkler als die Buchstabentasten.
+        aktion: scheme.surfaceContainerHighest,
         aktiv: scheme.primaryContainer,
         text: scheme.onSurface,
         aktivText: scheme.onPrimaryContainer,
+        // Die Eingabetaste ist die Akzentfarbe - wie beim System.
+        enter: scheme.primary,
+        enterText: scheme.onPrimary,
       );
     }
     final eigene = stil == TastaturStil.eigeneFarbe && widget.farbe != null;
@@ -212,12 +225,15 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
     return _TastaturFarben(
       hintergrund: scheme.surfaceContainer,
       taste: flaeche,
+      aktion: flaeche,
       aktiv: flaeche,
       // DER KONTRAST: Auf einer dunklen Fläche braucht es einen hellen
       // Text und umgekehrt. Das rechnet die Helligkeit der Fläche -
       // geraten wäre hier ein Fehler, den der Nutzer sieht.
       text: _lesbarerText(flaeche),
       aktivText: _lesbarerText(flaeche),
+      enter: flaeche,
+      enterText: _lesbarerText(flaeche),
     );
   }
 
@@ -329,8 +345,11 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
     child: Text(
       c,
       style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w500,
+        // DIE SCHRIFT (27.11.2026): Die Buchstaben der Systemtastatur
+        // sind groß und normal gewichtet - vorher waren sie klein und
+        // fett, das sah nach Tabelle aus.
+        fontSize: 22,
+        fontWeight: FontWeight.w400,
         color: _farben(context).text,
       ),
     ),
@@ -341,13 +360,26 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
     required String label,
     required VoidCallback? onTap,
     bool active = false,
-  }) => _KeyCap(
-    label: label,
-    farben: _farben,
-    onTap: onTap,
-    active: active,
-    child: Icon(icon, size: 20, color: _farben(context).text),
-  );
+    bool enter = false,
+  }) {
+    final palette = _farben(context);
+    return _KeyCap(
+      label: label,
+      farben: _farben,
+      onTap: onTap,
+      active: active,
+      // Die Funktionstasten (Umschaltung, Ziffern, Löschen) haben ihre
+      // eigene Farbe - wie beim System. Die Eingabetaste ist die
+      // Akzentfarbe.
+      aktion: !enter,
+      enter: enter,
+      child: Icon(
+        icon,
+        size: 20,
+        color: enter ? palette.enterText : palette.text,
+      ),
+    );
+  }
 
   /// Die Emoji-Auswahl (feste Höhe, damit die Tastatur nicht wächst).
   Widget _emojiPanel(BuildContext context) => SizedBox(
@@ -431,6 +463,9 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
               icon: Icons.keyboard_return,
               label: L10n.t(context, 'keyboard.enter'),
               onTap: widget.onEnter,
+              // DIE EINGABETASTE: Sie ist die Akzentfarbe - wie bei der
+              // Tastatur des Systems (27.11.2026).
+              enter: true,
             ),
           ]),
         );
@@ -460,6 +495,9 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
               icon: Icons.keyboard_return,
               label: L10n.t(context, 'keyboard.enter'),
               onTap: widget.onEnter,
+              // DIE EINGABETASTE: Sie ist die Akzentfarbe - wie bei der
+              // Tastatur des Systems (27.11.2026).
+              enter: true,
             ),
           ]),
         );
@@ -524,9 +562,12 @@ class _TastaturFarben {
   const _TastaturFarben({
     required this.hintergrund,
     required this.taste,
+    required this.aktion,
     required this.aktiv,
     required this.text,
     required this.aktivText,
+    required this.enter,
+    required this.enterText,
   });
 
   /// Der Hintergrund der Tastatur.
@@ -534,6 +575,9 @@ class _TastaturFarben {
 
   /// Die Farbe einer Taste.
   final Color taste;
+
+  /// Die Farbe einer Funktionstaste (Umschaltung, Ziffern, Löschen).
+  final Color aktion;
 
   /// Die Farbe einer aktiven Taste (Umschaltung).
   final Color aktiv;
@@ -543,6 +587,12 @@ class _TastaturFarben {
 
   /// Der Text auf einer aktiven Taste.
   final Color aktivText;
+
+  /// Die Farbe der Eingabetaste.
+  final Color enter;
+
+  /// Der Text auf der Eingabetaste.
+  final Color enterText;
 }
 
 /// Eine einzelne Taste. Die [flex] bestimmt, wie breit sie wird
@@ -555,6 +605,8 @@ class _KeyCap extends StatelessWidget {
     required this.farben,
     this.flex = 1,
     this.active = false,
+    this.aktion = false,
+    this.enter = false,
   });
 
   final Widget child;
@@ -568,6 +620,12 @@ class _KeyCap extends StatelessWidget {
   /// Hervorgehobene Taste (aktive Umschaltung).
   final bool active;
 
+  /// Eine Funktionstaste (Umschaltung, Ziffern, Löschen).
+  final bool aktion;
+
+  /// Die Eingabetaste (sie ist die Akzentfarbe).
+  final bool enter;
+
   /// Die Farben der Tastatur (kommen von oben - die Tastatur hängt
   /// sich nicht selbst um).
   final _TastaturFarben Function(BuildContext context) farben;
@@ -575,16 +633,31 @@ class _KeyCap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = farben(context);
+    final flaeche = enter
+        ? palette.enter
+        : aktion
+        ? palette.aktion
+        : active
+        ? palette.aktiv
+        : palette.taste;
     return Expanded(
       flex: flex,
       child: Semantics(
         button: true,
         label: label,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+          // DER ABSTAND (27.11.2026): Die Systemtastatur lässt zwischen
+          // den Tasten etwas Luft - ohne sie kleben die Tasten
+          // aneinander und die Tastatur sieht aus wie eine Tabelle.
+          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
           child: Material(
-            color: active ? palette.aktiv : palette.taste,
+            color: flaeche,
             borderRadius: BorderRadius.circular(8),
+            // DER SCHATTEN: Die Tasten der Systemtastatur stehen
+            // reliefartig - ein feiner Schatten unter der Taste macht
+            // den Unterschied.
+            elevation: 1,
+            shadowColor: Colors.black.withValues(alpha: 0.25),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: onTap,

@@ -152,6 +152,9 @@ const Map<String, Map<String, String>> stringsChat = {
     'chat.imageSendFailedBody':
         'Das Bild konnte nicht gesendet werden.\n\n{error}',
     'chat.imageSourcePrompt': 'Wähle eine Quelle für das zu sendende Bild.',
+    // Umschalten zwischen der System- und der App-Tastatur (27.11.2026).
+    'chat.keyboardToApp': 'Zur App-Tastatur wechseln',
+    'chat.keyboardToSystem': 'Zur Systemtastatur wechseln',
     'chat.micDisclosureAccept': 'Mikrofon freigeben',
     'chat.micDisclosureBody':
         'Um eine Sprachnachricht aufzunehmen, braucht die App Zugriff auf '
@@ -433,6 +436,9 @@ const Map<String, Map<String, String>> stringsChat = {
     'chat.imageSendFailed': 'Sending failed',
     'chat.imageSendFailedBody': 'The image could not be sent.\n\n{error}',
     'chat.imageSourcePrompt': 'Choose a source for the image to send.',
+    // Switch between the system and the app keyboard (27 Nov 2026).
+    'chat.keyboardToApp': "Switch to the app's own keyboard",
+    'chat.keyboardToSystem': 'Switch to the system keyboard',
     'chat.micDisclosureAccept': 'Allow microphone',
     'chat.micDisclosureBody':
         'To record a voice message, the app needs access to the '

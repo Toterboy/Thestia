@@ -17,8 +17,64 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/widgets/chat/secure_composer.dart';
 import 'package:thestia/widgets/chat/secure_keyboard.dart';
+
+/// Der Speicher im RAM (der Composer liest die Einstellungen daraus).
+class _Speicher implements LocalStorage {
+  final Map<String, String> _daten = <String, String>{};
+
+  @override
+  Future<void> saveString(String key, String value) async =>
+      _daten[key] = value;
+
+  @override
+  Future<String?> getString(String key) async => _daten[key];
+
+  @override
+  Future<void> saveBool(String key, bool value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<bool?> getBool(String key) async =>
+      _daten[key] == null ? null : _daten[key] == 'true';
+
+  @override
+  Future<void> remove(String key) async => _daten.remove(key);
+
+  @override
+  Future<void> saveInt(String key, int value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<int?> getInt(String key) async =>
+      _daten[key] == null ? null : int.tryParse(_daten[key]!);
+}
+
+/// Der Composer im Test.
+///
+/// DER GRUND (27.11.2026): Der Composer holt sich die Wahl der Belegung
+/// und der Farben selbst aus den Einstellungen - damit keine Stelle sie
+/// vergessen kann. Er braucht deshalb den Speicher der App.
+Widget hause(
+  TextEditingController controller, {
+  VoidCallback? onSend,
+  bool enterSends = false,
+}) {
+  return ProviderScope(
+    overrides: <Override>[localStorageProvider.overrideWithValue(_Speicher())],
+    child: MaterialApp(
+      home: Scaffold(
+        body: SecureComposer(
+          controller: controller,
+          onSend: onSend ?? () {},
+          enterSends: enterSends,
+        ),
+      ),
+    ),
+  );
+}
 
 void main() {
   group('Die eigene Tastatur', () {
@@ -26,13 +82,7 @@ void main() {
       tester,
     ) async {
       final controller = TextEditingController();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(controller: controller, onSend: () {}),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller));
 
       expect(find.byType(SecureKeyboard), findsNothing);
 
@@ -47,13 +97,7 @@ void main() {
       tester,
     ) async {
       final controller = TextEditingController();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(controller: controller, onSend: () {}),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller));
 
       final feld = tester.widget<TextField>(find.byType(TextField));
       // `readOnly` ist der entscheidende Punkt: bei einem readOnly-Feld
@@ -67,13 +111,7 @@ void main() {
 
     testWidgets('getippte Zeichen landen im Text', (tester) async {
       final controller = TextEditingController();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(controller: controller, onSend: () {}),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller));
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
@@ -89,13 +127,7 @@ void main() {
 
     testWidgets('die Umlaute sind eigene Tasten', (tester) async {
       final controller = TextEditingController();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(controller: controller, onSend: () {}),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller));
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
@@ -112,13 +144,7 @@ void main() {
 
     testWidgets('die Umschaltung macht Grossbuchstaben', (tester) async {
       final controller = TextEditingController();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(controller: controller, onSend: () {}),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller));
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
@@ -135,13 +161,7 @@ void main() {
 
     testWidgets('Backspace loescht das letzte Zeichen', (tester) async {
       final controller = TextEditingController(text: 'Hallo');
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(controller: controller, onSend: () {}),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller));
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
@@ -156,16 +176,7 @@ void main() {
     testWidgets('Enter fuegt einen Umbruch ein', (tester) async {
       final controller = TextEditingController();
       var gesendet = 0;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(
-              controller: controller,
-              onSend: () => gesendet++,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller, onSend: () => gesendet++));
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
@@ -182,15 +193,7 @@ void main() {
       final controller = TextEditingController();
       var gesendet = 0;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(
-              controller: controller,
-              onSend: () => gesendet++,
-              enterSends: true,
-            ),
-          ),
-        ),
+        hause(controller, onSend: () => gesendet++, enterSends: true),
       );
 
       await tester.tap(find.byType(TextField));
@@ -205,13 +208,7 @@ void main() {
 
     testWidgets('die Hardwaretastatur funktioniert auch', (tester) async {
       final controller = TextEditingController();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(controller: controller, onSend: () {}),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller));
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
@@ -226,13 +223,7 @@ void main() {
 
     testWidgets('die Tastatur laesst sich wieder ausblenden', (tester) async {
       final controller = TextEditingController();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(controller: controller, onSend: () {}),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller));
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
@@ -247,13 +238,7 @@ void main() {
 
     testWidgets('die Emoji-Auswahl funktioniert', (tester) async {
       final controller = TextEditingController();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SecureComposer(controller: controller, onSend: () {}),
-          ),
-        ),
-      );
+      await tester.pumpWidget(hause(controller));
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
@@ -272,7 +257,12 @@ void main() {
   group('Die Belegung folgt der Sprache', () {
     Widget host(TextEditingController controller, Locale locale) =>
         ProviderScope(
-          overrides: [localeProvider.overrideWith((ref) => locale)],
+          overrides: [
+            localeProvider.overrideWith((ref) => locale),
+            // DER SPEICHER: Der Composer holt sich die Wahl der Belegung
+            // und der Farben selbst aus den Einstellungen.
+            localStorageProvider.overrideWithValue(_Speicher()),
+          ],
           child: MaterialApp(
             home: Scaffold(
               body: L10nScope(
