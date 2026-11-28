@@ -1,0 +1,11 @@
+The keyboard now looks like the system keyboard - and you can switch
+
+The app's own keyboard now looks like the one on your phone: light letter keys, darker function keys, a coloured enter key and a shadow under every key. With the button next to the input field you switch between the app's keyboard and your system's at any time - and the app keyboard still doesn't see a single letter of your messages.
+
+And: sync dates (meeting instead of screen)
+
+Two people who live far apart meet at the same time in different places: both go for a walk and talk on the phone, both start the same film, both cook the same recipe. The idea wheel always suggests this, and during the date only this chat is available - the app should celebrate being away instead of creating ties. The call screen now shows how long you have been talking.
+
+Three bugs from testing fixed
+
+In the interests area the text next to the "re-spark" button was broken up letter by letter. The preview of your own profile had no background (you could see the profile screen through it). And the keyboard setting did not apply everywhere.
