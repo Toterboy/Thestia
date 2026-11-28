@@ -7,7 +7,7 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
-## [0.11.0] – Die Nachricht überdenken (Build 63, 2026-11-28)
+## [0.11.0] – Die Nachricht überdenken (Build 64, 2026-11-28)
 
 > **Warum eine neue Nummer?** Die Roadmap-Regel sagt: „Neue
 > Nutzerfunktion = **MINOR** (0.x.0)". Die „Nachricht überdenken" ist eine
