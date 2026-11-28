@@ -142,11 +142,23 @@ class ChatService {
         }
       }
       await newBox.flush();
-      await oldBox.close();
-      await newBox.close();
+      // DIE BOXEN BLEIBEN OFFEN (BEFUND 28.11.2026, der CI-Lauf 625 war
+      // rot): Hive schließt sie am Ende (beim Beenden der App, im Test
+      // beim Aufräumen). Schließt der Dienst sie hier selbst, kann
+      // Hive sie zweimal schließen - das zweite Mal scheitert, weil
+      // die Sperrdatei dann schon weg ist ("Cannot delete file ...
+      // .lock"). Deshalb wird nur die ALTE Box geschlossen (die wird
+      // ja gleich von der Platte gelöscht) - die neue bleibt offen.
+      await bestEffort('close', () async {
+        if (Hive.isBoxOpen(legacy)) {
+          await Hive.box<dynamic>(legacy).close();
+        }
+      });
       _historyBox = null;
       _qrContactsBox = null;
-      await Hive.deleteBoxFromDisk(legacy);
+      await bestEffort('deleteBoxFromDisk', () async {
+        await Hive.deleteBoxFromDisk(legacy);
+      });
     } catch (e) {
       debugPrint('[ChatService] Legacy-Migration übersprungen: $e');
     }
