@@ -260,10 +260,19 @@ extension _AuthServerSync on AuthNotifier {
     } finally {
       // Router freigeben: Setup-Flags sind geladen (oder der Sync ist
       // gescheitert - dann gilt der lokale Stand).
-      _ref.read(serverSyncDoneProvider.notifier).state = true;
-      // Ersten Sync abschliessen: Ab jetzt darf die Selbstheilung
-      // lokale Flags zum Server nachziehen (siehe oben).
-      _initialServerSyncDone = true;
+      //
+      // DER SCHUTZ (gefunden im CI-Lauf 622): Ist der Anbieter in der
+      // Zwischenzeit abgeräumt (der Nutzer hat sich abgemeldet, die App
+      // wird beendet oder der Test räumt auf), darf nicht mehr gelesen
+      // werden - Riverpod wirft dann "Tried to read a provider from a
+      // ProviderContainer that was already disposed". Das hat den Lauf
+      // rot gemacht, obwohl die App selbst nichts falsch gemacht hat.
+      if (mounted) {
+        _ref.read(serverSyncDoneProvider.notifier).state = true;
+        // Ersten Sync abschliessen: Ab jetzt darf die Selbstheilung
+        // lokale Flags zum Server nachziehen (siehe oben).
+        _initialServerSyncDone = true;
+      }
     }
   }
 }
