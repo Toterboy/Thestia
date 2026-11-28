@@ -130,10 +130,6 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
       dismissed: _milestoneDismissed,
     );
 
-    // DIE ANTIZIPATION (Plan 0.11.0): Der Termin steht unter der
-    // Kopfzeile - statt Chat-Metriken.
-    final syncDate = termin;
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -231,7 +227,7 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
             ],
           ),
         ),
-        bottom: SyncDateAntizipation.unten(syncDate),
+        bottom: antizipationUnten,
         actions: [
           // NUTZERWUNSCH "zu viele Symbole, Name abgeschnitten": Die
           // AppBar-Buttons sind auf ZWEI kompakte reduziert (Anruf +
@@ -432,6 +428,13 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
           ),
           Column(
             children: [
+              // DER NUDGE (Plan 0.11.0): Bei Distanz-Funken den Chat
+              // sanft Richtung Anruf nudgen ("Stimmen verbinden mehr als
+              // Texte"). Einmal je Chat.
+              stimmenNudge,
+              // Das Sync-Date (Plan 0.11.0): die Karte mit dem
+              // gemeinsamen Countdown und dem Anruf-Knopf.
+              syncDateKarte,
               // Verbindungs-Hinweis (v0.9.1): Abgerundete Karte, eingeklappt
               // nur "Keine direkte Verbindung", aufklappbar für Details.
               // Wegtippbar pro Öffnen.
@@ -754,8 +757,6 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
                   matchId: widget.matchId,
                   partnerName: partner.name,
                 ),
-              // Das Sync-Date (Plan 0.11.0): die Karte mit dem
-              // gemeinsamen Countdown und dem Anruf-Knopf.
               syncDateKarte,
               // Vorstellung des Partners (Text + Audio): Beide Seiten können
               // die Vorstellung im Chat anhören (v0.9.0-Feedback - die Person,

@@ -176,6 +176,24 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   - **umgesetzt in Build 62** (siehe oben unter „Umgesetzt")
 - Details: [docs/technik/lokale-ki-reflexion.md](docs/technik/lokale-ki-reflexion.md)
 
+### 0.11.0 – Der Sanctuary (Grundbau: Modelle selbst holen)
+
+- **Die App lädt kein KI-Modell selbst herunter** – der Nutzer holt die
+  GGUF-Datei selbst (Browser, Dateimanager, PC) und importiert sie. Die
+  App nennt nur ein paar **Empfehlungen**: fünf Modelle in zwei Stufen
+  (kompakt / ausgewogen) mit Name, Herkunft, Dateigröße, RAM-Bedarf,
+  Lizenz-Hinweis und den verfügbaren Quantisierungen.
+- **Der Import prüft die Datei** (echte GGUF-Signatur, Größe zwischen
+  50 MB und 20 GB), kopiert sie in das eigene Verzeichnis des Geräts
+  (eine Datei im Download-Ordner wäre beim Aufräumen weg) und merkt sie
+  sich. Ein selbst importiertes Modell wird als „Fremdmodell" markiert.
+- *Umsetzung:* `lib/models/sanctuary/sanctuary_empfehlung.dart`,
+  `lib/services/sanctuary/sanctuary_modell_service.dart`.
+- **Offen:** die Oberfläche (die Liste der Empfehlungen, der
+  Import-Knopf), die Krisen-Erkennung (mit dem offenen Punkt der
+  Rechtsberatung) und die Inferenz selbst (llama.cpp über FFI - die
+  native Abhängigkeit).
+
 ### 0.11.0 – Die Sync-Dates („Begegnung statt Bildschirm")
 
 - **Zwei Menschen, die weit auseinander wohnen, treffen sich zur selben
@@ -202,10 +220,15 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   steht er da ("Termin: 27.11. 20:00 - freut euch auf das Date!"), und
   läuft das Date gerade, steht das da. Das ist die Antizipation statt
   Chat-Metriken: der Termin ist das, worauf man sich freut.
-- **Offen:** der sanfte Nudge zu Anruf und Sprachnachricht bei
-  Distanz-Funken (die zweite Hälfte der Antizipation) und der
-  Offline-Knopf nach dem echten Treffen (die Grundlage steht: der
-  Ruhemodus).
+- **Der sanfte Nudge zu Anruf und Sprachnachricht** bei Distanz-Funken
+  steht: über dem Chat erscheint einmal ein schmaler Streifen
+  („Stimmen verbinden mehr als Texte - ruf doch an.") mit dem Anruf-Knopf.
+  Er kommt nur bei großer Entfernung (ab 50 km) und nur einmal je Chat
+  (der Merker liegt im lokalen Speicher). Wer ihn wegwischt, sieht ihn
+  nicht wieder.
+- **Offen:** der Offline-Knopf nach dem echten Treffen (die Grundlage
+  steht: der Ruhemodus) und die Sprachnachricht als Alternative zum
+  Anruf im Nudge.
 
 ### 0.12.0 – Web-Bridge, Transit-Reachability & Zero-Install-Gast-Verbindungen
 

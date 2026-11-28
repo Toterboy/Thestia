@@ -144,6 +144,12 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   steht er da („Termin: 27.11. 20:00 - freut euch auf das Date!"), und
   läuft das Date gerade, steht das da. Das ist die Antizipation statt
   Chat-Metriken: der Termin ist das, worauf man sich freut.
+- **Und ein sanfter Nudge Richtung Anruf:** Wohnen zwei people 300
+  Kilometer auseinander, hilft Schreiben nicht weiter - der Chat
+  bekommt einmal einen schmalen Streifen („Stimmen verbinden mehr als
+  Texte - ruf doch an.") mit dem Anruf-Knopf. Er erscheint nur bei
+  großer Entfernung und nur einmal je Chat; wer ihn wegwischt, sieht
+  ihn nicht wieder.
 - *Hinweis für den Betrieb:* Die neue Migration 223 muss auf dem Server
   angewandt werden – erst dann kennen die beiden Seiten die Sync-Dates.
 

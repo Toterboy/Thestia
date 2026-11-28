@@ -26,6 +26,22 @@ Aus der Roadmap (Stand 23.11.2026) in ein eigenes Dokument verschoben.
 > Ausschlusskriterium) stellt sich damit nicht. Wer das Modell
 > herunterlädt, entscheidet das selbst – und kann einen eigenen Spiegel
 > nehmen.
+>
+> **Stand 27.11.2026: Der Grundbau steht.**
+>
+> * **Der Katalog der Empfehlungen**
+>   (`lib/models/sanctuary/sanctuary_empfehlung.dart`): fünf Modelle in
+>   zwei Stufen (kompakt und ausgewogen) mit Name, Herkunft, Dateigröße,
+>   RAM-Bedarf, Lizenz-Hinweis und den verfügbaren Quantisierungen.
+> * **Der Import**
+>   (`lib/services/sanctuary/sanctuary_modell_service.dart`): der Nutzer
+>   wählt die GGUF-Datei selbst; die App prüft sie (echte GGUF-Signatur,
+>   Größe zwischen 50 MB und 20 GB), kopiert sie in ihr eigenes
+>   Verzeichnis (eine Datei im Download-Ordner wäre beim Aufräumen weg)
+>   und merkt sie sich. Ein fremdes Modell wird als solches markiert.
+> * **Noch offen:** die Oberfläche (die Liste der Empfehlungen und der
+>   Import-Knopf), die Krisen-Erkennung und die Inferenz selbst
+>   (llama.cpp über FFI – die native Abhängigkeit).
 
 - [ ] **Stufenbasierte Modellauswahl**:
       * Stufe 1 (Kompakt / Akkusparend): Gemma 4 E2B, Spark-X2.5-1.7B

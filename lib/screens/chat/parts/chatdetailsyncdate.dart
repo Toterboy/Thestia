@@ -21,6 +21,11 @@ extension _ChatDetailSyncDate on _ChatDetailScreenState {
     return ref.watch(syncDateProvider(widget.matchId));
   }
 
+  /// Die Vorfreude unter der Kopfzeile (null, wenn es keinen Termin
+  /// gibt - dann bleibt die Kopfzeile, wie sie ist).
+  PreferredSizeWidget? get antizipationUnten =>
+      SyncDateAntizipation.unten(termin);
+
   /// Die Karte des Sync-Dates (steht im Chat, wenn es eins gibt).
   ///
   /// Sie bringt den gemeinsamen Countdown und den Anruf-Knopf mit - das

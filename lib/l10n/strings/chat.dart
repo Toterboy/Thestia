@@ -238,6 +238,8 @@ const Map<String, Map<String, String>> stringsChat = {
         'dass niemand dazwischenfunkt.',
     'chat.safetyNumberTooltip': 'Sicherheitsnummer (E2E-Verifikation)',
     'chat.securityHeader': 'Sicherheit',
+    'chat.stimmenNudgeCall': 'Anrufen',
+    'chat.stimmenNudge': 'Stimmen verbinden mehr als Texte - ruf doch an.',
     'chat.spiceTooltip': 'Eisbrecher-Fragen (Spice Questions)',
     'chat.spiceUnavailable':
         'Eisbrecher-Fragen gibt es nur für Funken-Chats (nicht für '
@@ -544,6 +546,8 @@ const Map<String, Map<String, String>> stringsChat = {
         'nobody is intercepting your conversation.',
     'chat.safetyNumberTooltip': 'Safety number (E2E verification)',
     'chat.securityHeader': 'Security',
+    'chat.stimmenNudgeCall': 'Call',
+    'chat.stimmenNudge': 'Voices connect more than texts - give them a call.',
     'chat.spiceTooltip': 'Icebreaker questions (Spice Questions)',
     'chat.spiceUnavailable':
         'Icebreaker questions are only available for spark chats (not for '
