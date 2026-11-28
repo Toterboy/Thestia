@@ -86,7 +86,7 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   keinen Inhalt), Transit Spark: mehrere mit derselben Beschreibung
   anschreiben, ungefährer Ort als Selbstauskunft statt als Standort,
   serverseitiger Nachrichtenzähler, Kategorie-Sicht ohne Sackgasse
-- **0.11.0** (Build 64) – **Die Nachricht überdenken** und **die
+- **0.11.0** (Build 65) – **Die Nachricht überdenken** und **die
   eigene Tastatur wird einstellbar**. Vor dem Senden fragt die App, wie
   der Nutzer die Nachricht selbst versteht – und ob sie wirklich so
   bleiben soll. Einstellbar im Drei-Punkte-Menü des Chats: bei jeder
@@ -111,7 +111,7 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   Pausieren das richtige Token, das Bundesland-Feld der Ersteinrichtung
   läuft nicht mehr aus dem Rahmen, eine zweite Instanz des
   Verschlüsselungs-Dienstes lässt keinen Fehler ungehandelt laufen, die
-  Restzeit der Dating Hour passt bei großer Schrift; Build 64: neun neue
+  Restzeit der Dating Hour passt bei großer Schrift; Build 65: neun neue
   Testdateien für die bisher ungetesteten Wege (der Dating Hour zum Server,
   „Find your Match", der Transit-Radar, die Warteschlange des P2P-Chats,
   die Umstellung der alten Chat-Boxen auf den Konto-Namensraum, die
@@ -165,7 +165,7 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
     nur über einen Extra-Knopf im Eingabefeld
   - die eigene Deutung bleibt auf dem Gerät: sie wird nicht gesendet
     und nirgends gespeichert
-  - **umgesetzt in Build 64** (siehe oben unter „Umgesetzt")
+  - **umgesetzt in Build 65** (siehe oben unter „Umgesetzt")
 - **Die eigene Tastatur wird einstellbar** (die App-Tastatur aus
   Build 54): der **Hintergrund** (wie die App, in der Akzentfarbe der
   Farbwelt oder eine eigene Farbe) und die **Belegung** (wie die App,
@@ -173,7 +173,7 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   blind dem Sprachumschalter – App-Sprache und Werkzeug sind getrennt.
   Beide Schalter stehen in `ui_prefs` und überstehen damit eine
   Neuinstallation
-  - **umgesetzt in Build 64** (siehe oben unter „Umgesetzt")
+  - **umgesetzt in Build 65** (siehe oben unter „Umgesetzt")
 - Details: [docs/technik/lokale-ki-reflexion.md](docs/technik/lokale-ki-reflexion.md)
 
 ### 0.11.0 – Der Sanctuary (Grundbau: Modelle selbst holen)
